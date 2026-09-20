@@ -1,0 +1,22 @@
+{
+  "description": "Profile-2 FOUR-CORNER bundle (CF-5, twenty-first review): the federated Evidence Package plus the B.1 RelayAcceptance object its rdp_chain[] hop references. This is the bundle in which the per-hop reference is actually BOUND — bundle_lint LINT-BND-20 recomputes seal_digest (SHA-256 over the DECODED COSE_Sign1 bytes of the B.1's seal, TS clause 4.1) and rejects a mismatch. evidence_lint sees one object at a time, so its LINT-EP-06 can only confirm the hex is well-formed; ANY 64-hex string survives there. Recipient-side entity (EU-FR-PSBID) as in bundle.default. Paths are relative to this manifest's directory.",
+  "entity_uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+  "med": "sample-BW-MED-default.json",
+  "org": "sample-BW-ORG.json",
+  "members": [
+    "sample-BW-MEMBER-fr.json",
+    "sample-BW-MEMBER-fr2.json"
+  ],
+  "evidence": [
+    "sample-EP-federated.json",
+    "sample-RELAY-b1.json"
+  ],
+  "policy_history": [
+    "sample-BW-ORG-prev.json",
+    "sample-BW-ORG.json"
+  ],
+  "counterparty_members": [
+    "sample-BW-MEMBER.json"
+  ],
+  "federation_register": "federation.stage1.demo.json"
+}

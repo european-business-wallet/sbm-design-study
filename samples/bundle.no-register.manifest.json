@@ -1,0 +1,26 @@
+{
+  "description": "NEGATIVE fixture (Batch A / A5) — bundle.default with NO `federation_register`. Federation admission is a MANDATORY required property (docs/required-properties.json, id `federation-admission`), so a bundle that supplies no register MUST report the declared LINT-TRUST-06 [GAP] and exit 3 (INCOMPLETE) rather than [OK]: the verifier states that it could not establish admission instead of passing over it. Asserted by tests/test_federation_gate.py and NEVER run in the green path.",
+  "entity_uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+  "med": "sample-BW-MED-default.json",
+  "org": "sample-BW-ORG.json",
+  "members": [
+    "sample-BW-MEMBER-fr.json",
+    "sample-BW-MEMBER-fr2.json"
+  ],
+  "evidence": [
+    "sample-SE.json",
+    "sample-DE.json",
+    "sample-DE-availability.json"
+  ],
+  "grade_reveals": "grade-reveal.demo.json",
+  "policy_history": [
+    "sample-BW-ORG-prev.json",
+    "sample-BW-ORG.json"
+  ],
+  "group_contexts": "group-contexts.demo.json",
+  "counterparty_members": [
+    "sample-BW-MEMBER.json"
+  ],
+  "formation_inputs": "formation-inputs.demo.json",
+  "suite_registry": "suite-registry.demo.json"
+}

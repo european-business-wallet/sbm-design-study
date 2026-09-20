@@ -1,0 +1,13 @@
+{
+  "sm_artifact_b64": "hFGiAScETGVkZC1yZWdpc3RyeaBY2ahjdWlkeBpFVS1GUi1QU0JJRC1aWVdWVFNSUVBOTThNNGR0eXBlaVNUQVRVUy12MWZzdGF0dXNmYWN0aXZlZ3ZlcnNpb25jMS4waWlzc3VlZF9hdHQyMDI2LTA0LTA0VDEwOjE1OjAwWmpleHBpcmVzX2F0dDIwMjYtMDQtMDRUMTA6MjA6MDBaa3JlZ2lzdHJ5X2lkeBlFREQ6RVU6Y29yZS1yZWdpc3RyeS1kZW1vbGFzc2VydGlvbl9pZHgaMDFKOFpTVEFUVlMwMDAwMDAwMDAwMDAwQTFYQOHOXb/ziH4s3G9QF+MHpGl0Uuq+Yw8C5qdqdosBE6bOD9UQvluWU1cuwb+D7mOYObQNbC/BOY900ri5HyNtrg0=",
+  "projection": {
+    "type": "STATUS-v1",
+    "version": "1.0",
+    "uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+    "status": "active",
+    "issued_at": "2026-04-04T10:15:00Z",
+    "expires_at": "2026-04-04T10:20:00Z",
+    "assertion_id": "01J8ZSTATVS0000000000000A1",
+    "registry_id": "EDD:EU:core-registry-demo"
+  }
+}

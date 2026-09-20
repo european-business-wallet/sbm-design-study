@@ -1,0 +1,1421 @@
+{
+  "$comment": "R5-07: the client-visible SURFACE of each published contract, fingerprinted so it cannot change without its version. schema_shapes.py closed this for the discovery schemas after R3-09; the same hole stayed open one artefact over, and round 5 changed three of these four — including rebinding POST /messages from memberAuth to rdpAuth, which is BREAKING — with `make versions` green throughout. Seeded from the PRE-ROUND contracts on purpose, so the gate had to catch this round's own change rather than bless it. Regenerate deliberately with `python3 scripts/contract_shapes.py --write`.",
+  "contracts": {
+    "delivery-service-openapi.yaml": {
+      "version": "9.0.0",
+      "operations": {
+        "DELETE /group-establishment/outcomes/{outcome_id}": [
+          "memberAuth",
+          "memberMtls"
+        ],
+        "DELETE /reservations/{reservation_id}": [
+          "memberAuth",
+          "memberMtls"
+        ],
+        "DELETE /welcome/{welcome_id}": [
+          "deviceAuth",
+          "deviceMtls"
+        ],
+        "GET /group-establishment/outcomes": [
+          "memberAuth",
+          "memberMtls"
+        ],
+        "GET /groups/{group_id}/context": [
+          "memberAuth",
+          "memberMtls"
+        ],
+        "GET /keypackages/{uid}": [
+          "memberAuth",
+          "memberMtls"
+        ],
+        "GET /messages": [
+          "deviceAuth",
+          "deviceMtls"
+        ],
+        "GET /welcome": [
+          "deviceAuth",
+          "deviceMtls"
+        ],
+        "POST /groups/{group_id}/founder": [
+          "deviceAuth",
+          "deviceMtls"
+        ],
+        "POST /keypackages/{uid}/reservations": [
+          "memberAuth",
+          "memberMtls"
+        ],
+        "POST /messages": [
+          "rdpAuth"
+        ],
+        "POST /messages/{issuing_rdp_id}/{message_id}/receipt-ack": [
+          "deviceAuth",
+          "deviceMtls"
+        ],
+        "POST /reservations/{reservation_id}/commit": [
+          "memberAuth",
+          "memberMtls"
+        ],
+        "POST /welcome": [
+          "memberAuth",
+          "memberMtls"
+        ],
+        "POST /welcome/{welcome_id}/refusal": [
+          "deviceAuth",
+          "deviceMtls"
+        ]
+      },
+      "security_schemes": {
+        "deviceAuth": "http/bearer",
+        "deviceMtls": "mutualTLS/None",
+        "memberAuth": "http/bearer",
+        "memberMtls": "mutualTLS/None",
+        "rdpAuth": "mutualTLS/None"
+      },
+      "schemas": {
+        "AcceptanceRecord": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "accepted_at",
+            "envelope_hash",
+            "issuing_rdp_id",
+            "message_id",
+            "mls_group_id"
+          ],
+          "properties": {
+            "accepted_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "envelope_hash": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/EnvelopeHash"
+            },
+            "forwarding_rdp_id": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/RdpId"
+            },
+            "issuing_rdp_id": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/RdpId"
+            },
+            "message_id": {
+              "type": "string"
+            },
+            "mls_group_id": {
+              "type": "string"
+            }
+          }
+        },
+        "CollectedMessage": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "collection_token",
+            "issuing_rdp_id",
+            "message_digest",
+            "message_id",
+            "mls_group_id",
+            "mls_message_b64",
+            "state"
+          ],
+          "properties": {
+            "collection_token": {
+              "$ref": "#/components/schemas/CollectionToken"
+            },
+            "issuing_rdp_id": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/RdpId"
+            },
+            "message_digest": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/EnvelopeHash"
+            },
+            "message_id": {
+              "type": "string"
+            },
+            "mls_group_id": {
+              "type": "string"
+            },
+            "mls_message_b64": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "transferred"
+            }
+          }
+        },
+        "CollectionToken": {
+          "type": "string",
+          "minLength": 8
+        },
+        "DeliveryItemState": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "queued",
+            "transferred",
+            "acknowledged"
+          ]
+        },
+        "DeliveryReceipt": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "device_id",
+            "ds_alg",
+            "ds_kid",
+            "ds_signature",
+            "issuing_rdp_id",
+            "message_digest",
+            "message_id",
+            "mid",
+            "recipient_uid",
+            "server_time",
+            "session_binding"
+          ],
+          "properties": {
+            "client_acked_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "device_id": {
+              "type": "string"
+            },
+            "ds_alg": {
+              "type": "string",
+              "enum": [
+                "EdDSA",
+                "ES256",
+                "ES384"
+              ]
+            },
+            "ds_kid": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ds_signature": {
+              "type": "string"
+            },
+            "issuing_rdp_id": {
+              "$ref": "https://bw.example.eu/schemas/evidence-common.schema.json#/$defs/RdpId"
+            },
+            "message_digest": {
+              "type": "object",
+              "required": [
+                "format",
+                "hex"
+              ],
+              "properties": {
+                "format": {
+                  "type": "string",
+                  "enum": [
+                    "mls10-message"
+                  ]
+                },
+                "hex": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              }
+            },
+            "message_id": {
+              "type": "string"
+            },
+            "mid": {
+              "type": "string"
+            },
+            "recipient_uid": {
+              "type": "string"
+            },
+            "server_time": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "session_binding": {
+              "type": "object",
+              "required": [
+                "digest",
+                "kind"
+              ],
+              "properties": {
+                "digest": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "Error": {
+          "type": "object",
+          "required": [
+            "reason"
+          ],
+          "properties": {
+            "detail": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        },
+        "ForwardedOrigin": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "origin_rdp_id",
+            "se"
+          ],
+          "properties": {
+            "origin_rdp_id": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/RdpId"
+            },
+            "se": {
+              "type": "object",
+              "required": [
+                "projection",
+                "sm_artifact_b64"
+              ],
+              "properties": {
+                "projection": {
+                  "type": "object"
+                },
+                "sm_artifact_b64": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "GroupEstablishmentOutcome": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "device_id",
+            "mid",
+            "mls_group_id",
+            "offered_suite",
+            "outcome_id",
+            "reason",
+            "recipient_uid",
+            "refused_at",
+            "welcome_id"
+          ],
+          "properties": {
+            "device_id": {
+              "type": "string"
+            },
+            "mid": {
+              "type": "string",
+              "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+            },
+            "mls_group_id": {
+              "type": "string"
+            },
+            "offered_suite": {
+              "type": "string"
+            },
+            "outcome_id": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "suite-below-published-floor",
+                "group-info-mismatch"
+              ]
+            },
+            "recipient_uid": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/Uid"
+            },
+            "refused_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required_floor": {
+              "type": "string"
+            },
+            "welcome_id": {
+              "type": "string"
+            }
+          }
+        },
+        "GroupEstablishmentOutcomes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "outcomes"
+          ],
+          "properties": {
+            "outcomes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/GroupEstablishmentOutcome"
+              }
+            }
+          }
+        },
+        "InvitationDeposit": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "created_at",
+            "expires_at",
+            "group_info_commitment",
+            "invitation_id",
+            "keypackage_ref",
+            "mls_group_id",
+            "offered_suite",
+            "recipient_device",
+            "reservation_id",
+            "welcome_b64"
+          ],
+          "properties": {
+            "created_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "group_info_commitment": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/GroupInfoCommitment"
+            },
+            "invitation_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "keypackage_ref": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/KeyPackageRef"
+            },
+            "mls_group_id": {
+              "type": "string"
+            },
+            "offered_suite": {
+              "type": "string"
+            },
+            "recipient_device": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reservation_id": {
+              "type": "string"
+            },
+            "welcome_b64": {
+              "type": "string"
+            }
+          }
+        },
+        "KeyPackageAvailability": {
+          "type": "object",
+          "required": [
+            "suites"
+          ],
+          "properties": {
+            "suites": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "available",
+                  "cipher_suite"
+                ],
+                "properties": {
+                  "available": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "cipher_suite": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "MessageCollection": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "items"
+          ],
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CollectedMessage"
+              }
+            }
+          }
+        },
+        "MessageSubmission": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "message_id",
+            "mls_group_id",
+            "mls_message_b64"
+          ],
+          "properties": {
+            "message_id": {
+              "type": "string"
+            },
+            "mls_group_id": {
+              "type": "string"
+            },
+            "mls_message_b64": {
+              "type": "string"
+            },
+            "origin": {
+              "$ref": "#/components/schemas/ForwardedOrigin"
+            }
+          }
+        },
+        "ReceiptAckRequest": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "collection_token",
+            "device_id"
+          ],
+          "properties": {
+            "client_acked_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "collection_token": {
+              "$ref": "#/components/schemas/CollectionToken"
+            },
+            "device_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "RefusalAccepted": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "outcome_id"
+          ],
+          "properties": {
+            "outcome_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "Reservation": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "cipher_suite",
+            "committed",
+            "expires_at",
+            "keypackages",
+            "reservation_id"
+          ],
+          "properties": {
+            "cipher_suite": {
+              "type": "string"
+            },
+            "committed": {
+              "type": "boolean"
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "keypackages": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "unevaluatedProperties": false,
+                "required": [
+                  "cipher_suite",
+                  "device_id",
+                  "keypackage_b64",
+                  "keypackage_ref",
+                  "mid"
+                ],
+                "properties": {
+                  "cipher_suite": {
+                    "type": "string"
+                  },
+                  "device_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "keypackage_b64": {
+                    "type": "string"
+                  },
+                  "keypackage_ref": {
+                    "$ref": "schemas/evidence-common.schema.json#/$defs/KeyPackageRef"
+                  },
+                  "mid": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+                  }
+                }
+              }
+            },
+            "reservation_id": {
+              "type": "string"
+            }
+          }
+        },
+        "WelcomeQueue": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "device_id",
+            "welcomes"
+          ],
+          "properties": {
+            "device_id": {
+              "type": "string"
+            },
+            "welcomes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "unevaluatedProperties": false,
+                "required": [
+                  "group_info_commitment",
+                  "offered_suite",
+                  "queued_at",
+                  "recipient_device",
+                  "welcome_b64",
+                  "welcome_id"
+                ],
+                "properties": {
+                  "expires_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "group_info_commitment": {
+                    "$ref": "schemas/evidence-common.schema.json#/$defs/GroupInfoCommitment"
+                  },
+                  "offered_suite": {
+                    "type": "string"
+                  },
+                  "queued_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "recipient_device": {
+                    "type": "string"
+                  },
+                  "welcome_b64": {
+                    "type": "string"
+                  },
+                  "welcome_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "WelcomeQueued": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "recipient_device",
+            "welcome_id"
+          ],
+          "properties": {
+            "recipient_device": {
+              "type": "string"
+            },
+            "welcome_id": {
+              "type": "string"
+            }
+          }
+        },
+        "WelcomeRefusalRequest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "offered_suite",
+            "reason"
+          ],
+          "properties": {
+            "offered_suite": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "suite-below-published-floor",
+                "group-info-mismatch"
+              ]
+            },
+            "required_floor": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "wallet-rdp-openapi.yaml": {
+      "version": "9.0.0",
+      "operations": {
+        "GET /evidence/{message_id}": [
+          "walletAuth",
+          "walletMtls"
+        ],
+        "POST /confirmations": [
+          "walletAuth",
+          "walletMtls"
+        ],
+        "POST /submissions": [
+          "walletAuth",
+          "walletMtls"
+        ]
+      },
+      "security_schemes": {
+        "walletAuth": "http/bearer",
+        "walletMtls": "mutualTLS/None"
+      },
+      "schemas": {
+        "ConfirmationDelivery": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "confirmation",
+            "confirmation_kind",
+            "issuing_rdp_id",
+            "message_id"
+          ],
+          "properties": {
+            "confirmation": {},
+            "confirmation_kind": {
+              "type": "string",
+              "enum": [
+                "s3",
+                "refusal",
+                "reveal",
+                "mismatch"
+              ]
+            },
+            "issuing_rdp_id": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/RdpId"
+            },
+            "message_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "Error": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "reason"
+          ],
+          "properties": {
+            "detail": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        },
+        "EvidenceArtifact": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "projection",
+            "sm_artifact_b64"
+          ],
+          "properties": {
+            "projection": {
+              "type": "object"
+            },
+            "sm_artifact_b64": {
+              "type": "string"
+            }
+          }
+        },
+        "EvidenceResponse": {},
+        "SubmissionMetadata": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "acceptance_policy_ref",
+            "auth_context",
+            "auth_method",
+            "expires_at",
+            "message_id",
+            "mls_epoch",
+            "mls_group_id",
+            "mls_message_b64",
+            "origin_proof",
+            "payload_hash",
+            "recipient_addr",
+            "recipient_uid",
+            "scope_ref",
+            "sender_addr",
+            "sender_uid",
+            "sent_at"
+          ],
+          "properties": {
+            "acceptance_policy_ref": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/AcceptancePolicyRef"
+            },
+            "auth_context": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/AuthContext"
+            },
+            "auth_method": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/AuthMethod"
+            },
+            "envelope_hash": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/EnvelopeHash"
+            },
+            "expires_at": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/IsoTimestamp"
+            },
+            "grade_commitment": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "mandate_ref": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/MandateRef"
+            },
+            "manifest": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/Manifest"
+            },
+            "message_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "mls_epoch": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/MlsEpoch"
+            },
+            "mls_group_id": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/MlsGroupId"
+            },
+            "mls_message_b64": {
+              "type": "string"
+            },
+            "mls_state": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/MlsStateHash"
+            },
+            "origin_proof": {
+              "type": "string",
+              "enum": [
+                "sender-signed",
+                "provider-attested"
+              ]
+            },
+            "payload_hash": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/Hash"
+            },
+            "recipient_addr": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/BwAddress"
+            },
+            "recipient_uid": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/Uid"
+            },
+            "scope_ref": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/ScopeRef"
+            },
+            "sender_addr": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/BwAddress"
+            },
+            "sender_confirmation": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/SenderConfirmation"
+            },
+            "sender_uid": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/Uid"
+            },
+            "sent_at": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/IsoTimestamp"
+            }
+          }
+        }
+      }
+    },
+    "rdp-relay-openapi.yaml": {
+      "version": "9.0.0",
+      "operations": {
+        "GET /relay/evidence/{message_id}": [
+          "peerRdpAuth"
+        ],
+        "POST /relay/messages": [
+          "peerRdpAuth"
+        ],
+        "POST /relay/messages/{message_id}/result": [
+          "peerRdpAuth"
+        ]
+      },
+      "security_schemes": {
+        "peerRdpAuth": "mutualTLS/None"
+      },
+      "schemas": {
+        "Error": {
+          "type": "object",
+          "required": [
+            "reason"
+          ],
+          "properties": {
+            "detail": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "edd-resolver-openapi.yaml": {
+      "version": "1.12.0",
+      "operations": {
+        "GET /.well-known/bw/med/{uid}": [],
+        "GET /.well-known/bw/member/{uid}/{mid}": [],
+        "GET /.well-known/bw/org/{uid}": [],
+        "GET /euid/{euid}": [],
+        "GET /resolve/{uid}": [],
+        "GET /uid/{uid}/euid": [],
+        "GET /uid/{uid}/evidence/{message_id}": [
+          "counterpartyAuth",
+          "counterpartyMtls"
+        ],
+        "GET /uid/{uid}/keypackages": [],
+        "GET /uid/{uid}/members": [
+          "counterpartyAuth",
+          "counterpartyMtls"
+        ],
+        "GET /uid/{uid}/rdp": [],
+        "GET /uid/{uid}/redirect": [],
+        "GET /uid/{uid}/roster-snapshot": [],
+        "GET /uid/{uid}/status-assertion": []
+      },
+      "security_schemes": {
+        "counterpartyAuth": "http/bearer",
+        "counterpartyMtls": "mutualTLS/None"
+      },
+      "schemas": {
+        "DirectoryRecord": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "asserted_at",
+            "issuer_id",
+            "signature",
+            "status",
+            "timestamp",
+            "uid"
+          ],
+          "properties": {
+            "asserted_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "authorized_seal_keys": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "key_set_version",
+                  "not_after",
+                  "not_before"
+                ],
+                "properties": {
+                  "key_set_version": {
+                    "type": "string"
+                  },
+                  "not_after": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "not_before": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "spki_sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "x5t_s256": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "issuer_id": {
+              "type": "string"
+            },
+            "jurisdiction_note": {
+              "type": "string"
+            },
+            "links": {
+              "type": "object",
+              "properties": {
+                "euid": {
+                  "type": "string"
+                },
+                "lei": {
+                  "type": "string"
+                }
+              }
+            },
+            "med_url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "redirect_uid": {
+              "type": "string"
+            },
+            "signature": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "active",
+                "suspended",
+                "retired",
+                "merged"
+              ]
+            },
+            "timestamp": {
+              "type": "string"
+            },
+            "uid": {
+              "type": "string",
+              "pattern": "^EU-[A-Z]{2}-(EOID|PSBID)-[0-9A-HJ-NP-TV-Z]{14}$"
+            }
+          }
+        },
+        "Error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "reason"
+          ],
+          "properties": {
+            "detail": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "not-found",
+                "uid-suspended",
+                "uid-retired",
+                "uid-merged",
+                "member-suspended",
+                "member-retired",
+                "staleness-exceeded"
+              ]
+            },
+            "redirect_uid": {
+              "type": "string"
+            }
+          }
+        },
+        "KeyPackagesResponse": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "keypackages",
+            "uid"
+          ],
+          "properties": {
+            "keypackages": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "keypackage_b64",
+                  "single_use"
+                ],
+                "properties": {
+                  "keypackage_b64": {
+                    "type": "string"
+                  },
+                  "last_resort": {
+                    "type": "boolean"
+                  },
+                  "mid": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+                  },
+                  "not_after": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "single_use": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "uid": {
+              "type": "string"
+            }
+          }
+        },
+        "MembersResponse": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "members",
+            "uid"
+          ],
+          "properties": {
+            "members": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "devices",
+                  "mid",
+                  "roles"
+                ],
+                "properties": {
+                  "devices": {
+                    "type": "array",
+                    "additionalProperties": false,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "capabilities",
+                        "device_id",
+                        "mls_leaf_node_ref"
+                      ],
+                      "properties": {
+                        "capabilities": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "device_id": {
+                          "type": "string"
+                        },
+                        "mls_leaf_node_ref": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "signature_key_hash"
+                          ],
+                          "properties": {
+                            "signature_key_hash": {
+                              "type": "string",
+                              "pattern": "^[a-f0-9]{64}$"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "member_type": {
+                    "type": "string",
+                    "enum": [
+                      "person",
+                      "system"
+                    ]
+                  },
+                  "mid": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+                  },
+                  "roles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "uid": {
+              "type": "string",
+              "pattern": "^EU-[A-Z]{2}-(EOID|PSBID)-[0-9A-HJ-NP-TV-Z]{14}$"
+            }
+          }
+        },
+        "RdpDiscovery": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "discovery",
+            "evidence"
+          ],
+          "properties": {
+            "discovery": {
+              "type": "string",
+              "format": "uri"
+            },
+            "evidence": {
+              "type": "string"
+            }
+          }
+        },
+        "RedirectRecord": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "merged_at",
+            "merged_uid",
+            "signature",
+            "surviving_uid"
+          ],
+          "properties": {
+            "merged_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "merged_uid": {
+              "type": "string"
+            },
+            "signature": {
+              "type": "string"
+            },
+            "surviving_record": {
+              "$ref": "#/components/schemas/DirectoryRecord"
+            },
+            "surviving_uid": {
+              "type": "string"
+            }
+          }
+        },
+        "ReverseLink": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "informative",
+            "uid"
+          ],
+          "properties": {
+            "informative": {
+              "type": "boolean"
+            },
+            "record": {
+              "$ref": "#/components/schemas/DirectoryRecord"
+            },
+            "uid": {
+              "type": "string"
+            }
+          }
+        },
+        "RosterSnapshotArtifact": {
+          "type": "object",
+          "required": [
+            "projection",
+            "sm_artifact_b64"
+          ],
+          "properties": {
+            "projection": {
+              "type": "object"
+            },
+            "sm_artifact_b64": {
+              "type": "string"
+            }
+          }
+        },
+        "SignedEnvelope": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "payload",
+            "signature",
+            "timestamp"
+          ],
+          "properties": {
+            "payload": {
+              "type": "object"
+            },
+            "signature": {
+              "type": "string"
+            },
+            "timestamp": {
+              "type": "string"
+            }
+          }
+        },
+        "StatusAssertionArtifact": {
+          "type": "object",
+          "required": [
+            "projection",
+            "sm_artifact_b64"
+          ],
+          "properties": {
+            "projection": {
+              "type": "object"
+            },
+            "sm_artifact_b64": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "federation-register-openapi.yaml": {
+      "version": "3.0.0",
+      "operations": {
+        "GET /participants/{participant_id}": []
+      },
+      "security_schemes": {},
+      "schemas": {
+        "Error": {
+          "type": "object",
+          "required": [
+            "reason"
+          ],
+          "properties": {
+            "detail": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        },
+        "MembershipRecord": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "asserted_at",
+            "authorized_seal_keys",
+            "descriptor_url",
+            "participant_id",
+            "role",
+            "signature",
+            "status",
+            "status_history",
+            "timestamp"
+          ],
+          "properties": {
+            "asserted_at": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/IsoTimestamp"
+            },
+            "authorized_seal_keys": {
+              "type": "array",
+              "minItems": 1,
+              "items": {}
+            },
+            "descriptor_url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "participant_id": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/RdpId"
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "rdp"
+              ]
+            },
+            "signature": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "admitted",
+                "suspended",
+                "excluded"
+              ]
+            },
+            "status_history": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "unevaluatedProperties": false,
+                "required": [
+                  "from",
+                  "status"
+                ],
+                "properties": {
+                  "from": {
+                    "$ref": "schemas/evidence-common.schema.json#/$defs/IsoTimestamp"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "admitted",
+                      "suspended",
+                      "excluded"
+                    ]
+                  },
+                  "until": {
+                    "$ref": "schemas/evidence-common.schema.json#/$defs/IsoTimestamp"
+                  }
+                }
+              }
+            },
+            "timestamp": {
+              "type": "string"
+            }
+          }
+        },
+        "PilotSealKeyPin": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "kid",
+            "not_after",
+            "not_before",
+            "spki_sha256"
+          ],
+          "properties": {
+            "kid": {
+              "type": "string",
+              "minLength": 1
+            },
+            "not_after": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/IsoTimestamp"
+            },
+            "not_before": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/IsoTimestamp"
+            },
+            "spki_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "ProductionSealKeyPin": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "kid",
+            "not_after",
+            "not_before",
+            "x5t_s256"
+          ],
+          "properties": {
+            "kid": {
+              "type": "string",
+              "minLength": 1
+            },
+            "not_after": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/IsoTimestamp"
+            },
+            "not_before": {
+              "$ref": "schemas/evidence-common.schema.json#/$defs/IsoTimestamp"
+            },
+            "x5t_s256": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            }
+          }
+        }
+      }
+    }
+  }
+}

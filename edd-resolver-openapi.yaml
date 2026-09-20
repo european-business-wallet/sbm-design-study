@@ -1,0 +1,832 @@
+# SPDX-License-Identifier: MIT
+openapi: "3.1.0"
+info:
+  title: EDD Resolver
+  version: "1.12.0"
+  description: |
+    European Directory of Entities (EDD) resolver API.
+
+    This API contract is versioned INDEPENDENTLY (semantic versioning) of the
+    evidence `version` and of the specification edition; contract v1.12.0 (X-36: authenticated, bounded member enumeration).
+    (v1.7.0: the core `DirectoryRecord` carries `authorized_seal_keys` — the
+    entity's discovery-seal key-set pinned per UID, so a discovery document is
+    authentic only when its seal key is pinned for its own UID (finding X-01).
+    v1.6.0: the DISCOVERY document endpoints (med/org/member) now actually honour
+    the v1.5.0 content-negotiation promise — each serves the authoritative
+    `application/cbor` artefact (the bare `cose_sign1`) and, by
+    `Accept: application/json`, the `{ sm_artifact_b64, projection }` wrapper — and
+    the single-use KeyPackage pool is documented as the reserve → commit lifecycle
+    (finding 15a), not consumption on plain retrieval.
+    v1.5.0: CONTENT NEGOTIATION for the octet-authoritative revision (M4).
+    Endpoints that carry a sealed evidence or discovery document serve the
+    AUTHORITATIVE artefact as `application/cbor` (the deterministic-CBOR bytes:
+    an evidence artefact `[cose_sign1, qualified_timestamp]`, a discovery
+    artefact the bare `cose_sign1`) and, by `Accept: application/json`, a
+    NON-AUTHORITATIVE JSON projection `{ sm_artifact_b64, projection }`. A client
+    that stores evidence MUST preserve the octets it received, not a re-serialised
+    projection — a re-serialisation changes the digest.
+    v1.4.0 adds CONTENT-ADDRESSED / AS-OF historical reads (R2, evidence-integrity
+    review) so verification AT EVIDENCE TIME can retrieve the artefacts an evidence
+    object depends on: BW-ORG by `doc_digest` (the version pinned by
+    `acceptance_policy_ref.doc_digest`) and BW-MEMBER by `as_of`/`version` (the
+    binding as it stood at a confirmation's verified_at), served even for
+    since-retired/merged members. These are audit reads, distinct from the current
+    fail-closed reads, and the verification material MUST remain retrievable for the
+    evidence retention period (umbrella §4.3/§5.7).
+    v1.3.0 adds member_type to the /uid/{uid}/members enumeration so a sender
+    can see which members are agents when resolving a scope, agent profile /
+    Annex R.
+    v1.2.0 adds /uid/{uid}/members — the member-enumeration surface for
+    confidentiality-scope resolution and roster verification, umbrella §8.3a
+    and the I-D Sender Resolution / Roster Transparency; a non-authoritative
+    discovery mirror over the individually sealed BW-MEMBER documents, F14.
+    v1.1.0 narrowed /uid/{uid}/keypackages to a non-cacheable 302 pointer —
+    a draft-stage narrowing accepted on the minor stream: the EDD holds no
+    KeyPackage pool, so consume-once accounting lives at exactly one place,
+    the MSP pool the redirect targets.)
+
+    The EDD operates as a hybrid infrastructure: a centralised core registry
+    under EU governance holds authoritative UID records, while a federated
+    discovery layer operated by MSPs hosts MED/ORG/MEMBER documents and MLS
+    KeyPackages. The endpoints under /resolve, /uid/{uid}/euid, /euid/{euid}
+    and /uid/{uid}/redirect are served by the core registry. The endpoints
+    under /uid/{uid}/rdp, /uid/{uid}/evidence/{message_id},
+    /uid/{uid}/keypackages and /.well-known/bw/* resolve via the discovery
+    layer (MSP-hosted).
+
+    Federation trust model (umbrella, "Federation trust model" subsection under
+    the authoritative architecture): the core registry's signed
+    DirectoryRecord (med_url) authorises WHERE to resolve an entity; the
+    entity's OWN COSE_Sign1 seal artefact authorises WHAT is served — a serving
+    provider's key never substitutes for it. In a two-provider resolution a
+    sender-side RDP MUST seal-verify the resolved peer MED/ORG/MEMBER before
+    relying on it (the RDP-RDP channel seal secures the channel, not the
+    documents), and the entity's OWNING provider — the one named by med_url —
+    is the canonical answerer for that entity's roster and discovery documents.
+
+    Trust path — what a client MUST verify (normative anchors, not
+    duplicated here): responses carrying a BW-MED/BW-ORG/BW-MEMBER document
+    seal the document as a COSE_Sign1 artefact (`sm_artifact_b64`); the client MUST verify that
+    seal over the deterministic-CBOR document body before relying on the content
+    (umbrella §8.1/§9.4, LINT-DISC-01; production trust material per the TS).
+    Core-registry payloads (DirectoryRecord, SignedEnvelope, RedirectRecord)
+    carry a QSealC signature and a qualified timestamp, both of which the
+    client MUST validate for legal-effect use. Transport security (TLS) is
+    NEVER a substitute for these document-level verifications.
+
+    Caching and failure behaviour follow spec §5.7: directory records are
+    cacheable with `max-age` <= 600 s and MEDs with `max-age` <= 300 s
+    (measured against `asserted_at`); a revocation/suspension is propagated to
+    resolvers within 5 minutes. Operations that gate legal effect are
+    **fail-closed**: a UID whose non-`active` status cannot be confirmed is
+    served as an error (409/410), never as a stale success. Per-document
+    freshness bounds (contract level): directory records max-age <= 600 s,
+    BW-MED <= 300 s, BW-ORG <= 300 s (the policy applicable to a message is
+    in any case fixed at SE issuance via `acceptance_policy_ref`, umbrella
+    §8.3), BW-MEMBER <= 120 s (key-discovery trust path).
+servers:
+  - url: https://edd.example.eu
+paths:
+  /resolve/{uid}:
+    get:
+      summary: Resolve a UID to its canonical directory record
+      description: |
+        Returns the signed core registry record for a UID (status, issuer,
+        EUID/LEI links, med_url). `suspended` UIDs return 409 for legal-effect
+        callers; `retired`/`merged` return 410 (see /uid/{uid}/redirect).
+      parameters:
+        - $ref: '#/components/parameters/Uid'
+      responses:
+        '200':
+          description: Canonical directory record (signed)
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlRecord'
+            ETag:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectoryRecord'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Suspended'
+        '410':
+          $ref: '#/components/responses/Gone'
+  /uid/{uid}/euid:
+    get:
+      summary: Forward linkage UID → EUID
+      parameters:
+        - $ref: '#/components/parameters/Uid'
+      responses:
+        '200':
+          description: Signed EUID-LINK-v1 attribute
+          headers:
+            Cache-Control: { $ref: '#/components/headers/CacheControlRecord' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SignedEnvelope' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /euid/{euid}:
+    get:
+      summary: Reverse linkage EUID → UID
+      description: |
+        Returns the UID linked to a given EUID. Fallback mapping from the EDD
+        core registry is used when the Member State register has no native
+        reverse lookup; fallback results are marked `informative: true` and
+        are NOT signed by the register.
+      parameters:
+        - in: path
+          name: euid
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: UID record (signed) or fallback mapping (informative)
+          headers:
+            Cache-Control: { $ref: '#/components/headers/CacheControlRecord' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReverseLink' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /uid/{uid}/rdp:
+    get:
+      summary: Discover RDP endpoints for a UID
+      parameters:
+        - $ref: '#/components/parameters/Uid'
+      responses:
+        '200':
+          description: RDP discovery payload (resolved from the signed MED)
+          headers:
+            Cache-Control: { $ref: '#/components/headers/CacheControlMed' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RdpDiscovery' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /uid/{uid}/evidence/{message_id}:
+    get:
+      summary: Locate the RDP evidence for a message (pointer ONLY, X-13)
+      description: |
+        POINTER, not a store: the registry and discovery layers hold NO
+        evidence, so this endpoint NEVER returns an Evidence Package — it
+        redirects to the composing RDP's evidence surface. {uid} is the
+        SENDER-SIDE subject: the entity whose sender-side RDP composed the
+        EP (D2/F-13 — the composer is always the sender-side RDP); a
+        recipient-side party retrieves evidence through its own provider.
+        Access requires an authenticated, authorised caller (a party to the
+        message or a supervisory authority). Anti-enumeration: an unknown
+        message_id, an unknown uid and an unauthorised caller are
+        INDISTINGUISHABLE — one uniform 404, no existence oracle.
+      security:
+        - counterpartyAuth: []
+        - counterpartyMtls: []
+      parameters:
+        - $ref: '#/components/parameters/Uid'
+        - in: path
+          name: message_id
+          required: true
+          schema: { type: string }
+      responses:
+        '302':
+          description: Redirect to the evidence endpoint on the composing RDP
+          headers:
+            Location:
+              schema: { type: string, format: uri }
+        '404':
+          description: Unknown or unauthorised — uniformly indistinguishable (no existence oracle)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /uid/{uid}/redirect:
+    get:
+      summary: Redirect record for a merged UID
+      parameters:
+        - $ref: '#/components/parameters/Uid'
+      responses:
+        '200':
+          description: Redirect record (signed); includes the surviving UID and its current record
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RedirectRecord' }
+        '404':
+          description: Not a merged UID
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /uid/{uid}/status-assertion:
+    get:
+      summary: Signed short-lived status assertion for a UID (D6, F-10/X-07)
+      description: |
+        The EDD core registry's signed, SHORT-LIVED assertion of this UID's
+        lifecycle status — the capability an RDP may rely on (even offline)
+        for legal-effect issuance within the assertion's validity (umbrella
+        §5.7). Validity is bounded by the 5-minute suspension-propagation
+        bound; a suspension stops new assertions being issued, so after the
+        held assertion expires the RDP fails closed. Sealed as a COSE_Sign1
+        artefact under the registry's own key (DirectoryRecord
+        registry_seal_keys pin; production: Trusted-List-anchored).
+        Issuance is on demand; a deployment MAY additionally push bulk
+        snapshots (deployment-defined). Emergency revocation = stop issuing
+        + the hard expiry; no revocation list exists at this validity.
+      parameters:
+        - $ref: '#/components/parameters/Uid'
+      responses:
+        '200':
+          description: The current signed status assertion (STATUS-v1 artefact)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StatusAssertionArtifact' }
+        '404':
+          description: Unknown UID
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /uid/{uid}/roster-snapshot:
+    get:
+      summary: Signed atomic roster snapshot for a (scope, epoch) (F-12)
+      description: |
+        The entity's SIGNED manifest of its complete scope roster at one MLS
+        epoch (ROSTER-v1 artefact, sealed by the entity's
+        wallet-administration key). Completeness is what the signature
+        attests — the members[] list is the whole active roster, no
+        pagination of the signed set; each member_doc_digest pins the exact
+        sealed BW-MEMBER version, and tree_hash chains to the retained
+        GroupContext the evidence mls_state commits to. Served current and
+        AS-OF (by epoch) for the evidence-retention period (the F-03/R2
+        duty extended). The unsigned member-enumeration surface remains the
+        browsing mirror; THIS is the atomicity anchor.
+      parameters:
+        - $ref: '#/components/parameters/Uid'
+        - in: query
+          name: scope_id
+          schema: { type: string }
+          required: true
+        - in: query
+          name: epoch
+          schema: { type: string }
+          description: The MLS epoch (decimal string); omitted = current.
+      responses:
+        '200':
+          description: The signed roster snapshot (ROSTER-v1 artefact)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RosterSnapshotArtifact' }
+        '404':
+          description: Unknown UID / scope / epoch
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /uid/{uid}/keypackages:
+    get:
+      summary: Resolve the MSP KeyPackage pool for an entity (pointer)
+      description: |
+        POINTER, not a pool: the EDD does not serve KeyPackage bytes and holds
+        no KeyPackage pool. The response is a 302 to the entity's MSP pool —
+        the pool the entity's sealed MED already names (`mls.keypackage_url`) —
+        which owns the KeyPackage pool and ALL single-use pool accounting.
+
+        DR-08 (since contract 1.11.0): this description used to say the pool serves
+        `KeyPackagesResponse` from a GET containing actual packages. The
+        Delivery Service contract defines that same GET as **availability
+        counts only** — packages are obtained through the RESERVATION
+        lifecycle (`POST /keypackages/{uid}/reservations`, then commit or
+        release). Two contracts described incompatible clients for one URL, so
+        a sender could not deterministically fetch one usable package per
+        eligible device from the published documents at all. The authoritative
+        description of what the target serves is the Delivery-Service
+        contract; this contract points at it and does not restate its shapes.
+        The pool's accounting is:
+        the idempotent reserve → commit lifecycle (a KeyPackage reserved on
+        retrieval, committed on first use, released on timeout — not consumed
+        on plain retrieval, so a retrieval that never delivers does not deplete
+        the pool), replenishment notification, and the rejection of a replayed
+        commit (`keypackage-replay`). Serving KeyPackages
+        from the EDD directly is NOT a mode of this contract — a second copy
+        of the pool would make double-consumption of a single-use KeyPackage
+        unaccountable. Responses are per-request resolution state and MUST NOT
+        be cached (`Cache-Control: no-store`); a GET here never mutates pool
+        state. Lifetime is bounded per the active profile (30 days production /
+        90 days pilot). The credential is cross-checked against the current
+        EDD record / MED before the MSP serves a KeyPackage.
+      parameters:
+        - $ref: '#/components/parameters/Uid'
+        - in: query
+          name: target_mid
+          required: false
+          schema: { type: string, pattern: '^[0-9A-HJ-NP-TV-Z]{9}$' }
+          description: >-
+            Optional MID hint, forwarded in the redirect target. DR-08: a HINT
+            for pool routing, NOT the selection. The exact (mid, device_id)
+            set a group needs is carried in the Delivery Service's RESERVATION
+            request — the only surface that can express it, since a query
+            filter cannot name a device. This parameter existed on neither DS
+            operation before that request took target selectors.
+        - in: query
+          name: count
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 1 }
+          description: >-
+            Optional pre-flight hint only. DR-08: group establishment does not
+            ask for a COUNT — it asks for one package per selected device, and
+            a count cannot say which devices. Counts remain meaningful for the
+            availability read (`GET /keypackages/{uid}`).
+      responses:
+        '302':
+          description: Redirect to the MSP KeyPackage pool (serves KeyPackagesResponse; owns consume-once accounting and keypackage-replay rejection)
+          headers:
+            Location: { schema: { type: string, format: uri } }
+            Cache-Control:
+              schema: { type: string, enum: [no-store] }
+              required: true
+              description: Resolution state is never cacheable.
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /.well-known/bw/med/{uid}:
+    get:
+      summary: Retrieve the entity's BW-MED-v1 messaging descriptor
+      parameters:
+        - $ref: '#/components/parameters/Uid'
+      responses:
+        '200':
+          description: |
+            Signed BW-MED-v1 document (sealed as a COSE_Sign1 artefact, `sm_artifact_b64`). The client MUST
+            verify the seal over the deterministic-CBOR document body before use
+            (umbrella §8.1; LINT-DISC-01) and respect the freshness bound.
+          headers:
+            Cache-Control: { $ref: '#/components/headers/CacheControlMed' }
+          content:
+            application/cbor:
+              schema:
+                type: string
+                format: binary
+                description: Authoritative artefact bytes — the bare cose_sign1 (a discovery document carries no timestamp).
+            application/json:
+              schema:
+                type: object
+                required: [sm_artifact_b64, projection]
+                additionalProperties: false
+                properties:
+                  sm_artifact_b64:
+                    type: string
+                    description: base64 of the authoritative CBOR artefact (the cose_sign1).
+                  projection:
+                    $ref: './schemas/bw-med.schema.json'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /.well-known/bw/org/{uid}:
+    get:
+      summary: Retrieve the entity's BW-ORG-v1 organisation profile (current, or a pinned historical version)
+      parameters:
+        - $ref: '#/components/parameters/Uid'
+        - in: query
+          name: doc_digest
+          required: false
+          schema: { type: string, pattern: '^[a-f0-9]{64}$' }
+          description: |
+            R2 (evidence-integrity review): content-addressed HISTORICAL read.
+            When present, returns the specific sealed BW-ORG version whose
+            raw-sha256 of the ORG's deterministic-CBOR body equals this digest — the version an evidence
+            object pins via `acceptance_policy_ref.doc_digest` (umbrella §8.3) —
+            even after it has been superseded by a newer policy. This is an AUDIT
+            read for verification at evidence time (TS CMP-1/CMP-2), distinct from
+            the current (no-query) read; it MUST remain served for the evidence
+            retention period (umbrella §4.3/§5.7). Omit for the current profile.
+      responses:
+        '200':
+          description: |
+            Signed BW-ORG-v1 document (policy_version, valid_from; sealed as a COSE_Sign1 artefact).
+            The client MUST verify the seal over the deterministic-CBOR document body
+            before use (umbrella §8.1; LINT-DISC-01). The acceptance policy
+            applicable to a message is fixed at SE issuance via
+            `acceptance_policy_ref` (umbrella §8.3), so cache staleness never
+            silently changes an in-flight policy. With `doc_digest`, the response
+            is the pinned historical version (R2).
+          headers:
+            Cache-Control: { $ref: '#/components/headers/CacheControlOrg' }
+          content:
+            application/cbor:
+              schema:
+                type: string
+                format: binary
+                description: Authoritative artefact bytes — the bare cose_sign1 (a discovery document carries no timestamp).
+            application/json:
+              schema:
+                type: object
+                required: [sm_artifact_b64, projection]
+                additionalProperties: false
+                properties:
+                  sm_artifact_b64:
+                    type: string
+                    description: base64 of the authoritative CBOR artefact (the cose_sign1).
+                  projection:
+                    $ref: './schemas/bw-org.schema.json'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /.well-known/bw/member/{uid}/{mid}:
+    get:
+      summary: Retrieve a BW-MEMBER-v1 member binding
+      description: |
+        BW-MEMBER-v1 binds a MID to devices, capabilities and MLS leaf-node
+        references, so it sits on the key-discovery TRUST PATH. Responses are
+        freshness-bounded (Cache-Control) and MUST fail closed on a non-active
+        binding: a suspended member returns 409 and a retired member 410 (never
+        a stale 200), so a relying party never keys to a revoked device set.
+      parameters:
+        - $ref: '#/components/parameters/Uid'
+        - in: path
+          name: mid
+          required: true
+          schema: { type: string, pattern: '^[0-9A-HJ-NP-TV-Z]{9}$' }
+        - in: query
+          name: as_of
+          required: false
+          schema: { type: string, format: date-time }
+          description: |
+            R2 (evidence-integrity review): HISTORICAL / audit read. Returns the
+            member binding AS IT STOOD at this instant — the devices and
+            confirmation keys then valid, and the status then in force — served
+            even for a since-retired or since-merged member (unlike the current
+            read, which fails closed 409/410). This is what verification at
+            evidence time needs to check that a confirming device was active at the
+            confirmation's `verified_at` (TS INTF-2/R3) and to resolve the
+            then-valid `confirmation_key`. It MUST remain served for the evidence
+            retention period (umbrella §4.3/§5.7). It is NOT the key-discovery trust
+            path for NEW delivery — that is the current read below.
+        - in: query
+          name: version
+          required: false
+          schema: { type: string }
+          description: |
+            R2: fetch a specific historical BW-MEMBER version (audit read), as an
+            alternative addressing to `as_of`.
+      responses:
+        '200':
+          description: |
+            Signed BW-MEMBER-v1 document. Without a query, this is the CURRENT
+            binding on the key-discovery trust path: the client MUST verify the
+            seal over the deterministic-CBOR document body before keying to the member's
+            devices (umbrella §8.4; LINT-DISC-01/06) and MUST honour the 120 s
+            freshness bound. With `as_of`/`version`, it is a historical audit read
+            (R2) and the freshness bound does not apply.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlMember'
+          content:
+            application/cbor:
+              schema:
+                type: string
+                format: binary
+                description: Authoritative artefact bytes — the bare cose_sign1 (a discovery document carries no timestamp).
+            application/json:
+              schema:
+                type: object
+                required: [sm_artifact_b64, projection]
+                additionalProperties: false
+                properties:
+                  sm_artifact_b64:
+                    type: string
+                    description: base64 of the authoritative CBOR artefact (the cose_sign1).
+                  projection:
+                    $ref: './schemas/bw-member.schema.json'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/MemberSuspended'
+        '410':
+          $ref: '#/components/responses/MemberGone'
+  /uid/{uid}/members:
+    get:
+      summary: Enumerate an entity's active members (roles + device leaf refs) for scope resolution
+      description: |
+        The member-enumeration surface for confidentiality-scope resolution
+        (umbrella §8.3a; the I-D Sender Resolution / Roster Transparency).
+        Returns the entity's ACTIVE members with their roles and, per device,
+        the MLS leaf-node reference and capabilities — enough for a sender to
+        compute the scope-eligible device set (the union of the two entities'
+        scope-eligible devices) and for a verifier to map group leaves →
+        members → roles. This is a discovery CONVENIENCE and is
+        NON-AUTHORITATIVE: each member's individually sealed BW-MEMBER-v1
+        (/.well-known/bw/member/{uid}/{mid}) remains the key-discovery trust
+        anchor, and a client MUST verify that sealed binding before keying to a
+        member's devices (umbrella §8.4; LINT-DISC-01/06). The entity advertises
+        this surface in BW-ORG `member_endpoint`. Suspended and retired members
+        MUST be omitted (active only). ACCESS CONTROL (X-36, REQUIRED): a
+        member+role listing exposes the organisation's internal structure —
+        access REQUIRES an authenticated, authorised counterparty
+        (counterpartyAuth; anonymous access is NON-CONFORMANT), is
+        rate-limited and audited (umbrella §8.3a), and is minimised to the
+        requested relationship/scope where possible (scope_id filter).
+        Errors are privacy-safe: unknown uid and unauthorised caller are one
+        uniform 404 (no existence oracle). MIDs are pseudonymous (§8.4), so
+        the surface exposes structure, not natural-person identity.
+      security:
+        - counterpartyAuth: []
+        - counterpartyMtls: []
+      parameters:
+        - $ref: '#/components/parameters/Uid'
+        - in: query
+          name: role
+          required: false
+          schema: { type: string }
+          description: Optional filter — return only active members holding this role.
+        - in: query
+          name: scope_id
+          required: false
+          schema: { type: string }
+          description: >-
+            X-36 minimisation — return only the members holding the named
+            scope's roles (+ the records leaf where applicable): what a
+            sender resolving that scope actually needs.
+        - in: query
+          name: cursor
+          required: false
+          schema: { type: string }
+          description: Opaque pagination cursor from a previous response.
+        - in: query
+          name: limit
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+          description: >-
+            Page size; the SERVER-SIDE maximum is 100 — responses are always
+            bounded regardless of the requested limit.
+      responses:
+        '200':
+          description: |
+            The active-member enumeration (non-authoritative discovery mirror;
+            a client MUST verify each member's sealed BW-MEMBER-v1 before keying).
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlMember'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MembersResponse' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    counterpartyMtls:
+      type: mutualTLS
+      description: >-
+        R5-06: a deployment may bind this to mutual TLS instead. That option used to live in the bearer scheme's DESCRIPTION, which no generated client reads — so every one of them presented a bearer token. OpenAPI expresses 'either' as an OR of two schemes, and that is what the operations below now list. The certificate MUST identify the requesting counterparty entity.
+    counterpartyAuth:
+      type: http
+      scheme: bearer
+      description: >-
+        Authenticated counterparty access (X-13/X-36): a member-/entity-bound bearer token. A deployment preferring mutual TLS uses `counterpartyMtls`, which every operation lists as an alternative (R5-06). Anonymous access to the protected surfaces is
+        NON-CONFORMANT.
+  parameters:
+    Uid:
+      in: path
+      name: uid
+      required: true
+      schema:
+        type: string
+        pattern: '^EU-[A-Z]{2}-(EOID|PSBID)-[0-9A-HJ-NP-TV-Z]{14}$'
+  headers:
+    CacheControlRecord:
+      description: Directory-record caching bound (§5.7); max-age MUST NOT exceed 600 s.
+      schema: { type: string, example: 'public, max-age=600' }
+    CacheControlMed:
+      description: MED caching bound (§5.7, §8.1); max-age MUST NOT exceed 300 s.
+      schema: { type: string, example: 'public, max-age=300' }
+    CacheControlOrg:
+      description: BW-ORG caching bound (contract level); max-age MUST NOT exceed 300 s. The policy for an in-flight message is fixed at SE issuance (umbrella §8.3), so the bound protects new submissions, not in-flight evaluation.
+      schema: { type: string, example: 'public, max-age=300' }
+    CacheControlMember:
+      description: BW-MEMBER caching bound (key-discovery trust path); max-age MUST NOT exceed 120 s, and the binding MUST be re-fetched on any suspension/revocation signal.
+      schema: { type: string, example: 'public, max-age=120' }
+  responses:
+    NotFound:
+      description: |
+        Not found (reason=not-found). Resolvers are PERMISSIVE on input: a
+        syntactically malformed identifier — one that does not match the `Uid`
+        pattern — is by definition not a resolvable entity and resolves here to
+        404, not to a 422/400 validation error. No 422 is defined by this
+        contract and none is emitted, so the resolver exposes no
+        request-validation surface (a malformed id is simply "not found").
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Suspended:
+      description: |
+        UID is `suspended` — fail-closed for legal-effect operations (§5.7):
+        no delivery evidence may be produced against it.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Gone:
+      description: UID `retired` or `merged` (see /uid/{uid}/redirect)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    MemberSuspended:
+      description: |
+        Fail-closed (key-discovery trust path): the member binding — or the
+        entire UID — is `suspended` (`member-suspended` / `uid-suspended`).
+        The relying party MUST NOT key to the member's devices and MUST NOT
+        produce delivery evidence against the binding while suspended.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    MemberGone:
+      description: |
+        Fail-closed: the member binding is `retired` (`member-retired`), or the
+        UID is `retired`/`merged` (`uid-retired` / `uid-merged`; see
+        /uid/{uid}/redirect). A cached copy MUST be discarded — never a stale 200.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    RosterSnapshotArtifact:
+      type: object
+      description: >-
+        A sealed ROSTER-v1 artefact {sm_artifact_b64, projection}
+        (schemas/roster-snapshot.schema.json is the authoritative body
+        schema; LINT-DISC-26 is the reference check).
+      required: [sm_artifact_b64, projection]
+      properties:
+        sm_artifact_b64: { type: string }
+        projection: { type: object }
+    StatusAssertionArtifact:
+      type: object
+      description: >-
+        A sealed STATUS-v1 artefact {sm_artifact_b64, projection}; the
+        authoritative bytes are the COSE_Sign1 over the dCBOR body
+        (schemas/status-assertion.schema.json is the authoritative body
+        schema; LINT-DISC-25 is the reference check).
+      required: [sm_artifact_b64, projection]
+      properties:
+        sm_artifact_b64: { type: string }
+        projection: { type: object }
+    Error:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          enum:
+            - not-found
+            - uid-suspended
+            - uid-retired
+            - uid-merged
+            - member-suspended
+            - member-retired
+            - staleness-exceeded
+          description: Typed, machine-readable reason (aligns with the NDE reason codes where applicable).
+        detail: { type: string }
+        redirect_uid:
+          type: string
+          description: Present for uid-merged.
+      additionalProperties: false
+    SignedEnvelope:
+      type: object
+      description: A signed core-registry payload.
+      required: [payload, signature, timestamp]
+      properties:
+        payload: { type: object }
+        signature:
+          type: string
+          description: QSealC seal — COSE_Sign1 over the dCBOR payload minus {signature, timestamp}; embedded payload; EdDSA/ES256 allowlist (F-11, umbrella 5.2). No alternative format.
+        timestamp:
+          type: string
+          description: Qualified timestamp (Regulation (EU) No 910/2014, Article 42) over the signature.
+      additionalProperties: true
+    DirectoryRecord:
+      type: object
+      required: [uid, issuer_id, status, asserted_at, signature, timestamp]
+      properties:
+        uid:
+          type: string
+          pattern: '^EU-[A-Z]{2}-(EOID|PSBID)-[0-9A-HJ-NP-TV-Z]{14}$'
+        issuer_id: { type: string }
+        status: { type: string, enum: [active, suspended, retired, merged] }
+        asserted_at: { type: string, format: date-time }
+        links:
+          type: object
+          properties:
+            euid: { type: string }
+            lei: { type: string }
+        med_url: { type: string, format: uri }
+        redirect_uid: { type: string, description: 'Present only for status=merged.' }
+        jurisdiction_note: { type: string }
+        signature: { type: string, description: 'QSealC seal — COSE_Sign1 over the dCBOR record minus {signature, timestamp} (F-11). No alternative format.' }
+        timestamp: { type: string, description: 'Qualified timestamp over the signature (Article 42).' }
+        authorized_seal_keys:
+          type: array
+          description: >-
+            X-01: the entity's authorized discovery-seal key-set, pinned by the
+            EU-governed directory to THIS UID. A BW-MED/ORG/MEMBER document is
+            authorised only when its seal key is in this set for its own UID, so
+            a valid QSealC authorised for another UID cannot seal this entity's
+            discovery documents. OPTIONAL in the pilot profile; REQUIRED in
+            production. In production the pin is the QSealC x5t#S256; the pilot
+            pins the raw seal-key spki_sha256. Multiple entries support key
+            rotation with overlap and historical-artefact verification. The
+            production QSealC-chain / Trusted-List validation remains a
+            production-verifier duty (docs/production-verifier-architecture.md).
+          items:
+            type: object
+            required: [key_set_version, not_before, not_after]
+            properties:
+              x5t_s256:
+                type: string
+                description: 'Production: base64url SHA-256 thumbprint (RFC 7515 x5t#S256) of the authorized QSealC.'
+              spki_sha256:
+                type: string
+                pattern: '^[a-f0-9]{64}$'
+                description: 'Pilot/demo: lowercase-hex SHA-256 of the raw seal public key.'
+              key_set_version: { type: string }
+              not_before: { type: string, format: date-time }
+              not_after: { type: string, format: date-time }
+            additionalProperties: false
+      additionalProperties: false
+    ReverseLink:
+      type: object
+      required: [uid, informative]
+      properties:
+        uid: { type: string }
+        informative:
+          type: boolean
+          description: true when the mapping is the EDD fallback (not signed by the Member State register).
+        record: { $ref: '#/components/schemas/DirectoryRecord' }
+      additionalProperties: false
+    RedirectRecord:
+      type: object
+      required: [merged_uid, surviving_uid, merged_at, signature]
+      properties:
+        merged_uid: { type: string }
+        surviving_uid: { type: string }
+        merged_at: { type: string, format: date-time }
+        signature: { type: string }
+        surviving_record: { $ref: '#/components/schemas/DirectoryRecord' }
+      additionalProperties: false
+    RdpDiscovery:
+      type: object
+      required: [discovery, evidence]
+      properties:
+        discovery: { type: string, format: uri }
+        evidence: { type: string, description: 'Evidence URL template, e.g. https://rdp/evidence/{message_id}.' }
+      additionalProperties: false
+    KeyPackagesResponse:
+      type: object
+      description: The shape served at the /uid/{uid}/keypackages redirect target (the MSP pool) — kept in this contract as the documented pool response; the EDD itself never serves it (v1.1.0 pointer mode).
+      required: [uid, keypackages]
+      properties:
+        uid: { type: string }
+        keypackages:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [keypackage_b64, single_use]
+            properties:
+              mid: { type: string, pattern: '^[0-9A-HJ-NP-TV-Z]{9}$' }
+              keypackage_b64: { type: string, description: 'RFC 9420 KeyPackage (TLS-serialised), base64.' }
+              single_use: { type: boolean, description: 'true = one-time. Handed out via the idempotent reserve → commit flow — reserved on retrieval, committed on first use, released on timeout — NOT consumed on plain retrieval, so a retrieval that never delivers does not deplete the pool (the I-D, KeyPackage-pool integrity, R7).' }
+              last_resort: { type: boolean, description: 'true = last-resort package; its use mandates leaf-key rotation (the I-D (KeyPackage Rules)).' }
+              not_after: { type: string, format: date-time, description: 'KeyPackage lifetime bound.' }
+            additionalProperties: false
+      additionalProperties: false
+    MembersResponse:
+      type: object
+      description: |
+        The /uid/{uid}/members enumeration: the entity's ACTIVE members with
+        roles and per-device MLS leaf-node references and capabilities (F14). A
+        NON-AUTHORITATIVE discovery mirror over the individually sealed
+        BW-MEMBER-v1 documents (which remain the trust anchor); a client MUST
+        verify each member's sealed binding before keying to its devices.
+      required: [uid, members]
+      properties:
+        uid:
+          type: string
+          pattern: '^EU-[A-Z]{2}-(EOID|PSBID)-[0-9A-HJ-NP-TV-Z]{14}$'
+        members:
+          type: array
+          items:
+            type: object
+            required: [mid, roles, devices]
+            properties:
+              mid: { type: string, pattern: '^[0-9A-HJ-NP-TV-Z]{9}$' }
+              member_type: { type: string, enum: [person, system], description: 'person (default) or system/agent (Annex R); lets a sender see which members are agents when resolving a scope.' }
+              roles: { type: array, items: { type: string } }
+              devices:
+                type: array
+                items:
+                  type: object
+                  required: [device_id, mls_leaf_node_ref, capabilities]
+                  properties:
+                    device_id: { type: string }
+                    mls_leaf_node_ref:
+                      type: object
+                      required: [signature_key_hash]
+                      properties:
+                        signature_key_hash: { type: string, pattern: '^[a-f0-9]{64}$', description: 'SHA-256 hex of the device MLS leaf signature key (mirrors BW-MEMBER).' }
+                      additionalProperties: false
+                    capabilities: { type: array, items: { type: string } }
+                additionalProperties: false
+            additionalProperties: false
+      additionalProperties: false

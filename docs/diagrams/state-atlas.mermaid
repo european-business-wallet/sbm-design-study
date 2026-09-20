@@ -1,0 +1,59 @@
+%% SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors
+%% SPDX-License-Identifier: CC-BY-4.0
+%% figure
+%% owner: the maintainer (README, Feedback)
+%% source: docs/diagrams/state-atlas.mermaid (this file). Export: state-atlas.svg (docs/diagrams/exports.json)
+%% question: Which state machines does one message pass through, who owns each, and which acknowledgement moves which one?
+%% profile: all; the four machines are the same whether one operator or two run the providers
+%% status: current
+%% references: docs/message-lifecycle.md (the panel captions name each owner and caller); delivery-service-openapi.yaml (reservation, invitation, delivery item); wallet-rdp-openapi.yaml and TS clause 6 (message outcome); decisions R10-X2, R11-X1, R12-X1
+%% alt: Four separate machines. A reservation, owned by the Delivery Service, is reserved, then committed (its packages consumed), released while uncommitted, or expired. An invitation is open, then joined when the device acknowledges its Welcome, refused when the device refuses it (the creator collects an outcome), or expired on the Delivery Service's clock. A delivery item, one per routed device, is queued at acceptance, transferred when the device collects it (a reconnect reclaims it with a new token), and acknowledged when the device acknowledges it, which yields the signed S2 receipt. A message's outcome, owned by the recipient's RDP, is open until the policy is satisfied, a verified mismatch or refusal ends it, or the deadline passes; later acts are retained and change nothing, and a reveal is dispute material.
+%% end figure
+stateDiagram-v2
+    direction LR
+    state "Reservation" as RES {
+        direction TB
+        r0: reserved
+        r1: committed — packages consumed
+        r2: released
+        r3: expired — packages return
+        [*] --> r0
+        r0 --> r1: commit
+        r0 --> r2: release, if uncommitted
+        r0 --> r3: time to live passes
+    }
+    state "Invitation (one Welcome)" as INV {
+        direction TB
+        i0: open — routes the device
+        i1: joined
+        i2: refused — outcome to the creator
+        i3: expired — no outcome
+        [*] --> i0
+        i0 --> i1: device acknowledges
+        i0 --> i2: device refuses
+        i0 --> i3: expiry on the DS clock
+    }
+    state "Delivery item (one per device)" as ITEM {
+        direction TB
+        d0: queued
+        d1: transferred — collection token
+        d2: acknowledged — signed receipt (S2)
+        [*] --> d0
+        d0 --> d1: device collects
+        d1 --> d1: reconnect reclaims it
+        d1 --> d2: device acknowledges
+    }
+    state "Message outcome (at RDP in)" as OUT {
+        direction TB
+        o0: open
+        o1: satisfied — DE (S4)
+        o2: mismatch — NDE
+        o3: refused — RE
+        o4: expired — NDE
+        [*] --> o0
+        o0 --> o0: a counting act, or a reveal
+        o0 --> o1: completing confirmation
+        o0 --> o2: verified mismatch
+        o0 --> o3: verified refusal
+        o0 --> o4: deadline passes
+    }

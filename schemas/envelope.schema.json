@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bw.example.eu/schemas/envelope.schema.json",
+  "title": "envelope (SM-MLS application envelope headers v1.2)",
+  "description": "Header object of the SM-MLS application envelope (the I-D (Application Envelope)): the JSON object prepended to the payload within the MLS application_data, separated by a null byte (0x00). content_digest is the SAME hash object as the evidence payload_hash (evidence-common Hash) and the two MUST be equal for the same message — that equality is what the recipient's re-verification re-checks. The envelope versions with the I-D, not with the evidence objects (spec §9.3). v1.1 adds the optional grade_commitment_salt header (the I-D (Grade Commitment)): 16 bytes of fresh per-message salt, present exactly when the content class is availability-declared; it never leaves the encrypted envelope except by deliberate reveal (the TS clause 6). v1.2 adds the optional mandate_commitment_salt header (the I-D (Mandate Commitment), A1): present exactly on an opposable agent (system-member) message, same confinement.",
+  "type": "object",
+  "required": [
+    "message_id",
+    "ttl",
+    "content_type",
+    "content_digest",
+    "sender_addr",
+    "recipient_addr"
+  ],
+  "properties": {
+    "message_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Globally unique; UUIDv7 or ULID RECOMMENDED (the I-D (Application Envelope)). Echoed by every evidence object for the message."
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "OPTIONAL reference to the message_id of a prior message this one responds to."
+    },
+    "ttl": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4294967295,
+      "description": "Seconds from submission after which the message expires (the I-D (Error Handling and Retries)); bounded by the recipient MED's policy.ttl_max_s where published. Bounded to uint32 seconds (~136 years), well within the JSON safe-integer range (M1/J0+)."
+    },
+    "content_type": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Media type of the decrypted payload; selects the hash mode (the I-D (Canonicalisation and Payload Hashing))."
+    },
+    "content_class": {
+      "type": "string",
+      "pattern": "^(x-)?[a-z][a-z0-9-]{0,62}$",
+      "description": "OPTIONAL class from the two-tier content-class registry (the I-D (IANA Considerations)): federation-governed standard classes, or x- prefixed entity-defined private classes. Selects a confidentiality scope (spec §8.3a); not echoed in evidence (the resolved scope_ref is)."
+    },
+    "content_digest": {
+      "$ref": "evidence-common.schema.json#/$defs/Hash"
+    },
+    "sender_addr": {
+      "$ref": "evidence-common.schema.json#/$defs/BwAddress"
+    },
+    "recipient_addr": {
+      "$ref": "evidence-common.schema.json#/$defs/BwAddress"
+    },
+    "grade_commitment_salt": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{32}$",
+      "description": "16 bytes of cryptographically random salt, fresh per message, lowercase hex; input to the grade commitment carried in SE/DE (the I-D (Grade Commitment)). Present exactly when the message's content class is availability-declared in the recipient's BW-ORG (spec §8.3b)."
+    },
+    "mandate_commitment_salt": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{32}$",
+      "description": "16 bytes of cryptographically random salt, fresh per message, lowercase hex; input to the mandate commitment carried on an opposable agent SE (the I-D (Mandate Commitment), A1). Present exactly when a system member (agent) sends an opposable message; it never leaves the encrypted envelope except by deliberate reveal (the TS clause 6). A sibling of grade_commitment_salt (an agent message need not be availability-grade)."
+    }
+  },
+  "additionalProperties": false
+}

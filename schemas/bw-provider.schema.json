@@ -1,0 +1,49 @@
+{
+  "$id": "https://bw.example.eu/schemas/bw-provider.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BW-PROVIDER-v1 (v1.0)",
+  "description": "Batch A / A3 — the PROVIDER's own signed descriptor. Until this document, providers were named by URL inside the CUSTOMER's document: `BW-MED.rdp` carries `{discovery, evidence}` and `BW-MED.msp` is a bare URI, both published in the entity's MED and sealed by the entity's key. So a provider serving a thousand entities had its endpoints republished in a thousand documents sealed by a thousand different signers, with nothing stating they described the same provider. A descriptor is the provider speaking for itself, sealed by a key the membership register pins to it (LINT-TRUST-07). BW-MED is NOT changed in Batch A: the endpoints are duplicated for now and the duplication is removed in Batch B, when BW-MED begins referencing participants by identity.",
+  "type": "object",
+  "required": ["type", "version", "participant_id", "roles", "endpoints",
+               "asserted_at", "expires_at", "kid"],
+  "properties": {
+    "type": { "type": "string", "const": "BW-PROVIDER-v1" },
+    "version": { "type": "string", "const": "1.0" },
+    "participant_id": {
+      "$ref": "evidence-common.schema.json#/$defs/RdpId",
+      "description": "The participant this descriptor speaks for. The SAME value space the evidence and the membership register use (R7-X1), referenced rather than restated — a descriptor naming a provider in some other notation would be describing somebody the register cannot find."
+    },
+    "roles": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "enum": ["rdp"] },
+      "description": "What this provider is admitted AS. Closed to `rdp` in Batch A, matching the register's `role` enum: the participant model is exercised with one role before a second is introduced. An array rather than a scalar because a participant may hold more than one role once there is more than one."
+    },
+    "endpoints": {
+      "type": "object",
+      "required": ["discovery", "evidence"],
+      "additionalProperties": false,
+      "description": "The endpoints today scattered across every customer's `BW-MED.rdp`. Same two fields, same meanings; what changes is who says them and who signs.",
+      "properties": {
+        "discovery": { "type": "string", "format": "uri" },
+        "evidence": {
+          "type": "string",
+          "description": "Evidence-retrieval URI template, `{message_id}` templated as in BW-MED."
+        }
+      }
+    },
+    "asserted_at": { "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp" },
+    "expires_at": {
+      "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp",
+      "description": "After this instant the descriptor is stale and a verifier MUST NOT rely on it. Compared as an INSTANT (R9-04), never as a string."
+    },
+    "kid": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The key that sealed this descriptor. It MUST be one of the `authorized_seal_keys` the membership register pins to this participant (LINT-TRUST-07) — the LINT-TRUST-05 rule one level up: a seal key authorised for another participant cannot seal this one's descriptor."
+    }
+  },
+  "additionalProperties": false,
+  "$comment": "NO `ds_receipt_keys` in Batch A. Moving the DS receipt anchor off the customer's BW-MED and onto the provider's descriptor is the load-bearing half of Batch B, and doing it here would make an additive batch breaking."
+}

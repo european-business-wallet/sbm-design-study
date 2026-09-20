@@ -1,0 +1,19 @@
+{
+  "$comment": "DR-15/R2-M5 MACHINE-READABLE CIPHER-SUITE REGISTRY — the versioned preference vector AND the MANDATORY FLOOR, in one place, owned by the federation design authority (umbrella §13.4). The floor is a versioned CONSTANT rather than a number in prose precisely so that raising it is a GOVERNANCE action with an audit trail, not an edit. Before this file the profile said a member MAY refuse a suite below its 'locally configured floor': optional, unpublished, unverifiable, and ambiguous because the same advertised list also contains the mandatory baseline. A floor each participant declares protects only the participants who declare one — and a member that publishes nothing is exactly where a provider-induced downgrade lands.",
+  "registry_version": "1",
+  "preference_vector": {
+    "id": "mls-suite-preference/v1",
+    "$comment": "Strongest-first total order. Deterministic selection (N3): two conforming creators pick the same suite from the same capability sets. Post-quantum resistance ranks first (harvest-now-decrypt-later), then classical margin, then hardware-holdability, then the baseline.",
+    "order": [
+      "MLS_128_X25519MLKEM768_AES128GCM_SHA256_Ed25519",
+      "MLS_256_DHKEMP384_AES256GCM_SHA384_P384",
+      "MLS_128_DHKEMP256_AES128GCM_SHA256_P256",
+      "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
+    ]
+  },
+  "floor": {
+    "id": "mls-suite-floor/v1",
+    "suite": "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519",
+    "$comment": "MANDATORY, binding on EVERY conforming deployment including one that publishes nothing, and evaluable with no discovery fetch — so two creators with the same capability sets always reach the same decision. Set at the BASELINE deliberately: the baseline is REQUIRED of every implementation and ranks LAST in the preference vector, so a floor here adds no cryptographic STRENGTH — it adds uniform ENFORCEMENT, which is what was missing ('MAY refuse' becomes 'MUST NOT form'). Setting it at the hardware-holdable P-256 was considered and rejected: it would exclude software-only wallets and break the invariant that the baseline is in every intersection, so a selection always exists — a new requirement DR-15 does not ask for. A device MAY publish a HIGHER floor (BW-MEMBER 2.2 `min_cipher_suite`); it may never publish a lower one."
+  }
+}

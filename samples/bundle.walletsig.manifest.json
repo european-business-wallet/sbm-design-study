@@ -1,0 +1,25 @@
+{
+  "description": "Wallet-signed recipient confirmation (finding D, twenty-second review): the SE plus a DE whose s3_attestation carries a wallet advanced electronic signature (wallet_signature_b64) and a device_id. bundle_lint LINT-BND-21 resolves the confirming device's PUBLISHED confirmation_key anchor per (mid, device_id) from the BW-MEMBER set and VERIFIES the signature against it — the reference-verifier check at lint time. Recipient-side entity EU-FR-PSBID (as in bundle.default). Paths are relative to this manifest's directory.",
+  "entity_uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+  "med": "sample-BW-MED-default.json",
+  "org": "sample-BW-ORG.json",
+  "members": [
+    "sample-BW-MEMBER-fr.json",
+    "sample-BW-MEMBER-fr2.json"
+  ],
+  "evidence": [
+    "sample-SE.json",
+    "sample-DE-walletsig.json"
+  ],
+  "policy_history": [
+    "sample-BW-ORG-prev.json",
+    "sample-BW-ORG.json"
+  ],
+  "group_contexts": "group-contexts.demo.json",
+  "counterparty_members": [
+    "sample-BW-MEMBER.json"
+  ],
+  "formation_inputs": "formation-inputs.demo.json",
+  "suite_registry": "suite-registry.demo.json",
+  "federation_register": "federation.stage1.demo.json"
+}

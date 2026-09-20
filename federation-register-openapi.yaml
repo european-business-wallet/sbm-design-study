@@ -1,0 +1,281 @@
+# SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors
+# SPDX-License-Identifier: MIT
+openapi: "3.1.0"
+info:
+  title: Federation Membership Register
+  version: "3.0.0"
+  description: |
+    The federation membership register — the ADMISSION instrument of umbrella
+    §13.1, published as its own contract; contract v3.0.0.
+
+    WHY THIS IS A SEPARATE CONTRACT. §13.1 keeps four instruments distinct:
+    the Trusted Lists (who is qualified), this register (who is admitted), the
+    European Directory of Entities (who exists and how to reach them), and the
+    design authority (what protocol everyone runs). Folding admission into the
+    EDD resolver would merge two of the four, and the independence of the two
+    gates — qualification and admission — is the thing §13.1 is for.
+
+    WHY IT EXISTS AT ALL. §7.4 makes federation membership a verifier DUTY for
+    the `production` claim; §7.1.1 and TS ICS row 119 refer to the register;
+    and until this contract there was no artefact, no schema, no linter and no
+    demonstration behind that order. That is invariant 8 of round 9 at the
+    governance layer: a value the specification requires a verifier to obtain,
+    obtainable from nothing. The register supplies it.
+
+    WHAT IT IS NOT. Admission is not qualification, and this register does not
+    assert it. It does not establish certificate trust, chain validation,
+    Trusted-List status or legal effect; those remain the X-01 external
+    residual. A participant `admitted` here and absent from a Trusted List
+    satisfies one gate of the two, which is exactly what §13.1 says.
+
+    THE STAGE-1 DEMONSTRATION. `samples/federation.stage1.demo.json` is a
+    sealed demonstration register in the shape this contract publishes, signed
+    by a Federation Authority key that is DELIBERATELY NOT the design
+    authority's: §13.1 gives the two roles different rows, so the demonstration
+    gives them different signers. It demonstrates the mechanism. It admits
+    nobody to anything.
+paths:
+  /participants/{participant_id}:
+    get:
+      summary: The membership record of one participant
+      description: |
+        Returns the participant's membership record, including its complete
+        `status_history`.
+
+        AS-OF READS — EVALUATE, NEVER TRUNCATE (R11-X3). `as_of=t` asks for a
+        record that can answer for an act at `t`: the response is a record
+        ASSERTED AT OR AFTER `t` — the earliest the register retains, or its
+        current one — with its COMPLETE `status_history`, and the verifier
+        evaluates that history at `t`. A verifier checking a years-old act asks
+        the question the act's own instant poses — never today's status, which
+        is the rule the profile already applies to certificates (X-17/DR-11)
+        and to DS receipt keys (R3-04). Admission is evaluated at the instant
+        of the ACT, by a record whose `asserted_at` covers it (R10-X1).
+
+        This used to TRUNCATE the history to the entries in force at `as_of`
+        and set `status` to the status then. That cannot be done honestly: a
+        record asserted after a later suspension, cut back to an earlier
+        instant, ends in a status that was not the status at its own
+        `asserted_at` — which is what `status` states — and backdating the
+        assertion instead would contradict what `asserted_at` bounds. Where
+        the register holds no record asserted at or after `t` yet, it returns
+        its current record, and the verifier reports admission for the act as
+        NOT ESTABLISHED until a later assertion covers it.
+
+        LIVE USE IS A DIFFERENT CLAIM (R11-X3). Deciding whether to exchange
+        with a peer NOW is not "was it admitted when it acted": no record held
+        before an exchange can cover the exchange. A record therefore
+        authorises LIVE exchange as a lease — from its `asserted_at`, for the
+        maximum assertion age the Federation Authority publishes for the
+        federation — and the decision is taken at one defined instant: the
+        start of the exchange, on the deciding provider's own clock. The
+        record must state `admitted`, must not be asserted after that instant,
+        and must be no older than the published maximum
+        (`lint_cli.live_authorisation`). A live authorisation is never
+        evidence of admission at the act; evidence produced in the exchange is
+        verified later against a record asserted after it. The maximum itself
+        is a governance parameter this profile does not fix (review agenda
+        A2).
+
+        UNKNOWN PARTICIPANTS. A participant this register does not carry is a
+        `404`, and a verifier MUST treat that as a failure to establish
+        admission rather than as admission — the register is the authority for
+        the answer, and silence from an authority is not assent.
+      parameters:
+        - { in: path, name: participant_id, required: true,
+            schema: { $ref: 'schemas/evidence-common.schema.json#/$defs/RdpId' } }
+        - in: query
+          name: as_of
+          required: false
+          schema: { type: string, format: date-time }
+          description: >-
+            RFC 3339 instant: the instant the caller will EVALUATE. The response
+            is a record asserted at or after it, complete, never a history cut
+            back to it (R11-X3). Compared as an INSTANT, never as a string:
+            round 9 (R9-04) closed a
+            defect where a lexically ordered window was chronologically
+            inverted, and it must not return here.
+      responses:
+        '200':
+          description: The membership record
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MembershipRecord' }
+        '404':
+          description: >-
+            No such participant. Not admission. (A participant the register
+            carries is always answered with its complete record, whatever
+            `as_of` names — R11-X3.)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+components:
+  schemas:
+    MembershipRecord:
+      type: object
+      unevaluatedProperties: false
+      description: >-
+        One participant's admission to the federation, sealed individually by
+        the Federation Authority. The seal covers the dCBOR record minus
+        `{signature, timestamp}`, and the timestamp is taken over the
+        signature — the seal-then-timestamp sequencing of the Internet-Draft,
+        the same construction the Stage-1 directory uses.
+      required: [participant_id, role, status, status_history,
+                 authorized_seal_keys, descriptor_url, asserted_at,
+                 signature, timestamp]
+      properties:
+        participant_id:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/RdpId'
+          description: >-
+            The participant this record admits. ONE value space, referenced
+            rather than restated (R7-X1): the register names the same providers
+            the evidence does, or it is answering about somebody else.
+        role:
+          type: string
+          enum: [rdp]
+          description: >-
+            What the participant is admitted AS. Closed to `rdp` here
+            deliberately: the participant model is exercised with one role
+            before a second is introduced, so that the register's shape is
+            settled by something real rather than by anticipation.
+        status:
+          type: string
+          enum: [admitted, suspended, excluded]
+          description: >-
+            The status in force at `asserted_at` — the three verbs of the
+            §13.1 role. It MUST equal the status of the last `status_history`
+            entry: a record whose summary disagrees with its own history is
+            refused rather than reconciled, because there is no way to know
+            which half was meant.
+        status_history:
+          type: array
+          minItems: 1
+          description: >-
+            The complete admission history, oldest first. Entries are
+            HALF-OPEN `[from, until)`, contiguous and non-overlapping, and the
+            last entry is open-ended (no `until`) — open as far as
+            `asserted_at`, which bounds what the record can speak for (see
+            there, R10-X1). Half-open because that is
+            what the profile already uses for as-of resolution everywhere
+            else, and because a closed interval makes the instant of a status
+            change belong to two statuses at once.
+
+            This is what makes an as-of read answerable. A record carrying
+            only a current status could answer "is it admitted now"; a
+            verifier holding evidence from last year needs "was it admitted
+            then", and that question has no answer without the history.
+          items:
+            type: object
+            unevaluatedProperties: false
+            required: [status, from]
+            properties:
+              status: { type: string, enum: [admitted, suspended, excluded] }
+              from:
+                $ref: 'schemas/evidence-common.schema.json#/$defs/IsoTimestamp'
+              until:
+                $ref: 'schemas/evidence-common.schema.json#/$defs/IsoTimestamp'
+                description: >-
+                  Exclusive upper bound. Absent on the last entry only.
+        authorized_seal_keys:
+          type: array
+          minItems: 1
+          description: >-
+            The keys that may seal this participant's `BW-PROVIDER` descriptor,
+            pinned by the register to THIS participant. The `DirectoryRecord`
+            rule one level up: a seal key authorised for another participant
+            cannot seal this one's descriptor. Multiple entries support
+            rotation with overlap and historical verification.
+          items:
+            description: >-
+              R10-10: EXACTLY ONE pin form per entry. This was one closed object
+              requiring `spki_sha256` whose description said production pins the
+              QSealC `x5t#S256` "as the directory does" — with no field to carry
+              it, so a production record could not be written at all. The two
+              are different hashes of different inputs (a raw public key; a
+              certificate's DER), and one field meaning either would make a
+              digest ambiguous about what it identifies. An entry with both,
+              or with neither, matches no arm and is refused. (The directory's
+              own `authorized_seal_keys` item permits neither-and-both today;
+              it fails closed in the pilot linter, and is recorded rather than
+              changed here.)
+            oneOf:
+              - $ref: '#/components/schemas/PilotSealKeyPin'
+              - $ref: '#/components/schemas/ProductionSealKeyPin'
+        descriptor_url:
+          type: string
+          format: uri
+          description: Where this participant serves its `BW-PROVIDER` descriptor.
+        asserted_at:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/IsoTimestamp'
+          description: >-
+            THE COVERAGE BOUND (R10-X1). This record authenticates the
+            participant's history up to this instant and NOTHING after it.
+            The last `status_history` entry is open-ended because the history
+            has no later change to record — not because the Federation
+            Authority vouches for the future. An act after `asserted_at` is
+            outside what this record can speak for: a verifier holding only
+            this record reports admission for that act as NOT ESTABLISHED,
+            never as admitted and never as a violation, and obtains a record
+            asserted after the act. This is what defeats replay: a genuine
+            old `admitted` record cannot answer for an act that followed a
+            later suspension, because the act lies past its assertion.
+            LIVE use is a separate claim — a lease from `asserted_at` for the
+            maximum assertion age the Federation Authority publishes (see the
+            operation, R11-X3); that value is a governance parameter this
+            profile does not fix.
+        signature:
+          type: string
+          description: >-
+            Federation Authority seal — COSE_Sign1 over the dCBOR record minus
+            `{signature, timestamp}`. No alternative format (F-11). The signer
+            is the Federation Authority, NOT the design authority: §13.1 makes
+            them distinct roles, and a demonstration that signed both with one
+            key would demonstrate the opposite of what it claims.
+        timestamp:
+          type: string
+          description: Qualified timestamp over the signature (Article 42).
+    PilotSealKeyPin:
+      type: object
+      unevaluatedProperties: false
+      required: [kid, spki_sha256, not_before, not_after]
+      description: >-
+        Pilot profile: the descriptor seal key pinned by its RAW public key. A
+        window is REQUIRED — a pin with no window pins the key for ever, and
+        rotation and retirement stop meaning anything.
+      properties:
+        kid: { type: string, minLength: 1 }
+        spki_sha256:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+          description: Lowercase-hex SHA-256 of the raw seal public key.
+        not_before:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/IsoTimestamp'
+        not_after:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/IsoTimestamp'
+    ProductionSealKeyPin:
+      type: object
+      unevaluatedProperties: false
+      required: [kid, x5t_s256, not_before, not_after]
+      description: >-
+        Production profile: the descriptor seal pinned by its QSealC — the RFC
+        7515 `x5t#S256` thumbprint, i.e. SHA-256 over the certificate's DER.
+        The same field and encoding as the directory's `x5t_s256`, so one
+        certificate has one pin across both registers. A raw-key seal can
+        never satisfy this arm: matching it needs the certificate, which is
+        the production verifier's input, not the pilot linter's.
+      properties:
+        kid: { type: string, minLength: 1 }
+        x5t_s256:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{43}$'
+          description: base64url, unpadded, SHA-256 of the certificate DER.
+        not_before:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/IsoTimestamp'
+        not_after:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/IsoTimestamp'
+    Error:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string }
+        detail: { type: string }

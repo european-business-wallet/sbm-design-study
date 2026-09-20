@@ -1,0 +1,18 @@
+{
+  "sm_artifact_b64": "hFgaogEnBFVtb2NrZXUtMDAxLWRlc2NyaXB0b3KgWQEvqGNraWR1bW9ja2V1LTAwMS1kZXNjcmlwdG9yZHR5cGVuQlctUFJPVklERVItdjFlcm9sZXOBY3JkcGd2ZXJzaW9uYzEuMGllbmRwb2ludHOiaGV2aWRlbmNleDNodHRwczovL21vY2tldS0wMDEuZXhhbXBsZS5ldS9ldmlkZW5jZS97bWVzc2FnZV9pZH1pZGlzY292ZXJ5eC1odHRwczovL21vY2tldS0wMDEuZXhhbXBsZS5ldS8ud2VsbC1rbm93bi9yZHBqZXhwaXJlc19hdHQyMDI3LTA2LTMwVDIzOjU5OjU5Wmthc3NlcnRlZF9hdHQyMDI2LTAxLTAxVDAwOjAwOjAwWm5wYXJ0aWNpcGFudF9pZHZ1cm46c2JtOnJkcDptb2NrZXUtMDAxWECYhh0eip/zD0xxseBX+INaHnEGVFDuaYJEfhTU7rjanXXuO7PM14tNipWpYqK1uozM3sIU9LlRaZYkpwPBkXYE",
+  "projection": {
+    "type": "BW-PROVIDER-v1",
+    "version": "1.0",
+    "participant_id": "urn:sbm:rdp:mockeu-001",
+    "roles": [
+      "rdp"
+    ],
+    "endpoints": {
+      "discovery": "https://mockeu-001.example.eu/.well-known/rdp",
+      "evidence": "https://mockeu-001.example.eu/evidence/{message_id}"
+    },
+    "asserted_at": "2026-01-01T00:00:00Z",
+    "expires_at": "2027-06-30T23:59:59Z",
+    "kid": "mockeu-001-descriptor"
+  }
+}

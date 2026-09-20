@@ -1,0 +1,493 @@
+# SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors
+# SPDX-License-Identifier: CC-BY-4.0
+openapi: "3.1.0"
+info:
+  title: SM-MLS Wallet-RDP companion contract (profile 2)
+  version: "9.0.0"
+  description: |
+    F-15: the normative wallet-RDP surface — the submission-metadata
+    contract, recipient confirmation delivery, and party evidence retrieval.
+    Profile 2 (four-corner interoperability claims) REQUIRES this contract;
+    a profile-1 single-provider deployment MAY realise the surface
+    internally. Authentication: every operation requires an
+    authenticated wallet session at the TS clause 6 assurance levels
+    (member-/entity-bound; anonymous access is non-conformant). The evidence
+    objects exchanged are the authoritative dCBOR/COSE artefacts of the I-D
+    (M4 content negotiation: application/cbor authoritative,
+    application/json the projection wrapper). Error reasons are the
+    registry-governed codes (registries/reason-codes.json) — an unregistered
+    well-formed reason is preserved verbatim (X-25).
+paths:
+  /submissions:
+    post:
+      summary: Submit a message's evidence metadata (SE issuance)
+      description: |
+        The submission-metadata contract: every field the sender wallet
+        supplies for SE issuance, including the byte commitments and the D4
+        sender tuple. IDEMPOTENT by message_id — a retried submission never
+        opens a second delivery; a message_id reused for a different
+        recipient/payload is rejected at intake with the typed
+        `duplicate-message-id` reason (INTF-4).
+
+        WHO OWNS `policy_key` (DR-07). The contract used to say two things:
+        the schema said the wallet computed and signed it, the operation said
+        the RDP computed the deterministic selection. Both halves were true
+        of something, and stating them as alternatives was the defect. The
+        resolution is the DR-02 pattern: the wallet SUPPLIES
+        `acceptance_policy_ref` — it must, because the D4 tuple it signs
+        REQUIRES that field — and the RDP RECOMPUTES the selection
+        (umbrella §8.3, `lint_cli.select_policy_key`) and REJECTS a
+        disagreeing submission with a typed reason BEFORE sealing. The
+        wallet's copy is a commitment; the RDP's computation is the
+        authority. A verifier recomputes it again over the bundle
+        (LINT-BND-30), so no party's assertion is load-bearing.
+
+        The RDP also validates the sender_confirmation (LINT-DE-19 /
+        LINT-BND-28 semantics), checks that the pinned policy version was in
+        force at `sent_at` (LINT-BND-33), and issues the sealed SE.
+      security: [{ walletAuth: [] }, { walletMtls: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubmissionMetadata' }
+      responses:
+        '201':
+          description: The sealed SE artefact
+          content:
+            application/cbor:
+              schema: { type: string, format: binary }
+            application/json:
+              schema: { $ref: '#/components/schemas/EvidenceArtifact' }
+        '409':
+          description: duplicate-message-id (a different message under a reused id)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422':
+          description: >-
+            Typed intake rejection BEFORE any evidence is sealed. The
+            complete set is `submission_rejection_reasons` in
+            `registries/reason-codes.json` (R5-01) — previously this said "the
+            registry reasons (no-matching-scope, ...)" while no registry
+            section held them, so "typed" meant "whatever string the reference
+            happened to use". It now covers the policy recomputation
+            (`policy-key-mismatch`, `policy-digest-mismatch`,
+            `policy-not-in-force`) and the sender-confirmation validation
+            (`sender-confirmation-missing` / `-mismatch` / `-invalid` /
+            `-unverifiable`) that this operation's description has always
+            claimed. No SE exists after a rejection.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /confirmations:
+    post:
+      summary: Deliver a recipient confirmation (s3 / refusal / reveal / mismatch) to RDP(in)
+      description: |
+        The recipient-side wallet delivers a confirmation object within an
+        authenticated recipient session. The OBJECT is the evidence-common
+        schema (S3Attestation / RefusalConfirmation / RecipientRevealConfirmation
+        / RecipientConfirmation — wallet-signed under the device's published
+        confirmation_key, or session-authenticated with an optional
+        session_binding); the BINDING requirements are imported by reference
+        from the TS clause 6 (INTF-1/1a/2/3). RDP(in) is the sole evaluator
+        (X-10) — this surface collects, the RDP validates and evaluates.
+
+        MISMATCH (R10-07). `confirmation_kind: mismatch` carries the
+        recipient's proof that the decrypted payload's digest did not match
+        the SE's. It is the ONLY way an NDE with reason `payload-hash-mismatch`
+        comes to exist: RDP(in) issues that NDE embedding THIS proof as its
+        `recipient_confirmation`, after holding the complete NDE to the same
+        rules a verifier applies to a retained one. Silence is never it — a
+        device that does not acknowledge has proved nothing about the digest,
+        and a timeout yields a different outcome, never this one. This branch
+        was missing, so the negative outcome the protocol relies on could not
+        be reported by a conforming wallet at all.
+
+        BINDING. The authenticated principal MUST be the confirming member —
+        `(uid, mid)`, and `(uid, mid, device_id)` where the confirmation names
+        a device — of the message's RECIPIENT entity (R11-01). An entity-level
+        or transport-only session does not satisfy INTF-1. This is decided
+        FIRST: no stored answer is served to a principal it does not belong to
+        (R11-03).
+
+        WHICH MESSAGE. `issuing_rdp_id` and `message_id` together name the
+        message: a `message_id` is unique only within its originating
+        provider's namespace (R4-U3), so equal ids from two originating
+        providers are two messages (R11-02).
+
+        BEFORE ANYTHING IS STORED OR SEALED, RDP(in) runs TS clause 6 in full:
+        INTF-2 — the member is an active published member of the recipient
+        entity holding an ack-capable device, the named one where named (a
+        refusing member need only be active); INTF-1a — a wallet signature
+        binds this confirmation AND verifies against the named device's
+        PUBLISHED `confirmation_key`; INTF-3 — the confirmation's
+        `acceptance_policy_ref` is the SE's. A structural check of a signature
+        is not a verification of it (R11-03).
+
+        EACH KIND ITS OWN RULES (R12-X1). Every kind is bound, BEFORE anything
+        is stored or counted, to the message it claims to be about — through
+        the evidence it would rest on, held to the retained verifier's own
+        rules (R12-01): an `s3` to the SE's message, content digest,
+        transmitted octets, MLS session and group state and policy
+        (LINT-DE-01…04/13/16); a `mismatch` to the NDE it would produce
+        (LINT-NDE-01…07); a `refusal` to the RE it would produce (LINT-RE-01);
+        a `reveal` to the SE's message, recipient, octets and grade commitment
+        (LINT-GCM-01). Each is dated by its own field — `verified_at` for `s3`
+        and `mismatch`, `refused_at`, `read_at` — which must not follow
+        RDP(in)'s receipt of it; only `s3` and `mismatch` carry the policy
+        reference INTF-3 compares, and a refusing or revealing member must be
+        active but need not be ack-capable (R12-02).
+
+        ONE ACT PER MEMBER (R11-X1). A member's claim about delivery — an
+        `s3`, a `mismatch` or a `refusal` — is one act, and idempotency is per
+        act: `(issuing_rdp_id, message_id, uid, mid)`. The identical request
+        converges on what it produced the first time; the same member making a
+        DIFFERENT claim is refused (409) and the first stands. A `reveal`
+        claims nothing about delivery and is kept apart from that act: one per
+        member and message, under the same retry rule, accepted whatever the
+        member claimed before (R12-X1). Distinct members are distinct acts: an `s3` from each eligible
+        member counts once toward the SE's selected policy, and `quorum:<n>` or
+        `all` is SATISFIED — S4 — at the instant RDP(in) observes the completing
+        act (R11-X2). A verified `mismatch` or `refusal` is TERMINAL and issues
+        its evidence — the NDE, or the member's RE, whose `auth_context` is how
+        RDP(in) authenticated the member (R12-X1). A `reveal` changes no state:
+        it is dispute material, accepted after a terminal outcome too. Other
+        acts arriving after a terminal outcome are retained and change
+        nothing; a mismatch or a refusal after S4 is dispute material.
+      security: [{ walletAuth: [] }, { walletMtls: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ConfirmationDelivery' }
+      responses:
+        '202': { description: Accepted for validation and evaluation }
+        '422':
+          description: >-
+            Rejected (INTF-1..3 failure; typed reason): malformed, for another
+            message, not bound to the authenticated member, an ineligible
+            member, a signature that does not verify, a policy reference that
+            is not the SE's, a policy that cannot be resolved, or — for
+            `mismatch` — an NDE that would fail the evidence rules. The reasons
+            are enumerated in `registries/reason-codes.json`
+            (`confirmation_rejection_reasons`). Nothing is stored or sealed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: confirmation-conflict — this member already made a different confirmation for this message; the first stands (R11-X1)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /evidence/{message_id}:
+    get:
+      summary: Retrieve evidence for a message (party access)
+      description: |
+        Authenticated, authorised retrieval by a party to the message (or a
+        supervisory authority). Uniform 404 for unknown/unauthorised (no
+        existence oracle, X-13). M4 content negotiation.
+      security: [{ walletAuth: [] }, { walletMtls: [] }]
+      parameters:
+        - in: path
+          name: message_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: form
+          required: false
+          description: >-
+            DR-07: which of the three responses is wanted. The contract used to
+            return "the Evidence Package (or the available evidence set)" under
+            one generic wrapper with no discriminator, so a client could not
+            know what it had received. `package` is the sealed EP; `set` is the
+            available artefacts, which is NOT an EP and must not be read as
+            one; `latest` is the single most recent artefact. Default `set`,
+            because it is the only form always available.
+          schema: { type: string, enum: [set, package, latest], default: set }
+      responses:
+        '200':
+          description: >-
+            The evidence, in the requested form. The JSON body is a DISCRIMINATED
+            union — one artefact, an Evidence Package, or a SET of artefacts are
+            three different things and a party's obligations differ between them.
+          content:
+            application/cbor:
+              schema: { type: string, format: binary }
+            application/json:
+              schema: { $ref: '#/components/schemas/EvidenceResponse' }
+        '404':
+          description: Unknown or unauthorised — uniformly indistinguishable
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+components:
+  securitySchemes:
+    walletMtls:
+      type: mutualTLS
+      description: >-
+        R5-06: a deployment may bind this to mutual TLS instead. That option used to live in the bearer scheme's DESCRIPTION, which no generated client reads — so every one of them presented a bearer token. OpenAPI expresses 'either' as an OR of two schemes, and that is what the operations below now list. The certificate MUST identify the wallet's member or entity.
+    walletAuth:
+      type: http
+      scheme: bearer
+      description: >-
+        Authenticated wallet session at the TS clause 6 assurance level —
+        a member-/entity-bound bearer token. A deployment preferring mutual TLS uses `walletMtls`, which every operation lists as an alternative (R5-06). Anonymous access is NON-CONFORMANT.
+  schemas:
+    SubmissionMetadata:
+      type: object
+      description: >-
+        Every field the sender wallet supplies for SE issuance. DR-07: this
+        object omitted normative submission fields (`sender_uid`, `sent_at`,
+        `acceptance_policy_ref`, `sender_addr`) and typed the rest as bare
+        `object`, so two implementations could exchange mutually incompatible
+        payloads while both claimed conformance. The wallet-supplied fields are
+        now enumerated against the AUTHORITATIVE SE schema and every structured
+        type `$ref`s its evidence-common definition rather than paraphrasing
+        it — the definitions cannot drift, because there is only one of each.
+        The RDP mints the rest of SE (type, version, profile, evidence_id,
+        rdp_id, policy_id, event, transport).
+      unevaluatedProperties: false
+      required: [message_id, sender_uid, sender_addr, recipient_uid,
+                 recipient_addr, scope_ref, payload_hash,
+                 mls_message_b64, mls_group_id, mls_epoch, auth_method,
+                 auth_context, sent_at, expires_at, origin_proof,
+                 acceptance_policy_ref]
+      properties:
+        message_id: { type: string, minLength: 1, description: 'ULID; the idempotency key. DR-02: idempotency binds the message_id to THESE octets — replaying it with different bytes is rejected at BOTH services.' }
+        mls_message_b64:
+          type: string
+          description: >-
+            DR-02/R2-M2, REQUIRED: the EXACT transmitted MLSMessage octets.
+            RDP(out) COMPUTES envelope_hash from these bytes — it does not copy
+            a sender assertion — and hands the same bytes to the Delivery
+            Service. Before this field existed, the submission carried only a
+            claimed digest while the bytes reached the DS by a separate call
+            with no normative binding, so RDP(out) sealed an attestation over
+            octets it never saw.
+        sender_uid:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/Uid'
+          description: >-
+            DR-07, was MISSING although the D4 tuple the wallet signs REQUIRES
+            it — the submission could not populate the SE field it commits to.
+        recipient_uid:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/Uid'
+        sender_addr:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/BwAddress'
+          description: >-
+            R3-01, REQUIRED: the acting bw: address. Signed in the D4 tuple for
+            the same reason as recipient_addr — an acting identity outside the
+            proof is an acting identity a verifier cannot check.
+        recipient_addr:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/BwAddress'
+          description: >-
+            R3-01/R3-T1, REQUIRED. The INPUT to the §8.3 selection the RDP
+            recomputes. It was optional, and its absence selected the 'default'
+            policy exactly as an explicit entity address did — so a
+            role-addressed submission could be stripped of its address and
+            sealed under the weaker policy, with the sender's own signature
+            unable to reveal it. Absence is now the typed rejection
+            `unaddressed-submission`, and the address is inside the signed D4
+            tuple.
+        scope_ref:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/ScopeRef'
+        payload_hash:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/Hash'
+        envelope_hash:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/EnvelopeHash'
+          description: >-
+            OPTIONAL cross-check only. RDP(out) computes the authoritative
+            value from mls_message_b64; a supplied value that DISAGREES is a
+            typed `envelope-hash-mismatch` rejection BEFORE any evidence is
+            sealed (DR-02).
+        mls_group_id:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/MlsGroupId'
+        mls_epoch:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/MlsEpoch'
+        mls_state:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/MlsStateHash'
+          description: >-
+            OPTIONAL cross-check only. R2-M2 sub-decision: RDP(out) obtains the
+            RETAINED GroupContext for (mls_group_id, mls_epoch) from the
+            Delivery Service and hashes it itself, so SE records an
+            RDP-VERIFIED state rather than a sender claim. A supplied value
+            that disagrees is rejected before sealing.
+        auth_method:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/AuthMethod'
+        auth_context:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/AuthContext'
+          description: >-
+            DR-07, was missing though SE REQUIRES it and LINT-AUTH-01 requires
+            `auth_context.method == auth_method`.
+        sent_at:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/IsoTimestamp'
+          description: >-
+            DR-07, was missing. The act instant: it fixes the applicable policy
+            version (the pinned version MUST be in force at `sent_at`,
+            LINT-BND-33/DR-04) and bounds the TTL (LINT-DE-18/X-22).
+        expires_at:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/IsoTimestamp'
+        acceptance_policy_ref:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/AcceptancePolicyRef'
+          description: >-
+            DR-07, was missing. Supplied by the wallet because the D4 tuple it
+            signs REQUIRES it; the RDP RECOMPUTES `policy_key` by the §8.3
+            algorithm and rejects a disagreeing submission before sealing. The
+            wallet's copy is a commitment, not the authority.
+        origin_proof: { type: string, enum: [sender-signed, provider-attested] }
+        sender_confirmation:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/SenderConfirmation'
+          description: 'The D4 tuple. REQUIRED where origin_proof is sender-signed — see the conditional arms below.'
+        grade_commitment: { type: string, pattern: '^[a-f0-9]{64}$', description: 'REQUIRED where the class is availability-declared (X0).' }
+        mandate_ref:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/MandateRef'
+          description: 'Agent submissions (Annex R).'
+        manifest:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/Manifest'
+          description: 'Multipart submissions.'
+      oneOf:
+        - title: sender-signed
+          description: >-
+            DR-07: the conditional the contract never expressed. A sender-signed
+            origin REQUIRES the D4 tuple — without it the claim has no proof
+            and RDP(out) would seal an unsupported assertion.
+          properties:
+            origin_proof: { const: sender-signed }
+          required: [sender_confirmation]
+        - title: provider-attested
+          description: >-
+            The opposite arm, stated rather than implied: a provider-attested
+            origin MUST NOT carry a sender tuple, since the tuple asserts
+            exactly what this arm says was not done.
+          properties:
+            origin_proof: { const: provider-attested }
+            sender_confirmation: false
+    ConfirmationDelivery:
+      type: object
+      description: >-
+        DR-07: `confirmation` was a bare `object`, so an unknown shape was
+        indistinguishable from a valid one and a generated client had nothing
+        to build. It is a DISCRIMINATED union of exactly the confirmation types
+        the evidence schemas define.
+      unevaluatedProperties: false
+      required: [issuing_rdp_id, message_id, confirmation_kind, confirmation]
+      properties:
+        issuing_rdp_id:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/RdpId'
+          description: >-
+            The ORIGINATING provider — the SE's `rdp_id`, which the recipient
+            device reads from the collected item. With `message_id` it names
+            the message; a bare `message_id` collided across originating
+            providers (R11-02).
+        message_id: { type: string, minLength: 1 }
+        confirmation_kind:
+          type: string
+          enum: [s3, refusal, reveal, mismatch]
+          description: >-
+            The discriminator. Explicit rather than inferred from the object's
+            shape: two confirmation types with overlapping fields would
+            otherwise be decided by whichever branch a generator tried first.
+        confirmation:
+          description: 'The object, per confirmation_kind.'
+      discriminator:
+        propertyName: confirmation_kind
+      oneOf:
+        - title: s3
+          properties:
+            confirmation_kind: { const: s3 }
+            confirmation:
+              $ref: 'schemas/evidence-common.schema.json#/$defs/S3Attestation'
+        - title: refusal
+          properties:
+            confirmation_kind: { const: refusal }
+            confirmation:
+              $ref: 'schemas/evidence-common.schema.json#/$defs/RefusalConfirmation'
+        - title: reveal
+          properties:
+            confirmation_kind: { const: reveal }
+            confirmation:
+              $ref: 'schemas/evidence-common.schema.json#/$defs/RecipientRevealConfirmation'
+        - title: mismatch
+          description: >-
+            R10-07: the recipient decrypted the message, recomputed the payload
+            digest, and it did NOT match the SE's. The existing
+            `RecipientConfirmation` (result `mismatch`) — the proof an NDE
+            `payload-hash-mismatch` REQUIRES. This arm did not exist, so a
+            conforming wallet could not report a mandatory negative outcome.
+          properties:
+            confirmation_kind: { const: mismatch }
+            confirmation:
+              $ref: 'schemas/evidence-common.schema.json#/$defs/RecipientConfirmation'
+    EvidenceArtifact:
+      type: object
+      description: >-
+        ONE sealed artefact in its M4 form: the authoritative COSE_Sign1 bytes
+        and the non-authoritative projection of its decoded body.
+      unevaluatedProperties: false
+      required: [sm_artifact_b64, projection]
+      properties:
+        sm_artifact_b64:
+          type: string
+          description: 'base64 of the AUTHORITATIVE dCBOR/COSE artefact. The projection is derived from it, never the reverse (M4).'
+        projection:
+          type: object
+          description: 'decode(payload), byte-for-byte (LINT-PKG-11). Supplied for convenience; a verifier MUST work from sm_artifact_b64.'
+    EvidenceResponse:
+      description: >-
+        DR-07: three distinct responses, discriminated. One artefact, a sealed
+        Evidence Package and an evidence SET are different objects with
+        different evidentiary weight — an EP is sealed as a whole and its
+        outcomes are bound to its SE; a set is whatever exists so far and
+        proves nothing about completeness. Returning them under one wrapper
+        left the client to guess, which is how a partial set could be read as
+        a package.
+      discriminator:
+        propertyName: form
+      oneOf:
+        - title: package
+          type: object
+          unevaluatedProperties: false
+          required: [form, package]
+          properties:
+            form: { const: package }
+            package:
+              $ref: '#/components/schemas/EvidenceArtifact'
+              description: 'The sealed EP-v1 artefact.'
+        - title: latest
+          type: object
+          unevaluatedProperties: false
+          required: [form, artifact]
+          properties:
+            form: { const: latest }
+            artifact: { $ref: '#/components/schemas/EvidenceArtifact' }
+        - title: set
+          type: object
+          unevaluatedProperties: false
+          required: [form, artifacts]
+          properties:
+            form: { const: set }
+            artifacts:
+              type: array
+              minItems: 0
+              items: { $ref: '#/components/schemas/EvidenceArtifact' }
+              description: >-
+                The artefacts available to this party NOW. Explicitly NOT a
+                completeness claim: an absent DE means "not present here", not
+                "not delivered".
+            complete:
+              type: boolean
+              description: >-
+                Whether the RDP considers the message's evidence chain
+                terminal. Optional and advisory — the absence of the flag is
+                not a claim either way.
+    Error:
+      type: object
+      unevaluatedProperties: false
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          description: >-
+            Registry-governed reason code (registries/reason-codes.json);
+            lowercase-kebab; x- private use.
+        detail: { type: string }

@@ -1,0 +1,84 @@
+{
+  "_comment": "Stage-1 federation MEMBERSHIP register (umbrella §13.1): MembershipRecord records per federation-register-openapi.yaml, each sealed individually by the FEDERATION AUTHORITY (demo kid 'federation-authority', key published in trust-store.demo.json) over the deterministic-CBOR record minus {signature, timestamp}; timestamp = demo QTS token over the signature. The signer is NOT the design authority: §13.1 makes them distinct roles. This DEMONSTRATES the mechanism and admits nobody to anything. DEMO material; regenerate via regen_samples.py — never hand-edit.",
+  "records": [
+    {
+      "participant_id": "urn:sbm:rdp:mockeu-001",
+      "role": "rdp",
+      "status": "admitted",
+      "status_history": [
+        {
+          "status": "admitted",
+          "from": "2026-01-01T00:00:00Z"
+        }
+      ],
+      "authorized_seal_keys": [
+        {
+          "kid": "mockeu-001-descriptor",
+          "spki_sha256": "b6a07175a27d083b97c005d21c383e8cc995b49d035c2301f5001209cb289b5c",
+          "not_before": "2026-01-01T00:00:00Z",
+          "not_after": "2027-06-30T23:59:59Z"
+        }
+      ],
+      "descriptor_url": "https://mockeu-001.example.eu/.well-known/bw/provider",
+      "asserted_at": "2026-09-01T00:00:00Z",
+      "signature": "hFgZogEnBFRmZWRlcmF0aW9uLWF1dGhvcml0eaBZAaCnZHJvbGVjcmRwZnN0YXR1c2hhZG1pdHRlZGthc3NlcnRlZF9hdHQyMDI2LTA5LTAxVDAwOjAwOjAwWm5kZXNjcmlwdG9yX3VybHg1aHR0cHM6Ly9tb2NrZXUtMDAxLmV4YW1wbGUuZXUvLndlbGwta25vd24vYncvcHJvdmlkZXJucGFydGljaXBhbnRfaWR2dXJuOnNibTpyZHA6bW9ja2V1LTAwMW5zdGF0dXNfaGlzdG9yeYGiZGZyb210MjAyNi0wMS0wMVQwMDowMDowMFpmc3RhdHVzaGFkbWl0dGVkdGF1dGhvcml6ZWRfc2VhbF9rZXlzgaRja2lkdW1vY2tldS0wMDEtZGVzY3JpcHRvcmlub3RfYWZ0ZXJ0MjAyNy0wNi0zMFQyMzo1OTo1OVpqbm90X2JlZm9yZXQyMDI2LTAxLTAxVDAwOjAwOjAwWmtzcGtpX3NoYTI1NnhAYjZhMDcxNzVhMjdkMDgzYjk3YzAwNWQyMWMzODNlOGNjOTk1YjQ5ZDAzNWMyMzAxZjUwMDEyMDljYjI4OWI1Y1hAiaeOLIbGFe1Uy+/8nZAakQLAbxKfFe7RBxWR0jeRU1aQCHdP6VG8L6rQLbn/lbRiCjI26G/XaATwtgS/9ziIAQ==",
+      "timestamp": "MDMEIDF+3Y3PTVwi5TOvbXh3VGwit3LjaU8/hZxVaPQl8lrVGA8yMDI2MDkwMTAwMDAwMFo="
+    },
+    {
+      "participant_id": "urn:sbm:rdp:mockeu-002",
+      "role": "rdp",
+      "status": "admitted",
+      "status_history": [
+        {
+          "status": "admitted",
+          "from": "2026-01-01T00:00:00Z"
+        }
+      ],
+      "authorized_seal_keys": [
+        {
+          "kid": "mockeu-002-descriptor",
+          "spki_sha256": "ac951f8ab54ddf0c793995804cf9689fa01ebd7dfa2278196d76c14912e14f47",
+          "not_before": "2026-01-01T00:00:00Z",
+          "not_after": "2027-06-30T23:59:59Z"
+        }
+      ],
+      "descriptor_url": "https://mockeu-002.example.eu/.well-known/bw/provider",
+      "asserted_at": "2026-09-01T00:00:00Z",
+      "signature": "hFgZogEnBFRmZWRlcmF0aW9uLWF1dGhvcml0eaBZAaCnZHJvbGVjcmRwZnN0YXR1c2hhZG1pdHRlZGthc3NlcnRlZF9hdHQyMDI2LTA5LTAxVDAwOjAwOjAwWm5kZXNjcmlwdG9yX3VybHg1aHR0cHM6Ly9tb2NrZXUtMDAyLmV4YW1wbGUuZXUvLndlbGwta25vd24vYncvcHJvdmlkZXJucGFydGljaXBhbnRfaWR2dXJuOnNibTpyZHA6bW9ja2V1LTAwMm5zdGF0dXNfaGlzdG9yeYGiZGZyb210MjAyNi0wMS0wMVQwMDowMDowMFpmc3RhdHVzaGFkbWl0dGVkdGF1dGhvcml6ZWRfc2VhbF9rZXlzgaRja2lkdW1vY2tldS0wMDItZGVzY3JpcHRvcmlub3RfYWZ0ZXJ0MjAyNy0wNi0zMFQyMzo1OTo1OVpqbm90X2JlZm9yZXQyMDI2LTAxLTAxVDAwOjAwOjAwWmtzcGtpX3NoYTI1NnhAYWM5NTFmOGFiNTRkZGYwYzc5Mzk5NTgwNGNmOTY4OWZhMDFlYmQ3ZGZhMjI3ODE5NmQ3NmMxNDkxMmUxNGY0N1hA6QjjgersJEB8XyEOUZocquTr74prBDiXRgmNC7aVNZNP3y33zglruV1IwjwbGEs0rDd4sNnT+XN5iEPb5LNjDQ==",
+      "timestamp": "MDMEIFW9hbZjnG8nfqLwAD6mv4XbpxD5FeP2g9CNG9oYqELwGA8yMDI2MDkwMTAwMDAwMFo="
+    },
+    {
+      "participant_id": "urn:sbm:rdp:mockeu-003",
+      "role": "rdp",
+      "status": "admitted",
+      "status_history": [
+        {
+          "status": "admitted",
+          "from": "2026-01-01T00:00:00Z",
+          "until": "2026-03-01T00:00:00Z"
+        },
+        {
+          "status": "suspended",
+          "from": "2026-03-01T00:00:00Z",
+          "until": "2026-09-01T00:00:00Z"
+        },
+        {
+          "status": "admitted",
+          "from": "2026-09-01T00:00:00Z"
+        }
+      ],
+      "authorized_seal_keys": [
+        {
+          "kid": "mockeu-003-descriptor",
+          "spki_sha256": "d38a545c6445baec782fa08a641cfd5ed428b66985250329c4aba4621139e13e",
+          "not_before": "2026-01-01T00:00:00Z",
+          "not_after": "2027-06-30T23:59:59Z"
+        }
+      ],
+      "descriptor_url": "https://mockeu-003.example.eu/.well-known/bw/provider",
+      "asserted_at": "2026-09-01T00:00:00Z",
+      "signature": "hFgZogEnBFRmZWRlcmF0aW9uLWF1dGhvcml0eaBZAi2nZHJvbGVjcmRwZnN0YXR1c2hhZG1pdHRlZGthc3NlcnRlZF9hdHQyMDI2LTA5LTAxVDAwOjAwOjAwWm5kZXNjcmlwdG9yX3VybHg1aHR0cHM6Ly9tb2NrZXUtMDAzLmV4YW1wbGUuZXUvLndlbGwta25vd24vYncvcHJvdmlkZXJucGFydGljaXBhbnRfaWR2dXJuOnNibTpyZHA6bW9ja2V1LTAwM25zdGF0dXNfaGlzdG9yeYOjZGZyb210MjAyNi0wMS0wMVQwMDowMDowMFpldW50aWx0MjAyNi0wMy0wMVQwMDowMDowMFpmc3RhdHVzaGFkbWl0dGVko2Rmcm9tdDIwMjYtMDMtMDFUMDA6MDA6MDBaZXVudGlsdDIwMjYtMDktMDFUMDA6MDA6MDBaZnN0YXR1c2lzdXNwZW5kZWSiZGZyb210MjAyNi0wOS0wMVQwMDowMDowMFpmc3RhdHVzaGFkbWl0dGVkdGF1dGhvcml6ZWRfc2VhbF9rZXlzgaRja2lkdW1vY2tldS0wMDMtZGVzY3JpcHRvcmlub3RfYWZ0ZXJ0MjAyNy0wNi0zMFQyMzo1OTo1OVpqbm90X2JlZm9yZXQyMDI2LTAxLTAxVDAwOjAwOjAwWmtzcGtpX3NoYTI1NnhAZDM4YTU0NWM2NDQ1YmFlYzc4MmZhMDhhNjQxY2ZkNWVkNDI4YjY2OTg1MjUwMzI5YzRhYmE0NjIxMTM5ZTEzZVhA7TSV99imaMtjjQc4LmNTxKRToEnn212JdIxVG2qM4INgesogOnZfAfPiH9h8EZhATGvgDfmwCXFAqkEljM/lCg==",
+      "timestamp": "MDMEIFizCvhKaGQva1qrwrL0BF3DBY0lFkESt+fU/85v42q5GA8yMDI2MDkwMTAwMDAwMFo="
+    }
+  ]
+}

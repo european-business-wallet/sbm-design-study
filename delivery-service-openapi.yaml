@@ -1,0 +1,1686 @@
+# SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors
+# SPDX-License-Identifier: CC-BY-4.0
+openapi: "3.1.0"
+info:
+  title: SM-MLS Delivery Service companion contract (profile 2)
+  version: "9.0.0"
+  description: |
+    F-15: the normative MLS Delivery Service surface at
+    `BW-MED.mls.ds_url` — the COMPLETE KeyPackage reservation lifecycle
+    (R7/N-03), ciphertext handoff, the F-09 receipt acknowledgement, Welcome
+    queues and the F-03 retained-material reads. Profile 2 REQUIRES this
+    contract; profile-1 single-provider deployments MAY realise the surface
+    internally. Behavioural invariants (the I-D, normative):
+    idempotent submission by message_id; CIPHERTEXT-ONLY handling (the DS
+    never accesses plaintext); per-group handshake ordering; authenticated,
+    per-peer-quota'd KeyPackage retrieval. Every operation requires
+    authentication and anonymous access is non-conformant, but the REQUIRED
+    credential differs by operation and the difference is normative. Three
+    kinds of party present three kinds of credential: an authenticated
+    federation member (memberAuth) for KeyPackage and group reads; the
+    RECEIVING DEVICE'S own credential (deviceAuth, R3-06) for Welcome
+    collection, Welcome refusal and receipt acknowledgement — a member-level
+    credential is NOT sufficient there, because the queue is device-bound and a
+    sibling device must not collect, refuse or acknowledge another's Welcome;
+    and the ISSUING RDP (rdpAuth, mutual TLS, R5-06) for message submission,
+    whose identity the DS derives from the client certificate because R4-U3
+    makes it the idempotency namespace. The per-operation `security` blocks
+    below are authoritative; this summary describes them and is checked against
+    them (R4-07).
+paths:
+  /keypackages/{uid}:
+    get:
+      summary: Per-suite KeyPackage availability (N-03)
+      security: [{ memberAuth: [] }, { memberMtls: [] }]
+      parameters:
+        - { in: path, name: uid, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Per-suite availability counts — the pool is partitioned per cipher suite
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyPackageAvailability'
+  /keypackages/{uid}/reservations:
+    post:
+      summary: Reserve KeyPackages (suite-filtered, idempotent)
+      description: |
+        THE reservation operation (F-15 closes the R7 lifecycle): reserves
+        `count` unused KeyPackages of `cipher_suite` for the authenticated
+        peer. The `Idempotency-Key` header is REQUIRED — replaying the same
+        key returns the SAME reservation (same reservation_id, same
+        packages; no double reservation). Reservations expire at
+        `expires_at` (the reservation TTL — RECOMMENDED 300 s): an expired
+        reservation's packages return to the pool automatically. Per-peer
+        quotas apply (R7); exhaustion is the typed
+        `keypackage-pool-exhausted` error.
+      security: [{ memberAuth: [] }, { memberMtls: [] }]
+      parameters:
+        - { in: path, name: uid, required: true, schema: { type: string } }
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string, minLength: 16 }
+          description: Client-chosen; scoped per peer; replay-safe.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              unevaluatedProperties: false
+              required: [targets]
+              properties:
+                targets:
+                  type: array
+                  minItems: 1
+                  maxItems: 128
+                  description: >-
+                    DR-08: the EXACT (mid, device_id) set that scope resolution
+                    selected. The request used to carry only `cipher_suite` and
+                    `count`, which cannot name a device — so a creator could
+                    not ask for one usable package per eligible device, could
+                    not demonstrate the X-26 all-device property, and could not
+                    execute the normative selector from the published contracts.
+                    A count is not a selection.
+                  items:
+                    type: object
+                    unevaluatedProperties: false
+                    required: [mid, device_id]
+                    properties:
+                      mid: { type: string, pattern: '^[0-9A-HJ-NP-TV-Z]{9}$' }
+                      device_id: { type: string, minLength: 1 }
+                      cipher_suite:
+                        type: string
+                        description: >-
+                          OPTIONAL per-target pin. Omitted, the DS serves the
+                          device's current package for the suite named at the
+                          request level.
+                cipher_suite:
+                  type: string
+                  description: >-
+                    The suite the group will use — the outcome of
+                    the current `mls-suite-preference` vector (v2 since R10-11) over the devices' published
+                    `cipher_suites` (BW-MEMBER 2.2). Every target MUST have a
+                    current package for it, or the request is rejected: a
+                    partially-served reservation is what let a device be
+                    silently dropped from a group.
+      responses:
+        '201':
+          description: The reservation (or the SAME one on an Idempotency-Key replay)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reservation' }
+        '429':
+          description: Per-peer quota exceeded (R7)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: >-
+            keypackage-pool-exhausted for the requested suite, or a typed
+            per-target failure (DR-08): `keypackage-target-unavailable` (a
+            selected device has no current package for the suite),
+            `keypackage-target-duplicate` (one device named twice), or
+            `keypackage-target-unrequested` (the pool offered a package for a
+            device that was not selected). All three are rejections of the
+            WHOLE reservation: a group formed from a partially-served
+            reservation is a group missing a member's device. Also
+            `reservation-conflict`: the `Idempotency-Key` was already used for a
+            DIFFERENT request — another suite, other targets, or ANOTHER ENTITY.
+            The entity is part of what a key names: the same key and targets
+            under a different `uid` used to return the first entity's
+            reservation, packages and all (R10-06).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /reservations/{reservation_id}/commit:
+    post:
+      summary: Commit a reservation (IDEMPOTENT)
+      description: |
+        Marks the reserved KeyPackages consumed (first use). IDEMPOTENT — a
+        second commit of the same reservation_id returns 200 with the SAME
+        result, never a double consumption. A commit AFTER the reservation
+        TTL has expired is the typed `409 reservation-expired`: the packages
+        were already returned to the pool and the client must re-reserve.
+
+        ATOMIC (DR-08). The commit covers ALL of the reservation's targets or
+        none of them; there is no partial commit.
+
+        COMMIT CONSUMES (R10-X2 — burn and re-reserve). The packages are
+        CONSUMED at commit, whatever happens next. Before commit, nothing has
+        left the Delivery Service, and a creator abandoning the group RELEASES
+        the reservation: every package returns to the pool together. After
+        commit, a Welcome that cannot be deposited — or a set of which only
+        some were — releases NOTHING: the creator abandons that group and
+        reserves afresh for the retried one. This contract used to tell the
+        creator to release a committed reservation when a deposit failed. That
+        was unreachable, since a deposit requires a committed reservation and
+        release refuses one; and taken literally it was worse, because it would
+        return to the pool a package whose Welcome may already have reached a
+        device, making a single-use package usable twice (R10-06). Welcomes
+        already deposited for an abandoned group stay queued until their
+        invitation expires; a device that joins such a group receives nothing
+        on it.
+      security: [{ memberAuth: [] }, { memberMtls: [] }]
+      parameters:
+        - { in: path, name: reservation_id, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Committed (idempotent — identical on replay)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reservation' }
+        '409':
+          description: reservation-expired — the TTL elapsed before commit; re-reserve
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Unknown reservation (uniform for unknown/unauthorised)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /reservations/{reservation_id}:
+    delete:
+      summary: Release an UNCOMMITTED reservation (idempotent)
+      description: >-
+        Returns an uncommitted reservation's packages to the pool, all
+        together. IDEMPOTENT: releasing an already-released or EXPIRED
+        reservation is a 204: its packages are already back in the pool, and a lost release
+        response must converge on retry (the reference raised
+        `reservation-expired` here, R10-06). A COMMITTED reservation is not
+        released — its packages are consumed (R10-X2, see the commit
+        operation).
+      security: [{ memberAuth: [] }, { memberMtls: [] }]
+      parameters:
+        - { in: path, name: reservation_id, required: true, schema: { type: string } }
+      responses:
+        '204': { description: 'Released, already released, or expired (idempotent)' }
+        '404':
+          description: reservation-unknown — unknown, or held by another creator (uniformly indistinguishable)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: >-
+            reservation-committed — the packages are consumed; a group that
+            failed after commit is retried with a new reservation (R10-X2).
+            Published now: the reference has returned it since round 9, and an
+            error a client can receive but cannot find in the contract is one
+            it has to guess the meaning of.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /messages:
+    post:
+      summary: Submit an MLS message (ciphertext handoff)
+      description: |
+        Handshake or application MLSMessage submission — CIPHERTEXT ONLY
+        (the DS never accesses plaintext; enforced by MLS encryption).
+        IDEMPOTENT by message_id: a retried submission never opens a second
+        delivery. Per-group handshake ordering is preserved.
+
+        R3-07 — THE ORDERING IS NORMATIVE, and this operation is step 2 of 3:
+
+        1. RDP(out) computes the transmitted-octet commitment from the bytes
+           the wallet submitted and DURABLY RESERVES the binding
+           `(message_id -> envelope_hash)` — before contacting this service.
+        2. RDP(out) POSTs the SAME octets here and receives an
+           `AcceptanceRecord` echoing `(message_id, mls_group_id,
+           envelope_hash)`.
+        3. Only THEN may RDP(out) seal SE, and only with the commitment the
+           record confirms.
+
+        Sealing before acceptance is PROHIBITED: an SE attests that bytes were
+        accepted for transport, and one sealed first attests something that has
+        not happened — it may never happen. DR-02 fixed what RDP(out) attests;
+        it did not say WHEN, and the two operations were independent with no
+        ordering, durable state, recovery or response proof between them.
+
+        IDEMPOTENCY NAMESPACE (R4-05/R4-U3). Acceptance is idempotent within
+        `(authenticated issuing RDP, message_id)`, never by `message_id` alone.
+        The SAME message_id from a DIFFERENT authenticated principal is a
+        DIFFERENT message and MUST NOT collide; the same message_id from the
+        SAME principal with DIFFERENT octets is `duplicate-message-id`; with the
+        same octets it returns the same record. An unauthenticated submission
+        has no namespace to be idempotent within and MUST be refused.
+
+        RECOVERY, per interruption point:
+        - **before acceptance** — no SE exists; the wallet retries the
+          submission and the reservation makes the retry converge on the same
+          binding;
+        - **after acceptance, before sealing** — the acceptance is idempotent:
+          RDP(out) re-POSTs the same octets, receives the SAME record, and
+          seals. No second delivery is opened, because the message_id is
+          already bound;
+        - **after sealing, before the client response** — the wallet retries
+          the submission and receives the SAME SE (idempotency by message_id,
+          INTF-4). A second SE is never issued.
+
+        The observable invariant: **one message_id, one byte binding, at most
+        one SE, at most one delivery.**
+
+        FAN-OUT — THE ROUTING AUTHORITY (R9-02 requirement 4 / R9-X3).
+        Accepting a message CREATES the delivery items, and this paragraph is
+        the authority that says which. The DS creates exactly one item per
+        device it OBSERVED joining `mls_group_id`: the group's registered
+        FOUNDER (`POST /groups/{group_id}/founder`, R12-X3 — the device that
+        created the group, which no Welcome adds), and every device at least
+        one of whose invitations into the group is LIVE at acceptance —
+        acknowledged (`DELETE /welcome/{welcome_id}`, which is joining), or
+        open and not yet expired on the DS clock. Nothing else is consulted.
+
+        EACH INVITATION OWNS ITS OWN CLAIM (R11-07). A device may hold several
+        invitations into one group — burn-and-re-reserve produces exactly that
+        — and refusing one, or letting one expire, withdraws THAT invitation's
+        claim only. The routing state was one element per device, so refusing
+        an older invitation after acknowledging a newer one removed the device
+        and it received nothing again.
+
+        BOTH ENTITIES, EACH ITEM ITS OWN MEMBER (R10-X3). The bilateral group
+        holds members of both entities, so the observed devices do too, and
+        each item is bound to the entity and member of ITS device. Items for
+        the sending entity's devices are transport copies: this service cannot
+        tell them from the addressee's, and does not try — the RDP issuing a
+        DE states the delivery context it is processing, so a receipt for
+        another entity's device never becomes delivery evidence. This used to
+        pin every item to the first one's recipient and member, so an ordinary
+        two-member recipient failed the first submission, succeeded on the
+        identical retry, and lost one member's delivery for good (R10-04).
+
+        The submission does NOT name recipients, and this is deliberate. A
+        client-supplied target list would have to be checked against this same
+        group state before it could be trusted, so it would add a spoofing
+        surface without adding information — the reasoning that keeps `rdp_id`
+        out of the request body (R4-U3). It also means the acceptance record
+        identifies no recipient, which is correct: acceptance is about octets.
+
+        IDEMPOTENCY AND RESUMPTION. Item creation is idempotent on
+        `(issuing RDP, message_id, uid, mid, device_id)` — the device's whole
+        principal (R11-01): a MID is unique only within its entity and a
+        device label only within its member, so two devices sharing a label
+        are two items, never one. A replayed acceptance
+        creates no second item and moves no existing item's state. A replayed
+        acceptance also COMPLETES a fan-out an earlier attempt left partial,
+        before it replies: this returned the stored record and did nothing, so
+        an attempt that failed after acceptance left the retry `accepted` and
+        some devices with no item for ever (R10-04). An item is immutable — it
+        never changes recipient or member — and a retry naming a different
+        group for the same `message_id` is refused as a different submission.
+
+        CONCURRENCY. The roster is read ONCE, at acceptance. A device that
+        joins the group afterwards does not retroactively receive an
+        already-accepted message — including across a resumed fan-out, which
+        completes the set observed AT ACCEPTANCE rather than re-reading a
+        roster that has moved since; a device that refuses afterwards keeps the
+        item it was already owed. Both follow from fanning out at a single
+        observed instant rather than deriving the recipient set lazily at
+        collection time, and that is what makes two implementations agree.
+
+        Before this, item creation was a private helper of the reference
+        implementation whose first caller chose the recipient, member and
+        device. Two conforming Delivery Services would have fanned one accepted
+        message out to different devices, and no test could reach the flow
+        without calling that helper itself.
+        FORWARDING — THE ORIGIN NAMESPACE IS PROVEN, NOT CLAIMED (R12-03,
+        R12-X2). In the four-corner case the recipient-side RDP hands the
+        relayed octets to ITS Delivery Service under its own credential. The
+        namespace was derived from that credential alone, so the acceptance
+        named the forwarder as the issuer and two origins reusing a local
+        `message_id` collided here. A forwarded submission carries `origin`:
+        the originating provider and that provider's sealed SE. The DS keys
+        the message on the ORIGIN namespace only when the SE's seal verifies
+        against that provider's published evidence key and the SE names that
+        provider, this `message_id`, this group and the digest of these
+        octets; the forwarder is recorded as `forwarding_rdp_id`. The submitter
+        MUST be an RDP this DS accepts forwarded submissions from — a
+        deployment configures which. An `origin` without that proof is
+        refused: an unchecked origin string would trade the collision for
+        spoofing. Without `origin`, the submitter IS the origin, as before.
+      security: [{ rdpAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MessageSubmission' }
+      responses:
+        '201':
+          description: >-
+            ACCEPTED for transport. R3-07: the response used to be a bare 202,
+            so RDP(out) had nothing tying DS acceptance to the same
+            (message_id, mls_group_id, bytes) it submitted — and could seal SE
+            before, or without, any acceptance at all.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AcceptanceRecord' }
+        '409':
+          description: >-
+            `duplicate-message-id`: this message_id is already bound to
+            DIFFERENT octets at this service. R3-07: the conflict is detected
+            at BOTH boundaries, so the two ledgers cannot diverge.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: >-
+            forwarder-not-authorised — a forwarded submission (with `origin`)
+            from an RDP this Delivery Service does not accept forwarded
+            submissions from (R12-X2).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422':
+          description: >-
+            origin-unproven — the forwarded `origin` is not proven by the SE
+            it carries: the seal does not verify against the origin's
+            published evidence key, or the SE does not name that provider,
+            this `message_id`, this group and these octets (R12-X2).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    get:
+      summary: Collect queued messages for the authenticated DEVICE (the transfer)
+      description: |
+        R8-03 — THE TRANSFER TRANSITION, and it is public.
+
+        Before this operation the contract went straight from RDP submission
+        (`POST /messages`) to device acknowledgement (`.../receipt-ack`). The
+        `transferred` state the receipt depends on existed only in private
+        reference helpers, so an implementer had to invent the collection
+        operation, the principal that establishes the transfer, the session
+        binding, the retry behaviour and the exact moment `queued` becomes
+        `transferred`. Two services could publish identical APIs and disagree
+        about whether a message was ever delivered, which makes independent
+        conformance impossible — and the signed receipt rested on that
+        unpublished transition.
+
+        THE STATE VOCABULARY (R8-X1), one set of names across this contract,
+        the decision record, the reference implementation and the tests:
+
+        | state | who observed it | recorded by |
+        |---|---|---|
+        | `accepted` | the DS received the octets from the issuing RDP | `POST /messages` |
+        | `queued` | the DS staged them for one enrolled device | server-side fan-out |
+        | `transferred` | the DS EMITTED them to that device in this session | THIS operation |
+        | `acknowledged` | the device confirmed receipt | `.../receipt-ack` |
+
+        `transferred` names what the DS OBSERVED. `collected` — the earlier
+        draft's name — names what the device did, which the DS cannot witness
+        and therefore must not sign.
+
+        ATOMIC (R9-02). The operation selects every collectable item for the
+        authenticated device, checks that all of them can transition, and only
+        then transitions any. It either returns them all or changes nothing.
+        It previously mutated one item at a time, so a failure part-way
+        returned an error with no bytes AND left earlier items transferred:
+        a failed read with durable, invisible write effects.
+
+        RESPONSE-LOSS AND SESSION-LOSS SEMANTICS (R8-X1, revised by R9-X2).
+        The transition is recorded when the DS EMITS the octets, and each item
+        carries a `collection_token` derived from the transfer's own identity.
+        Retried in the SAME session, the items return with the SAME tokens and
+        no second delivery event is created.
+
+        Retried in a DIFFERENT session — a reconnect, a new device session
+        after a crash — the same DEVICE RECLAIMS its own unacknowledged items:
+        the binding moves to the new session and the token is REISSUED, because
+        the token names a transfer and this is a new one. The earlier rule
+        refused this as a conflict, on the reasoning that an observed handover
+        must not be moved; the effect was that an ordinary reconnect could
+        strand a device's whole queue with no actor able to repair it. There is
+        still exactly ONE signed delivery event per recipient, and it attests
+        the session it was acknowledged in. An ACKNOWLEDGED item is never
+        re-transferred.
+
+        THE IDENTITY IS THE CREDENTIAL'S. There is no parameter naming a
+        device, because a parameter that can name one is a parameter that can
+        be got wrong. The device identity and the session binding are
+        SERVER-DERIVED from the authenticated session, exactly as `GET
+        /welcome` already does for Welcomes.
+
+        FAN-OUT (R8-X2). One accepted message is staged per enrolled device,
+        so each device collects and acknowledges its own item and no device
+        can consume, move or observe another's. The FIRST acknowledgement is
+        the one recipient-level delivery event; siblings receive that same
+        receipt, AND each sibling's own item is acknowledged by its own
+        acknowledgement (R10-09): returning the first event used to skip that
+        step, so a second device kept a `transferred` item it collected for
+        ever. An acknowledged item is not offered again.
+
+        EXPIRY IS NOT ENFORCED HERE, and saying so is deliberate. This service
+        receives `(message_id, mls_group_id, mls_message_b64)` and never sees
+        the submission's `expires_at`, so it has nothing to compare a deadline
+        against. The X-21 deadline is enforced by RDP(out) against the
+        receipt's server-observed `server_time`. A DS that dropped items on a
+        deadline it cannot see would be guessing.
+      security: [{ deviceAuth: [] }, { deviceMtls: [] }]
+      responses:
+        '200':
+          description: >-
+            The authenticated device's transferred items. Returning them IS
+            the transfer: each is in state `transferred` when this responds.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MessageCollection' }
+        '401':
+          description: >-
+            No device-bound credential, or no well-formed authenticated
+            session to bind the transfer to (`delivery-session-invalid`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: >-
+            Reserved. R9-X2 REMOVED the only condition that produced a conflict
+            here: a collection in a different authenticated session used to be
+            refused, which meant losing a session stranded the items for ever.
+            The same device now reclaims its own unacknowledged items in any
+            session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  # R6-03: the acknowledgement path carries the ISSUING RDP, because the
+  # submission layer keys idempotency on (issuing RDP, message_id) and the
+  # receipt layer used a bare message_id — so two providers reusing one
+  # per-provider identifier collided AFTER submission had guaranteed they
+  # would not.
+  /messages/{issuing_rdp_id}/{message_id}/receipt-ack:
+    post:
+      summary: The acknowledged handover (F-09 - THE S2 event, server-observed)
+      description: |
+        F-09 - the acknowledged handover, THE S2 event: the message bytes
+        were TRANSFERRED to the enrolled device within this authenticated
+        session and this acknowledgement is the receipt.
+
+        DR-10: the authoritative event instant is **observed by the DS**, not
+        supplied by the client. A device (or a compromised entity session)
+        could otherwise acknowledge after expiry while backdating into the
+        valid window, defeating the X-21 deadline and the authenticated-S2
+        proof that rests on it. `client_acked_at`, if sent, is
+        NON-AUTHORITATIVE diagnostic metadata: it is echoed in the receipt so
+        that clock skew is measurable, and it never determines `delivered_at`.
+
+        The DS returns a **signed receipt** (DeliveryReceipt) binding
+        (issuing_rdp_id, message_id, recipient_uid, mid, device_id,
+        session_binding, server_time, message_digest). R9-01 requirement 4:
+        this sentence listed seven fields and omitted `issuing_rdp_id`, which
+        R6-03 added to the signed object and R7-02 made mandatory-signed — a
+        stale current claim about what the artefact binds.
+
+        `collection_token` is REQUIRED on the request and is deliberately NOT
+        in that tuple. It is a CAPABILITY, not an attested fact: presenting it
+        proves this caller is the one the DS handed the bytes to, which is what
+        authorises the acknowledgement. Signing it into a durable artefact
+        would put a bearer secret into evidence that outlives the session and
+        is shown to third parties. What the receipt attests is the handover;
+        what the token does is authorise the claim of it.
+
+        The DE issuer MUST verify that receipt - signature, DS key, and the
+        digest against the bytes submitted - BEFORE issuing a DE; an
+        unverifiable receipt yields no DE. The receipt's `server_time` is the
+        S2 instant, and it is `delivered_at` at the AVAILABILITY grade ONLY.
+        At the verification and acceptance grades the delivery instant is the
+        confirmation that completed the policy, as RDP(in) observed it
+        (R11-04, R11-X2): an S2 before `expires_at` cannot make a later S4
+        timely. This said "MUST set `delivered_at` to the receipt's
+        `server_time`" at every grade, so two issuers could decide the same
+        trace's deadline opposite ways. (Which RDP issues the DE in the
+        four-corner case, and how it obtains this receipt, is OPEN — R10-13;
+        this contract names RDP(out), TS clause 4.1 the recipient-side RDP.)
+
+        The FIRST server-observed ack per (message_id, recipient entity) is
+        THE event: its `server_time` is fixed at that instant and duplicate
+        acks (same or other devices) return the SAME receipt unchanged - they
+        are idempotent, not a second event and not a chance to move the time.
+        An ack replayed outside its session is invalid (401).
+      security: [{ deviceAuth: [] }, { deviceMtls: [] }]
+      parameters:
+        # R8-05: this restated the grammar as an UNANCHORED `^urn:sbm:rdp:`,
+        # which accepts an empty suffix, `urn:sbm:rdp:provider/child` and
+        # `urn:sbm:rdp:x:alias` — every alias shape R7-X1 exists to refuse.
+        # One definition, referenced.
+        - { in: path, name: issuing_rdp_id, required: true,
+            schema: { $ref: 'schemas/evidence-common.schema.json#/$defs/RdpId' } }
+        - { in: path, name: message_id, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReceiptAckRequest' }
+      responses:
+        '200':
+          description: >-
+            The event (idempotent: a duplicate returns the FIRST receipt,
+            byte-identical, including its server_time).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeliveryReceipt' }
+        '401':
+          description: >-
+            Ack outside its session (replay), or presented with an
+            entity-level credential that is not bound to the acknowledging
+            device (DR-10).
+  /welcome:
+    post:
+      summary: Deposit a Welcome for a device
+      description: |
+        R3-06: DEPOSIT authorisation is defined separately from COLLECTION
+        authorisation, because they are different acts. Depositing hands a
+        Welcome TO a device and is a member-level operation; collecting takes
+        possession of that device's group secrets and is not.
+      security: [{ memberAuth: [] }, { memberMtls: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationDeposit'
+      responses:
+        '202':
+          description: Queued (Welcome-queue integrity preserved)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WelcomeQueued' }
+        '409':
+          description: >-
+            A conflict with what the DS already holds: `invitation-conflict` —
+            this creator's handle already names an invitation with different
+            content (R7-03, R12-08); `keypackage-already-deposited` — the
+            committed KeyPackage was consumed by another invitation, and a
+            single-use package authorises one Welcome (R12-07). Nothing is
+            queued and no routing claim is added.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422':
+          description: >-
+            The deposit cannot be checked or is not backed by what it names:
+            `invitation-incomplete`, `welcome-malformed`,
+            `invitation-window-invalid`, `invitation-suite-mismatch`,
+            `reservation-unknown`, `reservation-not-committed`,
+            `keypackage-not-consumed`, `keypackage-target-unrequested`. These
+            were raised and published nowhere — an error a client can receive
+            but cannot find in the contract (invariant 8).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    get:
+      summary: Collect pending Welcomes for the authenticated DEVICE
+      description: |
+        R3-06: requires DEVICE-bound authentication. A Welcome carries the
+        group secrets for ONE device, and this operation took `memberAuth` —
+        the broader scheme — while `deviceAuth` already existed in this
+        contract for exactly this class of problem (DR-10). An entity- or
+        member-level credential could therefore collect the group secrets of
+        every device it covers.
+
+        The queue returned is EXACTLY the authenticated device's. There is no
+        parameter naming another device, because a parameter that can name one
+        is a parameter that can be got wrong: the identity comes from the
+        credential.
+
+        IDEMPOTENT: fetching does not dequeue. An item is removed by
+        acknowledging it (DELETE below), so a lost response is retried
+        harmlessly and concurrent fetches return the same set. It is also
+        removed by refusing it, in the same step as the refusal, and an item
+        whose invitation window has closed on the DS clock is not served
+        (R11-06): both stayed collectable. An invitation that expires
+        unacknowledged stops placing the device in the group at its
+        `expires_at`; it creates no outcome — silence is not a refusal — and
+        outcomes already created stay collectable until acknowledged.
+      security: [{ deviceAuth: [] }, { deviceMtls: [] }]
+      responses:
+        '200':
+          description: The authenticated device's pending Welcome queue
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WelcomeQueue' }
+  /welcome/{welcome_id}:
+    delete:
+      summary: Acknowledge (dequeue) one collected Welcome
+      description: |
+        R3-06: acknowledgement is explicit and per item, so collection can be
+        idempotent. IDEMPOTENT itself — deleting an already-deleted item
+        returns 204.
+
+        A device may only acknowledge its OWN items, and an item belonging to
+        another device returns **404, exactly as an unknown id does**: a
+        distinct 403 would confirm that some other device has a Welcome
+        pending, which is a queue-existence oracle over another device's
+        state. Uniform 404 is the same rule the evidence-retrieval surface
+        uses (X-13).
+
+        ACKNOWLEDGING IS JOINING (R11-07). The invitation becomes joined: it
+        keeps the device routed whatever becomes of any other invitation, and
+        it can no longer be refused. An item that is not served — refused, or
+        past its window on the DS clock — cannot be acknowledged, and returns
+        404 like an unknown one (R11-06); a refused Welcome used to be
+        acknowledgeable as if fresh.
+      security: [{ deviceAuth: [] }, { deviceMtls: [] }]
+      parameters:
+        - { in: path, name: welcome_id, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Acknowledged (idempotent) }
+        '404':
+          description: >-
+            Unknown, or belonging to another device — uniformly
+            indistinguishable (no cross-device existence oracle). A repeat by
+            the device that acknowledged is the 204 above: this text used to
+            list "already acknowledged" here, while the operation promised 204
+            on repeat and the reference answered the retry with this failure
+            (R10-09).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /welcome/{welcome_id}/refusal:
+    post:
+      summary: Refuse a Welcome whose cipher suite is below the device's floor
+      description: |
+        R5-04/R5-V2 — the PRE-JOIN return channel, and why it is here.
+
+        A device that receives a Welcome offering a suite below its published
+        floor MUST NOT join the group (the *Cipher Suites* rules), and the
+        creator has to learn why: a silent non-join is indistinguishable from
+        an offline device, so the typed outcome
+        `suite-below-published-floor` would be unreportable.
+
+        R4-U4 chose to carry that refusal as an authenticated MLS message to
+        the group creator. **That transport cannot exist for this failure.**
+        The refusing device is INVITED, not joined; sending an authenticated
+        message in the group means processing the Welcome and operating the
+        key schedule under the very cipher suite it is refusing as too weak.
+        The transport required doing the thing the refusal exists to avoid.
+
+        So the refusal travels here. The DS is already in the path, already
+        authenticates devices, and the KeyPackage credential is the one thing
+        the device demonstrably holds BEFORE joining — it is the credential
+        that put the device in the group being formed. Nothing in this
+        operation requires the device to instantiate the offered suite.
+
+        The refusal is bound to the Welcome it declines (`welcome_id`, whose
+        queue item is already device-bound), names the suite that was offered
+        and the floor the device requires, and is retrievable by the creator
+        that deposited the Welcome. Refusing an item belonging to another
+        device returns **404, exactly as an unknown id does** — the same
+        no-existence-oracle rule as collection and acknowledgement.
+
+        NOT EVIDENCE. This is a pre-group transport outcome: there is no
+        message, no `message_id`, no SE and no chain, so no NDE can carry it
+        and none is issued. `GroupEstablishmentRefusal-v1`, the standalone
+        Schema introduced in R3-08 and withdrawn in R4-U4, stays withdrawn —
+        the outcome needs to ARRIVE, not to be retained.
+      security: [{ deviceAuth: [] }, { deviceMtls: [] }]
+      parameters:
+        - { in: path, name: welcome_id, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WelcomeRefusalRequest' }
+      responses:
+        '201':
+          description: >-
+            The refusal is recorded, the queue item is dequeued, and the
+            OUTCOME IT CREATED is returned. IDEMPOTENT for the REFUSING DEVICE
+            (R6-07/R8-04): an identical retry by the same device returns the
+            same outcome, so a lost response converges.
+
+            R9-X4: this was `204 No Content` while the reference returned
+            `{"outcome_id": ...}`. A generated client got nothing, because the
+            contract promised nothing — and the repository's own tests took the
+            id from the return value. That is R9-03's shape a second time: a
+            value the next step needs, travelling on a private channel. The
+            refusal CREATES a resource the creator must acknowledge, so it
+            returns 201 and the reference is what the contract says.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RefusalAccepted' }
+        '404':
+          description: >-
+            Unknown, or belonging to another device — uniformly
+            indistinguishable, so the queue is not a cross-device existence
+            oracle. An item ALREADY HANDLED BY THIS DEVICE is 204, not 404:
+            the no-oracle rule protects other devices' state, and using it
+            against the caller's own completed action defeats retry.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422':
+          description: >-
+            A refusal whose `required_floor` does not match the floor the
+            device actually publishes (BW-MEMBER `min_cipher_suite`, never
+            below the mandatory `mls-suite-floor/v1`), whose `offered_suite`
+            is not the suite the Welcome offered, or whose `reason` is not a
+            registered group-establishment outcome. R8-04: the DS RESOLVES the
+            floor from published discovery and compares it. All three used to
+            be retained verbatim from the refusing device, so a target could
+            publish one floor and claim another, and an arbitrary reason
+            string reached the creator's queue.
+        '409':
+          description: >-
+            R8-04 requirement 7: this Welcome was already refused with a
+            DIFFERENT reason, suite or floor. An identical retry converges on
+            the original 204; a different request must not silently replace a
+            terminal result.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /group-establishment/outcomes:
+    get:
+      summary: Collect group-establishment outcomes for groups this creator formed
+      description: |
+        R6-04/R6-W2 — where the refusal actually goes.
+
+        THE CREATOR IS A MEMBER (R7-03/R7-X2). Deposit, collection and
+        acknowledgement all use the member principal, and the earlier prose
+        calling the creator a device is corrected. Forming a group is an
+        ORGANISATIONAL act: the member forms it and any of its devices may act
+        for it, so binding collection to one device would strand a group
+        formation on device loss. Refusal stays DEVICE-bound because refusing
+        is the opposite kind of act — a statement about THAT device's own
+        published floor, which no sibling can make for it. The two principals
+        differ because the two acts differ; before R7-03 they differed because
+        of which endpoint was specified when.
+
+        R5-V2 moved the pre-join refusal onto the DS, correctly: a device that
+        declines a Welcome has not joined, so it cannot send in the group. But
+        the refusal then TERMINATED there. The creator is not listening on the
+        refusing device's queue, so nothing delivered the outcome to the only
+        party that can act on it, and a silent non-join remained
+        indistinguishable from an offline device — the very thing the typed
+        outcome exists to prevent.
+
+        The creator POLLS. It is already an authenticated DS client with a
+        device identity, so this needs no new trust relationship — a DS-to-RDP
+        push would create one. Collection is symmetric to `GET /welcome`:
+        idempotent, and each outcome stays until acknowledged.
+
+        The invitation record is a first-class request schema now
+        (`InvitationDeposit`), deposited with the Welcome. It used to be
+        REQUIRED by this operation and REJECTED by that one —
+        `unevaluatedProperties: false` over two fields — so no conforming
+        implementation could serve this. Serving an outcome requires the DS to
+        hold that record — the authenticated creator, the target
+        device, the group or GroupInfo commitment, the offered suite, the
+        consumed KeyPackage reference, and an expiry — so that the refusal can
+        be validated against what was actually offered rather than against what
+        the refusing device asserts. That record is specified here as REQUIRED;
+        a deployment that does not retain it cannot serve this operation and
+        MUST NOT synthesise outcomes from the refusal alone.
+      security: [{ memberAuth: [] }, { memberMtls: [] }]
+      parameters:
+        - in: query
+          name: max
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: Zero or more outcomes for groups this creator formed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupEstablishmentOutcomes'
+        '403':
+          description: The caller did not create the groups it is asking about
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /group-establishment/outcomes/{outcome_id}:
+    delete:
+      summary: Acknowledge one collected outcome
+      description: |
+        R6-04: explicit per-item acknowledgement, so collection is idempotent
+        and a lost response converges on retry — the same shape as Welcome
+        acknowledgement. An outcome belonging to another creator returns 404,
+        indistinguishable from an unknown id, so the queue is not an existence
+        oracle over another creator's group formation.
+      security: [{ memberAuth: [] }, { memberMtls: [] }]
+      parameters:
+        - { in: path, name: outcome_id, required: true, schema: { type: string } }
+      responses:
+        '204':
+          description: >-
+            Acknowledged, and NO CONTENT — R9-X4 makes that true. The
+            reference returned `{"acknowledged": true}`, which carries nothing
+            the status code does not. IDEMPOTENT FOR THE CREATOR THAT OWNS IT
+            (R8-04 requirement 8): the same authenticated member repeating the
+            acknowledgement receives 204 again, including after the item has
+            been deleted, so a lost response converges.
+        '404':
+          description: >-
+            Unknown, or belonging to another creator - uniformly
+            indistinguishable. R8-04: this used to read "already acknowledged"
+            while the 204 above promised idempotency, and the reference
+            resolved the contradiction in the worst direction by returning
+            success for ANY unknown id before checking any identity at all. An
+            exact authenticated creator is required even when the item is
+            already gone; "already acknowledged BY YOU" is the 204 above, and
+            everything else is this.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /groups/{group_id}/founder:
+    post:
+      summary: Register the device that created the group as its founding member
+      description: |
+        R12-04 / R12-X3 — THE CREATOR IS A MEMBER TOO. MLS begins a group with
+        its creator, and nothing adds the creator through a Welcome; routing
+        derived from Welcomes alone therefore never contained the device that
+        formed the group — the counterparty's reply reached everyone but it.
+        The creating device registers itself here, DEVICE-authenticated, as
+        the group's founding member, and is routed for the group's life.
+
+        Once per group. The same device repeating it converges (204). The
+        device must belong to the creator — the same `(uid, mid)` — that
+        deposited an invitation into this group, so a group id cannot be
+        claimed by someone who did not form it; an unknown group and another
+        creator's group both return 404. A different device registering for a
+        group that already has its founder is 409. MLS membership changes
+        AFTER formation are not observed by this operation: an Add arrives as
+        a new invitation, and a Remove reaches no delivery set — its routing
+        owner is open (review agenda A10).
+      security: [{ deviceAuth: [] }, { deviceMtls: [] }]
+      parameters:
+        - { in: path, name: group_id, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Registered (idempotent for the same device) }
+        '404':
+          description: >-
+            group-unknown — no invitation into this group was deposited by this
+            device's member; uniformly indistinguishable from another
+            creator's group.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: founder-conflict — the group already has its founding device.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /groups/{group_id}/context:
+    get:
+      summary: Retained GroupContext / ratchet tree for an evidenced epoch (F-03)
+      description: |
+        The retention duty's read surface: the TLS-serialized GroupContext
+        (and tree/GroupInfo) for every evidenced (group_id, epoch), served
+        to AUTHORISED VERIFIERS for the evidence-retention period — what the
+        evidence mls_state commitment recomputes against (D3), access-
+        controlled because retained transcripts are attributable material
+        (X-23).
+      security: [{ memberAuth: [] }, { memberMtls: [] }]
+      parameters:
+        - { in: path, name: group_id, required: true, schema: { type: string } }
+        - { in: query, name: epoch, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The retained material
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [group_context_b64]
+                properties:
+                  group_context_b64: { type: string }
+                  ratchet_tree_b64: { type: string }
+        '404':
+          description: Unknown or unauthorised — uniform
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+components:
+  securitySchemes:
+    rdpAuth:
+      type: mutualTLS
+      description: |
+        The AUTHENTICATED ISSUING RDP, for provider-to-DS submission
+        (R5-06/R5-V3). Distinct from `memberAuth` because it authenticates a
+        different KIND of party: a member token identifies a participant of a
+        federation entity, and R4-U3 made the DS idempotency namespace
+        `(issuing-RDP identity, message_id)` — an identity a member token does
+        not carry. `/messages` was secured by `memberAuth`, declared
+        `type: http` / `scheme: bearer` with a description saying "token or
+        mutual TLS", so every generated client and every piece of middleware
+        saw a BEARER MEMBER TOKEN for the one operation whose identity is
+        load-bearing.
+
+        CANONICAL IDENTIFIER (normative, R6-06/R6-W3, propagated R7-04).
+        The `rdp_id` under which the DS namespaces a submission is DERIVED from
+        the presented client certificate and never from the request body —
+        except that a FORWARDED submission names its origin in the body and
+        PROVES it with the origin's sealed SE (R12-X2, `POST /messages`). The
+        grammar is the shared `RdpId` definition in
+        `schemas/evidence-common.schema.json`, which every evidence object uses
+        — *not a second statement of it here*. Until R7-04 that definition was
+        `{type: string, minLength: 1}`, so this rule governed nothing
+        downstream: samples carried `RDP:MockEU:001`, the reference path
+        defaulted to `RDP:DEMO:OUT`, and an arbitrary string was accepted and
+        stored as a ledger key.
+
+          rdp_id = "urn:sbm:rdp:" 1*( unreserved )
+
+        THE BINDING IS SINGULAR. The certificate MUST carry EXACTLY ONE
+        subjectAltName URI of that form. A certificate carrying none, or
+        carrying two or more, MUST be refused — this is not a precedence
+        puzzle: a certificate that names two providers cannot be attributed to
+        one, choosing between them would make the namespace depend on the order
+        a library returned extensions, and an RDP whose identity cannot be
+        derived has no namespace to be idempotent within, so accepting it would
+        silently share one.
+
+        *The entity-only fallback is REMOVED (R6-06).* An earlier revision fell
+        back to the subject DN's organizationIdentifier (2.5.4.97). That
+        identifies a LEGAL ENTITY, and one entity may operate several RDPs — so
+        the fallback collapsed distinct providers into a shared namespace,
+        which is the collision R4-U3 exists to prevent. Two authorised RDPs of
+        one entity now derive distinct stable identifiers because each carries
+        its own service-instance URI.
+
+        ROTATION AND ALIASES. The canonical identifier is the URI, not the
+        certificate: a rotated or re-issued certificate carrying the same URI
+        is the same RDP, and no ledger, receipt or evidence lookup changes. A
+        certificate carrying a DIFFERENT URI is a different RDP, whatever its
+        subject says.
+
+        NO ALIASES. Deployed legacy identifiers are not mapped onto canonical
+        ones: an alias resolving to the same namespace is a second name for one
+        thing, and two names for one namespace is how the collision R4-U3
+        prevents comes back. A deployment migrating must re-issue.
+
+        NO client-supplied `rdp_id` field is defined: it would have to be
+        checked against the certificate anyway, adding a spoofing surface and
+        no information.
+
+        AUTHORISATION IS NOT AUTHENTICATION, and this contract does not yet
+        provide it (R6-W3). Deriving a canonical identifier proves who
+        presented the certificate; it does not establish that the RDP is
+        ADMITTED to the federation, that its certificate chains to an accepted
+        trust anchor, that its EKU and certificate policy are appropriate, or
+        that it is qualified. Those are register questions, and the answer
+        has split. **The federation register is now DEFINED** —
+        `federation-register-openapi.yaml` publishes the `MembershipRecord`,
+        `lint_cli.admission_at` resolves admission at the instant of the act,
+        and `bundle_lint` LINT-TRUST-06 checks it fail-closed over retained
+        evidence. Implementations MUST check the authenticated identifier
+        against the register: the obligation is no longer conditional on one
+        existing. What remains EXTERNAL is narrower and unchanged — operating
+        a production register and admitting any real participant are
+        institutional acts this repository does not perform, and the
+        certificate questions (chain to an accepted anchor, EKU, certificate
+        policy, qualification) are Trusted-List questions that admission never
+        answers; §13.1 keeps the two gates independent in both directions. The
+        residual stays recorded in the X-01 family rather than faked here.
+
+        Deployments that cannot terminate mTLS at the application MUST convey
+        the verified certificate identity through a trusted channel and apply
+        the same mapping; the identity is the certificate's, never the
+        client's assertion about it.
+    memberMtls:
+      type: mutualTLS
+      description: >-
+        R5-06: a deployment may bind this to mutual TLS instead. That option used to live in the bearer scheme's DESCRIPTION, which no generated client reads — so every one of them presented a bearer token. OpenAPI expresses 'either' as an OR of two schemes, and that is what the operations below now list. The certificate MUST identify the federation MEMBER — an entity-level certificate is NOT sufficient (R8-X3), for the reason given under `memberAuth`.
+    memberAuth:
+      type: http
+      scheme: bearer
+      description: |
+        MEMBER-bound authentication (R7: KeyPackage retrieval is never
+        anonymous). A deployment preferring mutual TLS uses `memberMtls`,
+        which every operation lists as an alternative (R5-06).
+
+        R8-X3 — THE CREDENTIAL IS BOUND TO ONE MEMBER. It MUST carry the
+        federation member identifier (`mid`) it authenticates. An entity-level
+        token is NOT sufficient for any operation secured by this scheme: it
+        covers every member of the entity, so a sibling could create, collect
+        or acknowledge another creator's group-establishment outcomes.
+
+        This scheme described itself as "member-/entity-bound" while R7-X2
+        required the creator to be exactly a member at deposit, collection and
+        acknowledgement — and the reference accepted member, entity OR device
+        credentials at deposit and checked no kind at all at collection. A
+        decision the contract contradicts and the code does not implement is
+        not a decision.
+
+        R11-01 — THE PRINCIPAL IS `(uid, mid)`. A MID is unique only within
+        its entity (umbrella §3), so the credential MUST bind the member's
+        entity as well, and the Delivery Service MUST derive both from the
+        authenticated credential — never from a request field — and compare
+        both wherever it authorises or keys: reservations and their
+        `Idempotency-Key`, invitations, outcomes and their acknowledgements.
+        Bound to a bare `mid`, a member of another entity sharing the label
+        collected and acknowledged a creator's outcomes and committed its
+        reservation. Local identifiers stay local; the tuple is what is global.
+    deviceMtls:
+      type: mutualTLS
+      description: >-
+        R5-06: a deployment may bind this to mutual TLS instead. That option used to live in the bearer scheme's DESCRIPTION, which no generated client reads — so every one of them presented a bearer token. OpenAPI expresses 'either' as an OR of two schemes, and that is what the operations below now list. The certificate MUST identify the enrolled device named by `device_id`, with its member and entity (R11-01).
+    deviceAuth:
+      type: http
+      scheme: bearer
+      description: >-
+        DEVICE-bound authentication (DR-10). Strictly narrower than
+        memberAuth: the credential MUST be bound to the enrolled device
+        identified by `device_id` — and, because a device label is unique
+        only within its member and a MID only within its entity, to the
+        device's whole principal `(uid, mid, device_id)`, derived from the
+        authenticated credential and compared whole wherever the DS keys or
+        authorises: delivery items, collection, collection tokens,
+        acknowledgements and the receipt's `recipient_uid`/`mid`/`device_id`,
+        the Welcome queue, refusals and acknowledgement tombstones (R11-01).
+        Bound to a bare label, a FR device collected a DE device's message
+        and the DS signed a receipt attributing that delivery to DE (proof of possession of the device's own key; a deployment using a device-bound certificate uses `deviceMtls`). An entity- or member-level
+        token satisfies memberAuth but NOT this scheme, and MUST NOT be
+        accepted for the acknowledged handover — the S2 event asserts that a
+        particular DEVICE received the bytes, so authenticating only the
+        organisation would let one component of an entity manufacture a
+        handover to a device that never received anything.
+
+        R9-03 requirement 5 — THE KEYPACKAGE BINDING, on the pre-join path.
+        Refusing a Welcome (`POST /welcome/{welcome_id}/refusal`) requires more
+        than being the named device: the credential MUST demonstrate possession
+        of the private key of the exact KeyPackage the invitation consumed,
+        identified by its `KeyPackageRef`. A `device_id` is public, so proving
+        only that would let anyone who can read an invitation refuse it.
+
+        The proof is this scheme's ordinary one applied to a different key: for
+        `deviceAuth`, a signature over the request binding produced with the
+        KeyPackage's own key; for `deviceMtls`, a client certificate holding
+        that key. The DS resolves the reference from the invitation it
+        retained and checks the presented proof against the KeyPackage it
+        issued — it does not read a reference out of the request.
+
+        This binding previously existed only as an extra member of the
+        reference implementation's credential dictionary. It was enforced, and
+        no published scheme said it existed, so an independent implementation
+        had no way to know its refusals would be rejected.
+  schemas:
+    Reservation:
+      type: object
+      description: >-
+        DR-08: the response used to be an array of OPAQUE packages with no
+        MID/device association, so a creator could not tell which package
+        belonged to which device — and therefore could not verify that every
+        selected device got exactly one. Each package now carries its target.
+      unevaluatedProperties: false
+      required: [reservation_id, cipher_suite, expires_at, keypackages, committed]
+      properties:
+        reservation_id: { type: string, description: 'Server-assigned; the commit/release handle.' }
+        cipher_suite:
+          type: string
+          description: 'The suite EVERY package in this reservation is for.'
+        expires_at: { type: string, format: date-time, description: 'The reservation TTL boundary.' }
+        committed: { type: boolean }
+        keypackages:
+          type: array
+          minItems: 1
+          description: >-
+            EXACTLY ONE entry per requested target, in no guaranteed order. The
+            client MUST check the correspondence — the DS asserting it is not
+            the same as the client verifying it — and MUST reject a reservation
+            whose targets do not match the request one-for-one.
+          items:
+            type: object
+            unevaluatedProperties: false
+            required: [mid, device_id, cipher_suite, keypackage_b64, keypackage_ref]
+            properties:
+              mid: { type: string, pattern: '^[0-9A-HJ-NP-TV-Z]{9}$' }
+              device_id: { type: string, minLength: 1 }
+              cipher_suite:
+                type: string
+                description: >-
+                  The suite this package is for. Present per package, not only
+                  per reservation, so a substituted package is detectable
+                  rather than assumed away.
+              keypackage_b64: { type: string, description: 'base64 KeyPackage bytes (RFC 9420).' }
+              keypackage_ref:
+                $ref: 'schemas/evidence-common.schema.json#/$defs/KeyPackageRef'
+                description: >-
+                  R9-03/R9-X1: the MLS reference to THIS package
+                  (RFC 9420 §5.2 `RefHash` over `keypackage_b64`'s decoded
+                  bytes under `cipher_suite`), which the invitation must quote.
+                  The invitation required this value and no public shape
+                  produced it, so a conforming client could not construct the
+                  next request. It is RETURNED here and independently
+                  DERIVABLE from the bytes beside it: two ways to obtain one
+                  value, so neither party depends on the other's
+                  implementation, and a client that derives a different
+                  reference has detected a substituted package.
+    DeliveryItemState:
+      type: string
+      enum: [accepted, queued, transferred, acknowledged]
+      description: >-
+        R8-X1 — the ONE state vocabulary. The decision record said
+        `queued -> collected -> acknowledged` while the reference implemented
+        `accepted -> queued -> transferred -> acknowledged`, which is not a
+        spelling difference: `collected` and `transferred` identify different
+        observable moments when a response is lost. Transitions are MONOTONIC —
+        an acknowledged item never returns to `queued` (R8-02).
+    RefusalAccepted:
+      type: object
+      unevaluatedProperties: false
+      required: [outcome_id]
+      description: >-
+        R9-X4: the outcome the refusal created, so the creator can acknowledge
+        it by id. Published because the next step needs it.
+      properties:
+        outcome_id:
+          type: string
+          minLength: 1
+          description: >-
+            The handle for `DELETE /group-establishment/outcomes/{outcome_id}`.
+            It is also discoverable through the creator's queue; this response
+            saves a round trip and makes the reference's return value
+            contractual rather than private.
+    KeyPackageAvailability:
+      type: object
+      required: [suites]
+      properties:
+        suites:
+          type: array
+          items:
+            type: object
+            required: [cipher_suite, available]
+            properties:
+              cipher_suite: { type: string }
+              available: { type: integer, minimum: 0 }
+    GroupEstablishmentOutcomes:
+      type: object
+      additionalProperties: false
+      required: [outcomes]
+      properties:
+        outcomes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupEstablishmentOutcome'
+    GroupEstablishmentOutcome:
+      type: object
+      additionalProperties: false
+      required: [outcome_id, welcome_id, mls_group_id, recipient_uid, mid, device_id, reason, offered_suite, refused_at]
+      # R10-05: a floor only for the floor reason — see the refusal request.
+      if:
+        properties: { reason: { const: suite-below-published-floor } }
+      then:
+        required: [required_floor]
+      else:
+        not: { required: [required_floor] }
+      properties:
+        outcome_id: { type: string }
+        welcome_id: { type: string }
+        mls_group_id: { type: string }
+        recipient_uid:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/Uid'
+          description: >-
+            The entity of the device that refused (R11-01).
+        mid:
+          type: string
+          pattern: '^[0-9A-HJ-NP-TV-Z]{9}$'
+          description: >-
+            The member whose device refused (R11-01).
+        device_id:
+          type: string
+          description: >-
+            The label of the device that refused — the one the
+            invitation targeted, bound to the KeyPackage it consumed. A
+            label alone does not identify it (R11-01); `recipient_uid` and
+            `mid` complete the principal.
+        reason:
+          type: string
+          enum: [suite-below-published-floor, group-info-mismatch]
+        offered_suite:
+          type: string
+          description: >-
+            VALIDATED by the DS against the retained invitation
+            record, not taken from the refusing device: a
+            refusal that misreports what was offered is
+            rejected at deposit (422).
+        required_floor:
+          type: string
+          description: >-
+            The refusing device's published floor, checkable by
+            the creator against discovery.
+        refused_at: { type: string, format: date-time }
+    WelcomeRefusalRequest:
+      description: >-
+        R10-05: NAMED, so the reference can execute it. It was inline, and an
+        inline schema is one nothing can reference and therefore nothing
+        validates against (round 9, invariant 8): the reference checked the
+        reason, suite and floor by hand while the published body went
+        unexecuted. Found by writing the R10-05 test, which had nothing to
+        validate its request against.
+      type: object
+      additionalProperties: false
+      required: [reason, offered_suite]
+      # R10-05: `required_floor` belongs to the floor reason ONLY. A
+      # GroupInfo mismatch is not a cipher-suite refusal and must not
+      # be dressed as one, so it claims no floor at all.
+      if:
+        properties: { reason: { const: suite-below-published-floor } }
+      then:
+        required: [required_floor]
+      else:
+        not: { required: [required_floor] }
+      properties:
+        reason:
+          type: string
+          enum: [suite-below-published-floor, group-info-mismatch]
+          description: >-
+            From `group_establishment_reasons` in
+            registries/reason-codes.json. Enumerated rather than free
+            text so a creator can act on it. `group-info-mismatch`
+            (R10-05): the GroupInfo in the decrypted Welcome does not
+            match the `group_info_commitment` the device read from its
+            WelcomeQueue item. The DS cannot verify this — it cannot
+            parse a Welcome encrypted to the device — and records the
+            refusal, authenticated by the KeyPackage credential, for
+            the creator.
+        offered_suite:
+          type: string
+          description: The suite named by the GroupContext of the Welcome.
+        required_floor:
+          type: string
+          description: >-
+            The floor this device publishes (BW-MEMBER
+            `min_cipher_suite`). The creator can verify the claim
+            against published discovery, so the refusal is checkable
+            rather than merely asserted.
+    ReceiptAckRequest:
+      type: object
+      unevaluatedProperties: false
+      required: [device_id, collection_token]
+      description: >-
+        R9-01 requirement 5: the acknowledgement request as a NAMED component,
+        so the reference implementation can validate its own call against the
+        published shape rather than the two describing different protocols. It
+        was an inline object, which nothing could reference and therefore
+        nothing did — and `collection_token` was required here while the
+        reference treated absence as a compatibility path.
+      properties:
+        device_id: { type: string, minLength: 1 }
+        collection_token:
+          $ref: '#/components/schemas/CollectionToken'
+        client_acked_at:
+          type: string
+          format: date-time
+          description: >-
+            NON-AUTHORITATIVE (DR-10). The device's own clock reading,
+            retained for diagnostics and skew measurement only. It MUST NOT be
+            used as delivered_at, and a value that disagrees with server_time -
+            in either direction - does not change the recorded event.
+    CollectionToken:
+      type: string
+      minLength: 8
+      description: >-
+        R8-X1 — the idempotent handle returned with the octets by
+        `GET /messages`. It is DERIVED from the transfer's own identity
+        (issuing RDP, message_id, the device's whole principal, session),
+        so a retry in the same
+        session yields the same token by construction and no counter can
+        diverge. The acknowledgement quotes it, which is how a device names
+        THE transfer it is acknowledging rather than merely naming a message.
+    CollectedMessage:
+      type: object
+      unevaluatedProperties: false
+      required: [issuing_rdp_id, message_id, mls_group_id, mls_message_b64,
+                 message_digest, collection_token, state]
+      properties:
+        issuing_rdp_id:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/RdpId'
+        message_id: { type: string }
+        mls_group_id: { type: string }
+        mls_message_b64:
+          type: string
+          description: 'The TLS-serialized MLSMessage octets the DS accepted (D3).'
+        message_digest:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/EnvelopeHash'
+          description: >-
+            R8-02: the digest the DS recorded AT ACCEPTANCE, carried by
+            reference. The device acknowledges these exact bytes, and the
+            receipt attests this exact value — one binding from acceptance to
+            evidence, not three that happen to agree.
+        collection_token: { $ref: '#/components/schemas/CollectionToken' }
+        state:
+          type: string
+          const: transferred
+          description: >-
+            Always `transferred` — returning the octets IS the transition.
+            R9-02 requirement 5: this `$ref`-ed the whole four-value
+            `DeliveryItemState` while its own description said one value, so
+            the contract admitted three impossible response states. The
+            description was the normative half; the Schema now says the same
+            thing.
+    MessageCollection:
+      type: object
+      unevaluatedProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CollectedMessage' }
+          description: >-
+            EXACTLY the authenticated device's items. A sibling device's
+            transfers are never included and are not distinguishable from
+            absent ones.
+    MessageSubmission:
+      type: object
+      additionalProperties: false
+      description: >-
+        The `POST /messages` body — named in R12-X2. It was an inline Schema,
+        which nothing could reference and the reference never executed, and it
+        had no field through which a forwarder could state whose message this
+        is.
+      required: [message_id, mls_group_id, mls_message_b64]
+      properties:
+        message_id: { type: string }
+        mls_group_id: { type: string }
+        mls_message_b64:
+          type: string
+          description: The TLS-serialized MLSMessage octets — the bytes the evidence envelope_hash commits to (D3).
+        origin: { $ref: '#/components/schemas/ForwardedOrigin' }
+    ForwardedOrigin:
+      type: object
+      additionalProperties: false
+      description: >-
+        R12-X2 — the originating namespace of a FORWARDED submission, and its
+        proof: the origin's own sealed SE for this `message_id` and these
+        octets, as the wallet-RDP contract returns it.
+      required: [origin_rdp_id, se]
+      properties:
+        origin_rdp_id:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/RdpId'
+        se:
+          type: object
+          required: [sm_artifact_b64, projection]
+          properties:
+            sm_artifact_b64: { type: string }
+            projection: { type: object }
+    AcceptanceRecord:
+      type: object
+      description: >-
+        R3-07: the DS's statement that it accepted THESE octets under THIS
+        message_id, which is what lets RDP(out) seal an SE that is true when it
+        is sealed.
+
+        **SCOPE — LIVE TRANSACTION EVIDENCE ONLY (R4-05/R4-U2).** This record is
+        consumed by RDP(out) DURING the submission and nowhere else. It is NOT
+        signed, NOT retained, and NOT bound into the evidence model, so a later
+        verifier CANNOT correlate it: the earlier text claimed exactly that
+        correlation, and nothing in the object supported it. What a later
+        verifier correlates instead is the SEALED SE, whose `envelope_hash`
+        RDP(out) computed from the same octets the DS accepted.
+
+        It therefore requires an AUTHENTICATED CHANNEL between RDP(out) and the
+        Delivery Service — the record carries no signature of its own, so its
+        only integrity comes from the transport it arrived on, and the
+        `issuing_rdp_id` it echoes is the authenticated principal rather than
+        anything the client asserted. Making it long-term evidence would mean a
+        signed, retained, bundle-bound artefact with its own keys, rotation and
+        lint rules; that is a deliberate piece of work, not a side effect.
+      unevaluatedProperties: false
+      required: [message_id, issuing_rdp_id, mls_group_id, envelope_hash, accepted_at]
+      properties:
+        message_id: { type: string }
+        issuing_rdp_id:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/RdpId'
+          description: >-
+            R4-05/R4-U3: the issuing RDP, ECHOED from the authenticated
+            principal — the DS derives it from the credential the request was
+            authenticated with and does not read it from the request body. The
+            normative global handle is `(issuing-RDP, message_id)`, and
+            idempotency keyed by bare `message_id` put two providers in one
+            namespace: the same ULID from different providers collided, and one
+            provider could displace another's binding. A client-supplied field
+            would have to be checked against the principal anyway, so it would
+            add a spoofing surface without adding information.
+        mls_group_id: { type: string }
+        envelope_hash:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/EnvelopeHash'
+          description: >-
+            Computed BY THE DS over the octets it received — not echoed from
+            the request. A DS that echoed the submitter's digest would confirm
+            the submitter's claim rather than its own receipt, which is the
+            DR-02 defect one layer down.
+        accepted_at: { type: string, format: date-time }
+        forwarding_rdp_id:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/RdpId'
+          description: >-
+            R12-X2 — the RDP that forwarded this message, when it was not the
+            origin. `issuing_rdp_id` is always the ORIGIN, proven by its SE.
+    WelcomeQueued:
+      type: object
+      unevaluatedProperties: false
+      required: [welcome_id, recipient_device]
+      properties:
+        welcome_id: { type: string, description: 'The handle the target device acknowledges.' }
+        recipient_device: { type: string }
+    InvitationDeposit:
+      type: object
+      unevaluatedProperties: false
+      description: |
+        R7-03: the INVITATION RECORD, deposited with the Welcome.
+
+        `GET /group-establishment/outcomes` requires the DS to retain this
+        record and says a deployment lacking it MUST NOT synthesise outcomes.
+        The record had no schema, and this request declared
+        `unevaluatedProperties: false` over `[recipient_device, welcome_b64]` —
+        so its inputs were not merely unspecified, they were REJECTED. The
+        operation could not be served by any conforming implementation: a
+        declared authority with no path to it.
+
+        Every field is something the DS must be able to check a refusal
+        AGAINST. Without them the DS can only echo what the refusing device
+        asserts, which is not validation.
+      required:
+        [invitation_id, recipient_device, welcome_b64, mls_group_id,
+         group_info_commitment, offered_suite, reservation_id,
+         keypackage_ref, created_at, expires_at]
+      properties:
+        invitation_id:
+          type: string
+          minLength: 1
+          description: >-
+            Stable handle; the creator's outcomes are addressed by it. Supplied
+            by the creator so a lost response converges on retry rather than
+            creating a second invitation. SCOPED BY THE CREATOR (R12-08): the
+            handle names an invitation within one creator principal
+            `(uid, mid)`, and two creators may use the same value
+            independently; the DS-assigned `welcome_id` is the global one.
+            Within a creator, a reused handle with different content is 409.
+        recipient_device:
+          type: string
+          minLength: 1
+          description: The target device. A Welcome is addressed to ONE device.
+        welcome_b64: { type: string, description: 'base64 MLS Welcome (RFC 9420).' }
+        mls_group_id: { type: string, description: 'The group being formed.' }
+        group_info_commitment:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/GroupInfoCommitment'
+          description: >-
+            Commitment to the GroupInfo the Welcome carries, so a refusal ties
+            to the exact group state offered.
+
+            R9-03 requirement 6 — the construction is normative now:
+            `RefHash("SBM 1.0 GroupInfo Commitment", GroupInfo)` under the
+            invitation's `offered_suite`, base64url unpadded. Its own label, so
+            it can never be confused with a `KeyPackageRef` or replayed as one.
+
+            WHO VALIDATES IT: not this service. A Welcome is encrypted to the
+            invited device, so the DS retains and echoes the value without
+            being able to parse what it commits to. The INVITED DEVICE
+            recomputes it after decrypting the Welcome and refuses an
+            invitation whose commitment does not match, as
+            `group-info-mismatch`. It reads the value from its own
+            `WelcomeQueue` item. Round 9 wrote this paragraph "because the
+            field previously claimed a binding no component could check" —
+            and then assigned the check to the one component that could not
+            obtain the value, since the queue item did not carry it (R10-05).
+        offered_suite:
+          type: string
+          description: >-
+            The suite the GroupContext names. A refusal states the suite it was
+            offered and the DS compares it with THIS, so `offered_suite` is
+            validated rather than believed.
+        reservation_id: { type: string, description: 'The reservation consumed.' }
+        keypackage_ref:
+          $ref: 'schemas/evidence-common.schema.json#/$defs/KeyPackageRef'
+          description: >-
+            The exact KeyPackage consumed for the target device, as returned by
+            the committed reservation. It binds the refusing credential to this
+            invitation: a device may only refuse an invitation that consumed
+            ITS OWN package.
+
+            R9-03: this was `{type: string}` with no definition anywhere in the
+            specification — a required wire value with no producer. It is now
+            the shared `KeyPackageRef`, produced by the reservation response and
+            derivable from the KeyPackage bytes.
+        created_at: { type: string, format: date-time }
+        expires_at:
+          type: string
+          format: date-time
+          description: >-
+            After this the invitation is expired: its Welcome is no longer
+            served, and a refusal returns 404, uniform with an unknown id. An
+            outcome RECORDED before expiry is unaffected — it stays collectable
+            until its creator acknowledges it, so a creator returning after the
+            deadline still learns why a device did not join (D12-04; this said
+            outcome collection returned 404 too, against the outcome queue's
+            own rule). Refusal retry tombstones and acknowledgement tombstones
+            keep their owner-bound answers after expiry as well.
+    WelcomeQueue:
+      type: object
+      description: >-
+        R3-06: a TYPED, target-bound queue. The response used to be an array of
+        unlabelled base64 strings, so a device holding two pending Welcomes
+        could not tell which was which, could not acknowledge one of them, and
+        had no statement of who each was for.
+      unevaluatedProperties: false
+      required: [device_id, welcomes]
+      properties:
+        device_id:
+          type: string
+          description: >-
+            The AUTHENTICATED device, echoed so a client can assert it received
+            its own queue rather than assuming it.
+        welcomes:
+          type: array
+          items:
+            type: object
+            unevaluatedProperties: false
+            required: [welcome_id, recipient_device, welcome_b64, queued_at,
+                       group_info_commitment, offered_suite]
+            properties:
+              welcome_id: { type: string }
+              group_info_commitment:
+                $ref: 'schemas/evidence-common.schema.json#/$defs/GroupInfoCommitment'
+                description: >-
+                  R10-05: the commitment this device must check, DELIVERED TO
+                  IT. Round 9 defined the value and assigned the check to the
+                  invited device — and this item, the only thing that device
+                  receives, carried neither the value nor the suite it is
+                  computed under. After decrypting the Welcome the device
+                  recomputes `RefHash("SBM 1.0 GroupInfo Commitment",
+                  GroupInfo)` under `offered_suite` and refuses a mismatch as
+                  `group-info-mismatch`.
+              offered_suite:
+                type: string
+                description: The suite the commitment is computed under.
+              recipient_device:
+                type: string
+                description: 'MUST equal device_id — a Welcome for another device is never in this queue.'
+              welcome_b64: { type: string }
+              queued_at: { type: string, format: date-time }
+              expires_at:
+                type: string
+                format: date-time
+                description: 'Optional; an expired Welcome is not served and is not an error.'
+    DeliveryReceipt:
+      type: object
+      description: >-
+        The DS's signed record of an acknowledged handover (DR-10). The DE
+        issuer verifies it before issuing a DE; its `server_time` is
+        `delivered_at` at the availability grade only (R11-04). The receipt is
+        retained for the evidence-retention period as the protocol proof of
+        authenticated S2.
+      required: [message_id, issuing_rdp_id, recipient_uid, mid, device_id,
+                 session_binding, server_time, message_digest, ds_kid, ds_alg,
+                 ds_signature]
+      unevaluatedProperties: false
+      properties:
+        issuing_rdp_id:
+          $ref: 'https://bw.example.eu/schemas/evidence-common.schema.json#/$defs/RdpId'
+          description: >-
+            R7-02/R6-03: the issuing RDP whose namespace this receipt belongs
+            to. It was SIGNED by the code and absent from this schema, so the
+            wire contract described a receipt the implementation does not
+            produce — and a conforming client had no field to read the
+            namespace from.
+        message_id: { type: string }
+        recipient_uid: { type: string }
+        mid: { type: string, description: 'The acknowledging member.' }
+        device_id: { type: string, description: 'The device that received the bytes.' }
+        session_binding:
+          type: object
+          description: >-
+            The authenticated session the transfer happened in - the same
+            shape the evidence carries, so replay outside that session is
+            detectable by the verifier and not only by the DS.
+          required: [kind, digest]
+          properties:
+            kind: { type: string }
+            digest: { type: string }
+        server_time:
+          type: string
+          format: date-time
+          description: >-
+            THE authoritative S2 instant, observed by the DS — `delivered_at`
+            at the availability grade only; the verification and acceptance
+            grades are dated by the completing confirmation (DR-10/X-21,
+            R11-04). Fixed at the FIRST ack; a duplicate returns this same
+            value.
+        client_acked_at:
+          type: string
+          format: date-time
+          description: >-
+            Echo of the client's non-authoritative reading, where one was
+            supplied. Present so that skew is visible in evidence-adjacent
+            records; never authoritative.
+        message_digest:
+          type: object
+          description: >-
+            SHA-256 over the exact MLSMessage octets handed to the device -
+            the same commitment RDP(out) computed at submission (DR-02), so
+            the receipt attests THESE bytes and not merely some delivery.
+          required: [format, hex]
+          properties:
+            format: { type: string, enum: [mls10-message] }
+            hex: { type: string, pattern: '^[a-f0-9]{64}$' }
+        ds_kid:
+          type: string
+          minLength: 1
+          description: >-
+            R3-04/R3-T3: WHICH key verifies this receipt. The obligation to
+            verify against "the DS's published key" existed with no way to
+            discover the key, so the signature was unverifiable, pinned by
+            private configuration, or open to ambiguous substitution. The
+            `kid` resolves in the DS operator's signed BW-MED
+            (`ds_receipt_keys`), and its validity is judged AT `server_time`,
+            so a receipt stays verifiable after the key is rotated out.
+        ds_alg:
+          type: string
+          enum: [EdDSA, ES256, ES384]
+          description: >-
+            The COSE algorithm, which MUST equal the resolved key's declared
+            `alg` — three-way agreement as for confirmation keys (DR-12).
+        ds_signature:
+          type: string
+          description: >-
+            base64 COSE_Sign1 by the DS over the deterministic-CBOR encoding
+            of this receipt's other fields. RDP(out) MUST verify it against
+            the DS's published key before issuing the DE.
+    Error:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          description: >-
+            Typed reason — registry-governed where an NDE reason applies
+            (keypackage-pool-exhausted, ...); contract-local for the
+            reservation lifecycle (reservation-expired).
+        detail: { type: string }

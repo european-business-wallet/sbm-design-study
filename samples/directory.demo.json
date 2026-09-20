@@ -1,0 +1,37 @@
+{
+  "$comment": "X-01 DEMO directory-pin fixture — the pilot stand-in for the EU-governed EDD DirectoryRecord.authorized_seal_keys. Each record pins, per UID, the seal key(s) authorised to seal that entity's BW-MED/ORG/MEMBER discovery documents. LINT-TRUST-05 rejects a discovery seal whose key is not pinned for its own UID (a valid QSealC authorised for another UID cannot seal here). DEMO scope: the pin is the raw seal-key spki_sha256 (SHA-256 of the entity-admin Ed25519 public key); production pins the QSealC x5t#S256 and additionally validates the chain to an EU Trusted List (a production-verifier duty, docs/production-verifier-architecture.md). The two demo entities share the single demo entity-admin key, so both pin the same spki_sha256; a real deployment pins each entity's own key.",
+  "records": [
+    {
+      "uid": "EU-DE-EOID-7K3D9W0Q2M5FW0",
+      "authorized_seal_keys": [
+        {
+          "spki_sha256": "2d0db17724d5de1a546458250c2e6f68d3e1985870e63c649ee338aaa84281ee",
+          "key_set_version": "1",
+          "not_before": "2026-01-01T00:00:00Z",
+          "not_after": "2027-06-30T23:59:59Z"
+        }
+      ]
+    },
+    {
+      "uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+      "authorized_seal_keys": [
+        {
+          "spki_sha256": "2d0db17724d5de1a546458250c2e6f68d3e1985870e63c649ee338aaa84281ee",
+          "key_set_version": "1",
+          "not_before": "2026-01-01T00:00:00Z",
+          "not_after": "2027-06-30T23:59:59Z"
+        }
+      ]
+    }
+  ],
+  "registry_seal_keys": [
+    {
+      "spki_sha256": "f1c0ff812b8a4c86a50548bf310f70a410a1909dbebac871a32837f59ff596a8",
+      "registry_id": "EDD:EU:core-registry-demo",
+      "key_set_version": "1",
+      "not_before": "2026-01-01T00:00:00Z",
+      "not_after": "2027-06-30T23:59:59Z",
+      "$comment": "D6: the EDD core registry's OWN signing key - the anchor for STATUS-v1 assertions (LINT-DISC-25). Demo raw spki; production pins the registry QSealC x5t#S256 via the Trusted List."
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "$comment": "X-16 shared accept/reject corpus for bw: addresses (umbrella Annex A). {uid} is substituted with a canonical UID by the test; the SAME corpus drives the JSON-Schema BwAddress pattern, the bundle_lint parser, and the toolkit builder — one accept-set, several consumers.",
+  "accept": [
+    "bw:uid:{uid}",
+    "bw:uid:{uid}/u/{mid}",
+    "bw:uid:{uid}/r/invoices",
+    "bw:uid:{uid}/r/a.b_c-d",
+    "bw:uid:{uid}/r/x",
+    "bw:uid:{uid}/r/0123456789012345678901234567890a"
+  ],
+  "reject": [
+    "mailto:ops@example.eu",
+    "bw:uid:{uid}/r/Invoices",
+    "bw:uid:{uid}/r/",
+    "bw:uid:{uid}/r/0123456789012345678901234567890ab",
+    "bw:uid:{uid}/u/{mid}/r/invoices",
+    "bw:uid:{uid}/",
+    "bw:uid:{uid}/r/inv%20oices",
+    "bw:uid:{uid}/r/in voices",
+    "bw:uid:{uid}/r/in/voices",
+    "bw:{uid}",
+    "bw:uid:{uid}/x/foo",
+    "bw:uid:{uid}/u/TOOSHORT"
+  ]
+}

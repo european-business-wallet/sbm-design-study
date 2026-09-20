@@ -1,0 +1,259 @@
+{
+  "$id": "https://bw.example.eu/schemas/evidence-nde.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "evidence-nde (v2.8)",
+  "description": "Non-Delivery Evidence. Issued by RDP(out) or RDP(in) when a message cannot be delivered or accepted within policy windows.",
+  "type": "object",
+  "required": [
+    "type",
+    "version",
+    "profile",
+    "message_id",
+    "recipient_uid",
+    "reason",
+    "observed_at",
+    "rdp_id",
+    "event",
+    "evidence_id",
+    "policy_id"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "NDE-v1"
+    },
+    "version": {
+      "type": "string",
+      "const": "2.8"
+    },
+    "profile": {
+      "$ref": "evidence-common.schema.json#/$defs/Profile"
+    },
+    "message_id": {
+      "type": "string"
+    },
+    "event": {
+      "type": "string",
+      "enum": [
+        "A.2-SubmissionRejection",
+        "B.3-RelayFailure",
+        "C.5-AcceptanceRejectionExpiry",
+        "D.2-ContentConsignmentFailure",
+        "E.2-ContentHandoverFailure"
+      ],
+      "description": "ETSI EN 319 522-1 clause 6 event (component G03) for the non-delivery. See Annex I for the reason-to-event mapping."
+    },
+    "evidence_id": {
+      "$ref": "evidence-common.schema.json#/$defs/EvidenceId"
+    },
+    "policy_id": {
+      "$ref": "evidence-common.schema.json#/$defs/PolicyId"
+    },
+    "recipient_uid": {
+      "$ref": "evidence-common.schema.json#/$defs/Uid"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Normative reason codes (extendable in future versions). no-matching-scope: submission refused because no confidentiality scope matches the content class and no fallback is declared (D4). scope-violation: the message's content class is not permitted by the group's scope descriptor (D5). duplicate-message-id: a submission reuses a message_id already accepted for a different recipient or payload (A.2; the I-D Error Handling and Retries). keypackage-pool-exhausted: first contact could not proceed because the recipient's single-use KeyPackage pool is depleted (A.2; a registry action, finding R7 / wallet H) — distinct from recipient-unreachable, so pool exhaustion is attributable rather than silent. X-25: the value space is REGISTRY-GOVERNED, not spec-versioned — the schema bounds only the LEXICAL form (lowercase-kebab; x- = private use, never registered). The registered set and its event bindings live in registries/reason-codes.json (umbrella §13.4); registering a code is a registry action, NOT a version bump (§9.3). An unregistered well-formed code is accepted, preserved verbatim and treated generically (LINT-NDE-W1).",
+      "pattern": "^(x-)?[a-z][a-z0-9-]{1,62}$"
+    },
+    "observed_at": {
+      "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+    },
+    "rdp_id": {
+      "$ref": "evidence-common.schema.json#/$defs/RdpId"
+    },
+    "payload_hash": {
+      "$ref": "evidence-common.schema.json#/$defs/Hash",
+      "description": "The APPLICATION-CONTENT commitment (F-14 hash-domain rule): the sender-declared digest of the plaintext content of an ACCEPTED message. REQUIRED on every post-acceptance NDE (B.3/C.5/D.2/E.2 events); FORBIDDEN on an intake-stage A.2 NDE, which carries submission_hash instead — the two domains are distinct fields and are NEVER compared."
+    },
+    "recipient_confirmation": {
+      "$ref": "evidence-common.schema.json#/$defs/RecipientConfirmation",
+      "description": "Present when reason is 'payload-hash-mismatch': the recipient's signed/session-authenticated mismatch confirmation (the I-D (Canonicalisation and Payload Hashing), R11)."
+    },
+    "redirect_uid": {
+      "$ref": "evidence-common.schema.json#/$defs/Uid",
+      "description": "Present when reason is 'uid-merged'. Points to the surviving entity's UID."
+    },
+    "submission_hash": {
+      "$ref": "evidence-common.schema.json#/$defs/Hash",
+      "description": "F-14 (evidence 2.6): the REJECTED-SUBMISSION commitment — SHA-256 over the EXACT submitted octets as received at the intake boundary, BEFORE any parsing or decoding (the posted request body bytes). REQUIRED on an intake-stage A.2-SubmissionRejection NDE (the envelope was never accepted, possibly never parsed); FORBIDDEN elsewhere. A submission_hash and a payload_hash live in different semantic domains and are NEVER compared."
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "const": "payload-hash-mismatch"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "recipient_confirmation"
+        ]
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "const": "uid-merged"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "redirect_uid"
+        ]
+      }
+    },
+    {
+      "$comment": "N3/LINT-NDE-07: NDE reason binds to its EN 319 522-1 event (TS clause 8.1)."
+    },
+    {
+      "if": {
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "enum": [
+              "expired"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "event": {
+            "const": "C.5-AcceptanceRejectionExpiry"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "enum": [
+              "malformed-envelope",
+              "policy-block",
+              "quota-exceeded",
+              "unknown-uid",
+              "unsupported-protocol",
+              "no-matching-scope",
+              "scope-violation",
+              "duplicate-message-id"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "event": {
+            "const": "A.2-SubmissionRejection"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "enum": [
+              "recipient-unreachable",
+              "mls-group-invalid",
+              "payload-hash-mismatch"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "event": {
+            "const": "D.2-ContentConsignmentFailure"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "enum": [
+              "routing-failed"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "event": {
+            "enum": [
+              "B.3-RelayFailure",
+              "D.2-ContentConsignmentFailure"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "A.2-SubmissionRejection"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "submission_hash"
+        ],
+        "not": {
+          "required": [
+            "payload_hash"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "event": {
+              "const": "A.2-SubmissionRejection"
+            }
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "payload_hash"
+        ],
+        "not": {
+          "required": [
+            "submission_hash"
+          ]
+        }
+      }
+    }
+  ]
+}

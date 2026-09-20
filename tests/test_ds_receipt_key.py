@@ -1,0 +1,252 @@
+# SPDX-License-Identifier: MIT
+"""R3-04 — the DS receipt names a key that can actually be resolved.
+
+Former defect (round-3 review, High). The I-D required RDP(out) to verify the
+signed delivery receipt against "the DS's published key" before issuing the DE,
+and the Delivery-Service contract carried the same obligation on `ds_signature`
+— while **no DS signing-key field, discovery endpoint, key history, certificate
+profile, key identifier or rollover mechanism existed anywhere**. The reference
+mock's locally-known demo key is a convenience, not a trust relationship.
+
+So two conforming implementations could not discover which key verifies a
+receipt, could not validate a historical receipt after a rotation, and were
+exposed to ambiguous key substitution. An obligation with no referent is not an
+obligation.
+
+**R3-T3** binds the keys into BW-MED — an object that is already signed and
+already retained for the evidence period — rather than defining a new endpoint
+that would need its own rotation, history and retention machinery for a single
+key. The receipt carries `ds_kid` and `ds_alg`, and **validity is judged at the
+receipt's own `server_time`**: that is what keeps a 2026 receipt verifiable in
+2033, after the key that signed it has been rotated out.
+"""
+import copy
+import importlib.util
+import json
+import pathlib
+import sys
+
+import pytest
+import yaml
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import lint_cli as lc  # noqa: E402
+
+
+
+def _staged(mock, *, issuing_rdp_id, message_id, recipient_uid, mid, device_id,
+            octets, session_binding):
+    """R7-02: a receipt now requires an item the DS ACCEPTED, QUEUED and
+    TRANSFERRED. These fixtures run that lifecycle rather than bypassing it —
+    a helper that faked the state would reintroduce exactly the orphan the
+    finding is about, one layer down."""
+    import base64
+    mock.ds_accept_message(message_id, "demo-group",
+                           base64.b64encode(octets).decode(),
+                           principal=issuing_rdp_id)
+    mock.queue_delivery(issuing_rdp_id, message_id, recipient_uid=recipient_uid,
+                        mid=mid, device_id=device_id)
+    # R9-01/R9-02: collect through the PUBLIC operation and RETURN the token it
+    # issued. These fixtures used to call the private `transfer_delivery()` and
+    # then acknowledge with no token at all — which is why nothing noticed that
+    # a value the published request declares REQUIRED was optional in the
+    # reference. A fixture that can skip a wire value cannot test that it is
+    # needed.
+    got = mock.collect_messages(
+        credential={"kind": "device", "uid": recipient_uid, "mid": mid,
+                    "device_id": device_id,
+                    "session": session_binding["digest"]},
+        session_binding=session_binding)
+    return next(i["collection_token"] for i in got["items"]
+                if i["message_id"] == message_id)
+
+
+def _load(name, filename):
+    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / filename)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+mock = _load("mock_rdp", "mock_rdp.py")
+DS = yaml.safe_load((ROOT / "delivery-service-openapi.yaml").read_text())
+MED = json.loads((ROOT / "samples" / "sample-BW-MED.json").read_text())["projection"]
+SE = json.loads((ROOT / "samples" / "sample-SE.json").read_text())["projection"]
+
+OCTETS = b"\x00\x01" + b"the exact octets handed to the device" * 3
+SESSION = {"kind": "token-digest", "digest": "a" * 64}
+DEVICE = "DEV-1"
+CRED = {"kind": "device", "uid": SE["recipient_uid"], "mid": "F1N2C3D4P",
+        "device_id": DEVICE, "session": SESSION["digest"]}   # R11-01
+EVENT = "2026-04-04T10:16:23Z"
+
+
+def setup_function():
+    # R7-02: the delivery items are server state like the ledgers, so a
+    # test must not inherit a previous one's transfer.
+    mock._DELIVERY_ITEMS.clear()
+    mock._DS_LEDGER.clear()
+    mock._ACK_LEDGER.clear()
+
+
+def _ack(message_id="01HZ3KEY00000000000000001", *, server_clock=EVENT, **over):
+    rdp = over.pop("issuing_rdp_id", "urn:sbm:rdp:demo-out")
+    token = _staged(mock, issuing_rdp_id=rdp, message_id=message_id,
+                    recipient_uid=SE["recipient_uid"], mid="F1N2C3D4P",
+                    device_id=DEVICE, octets=OCTETS, session_binding=SESSION)
+    over.setdefault("collection_token", token)     # R9-01: required on the wire
+    return mock.receipt_ack(message_id=message_id, issuing_rdp_id=rdp,
+                            device_id=DEVICE, credential=CRED,
+                            session_binding=SESSION, octets=OCTETS,
+                            server_clock=server_clock, **over)
+
+
+def _digest():
+    import hashlib
+    return {"format": "mls10-message", "hex": hashlib.sha256(OCTETS).hexdigest()}
+
+
+def _med(*keys):
+    return {"ds_receipt_keys": list(keys)}
+
+
+DEMO_KEY = MED["ds_receipt_keys"][0]
+
+
+# ---------------------------------------------------------------------------
+# The obligation now has a referent
+# ---------------------------------------------------------------------------
+
+
+def _expect(receipt):
+    """R7-02: the delivery context is a TYPE now — complete, or it raises. A
+    bare mapping allowed `{}` and all-None contexts that asserted nothing."""
+    from lint_cli import DeliveryContext
+    return DeliveryContext(
+        message_id=receipt.get("message_id"),
+        issuing_rdp_id=receipt.get("issuing_rdp_id"),
+        recipient_uid=receipt.get("recipient_uid"),
+        mid=receipt.get("mid"),
+        device_id=receipt.get("device_id"),
+        session_binding=receipt.get("session_binding"),
+        message_digest=receipt.get("message_digest"))
+
+
+def test_the_receipt_names_its_verifying_key():
+    receipt = _ack()
+    assert receipt["ds_kid"] == "ds-demo-2026"
+    assert receipt["ds_alg"] == "EdDSA"
+
+
+def test_the_published_med_carries_the_key_the_receipt_names():
+    """Published in a signed, retained object rather than behind an endpoint
+    that would need its own rotation and retention machinery."""
+    assert any(k["kid"] == _ack()["ds_kid"] for k in MED["ds_receipt_keys"])
+
+
+def test_rdp_out_resolves_the_key_and_issues_the_de():
+    receipt = _ack()
+    assert mock.delivered_at_from_receipt(receipt, _digest(), med=MED, expect=_expect(receipt)) == EVENT
+
+
+def test_a_receipt_without_a_kid_yields_no_de():
+    """The state before R3-04: a signature with no way to say which key."""
+    receipt = copy.deepcopy(_ack())
+    receipt.pop("ds_kid")
+    with pytest.raises(mock.AckRejected) as exc:
+        mock.delivered_at_from_receipt(receipt, _digest(), med=MED, expect=_expect(receipt))
+    assert "no referent" in exc.value.detail
+
+
+# ---------------------------------------------------------------------------
+# Validity at the EVENT, which is the whole design
+# ---------------------------------------------------------------------------
+
+def test_a_receipt_verifies_after_the_key_is_rotated_out():
+    """The property that decides between judging validity at event time and at
+    verification time. A 2026 receipt must still verify in 2033."""
+    rotated = _med(dict(DEMO_KEY, valid_until="2026-06-01T00:00:00Z"),
+                   dict(DEMO_KEY, kid="ds-demo-2027",
+                        valid_from="2026-06-01T00:00:00Z"))
+    key = lc.resolve_ds_receipt_key(rotated, "ds-demo-2026", EVENT)
+    assert key["kid"] == "ds-demo-2026"
+    # R9-01: `_ack()` collects to obtain its token and an acknowledged item is
+    # not offered again, so ONE receipt is produced and reused rather than the
+    # fixture being called twice for the same message.
+    receipt = _ack()
+    assert mock.delivered_at_from_receipt(
+        receipt, _digest(), med=rotated, expect=_expect(receipt)) == EVENT
+
+
+def test_a_key_that_had_not_yet_taken_effect_cannot_have_signed_it():
+    future = _med(dict(DEMO_KEY, valid_from="2026-09-01T00:00:00Z"))
+    with pytest.raises(lc.ReceiptKeyError) as exc:
+        lc.resolve_ds_receipt_key(future, DEMO_KEY["kid"], EVENT)
+    assert "after the" in str(exc.value)
+
+
+def test_a_key_already_retired_at_the_event_fails():
+    retired = _med(dict(DEMO_KEY, valid_until="2026-02-01T00:00:00Z"))
+    with pytest.raises(lc.ReceiptKeyError):
+        lc.resolve_ds_receipt_key(retired, DEMO_KEY["kid"], EVENT)
+
+
+def test_the_window_is_half_open_at_the_boundary():
+    """Consistent with every other window in the profile: an instant on the
+    boundary belongs to exactly one key."""
+    boundary = _med(dict(DEMO_KEY, valid_until=EVENT))
+    with pytest.raises(lc.ReceiptKeyError):
+        lc.resolve_ds_receipt_key(boundary, DEMO_KEY["kid"], EVENT)
+    assert lc.resolve_ds_receipt_key(
+        _med(dict(DEMO_KEY, valid_from=EVENT)), DEMO_KEY["kid"], EVENT)
+
+
+# ---------------------------------------------------------------------------
+# Ambiguity fails closed
+# ---------------------------------------------------------------------------
+
+def test_an_unknown_kid_fails():
+    with pytest.raises(lc.ReceiptKeyError) as exc:
+        lc.resolve_ds_receipt_key(MED, "nobody-published-this", EVENT)
+    assert "nobody published" in str(exc.value)
+
+
+def test_two_keys_sharing_one_kid_fail_closed():
+    """The substitution risk the identifier exists to remove — so a duplicate
+    identifier cannot be resolved by picking one."""
+    ambiguous = _med(DEMO_KEY, dict(DEMO_KEY, public_key_b64="another-key"))
+    with pytest.raises(lc.ReceiptKeyError) as exc:
+        lc.resolve_ds_receipt_key(ambiguous, DEMO_KEY["kid"], EVENT)
+    assert "ambiguous" in str(exc.value)
+
+
+def test_an_algorithm_disagreement_is_rejected():
+    """Three-way agreement, as for confirmation keys (DR-12): the receipt's
+    declared algorithm must equal the published key's."""
+    receipt = copy.deepcopy(_ack())
+    receipt["ds_alg"] = "ES256"
+    with pytest.raises(mock.AckRejected) as exc:
+        mock.delivered_at_from_receipt(receipt, _digest(), med=MED, expect=_expect(receipt))
+    assert "algorithm" in exc.value.detail
+
+
+# ---------------------------------------------------------------------------
+# The contract and the schema say so
+# ---------------------------------------------------------------------------
+
+def test_the_contract_requires_the_identifier_and_the_algorithm():
+    receipt = DS["components"]["schemas"]["DeliveryReceipt"]
+    assert {"ds_kid", "ds_alg", "ds_signature"} <= set(receipt["required"])
+    assert set(receipt["properties"]["ds_alg"]["enum"]) == {"EdDSA", "ES256", "ES384"}
+
+
+def test_the_med_schema_defines_the_key_history():
+    med = json.loads((ROOT / "schemas" / "bw-med.schema.json").read_text())
+    keys = med["properties"]["ds_receipt_keys"]["items"]
+    assert set(keys["required"]) == {"kid", "alg", "public_key_b64", "valid_from"}
+    assert "valid_until" in keys["properties"]
+    note = " ".join(med["properties"]["ds_receipt_keys"]["description"].split())
+    assert "at the receipt's `server_time`" in note
+    assert "NOT at verification time" in note

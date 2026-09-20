@@ -1,0 +1,166 @@
+{
+  "$id": "https://bw.example.eu/schemas/evidence-ep.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Evidence Package (EP-v1) (v2.8)",
+  "description": "Evidence Package composed by the SENDER-SIDE RDP, always (D2/F-13; TS clause 4.1 — the former third-party EP-authority delegation is removed; the EP signer is bound to se.rdp_id in the trust store, LINT-TRUST-02/CF-6). Bundles SE with the final outcomes and records the RDP relay chain. On the wire the EP is a sealed evidence artefact `[cose-sign1, qualified-timestamp]` (this schema validates the PROJECTION, which carries no seal field); the artefact's qualified timestamp imprints SHA-256 of its first element (the EP COSE_Sign1) per the I-D (Evidence Objects and COSE Packaging) sequencing, attesting the time of bundle composition — which is the COMPOSER's act instant: the sender-side RDP (`se.rdp_id`) MUST be admitted to the federation at that instant, separately from the recorded acts inside the package, each checked at its own (R10-X5; umbrella §13.1); per-event legal times remain on the enclosed SE/DE/NDE/RE objects (the I-D (Evidence Objects and COSE Packaging), EPTS-1).",
+  "type": "object",
+  "required": [
+    "type",
+    "version",
+    "message_id",
+    "se",
+    "outcomes",
+    "rdp_chain"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "EP-v1"
+    },
+    "version": {
+      "type": "string",
+      "const": "2.8"
+    },
+    "message_id": {
+      "type": "string"
+    },
+    "se": {
+      "$ref": "evidence-se.schema.json"
+    },
+    "outcomes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "The message's outcome evidence. A monotone finality rule (R1/R4, twenty-fourth review): each of DE-v1 (delivery), NDE-v1 (non-delivery) and RE-v1 (refusal) is a TERMINAL outcome, and an EP MUST carry at most ONE terminal outcome for its message (per grade where grades differ) — a DE and a terminal NDE/RE for the same message are contradictory. Retries are idempotent (I-D Error Handling and Retries); late or additional events are SUPPLEMENTARY evidence carried in `changes`/`states`, never replacing the terminal result. At-most-one-terminal is evidence_lint LINT-EP-07; the full state machine is normative in the I-D.",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "evidence-de.schema.json"
+          },
+          {
+            "$ref": "evidence-nde.schema.json"
+          },
+          {
+            "$ref": "evidence-re.schema.json"
+          }
+        ]
+      }
+    },
+    "rdp_chain": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "rdp_id",
+          "timestamp"
+        ],
+        "properties": {
+          "rdp_id": {
+            "$ref": "evidence-common.schema.json#/$defs/RdpId",
+            "description": " R8-05: declared an unconstrained string, so this evidence field admitted provider identifiers the rest of the model rejects."
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "evidence": {
+            "type": "object",
+            "description": "OPTIONAL per-hop reference to this hop's sealed B.x relay evidence (RelayEvidence-v1), for the profile-2 four-corner case (FC-2; TS clause 4.1). Binds the specific relay-evidence object by the digest of its seal (see seal_digest for the exact input), so every hop is independently verifiable in a dispute (TS clause 4.1 dispute chain) rather than coupled to the archive by message_id convention alone. Absent in single-provider (profile-1) EPs. Its message_id equals the EP message_id (evidence_lint LINT-EP-06); where the referenced object is in the same bundle, the digest is recomputed and compared (bundle_lint LINT-BND-20).",
+            "required": [
+              "event",
+              "message_id",
+              "seal_digest"
+            ],
+            "properties": {
+              "event": {
+                "type": "string",
+                "enum": [
+                  "B.1-RelayAcceptance",
+                  "B.2-RelayRejection"
+                ]
+              },
+              "message_id": {
+                "type": "string"
+              },
+              "seal_digest": {
+                "type": "object",
+                "description": "The digest that binds this hop to its relay-evidence object. INPUT (normative, TS clause 4.1): the FIRST ELEMENT of the referenced object's evidence artefact — the exact serialized COSE_Sign1 octets — hex = lowercase-hex(SHA-256(cose-sign1)). NOT the base64 text: both are readings of 'the SHA-256 of its seal' and they yield DIFFERENT digests, so the input is fixed here. The decoded bytes are the profile's one convention — the qualified-timestamp imprint (LINT-PKG-08) digests the same input, so a seal has exactly one digest. `alg` names the hash FUNCTION; this description names its INPUT. Single implementation: lint_cli.compute_seal_digest; recomputed by bundle_lint LINT-BND-20; pinned in bytes by sample-EP-federated.json.",
+                "required": [
+                  "alg",
+                  "hex"
+                ],
+                "properties": {
+                  "alg": {
+                    "type": "string",
+                    "const": "SHA-256"
+                  },
+                  "hex": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$",
+                    "description": "lowercase-hex(SHA-256(cose-sign1)) over the referenced RelayEvidence-v1 artefact's first element (its serialized COSE_Sign1)."
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "changes": {
+      "type": "array",
+      "description": "Optional. Change-indication evidence (CE-v1) for any envelope/metadata transformation performed during sending or receiving (Regulation (EU) No 910/2014, Article 44(1)(e)).",
+      "items": {
+        "$ref": "evidence-ce.schema.json"
+      }
+    },
+    "states": {
+      "type": "array",
+      "description": "Optional. Non-DE, non-operative STATE RECORDS for states S1/S2/S3 (the I-D (Message Flows and Delivery States)): auditable metadata derived from authenticated MSP signals, NOT individually sealed and carrying no Article 43(2) effect; S1/S2 do not establish delivery. Each element records a state and its mapped EN 319 522-1 event and MUST NOT carry any delivery-establishing field (LINT-EP-04). Legally operative facts live in the sealed evidence objects.",
+      "items": {
+        "type": "object",
+        "required": [
+          "state",
+          "event",
+          "at"
+        ],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "event": {
+            "type": "string"
+          },
+          "at": {
+            "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+          },
+          "mid": {
+            "type": "string",
+            "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+          },
+          "device_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "disputes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "evidence-gcm.schema.json"
+      },
+      "description": "OPTIONAL (X-04/D5, evidence 2.2): grade-commitment-mismatch dispute evidence (GCM-v1), embedded as sub-artefact bytes on the wire like outcomes/changes. A valid GCM REBUTS the availability DE in dispute; it is NOT a terminal outcome (LINT-EP-07 finality untouched) and never retracts the DE."
+    }
+  },
+  "additionalProperties": false
+}

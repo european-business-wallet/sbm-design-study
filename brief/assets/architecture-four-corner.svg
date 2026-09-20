@@ -1,0 +1,116 @@
+<svg viewBox="0 0 940 660" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif" role="img">
+  <title>Four-corner federated architecture</title>
+  <desc>Entity A and Entity B wallet devices exchange MLS ciphertext through their Messaging Service Providers. Registered Delivery Providers exchange evidence metadata. Discovery goes through the European Directory of Entities. All trust chains to the EU Trusted Lists.</desc>
+
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <marker id="arrb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1d4ed8"/>
+    </marker>
+  </defs>
+
+  <text x="470" y="32" text-anchor="middle" font-size="18" font-weight="bold" fill="#1f2937">Four-corner federated architecture</text>
+
+  <!-- EDD -->
+  <rect x="270" y="56" width="400" height="62" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="470" y="80" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1f2937">EDD — European Directory of Entities</text>
+  <text x="470" y="98" text-anchor="middle" font-size="11.5" fill="#64748b">EU-governed core registry (UIDs, lifecycle) + federated discovery (MED, KeyPackages)</text>
+
+  <!-- Federation governance -->
+  <rect x="700" y="56" width="210" height="62" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.4"/>
+  <text x="805" y="76" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1f2937">Federation governance</text>
+  <text x="805" y="92" text-anchor="middle" font-size="10.5" fill="#475569">gated admission · membership registry</text>
+  <text x="805" y="107" text-anchor="middle" font-size="10.5" fill="#475569">design authority — central protocol control</text>
+
+  <!-- Discovery arrows -->
+  <path d="M 120 208 C 140 150, 220 115, 268 100" fill="none" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+  <text x="128" y="145" font-size="10.5" fill="#64748b">resolve UID</text>
+  <text x="128" y="159" font-size="10.5" fill="#64748b">fetch MED + KeyPackages</text>
+  <path d="M 820 208 C 805 165, 735 130, 672 105" fill="none" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+  <text x="742" y="145" font-size="10.5" fill="#64748b">publish MED,</text>
+  <text x="742" y="159" font-size="10.5" fill="#64748b">KeyPackages</text>
+
+  <!-- Wallet A -->
+  <rect x="30" y="210" width="180" height="112" rx="8" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.8"/>
+  <text x="120" y="234" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1f2937">Entity A</text>
+  <text x="120" y="252" text-anchor="middle" font-size="12" fill="#475569">Wallet Units — devices / MIDs</text>
+  <text x="120" y="270" text-anchor="middle" font-size="11.5" fill="#64748b">QSealC · UID QEAA credentials</text>
+  <text x="120" y="288" text-anchor="middle" font-size="11.5" fill="#1d4ed8">E2EE endpoint — plaintext here</text>
+
+  <!-- MSP out -->
+  <rect x="290" y="226" width="150" height="82" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="365" y="250" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">MSP (out)</text>
+  <text x="365" y="268" text-anchor="middle" font-size="11.5" fill="#475569">MLS Delivery Service</text>
+  <text x="365" y="285" text-anchor="middle" font-size="11.5" fill="#64748b">ciphertext only</text>
+
+  <!-- MSP in -->
+  <rect x="500" y="226" width="150" height="82" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="575" y="250" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">MSP (in)</text>
+  <text x="575" y="268" text-anchor="middle" font-size="11.5" fill="#475569">store &amp; forward, queues</text>
+  <text x="575" y="285" text-anchor="middle" font-size="11.5" fill="#64748b">ciphertext only</text>
+
+  <!-- Wallet B -->
+  <rect x="730" y="210" width="180" height="112" rx="8" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.8"/>
+  <text x="820" y="234" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1f2937">Entity B</text>
+  <text x="820" y="252" text-anchor="middle" font-size="12" fill="#475569">Wallet Units — devices / MIDs</text>
+  <text x="820" y="270" text-anchor="middle" font-size="11.5" fill="#64748b">roles · quorum acceptance</text>
+  <text x="820" y="288" text-anchor="middle" font-size="11.5" fill="#1d4ed8">E2EE endpoint — plaintext here</text>
+
+  <!-- Message flow arrows -->
+  <line x1="212" y1="262" x2="288" y2="262" stroke="#475569" stroke-width="1.6" marker-end="url(#arr)"/>
+  <line x1="442" y1="262" x2="498" y2="262" stroke="#475569" stroke-width="1.6" marker-end="url(#arr)"/>
+  <line x1="652" y1="262" x2="728" y2="262" stroke="#475569" stroke-width="1.6" marker-end="url(#arr)"/>
+  <text x="470" y="250" text-anchor="middle" font-size="10.5" fill="#475569">MLS ciphertext (HTTPS)</text>
+
+  <!-- E2EE key line -->
+  <path d="M 120 324 L 120 356 L 820 356 L 820 324" fill="none" stroke="#1d4ed8" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#arrb)" marker-start="url(#arrb)"/>
+  <text x="470" y="349" text-anchor="middle" font-size="11.5" fill="#1d4ed8" font-weight="bold">MLS group keys — negotiated end-to-end between devices; the federation sees only ciphertext</text>
+
+  <!-- RDPs -->
+  <rect x="290" y="408" width="150" height="86" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.6"/>
+  <text x="365" y="432" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">RDP (out)</text>
+  <text x="365" y="450" text-anchor="middle" font-size="11.5" fill="#475569">QERDS-qualified QTSP</text>
+  <text x="365" y="467" text-anchor="middle" font-size="11.5" fill="#64748b">SE · Evidence Package</text>
+
+  <rect x="500" y="408" width="150" height="86" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.6"/>
+  <text x="575" y="432" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">RDP (in)</text>
+  <text x="575" y="450" text-anchor="middle" font-size="11.5" fill="#475569">QERDS-qualified QTSP</text>
+  <text x="575" y="467" text-anchor="middle" font-size="11.5" fill="#64748b">DE · NDE · RE</text>
+
+  <!-- Evidence flow -->
+  <line x1="442" y1="451" x2="498" y2="451" stroke="#475569" stroke-width="1.4" marker-end="url(#arr)" marker-start="url(#arr)"/>
+  <text x="470" y="441" text-anchor="middle" font-size="10.5" fill="#475569">evidence metadata</text>
+
+  <line x1="365" y1="310" x2="365" y2="406" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arr)"/>
+  <text x="352" y="372" text-anchor="end" font-size="10.5" fill="#64748b">evidenced events</text>
+  <line x1="575" y1="310" x2="575" y2="406" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arr)"/>
+  <text x="588" y="372" font-size="10.5" fill="#64748b">acceptance / quorum</text>
+
+  <!-- Evidence to wallets -->
+  <path d="M 288 470 C 180 470, 130 400, 122 326" fill="none" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arr)"/>
+  <text x="150" y="450" font-size="10.5" fill="#64748b">EP → wallet-storable</text>
+  <path d="M 652 470 C 760 470, 810 400, 818 326" fill="none" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arr)"/>
+  <text x="700" y="450" font-size="10.5" fill="#64748b">DE / RE notices</text>
+
+  <!-- Trusted Lists -->
+  <rect x="150" y="548" width="640" height="58" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="1.2" stroke-dasharray="2 3"/>
+  <text x="470" y="572" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">EU Trusted Lists — Regulation (EU) No 910/2014</text>
+  <text x="470" y="590" text-anchor="middle" font-size="11.5" fill="#64748b">QTSPs: UID / QEAA issuers · QSealC · QERDS providers — single trust root for identity, encryption credentials and evidence</text>
+
+  <line x1="365" y1="494" x2="365" y2="546" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 3"/>
+  <line x1="575" y1="494" x2="575" y2="546" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 3"/>
+
+  <!-- Legend -->
+  <g font-size="10.5" fill="#64748b">
+    <line x1="30" y1="630" x2="62" y2="630" stroke="#475569" stroke-width="1.6"/>
+    <text x="68" y="634">message flow</text>
+    <line x1="160" y1="630" x2="192" y2="630" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="5 4"/>
+    <text x="198" y="634">discovery</text>
+    <line x1="280" y1="630" x2="312" y2="630" stroke="#1d4ed8" stroke-width="1.6" stroke-dasharray="6 4"/>
+    <text x="318" y="634">end-to-end keys</text>
+    <line x1="420" y1="630" x2="452" y2="630" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <text x="458" y="634">evidence / events</text>
+  </g>
+</svg>

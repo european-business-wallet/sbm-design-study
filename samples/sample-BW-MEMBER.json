@@ -1,0 +1,74 @@
+{
+  "sm_artifact_b64": "hFGiAScETGVudGl0eS1hZG1pbqBZB0yoY21pZGlBMUIyQzNENFJjdWlkeBlFVS1ERS1FT0lELTdLM0Q5VzBRMk01RlcwZHR5cGVsQlctTUVNQkVSLXYxZXJvbGVzgWhpbnZvaWNlc2ZzdGF0dXNmYWN0aXZlZ2RldmljZXOCqWhhZGRlZF9hdHQyMDI2LTAzLTAxVDA5OjAwOjAwWmlkZXZpY2VfaWRmZGV2LTAxaWxhc3Rfc2VlbnQyMDI2LTA0LTA0VDE3OjQyOjAwWmxjYXBhYmlsaXRpZXODZ3JlY2VpdmVjYWNrZHNpZ25sZGV2aWNlX2NsYXNzaHNvZnR3YXJlbWNpcGhlcl9zdWl0ZXOBeCxNTFNfMTI4X0RIS0VNWDI1NTE5X0FFUzEyOEdDTV9TSEEyNTZfRWQyNTUxOXBjb25maXJtYXRpb25fa2V5omNhbGdlRWREU0FucHVibGljX2tleV9iNjR4LFFYQStCeSt5eTZXZ2lLNnJtTkFYVzhWb0pHUGwzUjZvZXZ4ZFZFb0pwdlU9cG1sc19sZWFmX2JpbmRpbmeicGJpbmRpbmdfY29zZV9iNjR5ASRoRkdpQVNjRVRHVnVkR2wwZVMxaFpHMXBicUJZZ2FSamJXbGthVUV4UWpKRE0wUTBVbU4xYVdSNEdVVlZMVVJGTFVWUFNVUXROMHN6UkRsWE1GRXlUVFZHVnpCcFpHVjJhV05sWDJsa1ptUmxkaTB3TVhOc1pXRm1YM05wWjE5d2RXSnJaWGxmWWpZMGVDeEVUVTkyVjNsVlFXeFlRVVZ0Vms1NWJrcDRWVFZ0Um5KaE9YcHdOWFF4TkRkTlJHNXRSRWxXTmtSSlBWaEFlN3FhSUNGMVk5Z21sL0VVamQ3NEl3QUxwd045Syt1WXhqcDNtdHVCOVlUTkNGVSt2dStaZzl6WDBVYUE5SVlqdEhmMnFsU3hPRWZ4NUo4SmIyWk5Edz09c2xlYWZfc2lnX3B1YmtleV9iNjR4LERNT3ZXeVVBbFhBRW1WTnluSnhVNW1GcmE5enA1dDE0N01Ebm1ESVY2REk9cW1sc19sZWFmX25vZGVfcmVmoXJzaWduYXR1cmVfa2V5X2hhc2h4QGRlYjE3Mzk0NDQyOWU2MGE3NTUzYmUxMTdhMTcxZmNlMmQ1Mzg3YmI4MDg4YzNkNWQ1OTQwNmQ3NTRhZWYwYjCpaGFkZGVkX2F0dDIwMjYtMDMtMTBUMTQ6MTU6MDBaaWRldmljZV9pZGlkZXYtMDItc2VpbGFzdF9zZWVudDIwMjYtMDQtMDRUMTg6MDA6MDBabGNhcGFiaWxpdGllc4NncmVjZWl2ZWNhY2tkc2lnbmxkZXZpY2VfY2xhc3Nuc2VjdXJlLWVsZW1lbnRtY2lwaGVyX3N1aXRlc4J4LE1MU18xMjhfREhLRU1YMjU1MTlfQUVTMTI4R0NNX1NIQTI1Nl9FZDI1NTE5eCdNTFNfMTI4X0RIS0VNUDI1Nl9BRVMxMjhHQ01fU0hBMjU2X1AyNTZwY29uZmlybWF0aW9uX2tleaJjYWxnZUVkRFNBbnB1YmxpY19rZXlfYjY0eCxlbHpUMXgwd3dsNVdQOERNeStHa2tOMWxkYkc0Mlpsem1YSGh5V0pLRUlRPXBtbHNfbGVhZl9iaW5kaW5nonBiaW5kaW5nX2Nvc2VfYjY0eQEoaEZHaUFTY0VUR1Z1ZEdsMGVTMWhaRzFwYnFCWWhLUmpiV2xrYVVFeFFqSkRNMFEwVW1OMWFXUjRHVVZWTFVSRkxVVlBTVVF0TjBzelJEbFhNRkV5VFRWR1Z6QnBaR1YyYVdObFgybGthV1JsZGkwd01pMXpaWE5zWldGbVgzTnBaMTl3ZFdKclpYbGZZalkwZUN4RFJ6QlFOWGxsVkVjME1HMUJUVEpqVVhGWlpHbHlNekZVTjNkNFJEVndhVWh5UTJkV1EyVkVkUzlSUFZoQS8rQTVRMGUyS3d6Ly9LTEM4SmJsVnpaUDhTZUVkc3VhZWUxZlF2RjBPS1dOZ3duUURkWW44cXEwUjJvZEN6ZmZ2cmc3ZXMxS2UyNDdpSXgrU1RtZURBPT1zbGVhZl9zaWdfcHVia2V5X2I2NHgsQ0cwUDV5ZVRHNDBtQU0yY1FxWWRpcjMxVDd3eEQ1cGlIckNnVkNlRHUvUT1xbWxzX2xlYWZfbm9kZV9yZWahcnNpZ25hdHVyZV9rZXlfaGFzaHhAMjZmNDdiNTBkMzBmY2M5OGI5ZWQ5MTQ3N2RkM2IyMzNlNzZiYjE2ZmY5YTU0MDEzNDMwMjZjNGI4YzgxMDAwMWd2ZXJzaW9uYzIuMm5hY2NvdW50YWJpbGl0eaNpcmV0ZW50aW9uZFAxMFlxYWNjZXNzX2NvbmRpdGlvbnOCZ2Rpc3B1dGVzc3VwZXJ2aXNvcnktcmVxdWVzdHFhdXRob3Jpc2F0aW9uX3JlZngldXJuOm9yZzpiZWlzcGllbC1nbWJoOmF1dGh6OjIwMjYtMDA0MlhAzB0v8dYZJ7988OZpmpR1fmGpx/27mAw0ybALy50eNaXdTnqOORGRpc1gUgWn56nTLI9vSnCDFajUyedoIQOICA==",
+  "projection": {
+    "type": "BW-MEMBER-v1",
+    "version": "2.2",
+    "uid": "EU-DE-EOID-7K3D9W0Q2M5FW0",
+    "mid": "A1B2C3D4R",
+    "status": "active",
+    "roles": [
+      "invoices"
+    ],
+    "devices": [
+      {
+        "device_id": "dev-01",
+        "added_at": "2026-03-01T09:00:00Z",
+        "last_seen": "2026-04-04T17:42:00Z",
+        "mls_leaf_node_ref": {
+          "signature_key_hash": "deb173944429e60a7553be117a171fce2d5387bb8088c3d5d59406d754aef0b0"
+        },
+        "capabilities": [
+          "receive",
+          "ack",
+          "sign"
+        ],
+        "confirmation_key": {
+          "alg": "EdDSA",
+          "public_key_b64": "QXA+By+yy6WgiK6rmNAXW8VoJGPl3R6oevxdVEoJpvU="
+        },
+        "device_class": "software",
+        "mls_leaf_binding": {
+          "leaf_sig_pubkey_b64": "DMOvWyUAlXAEmVNynJxU5mFra9zp5t147MDnmDIV6DI=",
+          "binding_cose_b64": "hFGiAScETGVudGl0eS1hZG1pbqBYgaRjbWlkaUExQjJDM0Q0UmN1aWR4GUVVLURFLUVPSUQtN0szRDlXMFEyTTVGVzBpZGV2aWNlX2lkZmRldi0wMXNsZWFmX3NpZ19wdWJrZXlfYjY0eCxETU92V3lVQWxYQUVtVk55bkp4VTVtRnJhOXpwNXQxNDdNRG5tRElWNkRJPVhAe7qaICF1Y9gml/EUjd74IwALpwN9K+uYxjp3mtuB9YTNCFU+vu+Zg9zX0UaA9IYjtHf2qlSxOEfx5J8Jb2ZNDw=="
+        },
+        "cipher_suites": [
+          "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
+        ]
+      },
+      {
+        "device_id": "dev-02-se",
+        "added_at": "2026-03-10T14:15:00Z",
+        "last_seen": "2026-04-04T18:00:00Z",
+        "mls_leaf_node_ref": {
+          "signature_key_hash": "26f47b50d30fcc98b9ed91477dd3b233e76bb16ff9a5401343026c4b8c810001"
+        },
+        "capabilities": [
+          "receive",
+          "ack",
+          "sign"
+        ],
+        "confirmation_key": {
+          "alg": "EdDSA",
+          "public_key_b64": "elzT1x0wwl5WP8DMy+GkkN1ldbG42ZlzmXHhyWJKEIQ="
+        },
+        "device_class": "secure-element",
+        "mls_leaf_binding": {
+          "leaf_sig_pubkey_b64": "CG0P5yeTG40mAM2cQqYdir31T7wxD5piHrCgVCeDu/Q=",
+          "binding_cose_b64": "hFGiAScETGVudGl0eS1hZG1pbqBYhKRjbWlkaUExQjJDM0Q0UmN1aWR4GUVVLURFLUVPSUQtN0szRDlXMFEyTTVGVzBpZGV2aWNlX2lkaWRldi0wMi1zZXNsZWFmX3NpZ19wdWJrZXlfYjY0eCxDRzBQNXllVEc0MG1BTTJjUXFZZGlyMzFUN3d4RDVwaUhyQ2dWQ2VEdS9RPVhA/+A5Q0e2Kwz//KLC8JblVzZP8SeEdsuaee1fQvF0OKWNgwnQDdYn8qq0R2odCzffvrg7es1Ke247iIx+STmeDA=="
+        },
+        "cipher_suites": [
+          "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519",
+          "MLS_128_DHKEMP256_AES128GCM_SHA256_P256"
+        ]
+      }
+    ],
+    "accountability": {
+      "authorisation_ref": "urn:org:beispiel-gmbh:authz:2026-0042",
+      "retention": "P10Y",
+      "access_conditions": [
+        "dispute",
+        "supervisory-request"
+      ]
+    }
+  }
+}

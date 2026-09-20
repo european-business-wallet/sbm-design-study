@@ -1,0 +1,84 @@
+<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
+# License and IPR — Overview
+
+**Document:** Secure Business Messaging Profile
+**Version of this license overview:** 1.3
+**Applies to:** the Secure Business Messaging Profile specification set (the umbrella profile v2.1 and later, the IETF Internet-Draft, the TS-shaped QERDS binding) and the companion artefacts in this repository.
+**Date:** 2026-07-06
+
+---
+
+## 1. What is licensed how
+
+This repository uses a machine-readable, [REUSE](https://reuse.software)-compliant licensing scheme. Every file carries an `SPDX-License-Identifier` (inline or via `REUSE.toml`); the canonical license texts live in `LICENSES/`. In summary:
+
+| What | License | Canonical text |
+|------|---------|----------------|
+| **Specification text and documentation** (the umbrella, the Internet-Draft, the TS-shaped binding, `docs/`, `README.md`, this file) | **CC BY 4.0** | [`LICENSES/CC-BY-4.0.txt`](LICENSES/CC-BY-4.0.txt) |
+| **Reference code and machine-readable artefacts** (`scripts/`, `tests/`, `schemas/`, `samples/`, `edd-resolver-openapi.yaml`, build/CI files) | **MIT** | [`LICENSES/MIT.txt`](LICENSES/MIT.txt) |
+| **Patent commitment** (Royalty-Free / RAND-Z) of contributors, for Conformant Implementations | RAND-Z | [`IPR.md`](IPR.md) |
+| **Contribution terms** (inbound = outbound) | — | [`CONTRIBUTING.md`](CONTRIBUTING.md), [`IPR.md`](IPR.md) §5 |
+
+Copyright and patent rights are independent legal mechanisms: a copyright license alone does not grant patent rights, and a patent commitment alone does not grant the right to reproduce or adapt the text. An implementer therefore needs **both** the copyright license (CC BY 4.0) **and** the patent commitment ([`IPR.md`](IPR.md)) to implement the Specification freely from the published text.
+
+### 1.1 Ownership and independence
+
+Copyright in the Specification and the companion artefacts is held by **Paolo De Rosa and the contributors** to this repository, in their personal capacity. This work is an **independent technical exploration**: it is not an official proposal, deliverable or position of the European Commission, of any Member State, or of any standards body, and the choice of copyright holder reflects exactly that independence. Should the work later be adopted by an institution or standards-developing organisation, the adopted deliverable would be governed by the adopting body's own copyright and IPR regime (see [`IPR.md`](IPR.md) §6 on the IETF and ETSI); this repository would remain available under the licenses described here.
+
+---
+
+## 2. Part A — Copyright license (CC BY 4.0)
+
+The Specification text and its companion documentation are licensed to the public under the **Creative Commons Attribution 4.0 International Public License** (CC BY 4.0) — canonical text in [`LICENSES/CC-BY-4.0.txt`](LICENSES/CC-BY-4.0.txt), deed at <https://creativecommons.org/licenses/by/4.0/>. This overview applies CC BY 4.0 by reference and does not modify it; in case of conflict the canonical text prevails.
+
+### 2.1 Scope of Part A
+
+Part A applies to the specification and documentation files, including their future revisions:
+
+- `Secure-Business-Messaging-Profile.md` — the umbrella Specification document (and its future revisions);
+- `ietf/draft-sbm-mls-erd-00.md` — the Internet-Draft for the wire protocol. NOTE: upon submission to the IETF the draft is additionally governed by the IETF Trust Legal Provisions (BCP 78 / BCP 79); the `ipr: trust200902` declaration in the draft controls for IETF purposes (see [`IPR.md`](IPR.md) §6);
+- `etsi/TS-SBM-QERDS-Binding-v0.1.md` — the TS-shaped QERDS binding profile. NOTE: this is not an ETSI deliverable; upon any adoption by ETSI, the ETSI IPR Policy and copyright regime would govern the resulting ETSI deliverable, while the text as published here remains under this Part A;
+- `docs/vision-and-context.md` — the consolidated vision & context companion;
+- `README.md`, `IPR.md`, `CONTRIBUTING.md`, `THIRD_PARTY_NOTICES.md`, this `LICENSE` overview, and other Markdown documentation files, unless a given file carries a different notice.
+
+### 2.2 Attribution notice
+
+When reusing or adapting the Specification or its companion documentation, please include a notice substantially similar to:
+
+> © 2025–2026 Paolo De Rosa and contributors. Licensed under the Creative Commons Attribution 4.0 International License (CC BY 4.0). Original source: <https://github.com/paolo-de-rosa/secure-business-messaging>. A copy of the license is available at <https://creativecommons.org/licenses/by/4.0/legalcode>. Patent rights are subject to the Royalty-Free commitment described in `IPR.md`.
+
+---
+
+## 3. Part C — Reference code and machine-readable artefacts (MIT)
+
+Reference code and machine-readable artefacts — all files under `scripts/`, `tests/`, `schemas/` and `samples/`, and `edd-resolver-openapi.yaml`, plus the build/CI files (`Makefile`, `.github/workflows/`, `scripts/requirements.txt`) — are licensed under the **MIT License** ([`LICENSES/MIT.txt`](LICENSES/MIT.txt)). These are meant to be embedded directly in implementations, where a permissive software license is the appropriate instrument; licensing them with the code keeps attribution obligations out of implementers' codebases. Their technical content mirrors the Specification, which prevails in case of divergence.
+
+The reference code is provided on an "AS IS" basis, without warranties or conditions of any kind. It is **not** a production implementation, has not been independently audited for security, and should not be deployed in production without appropriate review.
+
+---
+
+## 4. Patents
+
+The Royalty-Free (RAND-Z) patent commitment of contributors, its definitions (Contribution, Essential Patent Claim, Conformant Implementation), scope and exclusions, defensive termination, and the IETF/ETSI regime notes are in [`IPR.md`](IPR.md).
+
+## 5. Contributions
+
+Contributions are accepted on an **inbound = outbound** basis: a Contribution is licensed outbound under CC BY 4.0 / MIT as applicable, and a Contributor's Essential Patent Claims are subject to the RAND-Z commitment. A Contribution is material intentionally submitted for inclusion **and** actually incorporated — a bare issue or comment is not a Contribution. See [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`IPR.md`](IPR.md) §5.
+
+---
+
+## 6. Disclaimer
+
+THE SPECIFICATION AND COMPANION ARTEFACTS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE SPECIFICATION, ITS IMPLEMENTATIONS, OR THE REFERENCE CODE.
+
+This is a licensing and IPR framework for a draft technical specification. It does **not** constitute an official position of the European Commission, a standards-track document of any standards-developing organisation, or legal advice. Implementers and contributors are encouraged to obtain independent legal review before commercial deployment or before contributing patented material.
+
+---
+
+## 7. Contact and about
+
+For questions about this license, to report a patent disclosure, or to request clarification on the scope of the RAND-Z commitment, please open an issue in the source repository or contact the maintainer(s) listed in `README.md`.
+
+This `LICENSE` overview and the `IPR.md` document are themselves licensed under CC BY 4.0, so other projects may adopt and adapt this framework. When doing so, update §2.1 and §3 to reflect the adopting repository's file layout and replace the attribution in §2.2.

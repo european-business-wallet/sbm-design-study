@@ -1,0 +1,67 @@
+{
+  "$comment": "R3-09 follow-up. A versioned discovery schema gained a field (BW-MED's `ds_receipt_keys`, R3-04) while its version const stayed put, and the version gate could not see it: every binding still agreed with the manifest, because the manifest had not moved either. The CHANGELOG and the pull request then claimed a bump that had not happened.\n\nThis file fingerprints each versioned schema's TOP-LEVEL PROPERTY SET. Change the shape and the fingerprint changes; if the version has not moved with it, `make versions` fails and names the schema. Regenerate deliberately with `python3 scripts/schema_shapes.py --write` when a bump is intended — the point is that the bump becomes a decision rather than an omission.",
+  "shapes": {
+    "bw-med.schema.json": {
+      "dimension": "discovery_bw_med",
+      "version": "2.1",
+      "properties": [
+        "asserted_at",
+        "ds_receipt_keys",
+        "expires_at",
+        "identity_credential",
+        "kid",
+        "mls",
+        "msp",
+        "org",
+        "policy",
+        "protocols",
+        "rdp",
+        "type",
+        "uid",
+        "version",
+        "wia_ref"
+      ]
+    },
+    "bw-org.schema.json": {
+      "dimension": "discovery_bw_org",
+      "version": "2.6",
+      "properties": [
+        "acceptance_policy",
+        "contact_url",
+        "delivery_grades",
+        "display_name",
+        "euid",
+        "legal_name",
+        "max_ttl",
+        "member_endpoint",
+        "policy_version",
+        "privacy_url",
+        "roles",
+        "scope_map",
+        "supersedes",
+        "terms_url",
+        "type",
+        "uid",
+        "valid_from",
+        "version"
+      ]
+    },
+    "bw-member.schema.json": {
+      "dimension": "discovery_bw_member",
+      "version": "2.2",
+      "properties": [
+        "accountability",
+        "devices",
+        "mandate_ref",
+        "member_type",
+        "mid",
+        "notifications",
+        "roles",
+        "status",
+        "type",
+        "uid",
+        "version"
+      ]
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "sm_artifact_b64": "glkBzIRIogEnBENyZHCgWQF8qmR0eXBlcFJlbGF5RXZpZGVuY2UtdjFlZXZlbnRzQi4xLVJlbGF5QWNjZXB0YW5jZWZob3BfYXR0MjAyNi0wNi0wMVQwOTowMDowNVpncHJvZmlsZWVwaWxvdGd2ZXJzaW9uYzIuOGptZXNzYWdlX2lkeBowMUhaM1JFTEFZMDAwMDAwMDAwMDAwMDAwMWtldmlkZW5jZV9pZHgodXJuOnV1aWQ6cmVsYXktYjEtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMW1lbnZlbG9wZV9oYXNoomNoZXh4QDIyZjVkMDc2MTA3ZjllYWE3MDY0YjZiM2NhYWE5MzQ1NWM5OGY0M2M4M2ZhNjg3OGY0ZGExYjQwOGMwYWVmNTNmZm9ybWF0bW1sczEwLW1lc3NhZ2Vuc2VuZGluZ19yZHBfaWR2dXJuOnNibTpyZHA6bW9ja2V1LTAwMXByZWNlaXZpbmdfcmRwX2lkdnVybjpzYm06cmRwOm1vY2tldS0wMDJYQBbnE9/ZId3W/hGLXVPuGRS9bJM6Bgx4g99AufzXqra73AnJakjK69bFcbMBw08YMOiB70r/aEW49yQwqyFZFQKjZmZvcm1hdGdyZmMzMTYxZnRzYV9pZHFRVFNBOk1vY2tFVTpUUy0wMWl0b2tlbl9iNjR4SE1ETUVJR2FucXBWZ01hNTdMZzRFM3BoSytlQ01UYU9iUWRUZVlpTWNjcVNSSGNyUkdBOHlNREkyTURZd01UQTVNREF3TlZvPQ==",
+  "projection": {
+    "type": "RelayEvidence-v1",
+    "version": "2.8",
+    "profile": "pilot",
+    "evidence_id": "urn:uuid:relay-b1-0000-0000-000000000001",
+    "message_id": "01HZ3RELAY0000000000000001",
+    "event": "B.1-RelayAcceptance",
+    "sending_rdp_id": "urn:sbm:rdp:mockeu-001",
+    "receiving_rdp_id": "urn:sbm:rdp:mockeu-002",
+    "hop_at": "2026-06-01T09:00:05Z",
+    "envelope_hash": {
+      "format": "mls10-message",
+      "hex": "22f5d076107f9eaa7064b6b3caaa93455c98f43c83fa6878f4da1b408c0aef53"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+# Developer / CI tooling — NOT required to use the artefacts. The canonical
+# test/conformance environment is scripts/requirements.txt; this file adds the
+# tools behind `make reuse`, `make licenses-report`, and the DCO check.
+#   Install with:  make dev-tools   (or: pip install -r requirements-dev.txt)
+#
+# Python note: these install cleanly on Python 3.11 (the CI runtime). Very new
+# runtimes may lack wheels for some transitive deps — pin 3.11 if `reuse` fails.
+#
+# The Internet-Draft render toolchain is Ruby (kramdown-rfc) + xml2rfc; it is
+# NOT a pip dependency and is installed only in the `render-id` CI job.
+
+reuse>=3.0          # REUSE / SPDX compliance (make reuse; the `reuse` CI job)
+pip-licenses>=4.0   # third-party dependency license report (make licenses-report)

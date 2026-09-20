@@ -1,0 +1,151 @@
+{
+  "$comment": "X-27 AUTH-ASSURANCE REGISTRY (design-authority-owned, umbrella §13.4; the X-25 registry model: registering a method or adjusting an admissible set is a REGISTRY ACTION, not a code or version change). The table is an explicit admissible-TUPLE table, never a scalar ordering: the finding warns that required assurance depends on the full method/combination, so each registered method carries the LoA labels it can truthfully claim, and each evidence context the (identity, LoA) tuples admissible for it — with combined-factor ELEVATION stated where a wallet signature (a possession factor over signed content) admits a lower session LoA. PILOT-PROVISIONAL: these floors are the pilot profile's provisional set. TODO(legal): the adopted floors' relation to the applicable standards and legal framework — which combinations satisfy which Regulation (EU) No 910/2014 obligations per evidence context — awaits counsel review and is LEFT OPEN; until then the table binds the reference deployment only (TS clause 6). Enforced fail-closed by evidence_lint LINT-AUTH-03; an UNREGISTERED well-formed method is accepted, preserved verbatim and treated as unassessed (LINT-AUTH-W1, the safe-generic-processing convention).",
+  "registry_version": 1,
+  "methods": {
+    "mls-x509": {
+      "status": "active",
+      "admissible_loa": [
+        "substantial",
+        "high"
+      ],
+      "note": "Entity-credential channel authentication (QSealC-anchored MLS session); cannot on its own claim very-high."
+    },
+    "wallet-eid-high": {
+      "status": "active",
+      "admissible_loa": [
+        "high",
+        "very-high"
+      ],
+      "note": "EUDI wallet eID authentication at LoA high or above."
+    },
+    "password-otp": {
+      "status": "active",
+      "admissible_loa": [
+        "substantial"
+      ],
+      "note": "Knowledge + OTP possession; never claims high."
+    },
+    "mls-uid-qeaa": {
+      "status": "active",
+      "admissible_loa": [
+        "substantial",
+        "high"
+      ],
+      "note": "UID QEAA carried as the MLS leaf credential (bw_uid_qeaa; OPTIONAL/experimental per X-19)."
+    },
+    "mls-x509+oidc4vp": {
+      "status": "active",
+      "admissible_loa": [
+        "substantial",
+        "high"
+      ],
+      "note": "X-08: mls-x509 plus a completed out-of-band OID4VP ceremony. Claimable ONLY with a channel-bound (channel_id-in-nonce) RETAINED transcript (umbrella §10.2); the ceremony adds policy enforcement, not LoA — the admissible set is the base method's."
+    },
+    "mls-uid-qeaa+oidc4vp": {
+      "status": "active",
+      "admissible_loa": [
+        "substantial",
+        "high"
+      ],
+      "note": "X-08: as mls-x509+oidc4vp, over the QEAA leaf credential."
+    }
+  },
+  "contexts": {
+    "se-submission": {
+      "sender-signed": {
+        "identities": [
+          "entity",
+          "member",
+          "system"
+        ],
+        "admissible_loa": [
+          "substantial",
+          "high",
+          "very-high"
+        ],
+        "elevation": "Combined-factor elevation: the sender wallet signature over the full D4 submission tuple is a possession factor the session LoA alone does not express, so a substantial session is admissible UNDER the signature. This row is WHY the reference SE (mls-x509/substantial) is admissible — only because origin_proof is sender-signed."
+      },
+      "provider-attested": {
+        "identities": [
+          "entity",
+          "member",
+          "system"
+        ],
+        "admissible_loa": [
+          "high",
+          "very-high"
+        ],
+        "note": "The narrowed mode leans wholly on the provider-attested session — a stronger session is required."
+      }
+    },
+    "de-confirmation": {
+      "wallet-signed": {
+        "identities": [
+          "member",
+          "device"
+        ],
+        "admissible_loa": [
+          "substantial",
+          "high",
+          "very-high"
+        ],
+        "elevation": "The member's wallet signature over the confirmation content elevates the session."
+      },
+      "session": {
+        "identities": [
+          "member",
+          "device"
+        ],
+        "admissible_loa": [
+          "high",
+          "very-high"
+        ],
+        "note": "A session-only confirmation of a legally operative delivery requires a high-or-above member session."
+      }
+    },
+    "de-availability": {
+      "identities": [
+        "member",
+        "device"
+      ],
+      "admissible_loa": [
+        "substantial",
+        "high",
+        "very-high"
+      ],
+      "note": "The authenticated-S2 retrieval session (the Article 44(1)(c) anchor); no confirmation object exists at this grade."
+    },
+    "re-member-refusal": {
+      "wallet-signed": {
+        "identities": [
+          "member"
+        ],
+        "admissible_loa": [
+          "substantial",
+          "high",
+          "very-high"
+        ],
+        "elevation": "The refusal_confirmation wallet signature elevates the session."
+      },
+      "session": {
+        "identities": [
+          "member"
+        ],
+        "admissible_loa": [
+          "high",
+          "very-high"
+        ]
+      }
+    },
+    "gcm-dispute": {
+      "identities": [
+        "member"
+      ],
+      "admissible_loa": [
+        "high",
+        "very-high"
+      ],
+      "note": "The disputing member's reveal is itself a legally consequential act."
+    }
+  }
+}

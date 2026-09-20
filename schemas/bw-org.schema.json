@@ -1,0 +1,225 @@
+{
+  "$id": "https://bw.example.eu/schemas/bw-org.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BW-ORG-v1 (v2.6)",
+  "description": "Organisation Profile: display metadata, roles, acceptance policies (evaluated over MLS group acknowledgements), an optional designated EP authority, and (v2.0) an optional confidentiality-scope map (spec §8.3a). v1.2 makes the acceptance policy deterministic: sealed as a COSE_Sign1 artefact, versioned (policy_version, valid_from), and referenced from SE/DE via acceptance_policy_ref (spec §8.3). v1.4 adds the optional delivery_grades map (spec §8.3b): the per-content-class delivery grade; availability is never a default. v1.5 adds the optional per-scope human_acceptance flag (Annex R, A3): system members are excluded from a human-gated scope's acceptance eligible set. v1.6 adds the per-scope records_role field (F16): which org role is a records scope's records leaf.",
+  "type": "object",
+  "required": [
+    "acceptance_policy",
+    "policy_version",
+    "type",
+    "uid",
+    "valid_from",
+    "version"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "BW-ORG-v1"
+    },
+    "version": {
+      "type": "string",
+      "const": "2.6"
+    },
+    "uid": {
+      "$ref": "evidence-common.schema.json#/$defs/Uid"
+    },
+    "policy_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Monotonic version identifier of this organisation profile / acceptance policy (spec §8.3). Referenced by SE/DE acceptance_policy_ref."
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Instant from which this policy_version is in force. R4-U1: the window is [valid_from, successor.valid_from) and the upper bound is DERIVED FROM THE CHAIN, never stored here. A published BW-ORG is IMMUTABLE — writing an end date into it later changes its deterministic-CBOR digest, and evidence that pinned the document would stop resolving to it. R4-02 reproduced exactly that deadlock: leaving v1 unbounded made the chain reject it (\"has a successor but no valid_until\"), and bounding it changed its digest, so both branches were closed for the ordinary publication."
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "legal_name": {
+      "type": "string"
+    },
+    "euid": {
+      "type": "string"
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "$ref": "evidence-common.schema.json#/$defs/RoleName"
+      }
+    },
+    "acceptance_policy": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "evidence-common.schema.json#/$defs/RoleName"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^(any-one|all|quorum:[1-9][0-9]*|device-class:[A-Za-z0-9_\\-]+)$",
+        "description": "any-one | all | quorum:n | device-class:<class>. Evaluated over MLS group acknowledgements by RDP(in) alone — the sole evidence-authoritative evaluator (X-10; TS clause 6). The MSP collects and forwards member confirmations; it evaluates nothing. X-16: the KEY is a RoleName — every declared role is addressable as bw:...r/<role>."
+      },
+      "minProperties": 1,
+      "required": [
+        "default"
+      ],
+      "description": "X-12 (BW-ORG 2.4): the RoleName-keyed acceptance-policy map, REQUIRED and non-empty, with the reserved key `default` REQUIRED — the policy governing entity-addressed default-scope messages, its eligible set the ENTIRE active membership. Exactly one key governs every message via the umbrella §8.3 deterministic selection: scoped → the scope's acceptance_policy_ref key; default-scope role-addressed → the role's key if present, else `default`; default-scope entity-addressed → `default`."
+    },
+    "scope_map": {
+      "type": "object",
+      "description": "Optional confidentiality-scope map (spec §8.3a). Signed as part of this BW-ORG document; the scope version in force at submission is echoed in SE/DE scope_ref. Absent ⇒ default-scope-only (backwards compatible). Administered by the same authority that seals this document (D3).",
+      "required": [
+        "scopes"
+      ],
+      "properties": {
+        "scopes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/ScopeDescriptor"
+          }
+        },
+        "fallback": {
+          "const": "default",
+          "description": "Map-level fallback (D4): when present, a content class with no matching scope MAY fall back to the default scope. Absent ⇒ no map-level fallback (submission refused with no-matching-scope unless a per-scope fallback applies)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "member_endpoint": {
+      "type": "string",
+      "format": "uri",
+      "description": "Base URL of the entity's member-enumeration surface (edd-resolver GET /uid/{uid}/members; umbrella §8.3a, F14): the active members with roles and per-device MLS leaf-node references and capabilities, so a counterparty can resolve the scope-eligible member/device set and a verifier can map group leaves to members and roles. REQUIRED where a scope_map is published (discovery_lint LINT-DISC-19). A non-authoritative discovery mirror — each member's sealed BW-MEMBER-v1 remains the trust anchor."
+    },
+    "privacy_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "terms_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "contact_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "delivery_grades": {
+      "type": "object",
+      "description": "OPTIONAL per-content-class delivery-grade declaration (spec §8.3b, v1.4): which act makes delivery of the class legally operative. Only classes explicitly listed here with the value 'availability' are availability-grade — never a default; undeclared classes take the grade implied by the governing acceptance policy (any-one/device-class => verification; quorum/all => acceptance). Grade/policy coherence: LINT-DISC-18.",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(x-)?[a-z][a-z0-9-]{0,62}$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "enum": [
+          "availability",
+          "verification",
+          "acceptance"
+        ]
+      }
+    },
+    "max_ttl": {
+      "type": "string",
+      "pattern": "^P(?!$)(\\d+D)?(T(?=\\d)(\\d+H)?(\\d+M)?(\\d+S)?)?$",
+      "description": "OPTIONAL (X-22, v2.2): the maximum TTL this entity accepts for inbound messages, as an ISO 8601 duration (days/time designators, e.g. P30D, P7D, PT72H). Absent = the profile default P30D. At submission the sender-computed expires_at MUST satisfy sent_at < expires_at <= sent_at + max_ttl (bundle_lint LINT-BND-27; the SE-level ordering is evidence_lint LINT-DE-18)."
+    },
+    "supersedes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_version",
+        "doc_digest"
+      ],
+      "description": "R4-U1: the predecessor this version replaces, pinned by CONTENT. This is now the ONLY statement of where the predecessor's window ends: `v2.valid_from` IS the instant v1 ceased. The digest is what makes the chain non-equivocable — an entity cannot publish two documents claiming the same predecessor without the disagreement being visible WHEN BOTH ARE OBSERVED. It does not PREVENT equivocation; that needs transparency and remains X-33.",
+      "properties": {
+        "policy_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "doc_digest": {
+          "$ref": "evidence-common.schema.json#/$defs/Hash",
+          "description": "SHA-256 of the predecessor's deterministic-CBOR body — the same digest acceptance_policy_ref pins."
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ScopeDescriptor": {
+      "type": "object",
+      "description": "A named confidentiality boundary (spec §8.3a). One MLS group per (entity pair, scope). recoverability is explicit with no default (D2).",
+      "required": [
+        "scope_id",
+        "version",
+        "valid_from",
+        "roles",
+        "content_classes",
+        "recoverability",
+        "acceptance_policy_ref"
+      ],
+      "properties": {
+        "scope_id": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "const": "default"
+          },
+          "description": "Stable scope identifier (e.g. 'legal', 'finance'). 'default' is RESERVED for the implicit baseline scope and MUST NOT be declared here (spec §8.3a)."
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Monotonic descriptor version; the value in force at submission is echoed in SE/DE scope_ref."
+        },
+        "valid_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "roles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "evidence-common.schema.json#/$defs/RoleName"
+          },
+          "description": "Roles whose members' devices are eligible leaves of this scope's group. X-16: each is a RoleName (addressable)."
+        },
+        "content_classes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^(x-)?[a-z][a-z0-9-]{0,62}$"
+          },
+          "description": "Envelope content_class values that route to this scope. Two-tier registry (the I-D, IANA Considerations): standard federation-governed classes, or entity-defined private classes under the mandatory x- prefix; the registry-membership discipline is discovery_lint LINT-DISC-16."
+        },
+        "recoverability": {
+          "type": "string",
+          "enum": [
+            "strict",
+            "records"
+          ],
+          "description": "REQUIRED, no default (D2): strict = only role members' devices; records = a declared organisational records/compliance leaf is present in the group and MUST be visible in the roster."
+        },
+        "acceptance_policy_ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Reference to the acceptance rule applied WITHIN this scope (quorum counts scope members only)."
+        },
+        "fallback": {
+          "const": "default",
+          "description": "Per-scope fallback declaration (D4). Absent ⇒ no fallback for this scope."
+        },
+        "human_acceptance": {
+          "type": "boolean",
+          "description": "OPTIONAL (default false; Annex R, A3): when true, legal acceptance in this scope requires a human — system members (member_type=system) are EXCLUDED from the scope's acceptance eligible set (§8.3), so an agent's acknowledgement does not satisfy the class. A human-acceptance scope whose eligible set is entirely system members is unsatisfiable (bundle_lint LINT-BND-16)."
+        },
+        "records_role": {
+          "$ref": "evidence-common.schema.json#/$defs/RoleName",
+          "description": "The organisation role whose active members are this scope's RECORDS LEAF (F16, §8.3a). X-16: a RoleName (addressable). REQUIRED where recoverability=records, FORBIDDEN where recoverability=strict (discovery_lint LINT-DISC-21). MUST be a declared org role and MUST NOT be one of this scope's own roles[] — the records function RECOVERS but is NOT an acceptance party (SCOPE-8 counts scope-role holders only). Distinguishability is the role, resolved via the member-enumeration surface (leaf → member → roles, §8.3a F14): a records scope's roster is exactly {scope-role holders} ∪ {records_role holders}."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

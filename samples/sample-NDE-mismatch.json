@@ -1,0 +1,48 @@
+{
+  "sm_artifact_b64": "glkEeoRIogEnBENyZHCgWQQqrWR0eXBlZk5ERS12MWVldmVudHgdRC4yLUNvbnRlbnRDb25zaWdubWVudEZhaWx1cmVmcmRwX2lkdnVybjpzYm06cmRwOm1vY2tldS0wMDJmcmVhc29udXBheWxvYWQtaGFzaC1taXNtYXRjaGdwcm9maWxlZXBpbG90Z3ZlcnNpb25jMi44aXBvbGljeV9pZHglaHR0cHM6Ly9yZHAuZXhhbXBsZS5ldS9wb2xpY3kvcWVyZHMvMWptZXNzYWdlX2lkeBowMUhaM0FCQ0RFRkdIOUpLTU4wUFFSU1RWV2tldmlkZW5jZV9pZHgaMDFKOFpOREUwMDAwMDAwMDAwMDAwMDAwMDlrb2JzZXJ2ZWRfYXR0MjAyNi0wNC0wNFQxMDo0NzowMFpscGF5bG9hZF9oYXNoo2NhbGdnU0hBLTI1NmNoZXh4QGQ4YmFlOWE3MWY4ZDMwYzVjZjQ3ODE3YWM4Mjk5MDM3NTQxZDFhNDZhYTFlZTJlZGQ0NzZlM2IxMTE5ZWM3N2VpaGFzaF9tb2RlanJhdy1zaGEyNTZtcmVjaXBpZW50X3VpZHgaRVUtRlItUFNCSUQtWllXVlRTUlFQTk04TTR2cmVjaXBpZW50X2NvbmZpcm1hdGlvbqpjbWlkaUYxTjJDM0Q0UGZyZXN1bHRobWlzbWF0Y2hpbWxzX2Vwb2NoYTNpbWxzX3N0YXRlomNoZXh4QGMxYmQ0NTYyMmU2YjBkOWQ0NThmNTA4MDcyNmI5N2UyZTA2MzBlOTRjNjgxMWJkMjNjNGVjNGNmNmM2NDc1MjdmZm9ybWF0c21sczEwLWdyb3VwLWNvbnRleHRqbWVzc2FnZV9pZHgaMDFIWjNBQkNERUZHSDlKS01OMFBRUlNUVldrdmVyaWZpZWRfYXR0MjAyNi0wNC0wNFQxMDo0NjozMFpsbWxzX2dyb3VwX2lkdlp6dzFTNHBXcTlUNW43eFliWGMyZFFscGF5bG9hZF9oYXNoo2NhbGdnU0hBLTI1NmNoZXh4QGZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZpaGFzaF9tb2RlanJhdy1zaGEyNTZ1YWNjZXB0YW5jZV9wb2xpY3lfcmVmo2pkb2NfZGlnZXN0o2NhbGdnU0hBLTI1NmNoZXh4QGNjYWE3ZWFlY2I4NGI2NmM5ZWE4YTg3NzZkZTllNDYxOGQxM2E3ZTZmYWZjNzZlYmRiODhlZDQ2Y2MzMGRiM2FpaGFzaF9tb2RlanJhdy1zaGEyNTZqcG9saWN5X2tleWtwcm9jdXJlbWVudG5wb2xpY3lfdmVyc2lvbmwyMDI2LTAzLTAxLjF1c2Vzc2lvbl9hdXRoZW50aWNhdGVk9VhAO5WsEyzUhP6wx45zro9Rfq9IxdpPRGQw89e6fGBXFlwFTapn9ZYiryjD4i62ysEJoCDBXGza9DQ3bXBTwn0FA6NmZm9ybWF0Z3JmYzMxNjFmdHNhX2lkcVFUU0E6TW9ja0VVOlRTLTAxaXRva2VuX2I2NHhITURNRUlLVk5qQ0Z6OGx4UEpRLzBtd2xBcjRBdWZjVEc3eTJUa3hLdGtjeTlDMmRzR0E4eU1ESTJNRFF3TkRFd05EY3dNRm89",
+  "projection": {
+    "type": "NDE-v1",
+    "version": "2.8",
+    "profile": "pilot",
+    "message_id": "01HZ3ABCDEFGH9JKMN0PQRSTVW",
+    "event": "D.2-ContentConsignmentFailure",
+    "evidence_id": "01J8ZNDE000000000000000009",
+    "policy_id": "https://rdp.example.eu/policy/qerds/1",
+    "recipient_uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+    "reason": "payload-hash-mismatch",
+    "observed_at": "2026-04-04T10:47:00Z",
+    "rdp_id": "urn:sbm:rdp:mockeu-002",
+    "payload_hash": {
+      "alg": "SHA-256",
+      "hex": "d8bae9a71f8d30c5cf47817ac8299037541d1a46aa1ee2edd476e3b1119ec77e",
+      "hash_mode": "raw-sha256"
+    },
+    "recipient_confirmation": {
+      "mid": "F1N2C3D4P",
+      "payload_hash": {
+        "alg": "SHA-256",
+        "hex": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "hash_mode": "raw-sha256"
+      },
+      "result": "mismatch",
+      "verified_at": "2026-04-04T10:46:30Z",
+      "message_id": "01HZ3ABCDEFGH9JKMN0PQRSTVW",
+      "mls_group_id": "Zzw1S4pWq9T5n7xYbXc2dQ",
+      "mls_epoch": "3",
+      "acceptance_policy_ref": {
+        "policy_version": "2026-03-01.1",
+        "doc_digest": {
+          "alg": "SHA-256",
+          "hex": "ccaa7eaecb84b66c9ea8a8776de9e4618d13a7e6fafc76ebdb88ed46cc30db3a",
+          "hash_mode": "raw-sha256"
+        },
+        "policy_key": "procurement"
+      },
+      "session_authenticated": true,
+      "mls_state": {
+        "format": "mls10-group-context",
+        "hex": "c1bd45622e6b0d9d458f5080726b97e2e0630e94c6811bd23c4ec4cf6c647527"
+      }
+    }
+  }
+}

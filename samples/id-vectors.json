@@ -1,0 +1,49 @@
+{
+  "$comment": "X-02 shared accept/reject corpus for UID and MID. accept: valid syntax+RS check. reject_syntax: fails the regex. reject_checksum: valid syntax, wrong RS check symbol. Consumed by tests/test_id_grammar.py and driven through the schema/OpenAPI/toolkit/linter regexes + the id_grammar checksum.",
+  "uid": {
+    "accept": [
+      "EU-DE-EOID-7K3D9W0Q2M5FW0",
+      "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+      "EU-IT-EOID-AAAAAAAAAAAAQ0",
+      "EU-ES-PSBID-0123456789ABYD"
+    ],
+    "reject_syntax": [
+      "eu-de-eoid-7k3d9w0q2m5fw0",
+      "EU-DE-EOID-7K3D9W0Q2M5FW",
+      "EU-DE-XXXX-7K3D9W0Q2M5FW0",
+      "EU-DE-EOID-7K3D9W0Q2M5FWI0",
+      "EU-D1-EOID-7K3D9W0Q2M5FW0",
+      "XX-DE-EOID-7K3D9W0Q2M5FW0"
+    ],
+    "reject_checksum": [
+      "EU-DE-EOID-7K3D9W0Q2M5FW1",
+      "EU-FR-PSBID-ZYWVTSRQPNM8M1",
+      "EU-IT-EOID-AAAAAAAAAAAAQ1",
+      "EU-ES-PSBID-0123456789ABY1"
+    ]
+  },
+  "mid": {
+    "accept": [
+      "A1B2C3D4R",
+      "AGENT001C",
+      "F1N2C3D4P",
+      "F2X3Y4Z55",
+      "RECRDS01N",
+      "000000000"
+    ],
+    "reject_syntax": [
+      "TOOSHORT",
+      "a1b2c3d4r",
+      "A1B2C3D4RR",
+      "A1B2C3D4I"
+    ],
+    "reject_checksum": [
+      "A1B2C3D41",
+      "AGENT0011",
+      "F1N2C3D41",
+      "F2X3Y4Z51",
+      "RECRDS011",
+      "000000001"
+    ]
+  }
+}

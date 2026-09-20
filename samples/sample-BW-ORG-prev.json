@@ -1,0 +1,25 @@
+{
+  "sm_artifact_b64": "hFGiAScETGVudGl0eS1hZG1pbqBZAYerY3VpZHgaRVUtRlItUFNCSUQtWllXVlRTUlFQTk04TTRkdHlwZWlCVy1PUkctdjFlcm9sZXODaGludm9pY2Vza3Byb2N1cmVtZW50ZWxlZ2FsZ3ZlcnNpb25jMi42amxlZ2FsX25hbWVvTWFpcmllIGRlIFBhcmlzanZhbGlkX2Zyb210MjAyNi0wMi0wMVQwMDowMDowMFprY29udGFjdF91cmx4HGh0dHBzOi8vd3d3LnBhcmlzLmZyL2NvbnRhY3RsZGlzcGxheV9uYW1lblZpbGxlIGRlIFBhcmlzbnBvbGljeV92ZXJzaW9ubDIwMjYtMDItMDEuMW9tZW1iZXJfZW5kcG9pbnR4KGh0dHBzOi8vbXNwLmV4YW1wbGUuZnIvdWlkL3t1aWR9L21lbWJlcnNxYWNjZXB0YW5jZV9wb2xpY3mkZWxlZ2FsY2FsbGdkZWZhdWx0Z2FueS1vbmVoaW52b2ljZXNnYW55LW9uZWtwcm9jdXJlbWVudGdhbnktb25lWECsfV1kU5GvoNiG43I9KtoZS0p0JNl9/Qdgx6WyXHGBdw0AINdMBLKFFqdPw+UIjYveOuurxU9+y25TFa8Ya3kG",
+  "projection": {
+    "type": "BW-ORG-v1",
+    "version": "2.6",
+    "uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+    "policy_version": "2026-02-01.1",
+    "valid_from": "2026-02-01T00:00:00Z",
+    "display_name": "Ville de Paris",
+    "legal_name": "Mairie de Paris",
+    "roles": [
+      "invoices",
+      "procurement",
+      "legal"
+    ],
+    "acceptance_policy": {
+      "invoices": "any-one",
+      "procurement": "any-one",
+      "legal": "all",
+      "default": "any-one"
+    },
+    "member_endpoint": "https://msp.example.fr/uid/{uid}/members",
+    "contact_url": "https://www.paris.fr/contact"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "sm_artifact_b64": "hFGiAScETGVudGl0eS1hZG1pbqBZBBmoY21pZGlGMlgzWTRaNTVjdWlkeBpFVS1GUi1QU0JJRC1aWVdWVFNSUVBOTThNNGR0eXBlbEJXLU1FTUJFUi12MWVyb2xlc4NoaW52b2ljZXNnZmluYW5jZWtwcm9jdXJlbWVudGZzdGF0dXNmYWN0aXZlZ2RldmljZXOBqWhhZGRlZF9hdHQyMDI2LTAzLTEyVDEwOjMwOjAwWmlkZXZpY2VfaWRmZGV2LTAxaWxhc3Rfc2VlbnQyMDI2LTA0LTA0VDE2OjIwOjAwWmxjYXBhYmlsaXRpZXOCZ3JlY2VpdmVjYWNrbGRldmljZV9jbGFzc2hzb2Z0d2FyZW1jaXBoZXJfc3VpdGVzgXgsTUxTXzEyOF9ESEtFTVgyNTUxOV9BRVMxMjhHQ01fU0hBMjU2X0VkMjU1MTlwY29uZmlybWF0aW9uX2tleaJjYWxnZUVkRFNBbnB1YmxpY19rZXlfYjY0eCxPendrYk5rNnhiVUxIaHk1T0FhYUVhcW9uRzFrcExpZzA1UHBNUFBQS2VZPXBtbHNfbGVhZl9iaW5kaW5nonBiaW5kaW5nX2Nvc2VfYjY0eQEkaEZHaUFTY0VUR1Z1ZEdsMGVTMWhaRzFwYnFCWWdxUmpiV2xrYVVZeVdETlpORm8xTldOMWFXUjRHa1ZWTFVaU0xWQlRRa2xFTFZwWlYxWlVVMUpSVUU1Tk9FMDBhV1JsZG1salpWOXBaR1prWlhZdE1ERnpiR1ZoWmw5emFXZGZjSFZpYTJWNVgySTJOSGdzV1Rnd1pGWTBTa3c0UTFCaVdXSndWbkpPUzBVMFNYQmhlRGhOUW14R1NtOTJkblp2UldZclJqSnFZejFZUU04V2xCL1JoRnhGOGpoSklsMmVZdVF5T0pRVkEwTEJVWUh5eGZRNDl6bWtFMEdod1pKWHllcmFJZ1A2T2EwSG1ScHh2SVY2dFdBNDNXOVpMUTBhWHdjPXNsZWFmX3NpZ19wdWJrZXlfYjY0eCxZODBkVjRKTDhDUGJZYnBWck5LRTRJcGF4OE1CbEZKb3Z2dm9FZitGMmpjPXFtbHNfbGVhZl9ub2RlX3JlZqFyc2lnbmF0dXJlX2tleV9oYXNoeEAxZTUxYmE1NjMzODU0MjM0MjkwZTgwOWQ5MDg4YzkwNGE3NGNiMmU2MzIyMjI5YTc0NWQ2MjE0Mzk2YTFmZTM4Z3ZlcnNpb25jMi4ybmFjY291bnRhYmlsaXR5o2lyZXRlbnRpb25kUDEwWXFhY2Nlc3NfY29uZGl0aW9uc4JnZGlzcHV0ZXNzdXBlcnZpc29yeS1yZXF1ZXN0cWF1dGhvcmlzYXRpb25fcmVmeCZ1cm46b3JnOnZpbGxlLWRlLXBhcmlzOmF1dGh6OjIwMjYtMDExNFhAJqHouEOBh+Hi+WmZZMdT2T/0KnOBoeEYaiCKggkXUBWoCq6QUMvDSKjN++NN1hXNVPrVROux3bhx9azq10UGDQ==",
+  "projection": {
+    "type": "BW-MEMBER-v1",
+    "version": "2.2",
+    "uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+    "mid": "F2X3Y4Z55",
+    "status": "active",
+    "roles": [
+      "invoices",
+      "finance",
+      "procurement"
+    ],
+    "devices": [
+      {
+        "device_id": "dev-01",
+        "added_at": "2026-03-12T10:30:00Z",
+        "last_seen": "2026-04-04T16:20:00Z",
+        "mls_leaf_node_ref": {
+          "signature_key_hash": "1e51ba5633854234290e809d9088c904a74cb2e6322229a745d6214396a1fe38"
+        },
+        "capabilities": [
+          "receive",
+          "ack"
+        ],
+        "confirmation_key": {
+          "alg": "EdDSA",
+          "public_key_b64": "OzwkbNk6xbULHhy5OAaaEaqonG1kpLig05PpMPPPKeY="
+        },
+        "device_class": "software",
+        "mls_leaf_binding": {
+          "leaf_sig_pubkey_b64": "Y80dV4JL8CPbYbpVrNKE4Ipax8MBlFJovvvoEf+F2jc=",
+          "binding_cose_b64": "hFGiAScETGVudGl0eS1hZG1pbqBYgqRjbWlkaUYyWDNZNFo1NWN1aWR4GkVVLUZSLVBTQklELVpZV1ZUU1JRUE5NOE00aWRldmljZV9pZGZkZXYtMDFzbGVhZl9zaWdfcHVia2V5X2I2NHgsWTgwZFY0Skw4Q1BiWWJwVnJOS0U0SXBheDhNQmxGSm92dnZvRWYrRjJqYz1YQM8WlB/RhFxF8jhJIl2eYuQyOJQVA0LBUYHyxfQ49zmkE0GhwZJXyeraIgP6Oa0HmRpxvIV6tWA43W9ZLQ0aXwc="
+        },
+        "cipher_suites": [
+          "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
+        ]
+      }
+    ],
+    "accountability": {
+      "authorisation_ref": "urn:org:ville-de-paris:authz:2026-0114",
+      "retention": "P10Y",
+      "access_conditions": [
+        "dispute",
+        "supervisory-request"
+      ]
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "sm_artifact_b64": "glkDnYRIogEnBENyZHCgWQNNrmR0eXBlZUNFLXYxZWV2ZW50bmNoYW5nZS1vZi1kYXRhZnJkcF9pZHZ1cm46c2JtOnJkcDptb2NrZXUtMDAxZ3Byb2ZpbGVlcGlsb3RndmVyc2lvbmMyLjhpcG9saWN5X2lkeCVodHRwczovL3JkcC5leGFtcGxlLmV1L3BvbGljeS9xZXJkcy8xamNoYW5nZWRfYXR0MjAyNi0wNC0wNFQxMDoxNTozMFpqbWVzc2FnZV9pZHgaMDFIWjNBQkNERUZHSDlKS01OMFBRUlNUVldrZXZpZGVuY2VfaWR4GjAxSjhaQ0UwMDAwMDAwMDAwMDAwMDAwMDA1bnRyYW5zZm9ybWF0aW9uaGNodW5raW5ndGVudmVsb3BlX2hhc2hfYmVmb3JlomNoZXh4QGJlOTk0MjE5OGE1NGNjODQ3NTk5YTJjZjYwYWQyYWYyZmQ4YTlkYzI0MjEzMDgzOGZkZDMzMjM5ZTdjZDdlNmVmZm9ybWF0bW1sczEwLW1lc3NhZ2V0cGFydF9lbnZlbG9wZV9oYXNoZXOComNoZXh4QDU1NDMxMTAwMjQxYzhlM2FhNGRiYWY5ZDljODU1ZmI5ZThjMDA3ZGIzOTE4YmIwNjEzNjM5NGViODk4MzZjYzdmZm9ybWF0bW1sczEwLW1lc3NhZ2WiY2hleHhAN2FiZmZlODczYjI5NmQ2ZTBmZDE4ZmRjY2M4ZjM3ODM1MmUzNjhkNWI4MmYwM2FhY2MxOTc4YTlmY2IwZTc4YmZmb3JtYXRtbWxzMTAtbWVzc2FnZXVlbnZlbG9wZV9kaWdlc3RfYWZ0ZXKjY2FsZ2dTSEEtMjU2Y2hleHhAZTFmMmEzYjRjNWQ2ZTdmODA5YTFiMmMzZDRlNWY2MDcxODI5M2E0YjVjNmQ3ZThmOTAxMjIzMzQ0NTU2Njc3OGloYXNoX21vZGVqcmF3LXNoYTI1NnZlbnZlbG9wZV9kaWdlc3RfYmVmb3Jlo2NhbGdnU0hBLTI1NmNoZXh4QGQ4YmFlOWE3MWY4ZDMwYzVjZjQ3ODE3YWM4Mjk5MDM3NTQxZDFhNDZhYTFlZTJlZGQ0NzZlM2IxMTE5ZWM3N2VpaGFzaF9tb2RlanJhdy1zaGEyNTZYQI4h74BLcD+D24NFR4ZnnU6dDJhyvm/mmMtDGoLXOmUk47onpxDMfJzUuCOUcW+GPtYr2htc5v/UoEW0S2ghxQSjZmZvcm1hdGdyZmMzMTYxZnRzYV9pZHFRVFNBOk1vY2tFVTpUUy0wMWl0b2tlbl9iNjR4SE1ETUVJTVp3QlJzc24zN1A1Q0pnK3pNT1YxTlhFTEdhUTZYdzJtVHpCL3gwMDJvY0dBOHlNREkyTURRd05ERXdNVFV6TUZvPQ==",
+  "projection": {
+    "type": "CE-v1",
+    "version": "2.8",
+    "profile": "pilot",
+    "message_id": "01HZ3ABCDEFGH9JKMN0PQRSTVW",
+    "event": "change-of-data",
+    "evidence_id": "01J8ZCE0000000000000000005",
+    "policy_id": "https://rdp.example.eu/policy/qerds/1",
+    "transformation": "chunking",
+    "envelope_digest_before": {
+      "alg": "SHA-256",
+      "hex": "d8bae9a71f8d30c5cf47817ac8299037541d1a46aa1ee2edd476e3b1119ec77e",
+      "hash_mode": "raw-sha256"
+    },
+    "envelope_digest_after": {
+      "alg": "SHA-256",
+      "hex": "e1f2a3b4c5d6e7f809a1b2c3d4e5f60718293a4b5c6d7e8f9012233445566778",
+      "hash_mode": "raw-sha256"
+    },
+    "rdp_id": "urn:sbm:rdp:mockeu-001",
+    "changed_at": "2026-04-04T10:15:30Z",
+    "envelope_hash_before": {
+      "format": "mls10-message",
+      "hex": "be9942198a54cc847599a2cf60ad2af2fd8a9dc242130838fdd33239e7cd7e6e"
+    },
+    "part_envelope_hashes": [
+      {
+        "format": "mls10-message",
+        "hex": "55431100241c8e3aa4dbaf9d9c855fb9e8c007db3918bb06136394eb89836cc7"
+      },
+      {
+        "format": "mls10-message",
+        "hex": "7abffe873b296d6e0fd18fdccc8f378352e368d5b82f03aacc1978a9fcb0e78b"
+      }
+    ]
+  }
+}

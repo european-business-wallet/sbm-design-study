@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Livello_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1177.68 708.51">
+  <!-- Generator: Adobe Illustrator 30.6.0, SVG Export Plug-In . SVG Version: 2.1.4 Build 109)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: none;
+      }
+
+      .st1 {
+        fill: #f4f6fb;
+        stroke: #9db1d6;
+      }
+
+      .st2, .st3, .st4, .st5, .st6, .st7, .st8, .st9, .st10, .st11 {
+        isolation: isolate;
+      }
+
+      .st2, .st3, .st4, .st7, .st9, .st11 {
+        font-family: Verdana, Verdana;
+      }
+
+      .st2, .st6 {
+        fill: #7a5c00;
+      }
+
+      .st2, .st9 {
+        font-size: 11.5px;
+      }
+
+      .st3 {
+        fill: #eef2fa;
+      }
+
+      .st3, .st4, .st7, .st11 {
+        font-size: 12px;
+      }
+
+      .st4 {
+        fill: #cdd8f0;
+      }
+
+      .st12, .st5, .st10 {
+        fill: #039;
+      }
+
+      .st13 {
+        fill: #7d95c9;
+      }
+
+      .st5 {
+        font-size: 26px;
+      }
+
+      .st5, .st6, .st8, .st10 {
+        font-family: Verdana-Bold, Verdana;
+        font-weight: 700;
+      }
+
+      .st6 {
+        font-size: 12.5px;
+      }
+
+      .st14 {
+        fill: #2a4480;
+      }
+
+      .st15 {
+        fill: #fdf3d7;
+        stroke: #e2b93b;
+      }
+
+      .st16 {
+        fill: #5474b8;
+      }
+
+      .st17 {
+        fill: #3a5aa0;
+      }
+
+      .st7 {
+        fill: #d9e2f5;
+      }
+
+      .st18 {
+        fill: #1a2e5a;
+      }
+
+      .st8 {
+        fill: #fff;
+        font-size: 15px;
+      }
+
+      .st9 {
+        fill: #33436b;
+      }
+
+      .st19 {
+        fill: #5b6b8c;
+      }
+
+      .st10 {
+        font-size: 13.5px;
+      }
+
+      .st11 {
+        fill: #e2e9f7;
+      }
+    </style>
+  </defs>
+  <text class="st5" transform="translate(.5 22.45)"><tspan x="0" y="0">Secure communication channel — functional layers</tspan></text>
+  <rect class="st12" x=".5" y="83.01" width="322.02" height="86" rx="10" ry="10"/>
+  <text class="st8" transform="translate(16 106.01)"><tspan x="0" y="0">Sender — Business Wallet endpoint</tspan></text>
+  <text class="st4" transform="translate(6.81 128.01)"><tspan x="0" y="0">legal entity --&gt; person / system acting for it --&gt;</tspan><tspan x="0" y="18">device authorised roles &amp; mandates</tspan></text>
+  <text/>
+  <rect class="st12" x="816.84" y="83.01" width="360.34" height="86" rx="10" ry="10"/>
+  <text class="st8" transform="translate(827.29 113.01)"><tspan x="0" y="0">Addressee — Business Wallet endpoint</tspan></text>
+  <text class="st4" transform="translate(831.38 135.01)"><tspan x="0" y="0">legal entity --&gt; person / system acting for it --&gt; device</tspan></text>
+  <text class="st4" transform="translate(853 154.01)"><tspan x="0" y="0">published acceptance policy per content class</tspan></text>
+  <rect class="st15" x="334.74" y="83.01" width="469.37" height="86" rx="8" ry="8"/>
+  <text class="st6" transform="translate(453.04 108.01)"><tspan x="0" y="0">Identity &amp; authentication binding</tspan></text>
+  <text class="st2" transform="translate(410.33 126.01)"><tspan x="0" y="0">high-confidence identification of sender and addressee,</tspan></text>
+  <text class="st2" transform="translate(348.09 142.01)"><tspan x="0" y="0">entity addressing linked to business registers, accountable machine senders</tspan></text>
+  <path class="st0" d=""/>
+  <path class="st19" d="M150.5,204.01" marker-end="url(#arr)"/>
+  <path class="st0" d=""/>
+  <path class="st19" d="M990.5,204.01" marker-end="url(#arr)"/>
+  <rect class="st18" x=".5" y="208.01" width="1176.68" height="82" rx="8" ry="8"/>
+  <text class="st8" transform="translate(20.5 238.01)"><tspan x="0" y="0">Registered-delivery evidence &amp; legal effect</tspan></text>
+  <text class="st4" transform="translate(20.5 259.01)"><tspan x="0" y="0">Sealed, time-stamped evidence for every delivery event, proof of sending and receipt over content fingerprints, issued without provider access to content, per-hop evidence in </tspan><tspan x="0" y="18">multi-provider transfers, independently verifiable, wallet-storable package</tspan></text>
+  <text/>
+  <rect class="st14" x=".5" y="298.01" width="1176.68" height="82" rx="8" ry="8"/>
+  <text class="st8" transform="translate(20.5 328.01)"><tspan x="0" y="0">Application envelope — content classes, policies &amp; delivery semantics</tspan></text>
+  <text class="st4" transform="translate(20.5 349.01)"><tspan x="0" y="0">Content fingerprint bound to the message, declared content classes, organisational acceptance policies (role, quorum, human-in-the-loop), configurable legal delivery grade per content </tspan><tspan x="0" y="18">class (availability / verification / acceptance)</tspan></text>
+  <text/>
+  <rect class="st17" x=".5" y="388.01" width="1176.68" height="82" rx="8" ry="8"/>
+  <text class="st8" transform="translate(20.5 418.01)"><tspan x="0" y="0">Confidentiality</tspan></text>
+  <text class="st7" transform="translate(20.5 439.01)"><tspan x="0" y="0">Content encrypted between endpoint devices only — no intermediary, including providers, can read it, forward secrecy &amp; post-compromise security, verified audience before sending, </tspan><tspan x="0" y="18">role-scoped boundaries, multi-device, post-quantum readiness</tspan></text>
+  <text/>
+  <rect class="st16" x=".5" y="478.01" width="1176.68" height="82" rx="8" ry="8"/>
+  <text class="st8" transform="translate(20.5 508.01)"><tspan x="0" y="0">Addressing, discovery &amp; key distribution — European Digital Directory</tspan></text>
+  <text class="st11" transform="translate(20.5 529.01)"><tspan x="0" y="0">Canonical legal-entity identifier linked to business registers, lookup of counterparty profile, providers and declared policies, authenticated key discovery with anti-substitution controls, </tspan><tspan x="0" y="18">routing information — no duplication of existing registers</tspan></text>
+  <text/>
+  <rect class="st13" x=".5" y="568.01" width="1176.68" height="64" rx="8" ry="8"/>
+  <text class="st8" transform="translate(20.5 594.01)"><tspan x="0" y="0">Secure transport — provider-to-provider relay</tspan></text>
+  <text class="st3" transform="translate(20.5 614.01)"><tspan x="0" y="0">State-of-the-art transport encryption · asynchronous store-and-forward · replay protection · large payloads</tspan></text>
+  <rect class="st1" x=".5" y="648.01" width="1176.68" height="60" rx="8" ry="8"/>
+  <text class="st10" transform="translate(20.5 672.01)"><tspan x="0" y="0">Cross-cutting</tspan></text>
+  <text class="st9" transform="translate(20.5 693.01)"><tspan x="0" y="0">Qualified providers &amp; certified key protection, cryptographic compliance, governance, conformity assessment &amp; provider interoperability on open standards, native wallet integration</tspan></text>
+</svg>

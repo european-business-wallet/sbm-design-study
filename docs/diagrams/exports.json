@@ -1,0 +1,53 @@
+{
+  "$comment": "DOC-01 / hand-off gate 4 — source/export freshness. Each rendered figure is listed with the digest of the source it was rendered from and of the export itself, and the command that renders it. `make doc-lint` recomputes both: a source edited without re-rendering, or an export replaced without its source, fails. After changing a source: run its command, then `python3 scripts/doc_lint.py --record-exports` to record the new digests. A digest proves which bytes were recorded, not that the picture is true — that is the manual semantic check.",
+  "exports": [
+    {
+      "export": "docs/diagrams/federated-flow.svg",
+      "source": "docs/diagrams/federated-flow.mermaid",
+      "command": "mmdc -i docs/diagrams/federated-flow.mermaid -o docs/diagrams/federated-flow.svg -b white",
+      "tool": "@mermaid-js/mermaid-cli 10.4.0",
+      "source_sha256": "2f572cbbc4faa47f4ccfc59346b78d50c30cc06c7c99dea50aeb37ed02438037",
+      "export_sha256": "8f8d8981145b5dd5ae2880c137b38d0c752728a3cf16d99a9c1f09bbb76e0b8d"
+    },
+    {
+      "export": "docs/diagrams/four-corner-architecture-technology-neutral.png",
+      "source": "docs/diagrams/four-corner-architecture-technology-neutral.svg",
+      "command": "rsvg-convert -w 1400 -b white docs/diagrams/four-corner-architecture-technology-neutral.svg -o docs/diagrams/four-corner-architecture-technology-neutral.png",
+      "tool": "rsvg-convert 2.63.0",
+      "source_sha256": "bbf6b1a9471d7d8ad713fab4a25faa9da2474d1681f255684eb806b312db8f1c",
+      "export_sha256": "def40afa2a5ce95ea3d97972f33a52a8702727aa0e9cf6c35e6a0e57e3f2d7c2"
+    },
+    {
+      "export": "docs/diagrams/functional-stack-technology-neutral.png",
+      "source": "docs/diagrams/functional-stack-technology-neutral.svg",
+      "command": "rsvg-convert -w 1400 -b white docs/diagrams/functional-stack-technology-neutral.svg -o docs/diagrams/functional-stack-technology-neutral.png",
+      "tool": "rsvg-convert 2.63.0",
+      "source_sha256": "49a9d6f51c26570969c2f278b9054b7a63c9f92ca26962f67a9a5265394096eb",
+      "export_sha256": "2a385ffda13b94c72e73301bea3a9b4cd31f34d10f0614fed88019a278fa6e0c"
+    },
+    {
+      "export": "docs/diagrams/minimal-message.svg",
+      "source": "docs/diagrams/minimal-message.mermaid",
+      "command": "mmdc -i docs/diagrams/minimal-message.mermaid -o docs/diagrams/minimal-message.svg -b white",
+      "tool": "@mermaid-js/mermaid-cli 10.4.0",
+      "source_sha256": "012199d0e9fd90fd05a866801d9d6d3aa06ee30d4a5610771e01a3343f891a41",
+      "export_sha256": "5109ac8b2087f9d71fd87863e0799f3df6b62bd6c8cffd9a9e4bc5c4f99710f0"
+    },
+    {
+      "export": "docs/diagrams/state-atlas.svg",
+      "source": "docs/diagrams/state-atlas.mermaid",
+      "command": "mmdc -i docs/diagrams/state-atlas.mermaid -o docs/diagrams/state-atlas.svg -b white",
+      "tool": "@mermaid-js/mermaid-cli 10.4.0",
+      "source_sha256": "fe2c6e660b9ef396a8af9eb9e894a8f610bbe70922fd3dbcab3feeee0f02988d",
+      "export_sha256": "56c576e2b48850df9bb5e26e454b4f5c30945fe68972087493313b5e36de0aab"
+    },
+    {
+      "export": "docs/diagrams/change-swimlane.svg",
+      "source": "docs/diagrams/change-swimlane.mermaid",
+      "command": "mmdc -i docs/diagrams/change-swimlane.mermaid -o docs/diagrams/change-swimlane.svg -b white",
+      "tool": "@mermaid-js/mermaid-cli 10.4.0",
+      "source_sha256": "ef001b6c7d915fb94689a1c051fe40a16a6d0de01388984ba71f3602f1d96195",
+      "export_sha256": "a8fad70dfd83aeb207bac1c06aecdee6b4a694c2e15b57abf4848fecc2df3edd"
+    }
+  ]
+}

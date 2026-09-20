@@ -1,0 +1,124 @@
+{
+  "$id": "https://bw.example.eu/schemas/evidence-ce.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "evidence-ce (v2.8)",
+  "description": "Change-Indication Evidence. Issued when an RDP performs an envelope/metadata transformation needed for sending or receiving the data (Regulation (EU) No 910/2014, Article 44(1)(e)). End-to-end encryption forbids content transformation; only envelope/metadata transformations are permitted, and each such change MUST be evidenced and indicated to both the sender and the addressee.",
+  "type": "object",
+  "required": [
+    "changed_at",
+    "envelope_hash_before",
+    "event",
+    "evidence_id",
+    "message_id",
+    "policy_id",
+    "profile",
+    "rdp_id",
+    "transformation",
+    "type",
+    "version"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "CE-v1"
+    },
+    "version": {
+      "type": "string",
+      "const": "2.8"
+    },
+    "profile": {
+      "$ref": "evidence-common.schema.json#/$defs/Profile"
+    },
+    "message_id": {
+      "type": "string"
+    },
+    "event": {
+      "type": "string",
+      "const": "change-of-data",
+      "description": "Regulation (EU) No 910/2014, Article 44(1)(e) change of data. No dedicated ETSI EN 319 522-1 clause 6 event exists for this; it is carried as a profile extension (EN 319 522-2 component E01)."
+    },
+    "evidence_id": {
+      "$ref": "evidence-common.schema.json#/$defs/EvidenceId"
+    },
+    "policy_id": {
+      "$ref": "evidence-common.schema.json#/$defs/PolicyId"
+    },
+    "transformation": {
+      "type": "string",
+      "enum": [
+        "re-packaging",
+        "chunking"
+      ],
+      "description": "X-24 (evidence 2.5): the OBSERVABLE envelope/metadata transformation performed. Content (plaintext) transformation is forbidden under E2EE. The former epoch-change value is REMOVED: MLS epoch changes do not re-encrypt queued application messages and intermediaries cannot transform the E2EE envelope — the operation was unobservable by its stated issuer; a sender resubmission after an epoch change is a NEW submission chain (new SE), never a CE."
+    },
+    "envelope_digest_before": {
+      "$ref": "evidence-common.schema.json#/$defs/Hash"
+    },
+    "envelope_digest_after": {
+      "$ref": "evidence-common.schema.json#/$defs/Hash"
+    },
+    "rdp_id": {
+      "$ref": "evidence-common.schema.json#/$defs/RdpId"
+    },
+    "changed_at": {
+      "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+    },
+    "envelope_hash_before": {
+      "$ref": "evidence-common.schema.json#/$defs/EnvelopeHash",
+      "description": "X-24 (evidence 2.5): the transmitted-octet commitment of the INPUT envelope — the SE's envelope_hash for this message (LINT-CE-01 chains it). The RDP legitimately observes these ciphertext framing bytes."
+    },
+    "envelope_hash_after": {
+      "$ref": "evidence-common.schema.json#/$defs/EnvelopeHash",
+      "description": "REQUIRED for re-packaging: the commitment of the OUTPUT envelope."
+    },
+    "part_envelope_hashes": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "evidence-common.schema.json#/$defs/EnvelopeHash"
+      },
+      "description": "REQUIRED for chunking: one commitment per emitted part."
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "transformation": {
+            "const": "re-packaging"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "envelope_hash_after"
+        ],
+        "not": {
+          "required": [
+            "part_envelope_hashes"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "transformation": {
+            "const": "chunking"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "part_envelope_hashes"
+        ],
+        "not": {
+          "required": [
+            "envelope_hash_after"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,256 @@
+{
+  "$id": "https://bw.example.eu/schemas/bw-member.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BW-MEMBER-v1 (v2.2)",
+  "description": "Member Binding: associates a Member ID (MID) with device entries that reference MLS leaf nodes and publish KeyPackages via the MSP. A member is a natural person or a system/agent (member_type; Annex R). Each ack/sign-capable device publishes a confirmation_key anchor (v2.0) so a verifier can resolve and verify the device's wallet advanced electronic signature on a recipient confirmation (TS clause 6 INTF-1(a); finding D).",
+  "type": "object",
+  "required": [
+    "type",
+    "version",
+    "uid",
+    "mid",
+    "status",
+    "devices",
+    "accountability"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "BW-MEMBER-v1"
+    },
+    "version": {
+      "type": "string",
+      "const": "2.2"
+    },
+    "uid": {
+      "$ref": "evidence-common.schema.json#/$defs/Uid"
+    },
+    "mid": {
+      "type": "string",
+      "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+    },
+    "member_type": {
+      "type": "string",
+      "enum": [
+        "person",
+        "system"
+      ],
+      "description": "Whether this member is a natural person or a system/agent (Annex R, A1). OPTIONAL; absent means 'person' (backwards compatible). A 'system' member acts under a scoped mandate (mandate_ref, A2), and evidence in which it is the acting identity records auth_context.identity=system; a human-acceptance scope excludes system members from its eligible set (§8.3)."
+    },
+    "mandate_ref": {
+      "$ref": "evidence-common.schema.json#/$defs/Mandate"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "suspended",
+        "retired"
+      ]
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "devices": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "device_id",
+          "added_at",
+          "mls_leaf_node_ref",
+          "capabilities",
+          "cipher_suites"
+        ],
+        "properties": {
+          "device_id": {
+            "type": "string"
+          },
+          "added_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_seen": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "mls_leaf_node_ref": {
+            "type": "object",
+            "description": "Reference to the device's MLS leaf node. Either the signature key hash or, where applicable, the current leaf index within an active group.",
+            "properties": {
+              "signature_key_hash": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$",
+                "description": "SHA-256 hex digest of the device's MLS leaf signature public key."
+              },
+              "leaf_index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295,
+                "description": "Optional: current leaf index in a specific group context. MLS leaf index is uint32 (RFC 9420), so it is bounded and always within the JSON safe-integer range (M1/J0+)."
+              },
+              "group_id": {
+                "$ref": "evidence-common.schema.json#/$defs/MlsGroupId",
+                "description": "Optional: the MLS group id this leaf belongs to (when device is bound to a specific group)."
+              }
+            },
+            "required": [
+              "signature_key_hash"
+            ],
+            "additionalProperties": false
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "receive",
+                "ack",
+                "sign"
+              ]
+            },
+            "minItems": 1
+          },
+          "confirmation_key": {
+            "type": "object",
+            "description": "Anchor for the device's recipient-confirmation signing key (finding D, twenty-second review). The mls_leaf_node_ref publishes only a HASH of the LEAF key, which can neither verify a signature nor is it the confirmation key; this field publishes the material a verifier needs to resolve and check a wallet advanced electronic signature (evidence wallet_signature_b64; TS clause 6 INTF-1(a)). public_key_b64 is REQUIRED and is what actually verifies the signature (pilot and production). x5chain is REQUIRED at the production profile (evidence_lint --profile production, LINT-PROD-01): the certificate chain anchoring the key to the entity QSealC / a Trusted List, which makes the signature an ADVANCED electronic signature (TS clause 5.1) and, because certificate validity is evaluated at evidence time (CMP-1/CMP-2), satisfies MWAP §3 (post-retirement verification). REQUIRED on every ack/sign-capable device (see the device-level if/then). Resolved per (mid, device_id) and verified by bundle_lint LINT-BND-21. R3-05: `x5chain` is REQUIRED in the PRODUCTION profile — the prose said so while this schema required only `alg` and `public_key_b64`, so a production deployment could publish a bare asserted key and still validate. The profile-conditional requirement is enforced by discovery_lint's production arm (LINT-DISC-31), because a JSON Schema cannot see which profile is in force.",
+            "required": [
+              "alg",
+              "public_key_b64"
+            ],
+            "properties": {
+              "alg": {
+                "type": "string",
+                "enum": [
+                  "EdDSA",
+                  "ES256",
+                  "ES384"
+                ],
+                "description": "COSE algorithm of the confirmation signature (matches the wallet_signature_b64 protected-header alg; LINT-PKG-05)."
+              },
+              "public_key_b64": {
+                "type": "string",
+                "description": "Base64 of the raw device confirmation public key (for EdDSA, the 32-byte Ed25519 public key), against which wallet_signature_b64 verifies. Same encoding convention as the demo trust store's pubkey_b64."
+              },
+              "x5chain": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "description": "Base64 (DER) X.509 certificate, leaf first."
+                },
+                "description": "OPTIONAL in pilot; REQUIRED at the production profile. The certificate chain anchoring public_key_b64 to the entity QSealC / a Trusted List."
+              }
+            },
+            "additionalProperties": false
+          },
+          "mls_leaf_binding": {
+            "type": "object",
+            "description": "F-04: a signed device binding tying THIS device's MLS LeafNode signature key to the entity UID / MID / device_id under the entity's seal key (the entity QSealC in production; the demo entity-admin key in the pilot). OPTIONAL in pilot; REQUIRED at the production profile. It profiles the I-D 'chains to the entity's QSealC' as an explicit signed binding (not a subordinate-CA use of the QSealC). leaf_sig_pubkey_b64 is the raw MLS leaf signature public key whose SHA-256 MUST equal mls_leaf_node_ref.signature_key_hash — the RFC 9420 rule that the credential key IS the LeafNode signature key. binding_cose_b64 is a COSE_Sign1 by the entity seal key over the deterministic-CBOR {uid, mid, device_id, leaf_sig_pubkey_b64}. Verified by discovery_lint LINT-DISC-23. The production certificate profile (Basic Constraints / Key Usage / EKU / name constraints / revocation) and the QSealC-chain validation to a Trusted List remain production-verifier duties.",
+            "required": [
+              "leaf_sig_pubkey_b64",
+              "binding_cose_b64"
+            ],
+            "properties": {
+              "leaf_sig_pubkey_b64": {
+                "type": "string",
+                "description": "Base64 of the raw MLS leaf signature public key (EdDSA: the 32-byte Ed25519 public key)."
+              },
+              "binding_cose_b64": {
+                "type": "string",
+                "description": "Base64 of a COSE_Sign1 by the entity seal key over dCBOR({uid, mid, device_id, leaf_sig_pubkey_b64})."
+              }
+            },
+            "additionalProperties": false
+          },
+          "device_class": {
+            "type": "string",
+            "description": "Device key-storage class, used for `device-class:` acceptance policies (BW-ORG §8.3) and as an MWAP assurance signal (backed by attestation, MWAP §5). Recognised vocabulary in ascending hardware-custody assurance: `software` (no hardware backing) < `tee` (a Trusted Execution Environment, e.g. TrustZone) < `secure-element` (a certified secure element — Android StrongBox, the Apple Secure Enclave — holding non-exportable, attestable keys; the P-256 element of the I-D `0x0002` suite) < `hsm` (a certified hardware security module). A free string so deployments MAY define additional classes; `secure-element` was added in the twenty-third review (finding G) to name the mobile hardware custody that MWAP §1 vouches for and that finding I's leaf-key suite requires.",
+            "examples": [
+              "software",
+              "tee",
+              "secure-element",
+              "hsm"
+            ]
+          },
+          "cipher_suites": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "DR-08: the MLS cipher suites THIS DEVICE's KeyPackages are published for, strongest-first order irrelevant (the normative selector imposes its own order, `the current mls-suite-preference vector`). REQUIRED since BW-MEMBER 2.2. The normative suite selector has always required per-member/device capability sets, but no published discovery or API path produced them: the tests supplied synthetic arrays, so the algorithm could not be executed from the published contracts at all. MUST contain the mandatory baseline suite (every implementation supports it) and MUST agree with the suites the Delivery Service actually serves KeyPackages for — the reservation response associates each package with its (mid, device_id, cipher_suite), which is what makes the agreement checkable rather than asserted."
+          },
+          "min_cipher_suite": {
+            "type": "string",
+            "minLength": 1,
+            "description": "DR-15/R2-M5, OPTIONAL: a floor this device demands, which may only RAISE the mandatory `mls-suite-floor/v1` and may never lower it (a weaker value is non-conformant — LINT-DISC-30). The mandatory floor binds every deployment including one that publishes nothing; this field exists for the case the floor is for — a device with materially stronger key protection, an HSM leaf beside a phone, which must be able to demand more than the common minimum. It MUST be one of the suites this device publishes in `cipher_suites`: demanding a suite the device cannot use makes every group unformable."
+          }
+        },
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "capabilities": {
+                  "contains": {
+                    "enum": [
+                      "ack",
+                      "sign"
+                    ]
+                  }
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "confirmation_key"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "notifications": {
+      "type": "object"
+    },
+    "accountability": {
+      "type": "object",
+      "description": "Enables the organisation (and the RDP only under controlled, documented conditions — dispute or supervisory request) to resolve this pseudonymous MID to an accountable authorisation event (the QERDS-binding TS, clause 6 — MID accountability; umbrella §8.4). Carries no personal data on the wire.",
+      "required": [
+        "authorisation_ref",
+        "retention",
+        "access_conditions"
+      ],
+      "properties": {
+        "authorisation_ref": {
+          "type": "string",
+          "description": "Opaque pointer to the organisation's authorisation record; not personal data."
+        },
+        "retention": {
+          "type": "string",
+          "description": "ISO 8601 duration for which the authorisation record is retained (e.g. P10Y)."
+        },
+        "access_conditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "dispute",
+              "supervisory-request"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

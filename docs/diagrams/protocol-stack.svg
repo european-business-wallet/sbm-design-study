@@ -1,0 +1,94 @@
+<svg viewBox="0 0 860 640" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif" role="img">
+<!-- figure
+owner: the maintainer (README, Feedback)
+source: docs/diagrams/protocol-stack.svg (hand-written SVG; this file is the source)
+question: Which layer does what, what can each operator see at each layer, and which standard does each layer build on?
+profile: all (1 to 5); the relay row applies where two providers relay (profile 2 and above)
+status: current
+references: umbrella §3, §5, §7.1 (the stack), §7.3; I-D "Canonicalisation and Payload Hashing" and "Application Envelope"; docs/evidence-layer-explainer.md §4
+alt: Four layers over an HTTPS underlay. Layer 3, registered delivery: evidence objects SE, DE, NDE and RE and the Evidence Package, each a COSE_Sign1 advanced electronic seal under a QSealC plus a qualified timestamp, binding to the content digest, the ciphertext digest and the MLS group state, never to plaintext; RDPs see ciphertext, hashes and metadata, never plaintext. Layer 2, the application envelope, encrypted: JSON headers and payload, with the content digest computed over the transmitted octets (raw-sha256 by default, jcs-sha256 an optional mode); providers never see it. Layer 1, SM-MLS-1.0: the MLS group between two entities is the end-to-end boundary; keys are held by devices only. Layer 0, addressing and discovery: UID and MID, the EDD resolver, WebFinger as an optional locator only; public records and routing metadata. Underlay: HTTPS between wallet and RDP, wallet and Delivery Service, RDP and Delivery Service, and the RDP-to-RDP relay. The EU Trusted Lists are the qualification root; federation admission and an entity's authorised seal keys are separate anchors.
+-->
+  <title>SM-MLS-1.0 and registered delivery — protocol stack</title>
+  <desc>Four-layer stack over an HTTPS transport underlay: Layer 0 addressing and discovery, Layer 1 MLS end-to-end encryption, Layer 2 application envelope, Layer 3 registered delivery evidence. Left side shows what each operator can see, right side the underlying standards. The EU Trusted Lists are the qualification root; admission and entity authorisation are separate anchors.</desc>
+
+  <text x="430" y="34" text-anchor="middle" font-size="18" font-weight="bold" fill="#1f2937">Protocol stack — SM-MLS-1.0 + registered delivery</text>
+
+  <!-- Layer 3 -->
+  <rect x="205" y="62" width="420" height="88" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="1.6"/>
+  <text x="220" y="84" font-size="11" fill="#64748b">LAYER 3 · REGISTERED DELIVERY (QERDS)</text>
+  <text x="220" y="105" font-size="13.5" font-weight="bold" fill="#1f2937">Evidence: SE / DE / NDE / RE → Evidence Package</text>
+  <text x="220" y="124" font-size="12" fill="#475569">COSE_Sign1 advanced seal (QSealC) · qualified timestamp</text>
+  <text x="220" y="140" font-size="12" fill="#475569">binds content + ciphertext digests, MLS state — no plaintext</text>
+
+  <!-- Layer 2 -->
+  <rect x="205" y="162" width="420" height="82" rx="8" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.2" stroke-dasharray="5 3"/>
+  <text x="220" y="184" font-size="11" fill="#1d4ed8">LAYER 2 · APPLICATION ENVELOPE (encrypted)</text>
+  <text x="220" y="205" font-size="13.5" font-weight="bold" fill="#1f2937">Headers + payload</text>
+  <text x="220" y="224" font-size="12" fill="#475569">message_id · content digest over the octets · ttl · addressing</text>
+
+  <!-- Layer 1 -->
+  <rect x="205" y="256" width="420" height="88" rx="8" fill="#eff6ff" stroke="#1d4ed8" stroke-width="2"/>
+  <text x="220" y="278" font-size="11" fill="#1d4ed8" font-weight="bold">LAYER 1 · SM-MLS-1.0 — E2EE BOUNDARY</text>
+  <text x="220" y="299" font-size="13.5" font-weight="bold" fill="#1f2937">MLS group = channel between two entities</text>
+  <text x="220" y="318" font-size="12" fill="#475569">leaves = devices/MIDs · credentials verified in the handshake</text>
+  <text x="220" y="334" font-size="12" fill="#475569">forward secrecy · post-compromise security · async KeyPackages</text>
+
+  <!-- Layer 0 -->
+  <rect x="205" y="356" width="420" height="88" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="220" y="378" font-size="11" fill="#64748b">LAYER 0 · ADDRESSING &amp; DISCOVERY</text>
+  <text x="220" y="399" font-size="13.5" font-weight="bold" fill="#1f2937">UID (EOID / PSBID) + MID · EDD</text>
+  <text x="220" y="418" font-size="12" fill="#475569">resolve UID → provider endpoints, MED, KeyPackages</text>
+  <text x="220" y="434" font-size="12" fill="#475569">EU core registry + federated discovery · EUID/BRIS linkage</text>
+
+  <!-- Left annotations: visibility -->
+  <text x="188" y="92" text-anchor="end" font-size="11.5" fill="#334155" font-weight="bold">RDPs see</text>
+  <text x="188" y="107" text-anchor="end" font-size="11.5" fill="#64748b">ciphertext, hashes and</text>
+  <text x="188" y="122" text-anchor="end" font-size="11.5" fill="#64748b">metadata — no plaintext</text>
+
+  <text x="188" y="196" text-anchor="end" font-size="11.5" fill="#1d4ed8" font-weight="bold">Providers</text>
+  <text x="188" y="211" text-anchor="end" font-size="11.5" fill="#1d4ed8">never see this</text>
+
+  <text x="188" y="294" text-anchor="end" font-size="11.5" fill="#1d4ed8" font-weight="bold">Keys held by</text>
+  <text x="188" y="309" text-anchor="end" font-size="11.5" fill="#1d4ed8">devices only</text>
+
+  <text x="188" y="392" text-anchor="end" font-size="11.5" fill="#334155" font-weight="bold">Public records,</text>
+  <text x="188" y="407" text-anchor="end" font-size="11.5" fill="#64748b">routing metadata</text>
+
+  <!-- Right annotations: standards -->
+  <text x="640" y="92" font-size="11.5" fill="#64748b">Reg. (EU) No 910/2014 Art. 44</text>
+  <text x="640" y="107" font-size="11.5" fill="#64748b">CIR (EU) 2025/1944</text>
+  <text x="640" y="122" font-size="11.5" fill="#64748b">ETSI EN 319 522 · COSE</text>
+
+  <text x="640" y="200" font-size="11.5" fill="#64748b">JSON headers + payload</text>
+  <text x="640" y="215" font-size="11.5" fill="#64748b">SHA-256: raw-sha256 default,</text>
+  <text x="640" y="230" font-size="11.5" fill="#64748b">jcs-sha256 optional mode</text>
+
+  <text x="640" y="290" font-size="11.5" fill="#64748b">MLS (RFC 9420)</text>
+  <text x="640" y="305" font-size="11.5" fill="#64748b">QSealC / UID QEAA credentials</text>
+  <text x="640" y="320" font-size="11.5" fill="#64748b">PQ hybrid X25519 + ML-KEM-768</text>
+
+  <text x="640" y="392" font-size="11.5" fill="#64748b">UID / MID · EDD resolver API</text>
+  <text x="640" y="407" font-size="11.5" fill="#64748b">WebFinger: optional locator only</text>
+
+  <!-- Transport underlay -->
+  <rect x="205" y="456" width="420" height="72" rx="8" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="220" y="478" font-size="11" fill="#64748b">UNDERLAY · TRANSPORT (hop-by-hop)</text>
+  <text x="220" y="499" font-size="13.5" font-weight="bold" fill="#1f2937">HTTPS — REST APIs between all components</text>
+  <text x="220" y="518" font-size="12" fill="#475569">channel security per hop; content never depends on it (E2EE above)</text>
+
+  <text x="188" y="482" text-anchor="end" font-size="11.5" fill="#334155" font-weight="bold">Wallet↔RDP, Wallet↔DS,</text>
+  <text x="188" y="497" text-anchor="end" font-size="11.5" fill="#64748b">RDP↔DS, and the</text>
+  <text x="188" y="512" text-anchor="end" font-size="11.5" fill="#64748b">RDP↔RDP relay</text>
+
+  <text x="640" y="486" font-size="11.5" fill="#64748b">TLS 1.3 · mutual TLS (NCP certs)</text>
+  <text x="640" y="501" font-size="11.5" fill="#64748b">state-of-the-art per ENISA ACM</text>
+  <text x="640" y="516" font-size="11.5" fill="#64748b">(REQ-ERDSP-7.8-04)</text>
+
+  <!-- Trust root bar -->
+  <rect x="205" y="554" width="420" height="52" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.2" stroke-dasharray="2 3"/>
+  <text x="415" y="576" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1f2937">Qualification root: EU Trusted Lists</text>
+  <text x="415" y="594" text-anchor="middle" font-size="11.5" fill="#64748b">admission and an entity's authorised seal keys are separate anchors</text>
+
+  <line x1="415" y1="444" x2="415" y2="456" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 3"/>
+  <line x1="415" y1="528" x2="415" y2="554" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 3"/>
+</svg>

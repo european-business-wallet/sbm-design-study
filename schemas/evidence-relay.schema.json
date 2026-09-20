@@ -1,0 +1,99 @@
+{
+  "$id": "https://bw.example.eu/schemas/evidence-relay.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Relay Evidence (RelayEvidence-v1) (v2.8)",
+  "description": "A single four-corner relay hop's sealed evidence (profile-2; TS clause 4.1, FC-1). B.1-RelayAcceptance / B.2-RelayRejection are issued by the RECIPIENT-side RDP as it accepts or refuses a relayed message over the RDP-RDP relay interface; the sender-side RDP aggregates them into the Evidence Package (EP rdp_chain[].evidence, FC-2). B.3-RelayFailure is NOT a RelayEvidence object — it is a sender-side NDE with reason routing-failed (TS clause 8.1). Each object is sealed by its issuer (the receiving RDP) and carries a qualified timestamp AT THE HOP. Fields are fixed by TS clause 4.1: message_id, the sending and receiving RDP identifiers, the hop instant, a typed reason (B.2 only), the issuer's seal, and the hop qualified timestamp. NOT exercised by the single-provider (profile-1) conformance samples.",
+  "type": "object",
+  "required": [
+    "envelope_hash",
+    "event",
+    "hop_at",
+    "message_id",
+    "receiving_rdp_id",
+    "sending_rdp_id",
+    "type",
+    "version"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "RelayEvidence-v1"
+    },
+    "version": {
+      "type": "string",
+      "const": "2.8"
+    },
+    "profile": {
+      "type": "string",
+      "description": "Deployment profile marker (pilot | production), as on the other evidence objects."
+    },
+    "evidence_id": {
+      "type": "string",
+      "description": "Optional issuer-assigned evidence identifier."
+    },
+    "message_id": {
+      "type": "string",
+      "description": "The relayed message's id; equals the EP message_id when this hop is referenced from EP rdp_chain[].evidence (evidence_lint LINT-EP-06)."
+    },
+    "event": {
+      "type": "string",
+      "enum": [
+        "B.1-RelayAcceptance",
+        "B.2-RelayRejection"
+      ]
+    },
+    "sending_rdp_id": {
+      "$ref": "evidence-common.schema.json#/$defs/RdpId",
+      "description": "The relaying (sender-side) RDP — the peer that dispatched the message over the relay interface. R8-05: declared an unconstrained string, so this evidence field admitted provider identifiers the rest of the model rejects."
+    },
+    "receiving_rdp_id": {
+      "$ref": "evidence-common.schema.json#/$defs/RdpId",
+      "description": "The recipient-side RDP that issues and seals this relay evidence. R8-05: declared an unconstrained string, so this evidence field admitted provider identifiers the rest of the model rejects."
+    },
+    "hop_at": {
+      "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Typed relay-rejection reason. REQUIRED exactly when event is B.2-RelayRejection; FORBIDDEN for B.1-RelayAcceptance (evidence_lint LINT-RLY-01). Maps to the sender-facing NDE reason per TS clause 4.1 (finding 7): unknown-uid->unknown-uid, uid-suspended->uid-suspended, policy-violation->policy-block, malformed->malformed-envelope. X-25: the value space is REGISTRY-GOVERNED, not spec-versioned — the schema bounds only the LEXICAL form (lowercase-kebab; x- = private use, never registered). The registered set and its event bindings live in registries/reason-codes.json (umbrella §13.4); registering a code is a registry action, NOT a version bump (§9.3). An unregistered well-formed code is accepted, preserved verbatim and treated generically (LINT-NDE-W1).",
+      "pattern": "^(x-)?[a-z][a-z0-9-]{1,62}$"
+    },
+    "envelope_hash": {
+      "$ref": "evidence-common.schema.json#/$defs/EnvelopeHash",
+      "description": "F-02 (evidence 2.2): each hop attests the exact TLS-serialized MLSMessage octets it received/handed over; in a bundle it MUST equal the SE's for the same message_id (LINT-BND-25) — a substituted ciphertext under the same metadata fails at every hop. A relaying RDP MUST refuse a hop whose recomputation differs from the sending side's declared value."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "B.2-RelayRejection"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "reason"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "B.1-RelayAcceptance"
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "reason"
+          ]
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

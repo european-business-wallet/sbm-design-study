@@ -1,0 +1,13 @@
+{
+  "description": "NEGATIVE fixture — an INTENTIONALLY incoherent bundle (member/policy mismatch): the scoped FR entity without its second member, so the 'quorum:2' policies (finance, procurement) and the 'any-one' policy (invoices) are unsatisfiable. MUST fail scripts/bundle_lint.py with LINT-BND-08; asserted by tests/test_bundle_lint.py and NEVER run in the green path (make lint runs only the positive manifests).",
+  "entity_uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+  "med": "sample-BW-MED-scoped.json",
+  "org": "sample-BW-ORG-scoped.json",
+  "members": [
+    "sample-BW-MEMBER-fr.json"
+  ],
+  "evidence": [
+    "sample-SE-scoped.json",
+    "sample-DE-scoped.json"
+  ]
+}

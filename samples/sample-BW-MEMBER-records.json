@@ -1,0 +1,44 @@
+{
+  "sm_artifact_b64": "hFGiAScETGVudGl0eS1hZG1pbqBZA/qpY21pZGlSRUNSRFMwMU5jdWlkeBpFVS1GUi1QU0JJRC1aWVdWVFNSUVBOTThNNGR0eXBlbEJXLU1FTUJFUi12MWVyb2xlc4FncmVjb3Jkc2ZzdGF0dXNmYWN0aXZlZ2RldmljZXOBqGhhZGRlZF9hdHQyMDI2LTAzLTAxVDA5OjAwOjAwWmlkZXZpY2VfaWRucmVjb3Jkcy1oc20tMDFpbGFzdF9zZWVudDIwMjYtMDQtMDRUMTg6MDA6MDBabGNhcGFiaWxpdGllc4FncmVjZWl2ZWxkZXZpY2VfY2xhc3NjSFNNbWNpcGhlcl9zdWl0ZXOCeCxNTFNfMTI4X0RIS0VNWDI1NTE5X0FFUzEyOEdDTV9TSEEyNTZfRWQyNTUxOXgnTUxTXzEyOF9ESEtFTVAyNTZfQUVTMTI4R0NNX1NIQTI1Nl9QMjU2cG1sc19sZWFmX2JpbmRpbmeicGJpbmRpbmdfY29zZV9iNjR5ATBoRkdpQVNjRVRHVnVkR2wwZVMxaFpHMXBicUJZaXFSamJXbGthVkpGUTFKRVV6QXhUbU4xYVdSNEdrVlZMVVpTTFZCVFFrbEVMVnBaVjFaVVUxSlJVRTVOT0UwMGFXUmxkbWxqWlY5cFpHNXlaV052Y21SekxXaHpiUzB3TVhOc1pXRm1YM05wWjE5d2RXSnJaWGxmWWpZMGVDeEVWRzFSVkVwV1FraGhSek5wTW5CeU4zYzNRVTQ1TUZwU09FWjRlbHBPVWxsU1RIcDZRVlZ0Umtjd1BWaEF6L3dsU2FMbEZpRlJPRXpzaFA1N3EyU2JZU3NIdkZoems5UjlkaFNINjBnUTlWK2w4L2Ercnh5aWFObGdqckRXUTJXaEtMNG5aZlFpVlJEeFEzMFREQT09c2xlYWZfc2lnX3B1YmtleV9iNjR4LERUbVFUSlZCSGFHM2kycHI3dzdBTjkwWlI4Rnh6Wk5SWVJMenpBVW1GRzA9cW1sc19sZWFmX25vZGVfcmVmoXJzaWduYXR1cmVfa2V5X2hhc2h4QGNlMmUyMzAwODhlZDkxOGIxYzUzMDcwYmNiM2JhMjhhNmI3ODViMzg4YjA5ZDQzOTFjMmY3MmI0ODFjODJlZWVndmVyc2lvbmMyLjJrbWVtYmVyX3R5cGVmcGVyc29ubmFjY291bnRhYmlsaXR5o2lyZXRlbnRpb25kUDEwWXFhY2Nlc3NfY29uZGl0aW9uc4JnZGlzcHV0ZXNzdXBlcnZpc29yeS1yZXF1ZXN0cWF1dGhvcmlzYXRpb25fcmVmeC51cm46b3JnOnZpbGxlLWRlLXBhcmlzOmF1dGh6OjIwMjYtMDIwMC1yZWNvcmRzWEA488lZGNCAVnLiCcbbE0bkEspoRmMqrUmZFp4Fp8lzz9vSfg3tuFgKGILDVJvf728Sv8EOE+YvIWHRjjIgSS8I",
+  "projection": {
+    "type": "BW-MEMBER-v1",
+    "version": "2.2",
+    "uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+    "mid": "RECRDS01N",
+    "member_type": "person",
+    "status": "active",
+    "roles": [
+      "records"
+    ],
+    "devices": [
+      {
+        "device_id": "records-hsm-01",
+        "added_at": "2026-03-01T09:00:00Z",
+        "last_seen": "2026-04-04T18:00:00Z",
+        "mls_leaf_node_ref": {
+          "signature_key_hash": "ce2e230088ed918b1c53070bcb3ba28a6b785b388b09d4391c2f72b481c82eee"
+        },
+        "capabilities": [
+          "receive"
+        ],
+        "device_class": "HSM",
+        "mls_leaf_binding": {
+          "leaf_sig_pubkey_b64": "DTmQTJVBHaG3i2pr7w7AN90ZR8FxzZNRYRLzzAUmFG0=",
+          "binding_cose_b64": "hFGiAScETGVudGl0eS1hZG1pbqBYiqRjbWlkaVJFQ1JEUzAxTmN1aWR4GkVVLUZSLVBTQklELVpZV1ZUU1JRUE5NOE00aWRldmljZV9pZG5yZWNvcmRzLWhzbS0wMXNsZWFmX3NpZ19wdWJrZXlfYjY0eCxEVG1RVEpWQkhhRzNpMnByN3c3QU45MFpSOEZ4elpOUllSTHp6QVVtRkcwPVhAz/wlSaLlFiFROEzshP57q2SbYSsHvFhzk9R9dhSH60gQ9V+l8/a+rxyiaNlgjrDWQ2WhKL4nZfQiVRDxQ30TDA=="
+        },
+        "cipher_suites": [
+          "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519",
+          "MLS_128_DHKEMP256_AES128GCM_SHA256_P256"
+        ]
+      }
+    ],
+    "accountability": {
+      "authorisation_ref": "urn:org:ville-de-paris:authz:2026-0200-records",
+      "retention": "P10Y",
+      "access_conditions": [
+        "dispute",
+        "supervisory-request"
+      ]
+    }
+  }
+}

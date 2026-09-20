@@ -1,0 +1,100 @@
+<svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif" role="img">
+<!-- figure
+owner: the maintainer (README, Feedback)
+source: docs/diagrams/verification-inputs.svg (hand-written SVG; this file is the source)
+question: What must a verifier hold, years later, besides the Evidence Package — and what is the verdict when one of those inputs is missing?
+profile: all; the relay hop evidence in the package exists from profile 2
+status: current
+references: docs/production-verifier-architecture.md (this figure's note); docs/required-properties.json; scripts/bundle_lint.py; README "What a green bar means"; decisions R6-W1 (maximality), R11-X3 (live lease), R12-X4 (formation inputs)
+alt: Three columns feeding one verdict. The Evidence Package carries the Sending Evidence, the outcome (DE, NDE or RE), the RDP chain with per-hop evidence, and optionally change records, non-operative state records and disputes. Beside it, the retained material that must accompany it: the policy chain, the counterparty roster, the retained GroupContext, the formation inputs, the suite registry and the federation register, each with the gap rule reported when it is absent, plus optional Delivery Service receipts and grade reveals. On the right, what is configured rather than retained: the EU Trusted Lists for qualification and the Federation Authority anchor for admission; the demo trust store stands in for the first only. The verdict is one of three: a pass, INCOMPLETE with exit code 3 when a required property cannot be established, or FAIL with exit code 1 for a violation. Two facts no retained material can establish are marked: that no later policy version existed, and that an observation reported by a Delivery Service is true.
+-->
+  <title>What a verifier must hold, besides the package</title>
+  <desc>The Evidence Package, the retained material that must accompany it with the gap rule for each, and the configured trust anchors — feeding one of three verdicts: pass, INCOMPLETE (exit 3) or FAIL (exit 1).</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="620" fill="#ffffff"/>
+  <text x="500" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1f2937">What a verifier must hold, besides the package</text>
+
+  <!-- EP -->
+  <rect x="24" y="56" width="290" height="240" rx="8" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.6"/>
+  <text x="169" y="78" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">The Evidence Package carries</text>
+  <g font-size="11.5" fill="#475569">
+    <text x="40" y="102">· the Sending Evidence (SE)</text>
+    <text x="40" y="124">· the outcome — DE, NDE or RE</text>
+    <text x="40" y="146">· the RDP chain, with per-hop evidence</text>
+    <text x="40" y="168">· change records, if any</text>
+    <text x="40" y="190">· non-operative state records</text>
+    <text x="40" y="212">· disputes, if any</text>
+  </g>
+  <text x="169" y="244" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">sealed, and time-stamped from outside</text>
+  <text x="169" y="266" text-anchor="middle" font-size="11" fill="#64748b">it does not carry the material</text>
+  <text x="169" y="282" text-anchor="middle" font-size="11" fill="#64748b">the columns beside it hold</text>
+
+  <!-- retained sidecars -->
+  <rect x="340" y="56" width="330" height="330" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="1.4"/>
+  <text x="505" y="78" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">Retained beside it — or INCOMPLETE</text>
+  <g font-size="11.5" fill="#475569">
+    <text x="356" y="102">· the policy chain in force at the act</text>
+    <text x="368" y="117" font-size="10.5" fill="#64748b">absent → LINT-BND-I1</text>
+    <text x="356" y="141">· the counterparty roster, as of the act</text>
+    <text x="368" y="156" font-size="10.5" fill="#64748b">absent → LINT-BND-I2</text>
+    <text x="356" y="180">· the retained GroupContext octets</text>
+    <text x="368" y="195" font-size="10.5" fill="#64748b">absent → LINT-BND-I4</text>
+    <text x="356" y="219">· the formation inputs, and the suite registry</text>
+    <text x="368" y="234" font-size="10.5" fill="#64748b">absent → LINT-BND-I5</text>
+    <text x="356" y="258">· the federation register's records</text>
+    <text x="368" y="273" font-size="10.5" fill="#64748b">absent → LINT-BND-I6</text>
+    <text x="356" y="297">· Delivery Service receipts, where held</text>
+    <text x="368" y="312" font-size="10.5" fill="#64748b">optional today; checked when present</text>
+    <text x="356" y="336">· a reveal, for a disputed grade or mandate</text>
+    <text x="368" y="351" font-size="10.5" fill="#64748b">discloses that class to the dispute's parties</text>
+  </g>
+  <text x="505" y="374" text-anchor="middle" font-size="11" fill="#64748b">the claimant produces these; each is itself sealed</text>
+
+  <!-- configured -->
+  <rect x="696" y="56" width="280" height="240" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.6"/>
+  <text x="836" y="78" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">Configured, not retained</text>
+  <g font-size="11.5" fill="#475569">
+    <text x="712" y="104">· the EU Trusted Lists</text>
+    <text x="724" y="119" font-size="10.5" fill="#64748b">qualification, at the act's instant</text>
+    <text x="712" y="143">· the Federation Authority's anchor</text>
+    <text x="724" y="158" font-size="10.5" fill="#64748b">admission — without it the register</text>
+    <text x="724" y="172" font-size="10.5" fill="#64748b">cannot be authenticated (I6)</text>
+    <text x="712" y="196">· the plaintext the party holds</text>
+    <text x="724" y="211" font-size="10.5" fill="#64748b">for any claim about content</text>
+  </g>
+  <text x="836" y="244" text-anchor="middle" font-size="11" fill="#64748b">the demo trust store stands in</text>
+  <text x="836" y="260" text-anchor="middle" font-size="11" fill="#64748b">for the Trusted Lists only</text>
+  <text x="836" y="282" text-anchor="middle" font-size="11" fill="#64748b">(and for the demo anchor)</text>
+
+  <!-- arrows to verdict -->
+  <line x1="169" y1="298" x2="330" y2="446" stroke="#475569" stroke-width="1.3" marker-end="url(#a)"/>
+  <line x1="505" y1="388" x2="505" y2="446" stroke="#475569" stroke-width="1.3" marker-end="url(#a)"/>
+  <line x1="836" y1="298" x2="676" y2="446" stroke="#475569" stroke-width="1.3" marker-end="url(#a)"/>
+
+  <!-- verdict -->
+  <rect x="300" y="450" width="410" height="86" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="1.6"/>
+  <text x="505" y="472" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">One of three verdicts — never a fourth</text>
+  <text x="505" y="493" text-anchor="middle" font-size="11.5" fill="#475569">a pass · INCOMPLETE, exit 3 — a required property not established</text>
+  <text x="505" y="510" text-anchor="middle" font-size="11.5" fill="#475569">FAIL, exit 1 — a violation of a rule</text>
+  <text x="505" y="528" text-anchor="middle" font-size="11" fill="#64748b">material that does not parse is a finding, not an exception</text>
+
+  <!-- what nothing establishes -->
+  <rect x="24" y="450" width="250" height="86" rx="8" fill="#fffbeb" stroke="#b45309" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <text x="149" y="472" text-anchor="middle" font-size="12" font-weight="bold" fill="#b45309">No retained material shows</text>
+  <text x="149" y="492" text-anchor="middle" font-size="11" fill="#b45309">that no later policy existed (X-33)</text>
+  <text x="149" y="510" text-anchor="middle" font-size="11" fill="#b45309">that a reported observation is true</text>
+  <text x="149" y="527" text-anchor="middle" font-size="11" fill="#b45309">(the S2 receipt — A9)</text>
+
+  <rect x="736" y="450" width="240" height="86" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.2" stroke-dasharray="2 3"/>
+  <text x="856" y="472" text-anchor="middle" font-size="12" font-weight="bold" fill="#1f2937">Outside this bar</text>
+  <text x="856" y="492" text-anchor="middle" font-size="11" fill="#475569">certificate chains, TSA tokens,</text>
+  <text x="856" y="509" text-anchor="middle" font-size="11" fill="#475569">qualification scope at evidence time</text>
+  <text x="856" y="527" text-anchor="middle" font-size="11" fill="#475569">— the production verifier's duties</text>
+
+  <text x="500" y="568" text-anchor="middle" font-size="11" fill="#64748b">Every instant is judged at the act it dates, never at verification time: admission at each act, key validity at the signature, policy at submission.</text>
+  <text x="500" y="590" text-anchor="middle" font-size="11" fill="#64748b">A live admission lease authorises an exchange; it is never evidence of admission at an act inside it.</text>
+</svg>

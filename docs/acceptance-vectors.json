@@ -1,0 +1,429 @@
+{
+  "$comment": "R7-05 requirement 5: a machine-readable finding -> CRITERION -> test-node matrix. Round 6's gate asserted only that a cited file EXISTS and mentions the finding — so a finding could read remediated while any individual acceptance criterion went unexercised, which is how R5-02's `[v1]` criterion was written down and never run. Each criterion here names a COLLECTED pytest node, checked against the actual collection rather than against the filesystem.",
+  "registry_version": "1",
+  "findings": {
+    "R7-01": {
+      "each required field fails before all three ledgers change": "tests/test_intake_obligations.py::test_every_contract_required_field_fails_before_any_ledger_moves",
+      "no omission produces an untyped crash": "tests/test_intake_obligations.py::test_no_omission_produces_an_untyped_crash",
+      "re-signing an incomplete tuple does not make it acceptable": "tests/test_intake_obligations.py::test_every_contract_required_field_fails_before_any_ledger_moves",
+      "identity equality is unconditional": "tests/test_intake_obligations.py::test_the_recipient_tuple_must_name_ONE_entity",
+      "the validator is derived from the contract": "tests/test_intake_obligations.py::test_intake_and_the_published_contract_agree",
+      "the SE is validated before sealing": "tests/test_intake_obligations.py::test_no_invalid_artefact_is_ever_signed"
+    },
+    "R8-01": {
+      "the published request Schema is executed, not projected": {
+        "node": "tests/test_intake_obligations.py::test_intake_and_the_published_contract_agree",
+        "proves": "intake and a Draft 2020-12 validator over the published SubmissionMetadata return the same verdict on every member of a malformed corpus"
+      },
+      "every constraint kind refuses before all three ledgers move": {
+        "node": "tests/test_intake_obligations.py::test_a_value_the_contract_rejects_never_moves_a_ledger",
+        "proves": "_SUBMISSION_LEDGER, _DS_LEDGER and _SE_LEDGER are all empty after a refused submission"
+      },
+      "the candidate SE is refused before the DS is contacted": {
+        "node": "tests/test_intake_obligations.py::test_the_candidate_is_refused_before_the_delivery_service_is_contacted",
+        "proves": "_DS_LEDGER is empty after a candidate that cannot be sealed"
+      },
+      "no invalid artefact is ever signed, and the refusal is retryable": {
+        "node": "tests/test_intake_obligations.py::test_no_invalid_artefact_is_ever_signed",
+        "proves": "_SE_LEDGER is empty after the failure, and the corrected submission then seals"
+      },
+      "typed semantic reasons survive structural validation": {
+        "node": "tests/test_intake_obligations.py::test_a_caller_decides_on_fields_not_on_the_message_text",
+        "proves": "the raised reason is sender-confirmation-missing, and no submitted value appears in the message"
+      }
+    },
+    "R8-02": {
+      "the queue cannot express a binding of its own": {
+        "node": "tests/test_production_signature_claims.py::test_the_queue_cannot_express_a_binding_of_its_own",
+        "proves": "queue_delivery's signature has no octets parameter"
+      },
+      "bytes the DS never accepted cannot be acknowledged": {
+        "node": "tests/test_production_signature_claims.py::test_bytes_the_ds_never_accepted_cannot_be_acknowledged",
+        "proves": "_ACK_LEDGER is empty and the raised reason is delivery-digest-mismatch"
+      },
+      "one byte binding runs from acceptance to receipt": {
+        "node": "tests/test_production_signature_claims.py::test_one_byte_binding_runs_from_acceptance_to_receipt",
+        "proves": "the acceptance record, the delivery item and the signed receipt hold the same digest object"
+      },
+      "an accepted message cannot be retargeted": {
+        "node": "tests/test_production_signature_claims.py::test_an_accepted_message_cannot_be_retargeted",
+        "proves": "_ACK_LEDGER holds exactly one entry and the first receipt is unchanged"
+      },
+      "state is monotonic; an acknowledged item cannot be re-queued": {
+        "node": "tests/test_production_signature_claims.py::test_an_acknowledged_item_cannot_be_walked_back_to_queued",
+        "proves": "the item's state is still acknowledged after a re-queue"
+      },
+      "several devices converge on one recipient event": {
+        "node": "tests/test_production_signature_claims.py::test_several_devices_converge_on_one_recipient_event",
+        "proves": "two delivery items, one _ACK_LEDGER entry, and the sibling's item still transferred"
+      },
+      "a transfer needs a well-formed session and moves nothing without one": {
+        "node": "tests/test_production_signature_claims.py::test_a_transfer_needs_a_well_formed_session_and_moves_nothing_without_one",
+        "proves": "the item's state is still queued after every malformed session"
+      },
+      "every emitted receipt validates against its published Schema": {
+        "node": "tests/test_production_signature_claims.py::test_every_emitted_receipt_validates_against_its_published_schema",
+        "proves": "validate_delivery_receipt returns [] for the signed receipt"
+      },
+      "a transfer retry converges; a new session reclaims": {
+        "node": "tests/test_production_signature_claims.py::test_a_transfer_retry_converges_and_a_new_session_RECLAIMS",
+        "proves": "the same session returns the same collection_token; a different session reissues it and moves the binding; an acknowledged item stays terminal with one _ACK_LEDGER entry"
+      }
+    },
+    "R7-02": {
+      "an orphan receipt cannot be produced": "tests/test_production_signature_claims.py::test_an_orphan_receipt_cannot_be_produced_at_all",
+      "an accepted but untransferred item cannot be acknowledged": "tests/test_production_signature_claims.py::test_an_accepted_but_untransferred_item_cannot_be_acknowledged",
+      "the ack is checked against the stored item": "tests/test_production_signature_claims.py::test_the_ack_is_checked_against_the_stored_item_not_its_caller",
+      "empty and all-None contexts are unconstructible": "tests/test_production_signature_claims.py::test_an_empty_or_all_None_context_cannot_be_constructed",
+      "a bare mapping is refused": "tests/test_production_signature_claims.py::test_a_bare_mapping_is_refused_by_the_verifier",
+      "session_binding and issuing_rdp_id are mandatory signed": "tests/test_production_signature_claims.py::test_a_receipt_missing_session_binding_fails_both_paths",
+      "two RDPs reusing one message_id get their own items": "tests/test_production_signature_claims.py::test_a_receipt_for_another_issuing_rdp_is_a_different_item"
+    },
+    "R7-03": {
+      "the record has a schema and the deposit carries it": "tests/test_current_claims.py::test_the_invitation_record_has_a_schema_and_the_deposit_carries_it",
+      "one principal for deposit, collection and acknowledgement": "tests/test_current_claims.py::test_one_principal_for_deposit_collection_and_acknowledgement",
+      "the whole flow runs in the reference path": "tests/test_current_claims.py::test_the_whole_pre_join_flow_runs_in_the_reference_path",
+      "the refusal is validated against the record": "tests/test_current_claims.py::test_the_refusal_is_VALIDATED_against_the_record_not_echoed",
+      "a sibling device cannot refuse another's invitation": "tests/test_current_claims.py::test_a_sibling_device_cannot_refuse_another_devices_invitation",
+      "another creator cannot see or acknowledge the outcome": "tests/test_current_claims.py::test_another_creator_cannot_see_or_acknowledge_the_outcome",
+      "lost responses converge on retry": "tests/test_current_claims.py::test_lost_responses_converge_on_retry"
+    },
+    "R7-04": {
+      "one shared definition with the canonical grammar": "tests/test_intake_obligations.py::test_the_grammar_is_ONE_definition_reused_everywhere",
+      "the code reads the grammar from the schema": "tests/test_intake_obligations.py::test_the_grammar_the_code_enforces_IS_the_schemas",
+      "every shipped identifier is canonical": "tests/test_intake_obligations.py::test_every_shipped_rdp_id_is_canonical",
+      "arbitrary principals are refused at every entry point": "tests/test_intake_obligations.py::test_a_non_canonical_principal_is_refused_at_every_entry_point",
+      "the adapter requires exactly one canonical URI": "tests/test_intake_obligations.py::test_the_identity_adapter_requires_exactly_one_canonical_uri",
+      "no alias policy, deliberately": "tests/test_intake_obligations.py::test_no_alias_policy_is_defined_and_that_is_deliberate",
+      "authorisation stays external": "tests/test_intake_obligations.py::test_authorisation_stays_external"
+    },
+    "R7-05": {
+      "an injected property emits its gap": "tests/test_release_probes.py::test_a_valid_injected_property_EMITS_ITS_GAP",
+      "a misspelt declaration is fatal": "tests/test_release_probes.py::test_a_misspelt_declaration_is_FATAL_not_skipped",
+      "the original injection no longer passes": "tests/test_release_probes.py::test_cowork_s_exact_injection_no_longer_passes",
+      "the hard-coded map is gone": "tests/test_release_probes.py::test_a_valid_injected_property_EMITS_ITS_GAP",
+      "the supplied inputs are not restated": "tests/test_release_probes.py::test_the_supplied_inputs_are_not_restated_beside_the_signature"
+    },
+    "R8-03": {
+      "the transfer transition is a published operation": {
+        "node": "tests/test_production_signature_claims.py::test_the_transfer_transition_is_a_published_operation",
+        "proves": "GET /messages exists, is device-secured and declares no device parameter"
+      },
+      "one state vocabulary across contract, decisions and code": {
+        "node": "tests/test_production_signature_claims.py::test_one_state_vocabulary_across_contract_decisions_and_code",
+        "proves": "the published DeliveryItemState enum, the decision record and _DELIVERY_STATES agree"
+      },
+      "a device reaches the receipt through published operations only": {
+        "node": "tests/test_production_signature_claims.py::test_a_device_reaches_the_receipt_through_published_operations_only",
+        "proves": "collecting returns state transferred and the receipt's digest equals the collected item's"
+      },
+      "the collected item validates against its published Schema": {
+        "node": "tests/test_production_signature_claims.py::test_the_collected_item_validates_against_its_published_schema",
+        "proves": "the MessageCollection validator returns no errors"
+      },
+      "a sibling device collects nothing and cannot tell why": {
+        "node": "tests/test_production_signature_claims.py::test_a_sibling_device_collects_nothing_and_cannot_tell_why",
+        "proves": "the sibling's collection is empty and the target's item is still queued"
+      },
+      "a lost collection response converges without a duplicate event": {
+        "node": "tests/test_production_signature_claims.py::test_a_lost_collection_response_converges",
+        "proves": "the second collection is byte-identical, one delivery item, one _ACK_LEDGER entry"
+      },
+      "collection requires a device credential bound to the session": {
+        "node": "tests/test_production_signature_claims.py::test_collection_requires_a_device_credential_bound_to_the_session",
+        "proves": "the item's state is still queued after every refused credential"
+      },
+      "the acknowledgement quotes the transfer it collected": {
+        "node": "tests/test_production_signature_claims.py::test_an_acknowledgement_must_quote_the_transfer_it_collected",
+        "proves": "_ACK_LEDGER is empty and the raised reason is delivery-token-mismatch"
+      }
+    },
+    "R8-04": {
+      "the reference request is exactly the published Schema": {
+        "node": "tests/test_current_claims.py::test_the_reference_request_is_exactly_the_published_schema",
+        "proves": "the old split-signature shape produces exactly two required-property errors"
+      },
+      "a deposit that cannot be checked is refused before anything is queued": {
+        "node": "tests/test_current_claims.py::test_a_deposit_that_cannot_be_checked_is_refused_before_anything_is_queued",
+        "proves": "_INVITATIONS and _WELCOME_QUEUE are both empty"
+      },
+      "only a member-bound credential is the creator": {
+        "node": "tests/test_current_claims.py::test_only_a_member_bound_credential_is_the_creator",
+        "proves": "deposit, collection and acknowledgement all raise WelcomeAccessDenied"
+      },
+      "the member scheme itself says it is member-bound": {
+        "node": "tests/test_current_claims.py::test_the_member_scheme_says_it_is_member_bound",
+        "proves": "both member schemes state that an entity-level credential is NOT sufficient"
+      },
+      "the invitation binds a committed reservation and its exact package": {
+        "node": "tests/test_current_claims.py::test_the_invitation_binds_a_committed_reservation_and_its_exact_package",
+        "proves": "_INVITATIONS is empty and the reason names the reservation or the package"
+      },
+      "an uncommitted reservation cannot carry an invitation": {
+        "node": "tests/test_current_claims.py::test_an_uncommitted_reservation_cannot_carry_an_invitation",
+        "proves": "the raised reason is reservation-not-committed"
+      },
+      "only an in-window refusal creates an outcome": {
+        "node": "tests/test_current_claims.py::test_only_an_in_window_refusal_creates_an_outcome",
+        "proves": "_OUTCOMES is empty outside the window and holds the outcome inside it"
+      },
+      "the refusing credential must hold this invitation's KeyPackage": {
+        "node": "tests/test_current_claims.py::test_the_refusing_credential_must_hold_this_invitations_keypackage",
+        "proves": "_OUTCOMES is empty and the answer is indistinguishable from unknown"
+      },
+      "an invented reason is refused": {
+        "node": "tests/test_current_claims.py::test_an_invented_reason_is_refused",
+        "proves": "_OUTCOMES is empty and the raised reason is refusal-reason-unknown"
+      },
+      "the floor is resolved from discovery, not believed": {
+        "node": "tests/test_current_claims.py::test_the_floor_is_resolved_from_discovery_not_believed",
+        "proves": "the stored outcome's required_floor is the published value, not the caller's"
+      },
+      "an identical refusal retry converges; a conflicting one fails": {
+        "node": "tests/test_current_claims.py::test_a_conflicting_refusal_retry_fails_deterministically",
+        "proves": "the same outcome_id twice, then invitation-conflict, with one outcome stored"
+      },
+      "an unknown outcome is not acknowledged by just anybody": {
+        "node": "tests/test_current_claims.py::test_an_unknown_outcome_is_not_acknowledged_by_just_anybody",
+        "proves": "an unknown id raises outcome-unknown, and the owner's repeat succeeds after deletion"
+      }
+    },
+    "R8-05": {
+      "every provider-identity field $refs the one definition": {
+        "node": "tests/test_intake_obligations.py::test_every_provider_identity_field_refs_the_one_definition",
+        "proves": "the inventory reports no restatement across every contract and Schema"
+      },
+      "the inventory catches a restatement anywhere": {
+        "node": "tests/test_intake_obligations.py::test_the_inventory_catches_a_restatement_anywhere",
+        "proves": "each of the three injected declaration shapes is reported"
+      },
+      "every layer rejects the same invalid corpus": {
+        "node": "tests/test_intake_obligations.py::test_every_layer_rejects_the_same_invalid_corpus",
+        "proves": "the reference, three published object schemas and the path parameter all refuse the same five values"
+      },
+      "the adapter counts occurrences, not distinct values": {
+        "node": "tests/test_intake_obligations.py::test_the_adapter_counts_occurrences_not_distinct_values",
+        "proves": "a duplicate-identical SAN raises rdp-identity-ambiguous"
+      },
+      "a duplicate SAN reports every occurrence": {
+        "node": "tests/test_intake_obligations.py::test_a_duplicate_san_reports_every_occurrence",
+        "proves": "the detail states the occurrence count"
+      },
+      "a server-derived AcceptanceRecord is validated before it is stored": {
+        "node": "tests/test_intake_obligations.py::test_a_server_derived_acceptance_record_is_validated_before_it_is_stored",
+        "proves": "_DS_LEDGER is empty after an invalid record"
+      },
+      "two services of one entity keep distinct namespaces": {
+        "node": "tests/test_intake_obligations.py::test_two_services_of_one_entity_keep_distinct_namespaces",
+        "proves": "_DS_LEDGER holds two entries for one message_id"
+      }
+    },
+    "R8-06": {
+      "one declaration behaves the same under every incomplete rule": {
+        "node": "tests/test_release_probes.py::test_one_declaration_behaves_the_same_under_every_incomplete_rule",
+        "proves": "the injected establishes marker appears in the CLI output for every catalogued incomplete rule"
+      },
+      "no source branch selects behaviour by rule id or property id": {
+        "node": "tests/test_release_probes.py::test_no_source_branch_selects_behaviour_by_rule_id_or_property_id",
+        "proves": "bundle_lint.py, comments stripped, compares no gap_rule or property id against a literal",
+        "paired_with": "tests/test_release_probes.py::test_one_declaration_behaves_the_same_under_every_incomplete_rule"
+      },
+      "removing any row's input from the bundle is never a pass": {
+        "node": "tests/test_release_probes.py::test_removing_a_rows_input_from_the_bundle_is_never_a_pass",
+        "proves": "the CLI exits non-zero for every declared row's input, driven from the registry"
+      },
+      "every registry mutation fails closed": {
+        "node": "tests/test_release_probes.py::test_every_registry_mutation_fails_closed",
+        "proves": "delete, duplicate, rename, missing strategy, unknown strategy and an undeclared row each exit 1"
+      },
+      "a delegated property must name a catalogued owner": {
+        "node": "tests/test_release_probes.py::test_a_delegated_property_must_name_a_catalogued_owner",
+        "proves": "a delegation naming nobody, or an uncatalogued rule, exits 1"
+      },
+      "a delegation whose owner says nothing still reports the gap": {
+        "node": "tests/test_release_probes.py::test_a_delegation_whose_owner_says_nothing_still_reports_the_gap",
+        "proves": "the delegated row's own establishes marker appears when its owner reported nothing"
+      },
+      "no acceptance criterion rests on a source-inspection test": {
+        "node": "tests/test_release_probes.py::test_no_acceptance_criterion_rests_on_a_source_inspection_test",
+        "proves": "every mapped node drives the reference rather than only reading a source file"
+      },
+      "every round-eight criterion declares what it proves": {
+        "node": "tests/test_release_probes.py::test_every_round_eight_criterion_declares_what_it_proves",
+        "proves": "each R8-* criterion carries a non-trivial external-state assertion"
+      }
+    },
+    "R9-03": {
+      "the KeyPackage reference is defined once, and is MLS's own": {
+        "node": "tests/test_current_claims.py::test_the_keypackage_reference_is_defined_once_and_is_MLS_own",
+        "proves": "the shared $def carries the RFC 9420 5.2 construction and both wire occurrences $ref it"
+      },
+      "the construction is RefHash under the reservation's suite": {
+        "node": "tests/test_current_claims.py::test_the_reference_is_RFC_9420_ref_hash_and_suite_bound",
+        "proves": "the value equals Hash(opaque_v(label)+opaque_v(keypackage)) and differs by suite and by label"
+      },
+      "a client can derive the reference the server returned": {
+        "node": "tests/test_current_claims.py::test_a_client_can_derive_the_reference_the_server_returned",
+        "proves": "the client's independent derivation from keypackage_b64 equals the returned keypackage_ref"
+      },
+      "the whole public flow uses only values public operations returned": {
+        "node": "tests/test_current_claims.py::test_the_whole_public_flow_uses_only_values_public_operations_returned",
+        "proves": "reserve, commit, deposit and refuse complete with no invented identifier"
+      },
+      "every reservation response validates against its contract": {
+        "node": "tests/test_current_claims.py::test_every_reservation_response_validates_against_its_contract",
+        "proves": "both the reserve and the commit responses produce zero Reservation errors"
+      },
+      "the response carries no internal field": {
+        "node": "tests/test_current_claims.py::test_the_response_carries_no_internal_field",
+        "proves": "creator, uid, targets and state are absent from the public object"
+      },
+      "the idempotency model is the contract's one": {
+        "node": "tests/test_current_claims.py::test_the_idempotency_model_is_the_contracts_one",
+        "proves": "a replayed Idempotency-Key returns the same reservation, a reused one conflicts, a missing one is refused"
+      },
+      "TTL expiry and release return packages exactly once": {
+        "node": "tests/test_current_claims.py::test_ttl_expiry_and_release_return_packages_exactly_once",
+        "proves": "an expired reservation cannot commit, a released one cannot commit, and a committed one cannot be released"
+      },
+      "the device credential binding is published": {
+        "node": "tests/test_current_claims.py::test_the_device_credential_binding_is_published",
+        "proves": "deviceAuth names the KeyPackageRef possession proof and says the DS does not read it from the request"
+      },
+      "the group-info commitment says what it is and who checks it": {
+        "node": "tests/test_current_claims.py::test_the_group_info_commitment_says_what_it_is_and_who_checks_it",
+        "proves": "the shared $def carries the labelled RefHash construction and names the invited device as validator"
+      }
+    },
+    "R9-02": {
+      "a collection returns everything or changes nothing": {
+        "node": "tests/test_production_signature_claims.py::test_a_collection_returns_everything_or_changes_nothing",
+        "proves": "after a refused collection both items are still queued, and the control collects two items first"
+      },
+      "the ordinary reconnect collects rather than stranding": {
+        "node": "tests/test_production_signature_claims.py::test_the_ordinary_reconnect_collects_rather_than_stranding",
+        "proves": "a second session collects both items, the reclaimed token differs, and one _ACK_LEDGER entry results"
+      },
+      "every item stays reachable after any interleaving": {
+        "node": "tests/test_production_signature_claims.py::test_every_item_stays_reachable_after_any_interleaving",
+        "proves": "both session orderings leave two collectable items and exactly one signed event"
+      },
+      "a lost response does not create a second event": {
+        "node": "tests/test_production_signature_claims.py::test_a_lost_response_does_not_create_a_second_event",
+        "proves": "the repeated collection is byte-identical and the two acknowledgements return one receipt"
+      },
+      "the fan-out is derived from group state the DS observed": {
+        "node": "tests/test_production_signature_claims.py::test_the_fan_out_is_derived_from_group_state_the_ds_observed",
+        "proves": "acceptance alone creates one item per rostered device, and a replay creates no second item"
+      },
+      "a device that refused receives nothing": {
+        "node": "tests/test_production_signature_claims.py::test_a_device_that_refused_receives_nothing",
+        "proves": "the roster empties on refusal and acceptance creates no delivery item"
+      },
+      "the collection response can only carry the promised state": {
+        "node": "tests/test_production_signature_claims.py::test_the_collection_response_can_only_carry_the_promised_state",
+        "proves": "state is const transferred, the real response validates, and a queued state is rejected"
+      }
+    },
+    "R9-01": {
+      "the exact token succeeds and a conforming retry returns it again": {
+        "node": "tests/test_server_observed_ack.py::test_the_exact_token_succeeds_and_a_conforming_retry_returns_it_again",
+        "proves": "two acknowledgements with the collected token return one identical receipt and one _ACK_LEDGER entry"
+      },
+      "no other token value creates a receipt": {
+        "node": "tests/test_server_observed_ack.py::test_no_other_token_value_creates_a_receipt",
+        "proves": "omitted, null, empty, well-formed-wrong and foreign tokens leave _ACK_LEDGER empty and the item transferred"
+      },
+      "another device's token cannot acknowledge this transfer": {
+        "node": "tests/test_server_observed_ack.py::test_another_devices_token_cannot_acknowledge_this_transfer",
+        "proves": "the sibling's token for the same message_id is refused and no receipt exists"
+      },
+      "a token from a superseded session is refused": {
+        "node": "tests/test_server_observed_ack.py::test_a_token_from_a_superseded_session_is_refused",
+        "proves": "the pre-reclaim token no longer authorises the acknowledgement"
+      },
+      "the reference validates its own call against the published request": {
+        "node": "tests/test_server_observed_ack.py::test_the_reference_validates_its_own_call_against_the_published_request",
+        "proves": "ReceiptAckRequest is a named closed component requiring the token, and the reference validates against it",
+        "paired_with": "tests/test_server_observed_ack.py::test_no_other_token_value_creates_a_receipt"
+      },
+      "the signed-tuple prose matches what is actually signed": {
+        "node": "tests/test_server_observed_ack.py::test_the_signed_tuple_prose_matches_what_is_actually_signed",
+        "proves": "every mandatory-signed attested fact appears in the binding tuple and collection_token deliberately does not"
+      }
+    },
+    "R9-04": {
+      "equivalent instants decide identically": {
+        "node": "tests/test_current_claims.py::test_equivalent_instants_decide_identically",
+        "proves": "Z, +02:00, -02:00 and fractional forms of one instant all create an outcome"
+      },
+      "a chronologically inverted window is refused even when lexically ordered": {
+        "node": "tests/test_current_claims.py::test_a_chronologically_inverted_window_is_refused_even_when_lexically_ordered",
+        "proves": "the deposit raises invitation-window-invalid and _INVITATIONS stays empty"
+      },
+      "a refusal after the deadline is refused however it is written": {
+        "node": "tests/test_current_claims.py::test_a_refusal_after_the_deadline_is_refused_however_it_is_written",
+        "proves": "an offset form 90 minutes past the deadline leaves _OUTCOMES empty"
+      },
+      "each boundary follows the documented rule": {
+        "node": "tests/test_current_claims.py::test_each_boundary_follows_the_documented_rule",
+        "proves": "before/at/at/after the closed window: outcomes created only at and inside both bounds"
+      },
+      "an unparsable instant is refused rather than compared": {
+        "node": "tests/test_current_claims.py::test_an_unparsable_instant_is_refused_rather_than_compared",
+        "proves": "a non-RFC-3339 bound raises instead of taking part in a string comparison"
+      },
+      "every generated response validates against its closed Schema": {
+        "node": "tests/test_current_claims.py::test_every_generated_response_validates_against_its_closed_schema",
+        "proves": "WelcomeQueued, WelcomeQueue, RefusalAccepted and each outcome return zero contract errors"
+      },
+      "no internal field reaches a public response": {
+        "node": "tests/test_current_claims.py::test_no_internal_field_reaches_a_public_response",
+        "proves": "invitation_id and creator are absent from the deposit, the queue items and the outcomes"
+      },
+      "the refusal returns its outcome and the ack returns nothing": {
+        "node": "tests/test_current_claims.py::test_the_refusal_returns_its_outcome_and_the_ack_returns_nothing",
+        "proves": "the refusal is 201 with a published RefusalAccepted body and the acknowledgement returns None"
+      }
+    },
+    "R9-05": {
+      "an unrelated occurrence of any rule establishes nothing": {
+        "node": "tests/test_release_probes.py::test_an_unrelated_occurrence_of_any_rule_establishes_nothing",
+        "proves": "for every catalogued incomplete rule, an injected delegated row still reports its own establishes marker"
+      },
+      "a delegate cannot establish a property nobody declared": {
+        "node": "tests/test_release_probes.py::test_a_delegate_cannot_establish_a_property_nobody_declared",
+        "proves": "an establishment signal for an undeclared id exits 1 with a configuration error"
+      },
+      "removing one establishment signal fails that property": {
+        "node": "tests/test_release_probes.py::test_removing_one_establishment_signal_fails_that_property",
+        "proves": "each delegated row's signal removed in turn reports exactly that row's gap and no other"
+      },
+      "the delegated rows declare an owner that actually records": {
+        "node": "tests/test_release_probes.py::test_the_delegated_rows_declare_an_owner_that_actually_records",
+        "proves": "every delegated property id has a matching establish() call in the verifier",
+        "paired_with": "tests/test_release_probes.py::test_removing_one_establishment_signal_fails_that_property"
+      }
+    },
+    "R9-B6": {
+      "every published response matches its contract": {
+        "node": "tests/test_release_probes.py::test_every_published_response_matches_its_contract",
+        "proves": "all 14 published operations are driven and none returns an object its own response Schema rejects"
+      },
+      "an undeclared missing reference fails the sweep": {
+        "node": "tests/test_release_probes.py::test_an_undeclared_missing_reference_fails_the_sweep",
+        "proves": "clearing the declared-residual list makes the sweep report the operation with no reference"
+      },
+      "a response body under a no-content code is caught": {
+        "node": "tests/test_release_probes.py::test_a_response_body_under_a_no_content_code_is_caught",
+        "proves": "the refusal reports ok (RefusalAccepted) and the outcome acknowledgement ok (no content)"
+      },
+      "schema shapes are part of the recorded surface": {
+        "node": "tests/test_release_probes.py::test_schema_shapes_are_part_of_the_recorded_surface",
+        "proves": "contract-shapes.json records required sets and $refs, so a breaking schema change forces a version bump"
+      }
+    }
+  },
+  "$proves": "R8-06 requirement 5. A criterion whose value is an object declares WHAT EXTERNAL STATE its node asserts, so the release gate can report it rather than reporting only that a node was collected. The round-7 criteria keep the bare-string form: they were written before this field existed, and the three the review named as shallow — the SE pre-seal criterion, the invitation full-flow test and the shared-RdpId scan — were repointed at behavioural nodes in R8-01, R8-04 and R8-05 rather than annotated. Every criterion added from round 8 onward MUST carry `proves`, and no criterion of any round may name a source-inspection test.",
+  "$paired_with": "R8-06: a criterion whose node inspects SOURCE may stand only when it names the behavioural node that would fail on the defect, and that node is itself in this matrix. Structural evidence is sometimes the only possible evidence — 'no branch selects behaviour by rule id' cannot be shown by running anything — but it may never be the ONLY evidence, which is how two source-order assertions came to stand for R7-01's output gate."
+}

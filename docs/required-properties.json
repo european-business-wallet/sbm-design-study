@@ -1,0 +1,99 @@
+{
+  "$comment": "R6-05, REBUILT in round 7 (R7-05). This declares the properties a complete bundle verification must establish, and `check_bundle` ITERATES it. The round-6 version claimed 'adding a property here fails closed until it is wired' and that was FALSE: `_gaps()` consulted a second, hard-coded `applies` map, so `applies.get(prop['id'])` returned None for any id it did not already know and the property was skipped in silence. A property injected with an in-source input name and a catalogued gap rule passed the whole suite and produced byte-identical verifier output. The gate checked a substring, the verifier checked a hard-coded id, and neither checked the property.\n\nThe map is DELETED, not extended (standing rule 3). `when` is now an EXECUTABLE precondition from a closed vocabulary, evaluated generically — so the declaration drives the behaviour. Anything unknown here — an id, an input, a `when` kind, a gap rule — is a FATAL configuration error, never a `continue`. Failing closed on an unrecognised declaration is the whole point: the previous design failed OPEN, which is why the injection was invisible.\n\nR8-06: `_gaps()` still ended in two branches keyed on the OUTPUT RULE ID — `if gap_rule == \"LINT-BND-I1\": continue` and the same for I2. So the declaration drove the behaviour for three of five rows and the rule identifier drove it for two, and any FUTURE row choosing I1 or I2 was silently skipped whatever its semantics. Reproduced with a control: one injected row, five gap rules, and the marker appeared for I3/I4/I5 and vanished for I1/I2. Behaviour is now selected by an explicit `strategy` from a closed vocabulary, and `delegated` names WHO establishes the property and is CONFIRMED at the end of the run — a delegation nobody checks is the same shape as the branch it replaces.",
+  "registry_version": "3",
+  "properties": [
+    {
+      "id": "policy-chain",
+      "input": "policy_history",
+      "gap_rule": "LINT-BND-I1",
+      "establishes": "which acceptance policy governed the act, and that the chain is unbroken",
+      "precondition": "an evidence object pins this bundle's BW-ORG",
+      "when": {
+        "kind": "evidence_has_field",
+        "field": "acceptance_policy_ref"
+      },
+      "strategy": "delegated",
+      "delegated_to": [
+        "LINT-BND-35"
+      ]
+    },
+    {
+      "id": "counterparty-roster",
+      "input": "counterparty_members",
+      "gap_rule": "LINT-BND-I2",
+      "establishes": "the sender-side identity tuple: the signing member's entity, role and device authority",
+      "precondition": "an SE-v1 carries a sender_confirmation whose member is not in this bundle's roster",
+      "when": {
+        "kind": "always"
+      },
+      "strategy": "delegated",
+      "delegated_to": [
+        "LINT-BND-I2",
+        "LINT-BND-41"
+      ]
+    },
+    {
+      "id": "group-state",
+      "input": "group_contexts",
+      "gap_rule": "LINT-BND-I4",
+      "establishes": "the MLS state the evidence commits to, and the cipher-suite decision it encodes",
+      "precondition": "an evidence object carries mls_state",
+      "when": {
+        "kind": "evidence_has_field",
+        "field": "mls_state"
+      },
+      "strategy": "report_gap"
+    },
+    {
+      "id": "formation-inputs",
+      "input": "formation_inputs",
+      "gap_rule": "LINT-BND-I5",
+      "establishes": "the exact inputs the cipher-suite decision was taken on — both entities' member documents and each device's KeyPackage availability at formation — matched to the digest the decision commits to (R12-X4). Without them the decision is not recomputed, never recomputed from current data",
+      "precondition": "a retained GroupContext carries sbm_group_params",
+      "when": {
+        "kind": "any_input",
+        "inputs": [
+          "group_contexts"
+        ]
+      },
+      "strategy": "report_gap"
+    },
+    {
+      "id": "suite-registry",
+      "input": "suite_registry",
+      "gap_rule": "LINT-BND-I5",
+      "establishes": "the registry revision, preference order and floor as they stood when the group was formed",
+      "precondition": "a retained GroupContext carries sbm_group_params",
+      "when": {
+        "kind": "any_input",
+        "inputs": [
+          "group_contexts"
+        ]
+      },
+      "strategy": "report_gap"
+    },
+    {
+      "id": "federation-admission",
+      "input": "federation_register",
+      "gap_rule": "LINT-BND-I6",
+      "establishes": "that every provider named in the bundle was admitted to the federation at the instant of its act",
+      "precondition": "always: every bundle names at least the issuing provider, and admission is an independent gate (umbrella §13.1)",
+      "when": {
+        "kind": "always"
+      },
+      "strategy": "report_gap",
+      "$gap_rule": "The work order wrote `gap_rule: LINT-TRUST-06`. It cannot be: `is_incomplete` classifies the THIRD verdict by the `LINT-BND-I` prefix, so a row emitting LINT-TRUST-06 on absence reports a VIOLATION and exit 1 where the work order asks for [GAP] and exit 3 — and making the classifier recognise LINT-TRUST-06 would make a genuine `suspended` finding report INCOMPLETE too, since one rule id would then carry two verdicts. That is behaviour selected by a rule identifier, which is exactly the defect R8-06 closed. So absence emits LINT-BND-I6 (the register was not supplied; nothing is wrong with the evidence) and LINT-TRUST-06 stays what it is: a provider that acted while not admitted."
+    }
+  ],
+  "$when": "Closed vocabulary, exhaustively mapped in bundle_lint._precondition_holds: `always` | `evidence_has_field` (with `field`) | `any_input` (with `inputs`). A kind not in this list raises rather than defaulting to 'does not apply'.",
+  "mandatory": [
+    "policy-chain",
+    "counterparty-roster",
+    "group-state",
+    "formation-inputs",
+    "suite-registry",
+    "federation-admission"
+  ],
+  "$strategy": "Closed vocabulary, exhaustively mapped in bundle_lint._gaps: `report_gap` emits this row's `gap_rule` when the precondition holds and the input is absent; `delegated` records that the rules in `delegated_to` own the property, and bundle_lint._verify_delegations emits this row's own `gap_rule` at the end of the run if none of them actually reported anything. A strategy not in this list raises. Behaviour is NEVER selected by `gap_rule` or by `id`.",
+  "$mandatory": "R8-06 requirement 3: the EXACT set of property ids this verifier must carry. `check_bundle` compares the rows against it, so deleting a row, duplicating one or renaming one is a fatal configuration error rather than a quiet reduction in what a green verdict means. Adding a property means declaring it here too."
+}

@@ -1,0 +1,58 @@
+{
+  "sm_artifact_b64": "hFGiAScETGVudGl0eS1hZG1pbqBZBPGqY21pZGlBR0VOVDAwMUNjdWlkeBlFVS1ERS1FT0lELTdLM0Q5VzBRMk01RlcwZHR5cGVsQlctTUVNQkVSLXYxZXJvbGVzgWhpbnZvaWNlc2ZzdGF0dXNmYWN0aXZlZ2RldmljZXOBqWhhZGRlZF9hdHQyMDI2LTA0LTAxVDA5OjAwOjAwWmlkZXZpY2VfaWRtYWdlbnQtaG9zdC0wMWlsYXN0X3NlZW50MjAyNi0wNC0wNFQxODozMDowMFpsY2FwYWJpbGl0aWVzg2dyZWNlaXZlY2Fja2RzaWdubGRldmljZV9jbGFzc2hzb2Z0d2FyZW1jaXBoZXJfc3VpdGVzgXgsTUxTXzEyOF9ESEtFTVgyNTUxOV9BRVMxMjhHQ01fU0hBMjU2X0VkMjU1MTlwY29uZmlybWF0aW9uX2tleaJjYWxnZUVkRFNBbnB1YmxpY19rZXlfYjY0eCxtS0I5TndUZmdSdGNNeUJjbkxRaGt6RkVmekc1WlNpcHBDbldnd3lvL25FPXBtbHNfbGVhZl9iaW5kaW5nonBiaW5kaW5nX2Nvc2VfYjY0eQEsaEZHaUFTY0VUR1Z1ZEdsMGVTMWhaRzFwYnFCWWlLUmpiV2xrYVVGSFJVNVVNREF4UTJOMWFXUjRHVVZWTFVSRkxVVlBTVVF0TjBzelJEbFhNRkV5VFRWR1Z6QnBaR1YyYVdObFgybGtiV0ZuWlc1MExXaHZjM1F0TURGemJHVmhabDl6YVdkZmNIVmlhMlY1WDJJMk5IZ3NZa3RHUTJwQ1JVMVlLMnRZYVVKdVpEZEtlakJvVWpaMVRVazFaWFV5WlVsSlNWUlRaalJYVUhWSFp6MVlRRUxhSEgyMjRRa3pibkNKallteTZTM0hhRUhtdmpkUURkdzdmd285NDkvSTVTd3NscStPN04rS08vK2NWUHdQZWxKWmRyZUNqQkRXdEJtMXBuZWVnUTQ9c2xlYWZfc2lnX3B1YmtleV9iNjR4LGJLRkNqQkVNWCtrWGlCbmQ3SnowaFI2dU1JNWV1MmVJSUlUU2Y0V1B1R2c9cW1sc19sZWFmX25vZGVfcmVmoXJzaWduYXR1cmVfa2V5X2hhc2h4QGE1YjU4MzRmNGIzOGIxMGM4Yzk3NzI0YzAzNTYxY2E1OWVkOGYyMzg3NGIzM2Y1Yzk3MTBlM2UzYzAyZjkwMWFndmVyc2lvbmMyLjJrbWFuZGF0ZV9yZWalYmlkeCd1cm46bWFuZGF0ZToyMDI2OnByb2N1cmVtZW50LWFnZW50OjAwMDFlc2NvcGWBZ2ludm9pY2VmaXNzdWVyeCt1cm46b3JnOm11c3RlcmhhbmRlbC1nbWJoOm1hbmRhdGUtYXV0aG9yaXR5anZhbGlkX2Zyb210MjAyNi0wMS0wMVQwMDowMDowMFprdmFsaWRfdW50aWx0MjAyNy0wNi0zMFQwMDowMDowMFprbWVtYmVyX3R5cGVmc3lzdGVtbmFjY291bnRhYmlsaXR5o2lyZXRlbnRpb25kUDEwWXFhY2Nlc3NfY29uZGl0aW9uc4JnZGlzcHV0ZXNzdXBlcnZpc29yeS1yZXF1ZXN0cWF1dGhvcmlzYXRpb25fcmVmeC91cm46b3JnOm11c3RlcmhhbmRlbC1nbWJoOmF1dGh6OjIwMjYtMDE3Ny1hZ2VudFhAj5YX8+qig3l+loXUzwu494mYDQevvfzlioNl5Etfc8GAlF1KprwRFk7z2jVpnaH7VKCz8VFUMzWorEC1ZBu2Dw==",
+  "projection": {
+    "type": "BW-MEMBER-v1",
+    "version": "2.2",
+    "uid": "EU-DE-EOID-7K3D9W0Q2M5FW0",
+    "mid": "AGENT001C",
+    "member_type": "system",
+    "status": "active",
+    "roles": [
+      "invoices"
+    ],
+    "mandate_ref": {
+      "issuer": "urn:org:musterhandel-gmbh:mandate-authority",
+      "id": "urn:mandate:2026:procurement-agent:0001",
+      "scope": [
+        "invoice"
+      ],
+      "valid_from": "2026-01-01T00:00:00Z",
+      "valid_until": "2027-06-30T00:00:00Z"
+    },
+    "devices": [
+      {
+        "device_id": "agent-host-01",
+        "added_at": "2026-04-01T09:00:00Z",
+        "last_seen": "2026-04-04T18:30:00Z",
+        "mls_leaf_node_ref": {
+          "signature_key_hash": "a5b5834f4b38b10c8c97724c03561ca59ed8f23874b33f5c9710e3e3c02f901a"
+        },
+        "capabilities": [
+          "receive",
+          "ack",
+          "sign"
+        ],
+        "confirmation_key": {
+          "alg": "EdDSA",
+          "public_key_b64": "mKB9NwTfgRtcMyBcnLQhkzFEfzG5ZSippCnWgwyo/nE="
+        },
+        "device_class": "software",
+        "mls_leaf_binding": {
+          "leaf_sig_pubkey_b64": "bKFCjBEMX+kXiBnd7Jz0hR6uMI5eu2eIIITSf4WPuGg=",
+          "binding_cose_b64": "hFGiAScETGVudGl0eS1hZG1pbqBYiKRjbWlkaUFHRU5UMDAxQ2N1aWR4GUVVLURFLUVPSUQtN0szRDlXMFEyTTVGVzBpZGV2aWNlX2lkbWFnZW50LWhvc3QtMDFzbGVhZl9zaWdfcHVia2V5X2I2NHgsYktGQ2pCRU1YK2tYaUJuZDdKejBoUjZ1TUk1ZXUyZUlJSVRTZjRXUHVHZz1YQELaHH224QkzbnCJjYmy6S3HaEHmvjdQDdw7fwo949/I5Swslq+O7N+KO/+cVPwPelJZdreCjBDWtBm1pneegQ4="
+        },
+        "cipher_suites": [
+          "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
+        ]
+      }
+    ],
+    "accountability": {
+      "authorisation_ref": "urn:org:musterhandel-gmbh:authz:2026-0177-agent",
+      "retention": "P10Y",
+      "access_conditions": [
+        "dispute",
+        "supervisory-request"
+      ]
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "sm_artifact_b64": "glkEVoRIogEnBENyZHCgWQQGs2R0eXBlZURFLXYxZWV2ZW50dkQuMS1Db250ZW50Q29uc2lnbm1lbnRmcmRwX2lkdnVybjpzYm06cmRwOm1vY2tldS0wMDJncHJvZmlsZWVwaWxvdGd2ZXJzaW9uYzIuOGlwb2xpY3lfaWR4JWh0dHBzOi8vcmRwLmV4YW1wbGUuZXUvcG9saWN5L3FlcmRzLzFpc2NvcGVfcmVmomd2ZXJzaW9uYTFoc2NvcGVfaWRnZGVmYXVsdGptZXNzYWdlX2lkeBowMUhaM0FWTEJDREVGR0g5SktNTjBQUVJTVGtldmlkZW5jZV9pZHgaMDFKOFpEQTAwMDAwMDAwMDAwMDAwMDAwMDRsYXV0aF9jb250ZXh0pGNsb2FpdmVyeS1oaWdoZm1ldGhvZG93YWxsZXQtZWlkLWhpZ2hoaWRlbnRpdHlmZGV2aWNlaWF1dGhvcml0eXFRVFNQOkZSOmlzc3Vlci0wMWxkZWxpdmVyZWRfYXR0MjAyNi0wNC0wNFQwOTo1ODo0MVpscGF5bG9hZF9oYXNoo2NhbGdnU0hBLTI1NmNoZXh4QGQ4YmFlOWE3MWY4ZDMwYzVjZjQ3ODE3YWM4Mjk5MDM3NTQxZDFhNDZhYTFlZTJlZGQ0NzZlM2IxMTE5ZWM3N2VpaGFzaF9tb2RlanJhdy1zaGEyNTZtZW52ZWxvcGVfaGFzaKJjaGV4eEA1MWM4MGY1NTA1NzA2YzZmOWE5N2FkM2U4NDEzMWU5NGFlYTI2NTNmNWYzODQyODU5NWFiYmQ1YjU0NGQ1MmUzZmZvcm1hdG1tbHMxMC1tZXNzYWdlbXJlY2lwaWVudF91aWR4GkVVLUZSLVBTQklELVpZV1ZUU1JRUE5NOE00bmRlbGl2ZXJ5X2dyYWRlbGF2YWlsYWJpbGl0eW9pbnRlZ3JpdHlfYmFzaXN2c2VuZGVyLWRlY2xhcmVkLWRpZ2VzdHBncmFkZV9jb21taXRtZW50eEAxY2Q5MDZiMzA3ODY0YWFhODNhNTY1NWYxYjRhOTYxODZiMmE2YWZiNGMzMjk3ZTBkY2MyZTY4MmI5ZDExNGZjdWFjY2VwdGFuY2VfcG9saWN5X3JlZqNqZG9jX2RpZ2VzdKNjYWxnZ1NIQS0yNTZjaGV4eEBjY2FhN2VhZWNiODRiNjZjOWVhOGE4Nzc2ZGU5ZTQ2MThkMTNhN2U2ZmFmYzc2ZWJkYjg4ZWQ0NmNjMzBkYjNhaWhhc2hfbW9kZWpyYXctc2hhMjU2anBvbGljeV9rZXlnZGVmYXVsdG5wb2xpY3lfdmVyc2lvbmwyMDI2LTAzLTAxLjF1cmVjaXBpZW50X2F1dGhfbWV0aG9kb3dhbGxldC1laWQtaGlnaFhA5YkRZCBUTVQDvffxu1LKBpCU6wpMaePFw5AN1NenzvoRV70G9wXntqi9+7NEQxQfugV35yhqE4AYXYGZlThbDqNmZm9ybWF0Z3JmYzMxNjFmdHNhX2lkcVFUU0E6TW9ja0VVOlRTLTAxaXRva2VuX2I2NHhITURNRUlKb1hIQjhtMndUN2hrM2FqckkrNG02cGZwdTJVbkZxNUMxOFFzZnUzeUNqR0E4eU1ESTJNRFF3TkRBNU5UZzBNVm89",
+  "projection": {
+    "type": "DE-v1",
+    "version": "2.8",
+    "profile": "pilot",
+    "message_id": "01HZ3AVLBCDEFGH9JKMN0PQRST",
+    "event": "D.1-ContentConsignment",
+    "evidence_id": "01J8ZDA0000000000000000004",
+    "policy_id": "https://rdp.example.eu/policy/qerds/1",
+    "acceptance_policy_ref": {
+      "policy_version": "2026-03-01.1",
+      "doc_digest": {
+        "alg": "SHA-256",
+        "hex": "ccaa7eaecb84b66c9ea8a8776de9e4618d13a7e6fafc76ebdb88ed46cc30db3a",
+        "hash_mode": "raw-sha256"
+      },
+      "policy_key": "default"
+    },
+    "recipient_uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+    "delivered_at": "2026-04-04T09:58:41Z",
+    "rdp_id": "urn:sbm:rdp:mockeu-002",
+    "recipient_auth_method": "wallet-eid-high",
+    "auth_context": {
+      "identity": "device",
+      "method": "wallet-eid-high",
+      "loa": "very-high",
+      "authority": "QTSP:FR:issuer-01"
+    },
+    "payload_hash": {
+      "alg": "SHA-256",
+      "hex": "d8bae9a71f8d30c5cf47817ac8299037541d1a46aa1ee2edd476e3b1119ec77e",
+      "hash_mode": "raw-sha256"
+    },
+    "delivery_grade": "availability",
+    "integrity_basis": "sender-declared-digest",
+    "scope_ref": {
+      "scope_id": "default",
+      "version": "1"
+    },
+    "grade_commitment": "1cd906b307864aaa83a5655f1b4a96186b2a6afb4c3297e0dcc2e682b9d114fc",
+    "envelope_hash": {
+      "format": "mls10-message",
+      "hex": "51c80f5505706c6f9a97ad3e84131e94aea2653f5f38428595abbd5b544d52e3"
+    }
+  }
+}

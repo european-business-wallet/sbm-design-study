@@ -1,0 +1,566 @@
+{
+  "$comment": "R-01 SINGLE SOURCE OF TRUTH for CURRENT artefact versions. Every binding below MUST resolve to its dimension's `value`; scripts/version_manifest.py (make versions) and tests/test_version_matrix.py enforce equality and FAIL when the manifest OR any one artefact drifts independently. Historical values live in CHANGELOG.md and the per-document change-history tables, NEVER here. Binding kinds: `json` reads FILE, follows PATH (dotted, list indices allowed), and — if PATTERN is present — regex-extracts group 1 from that string; `text` reads FILE and regex-extracts group 1 of PATTERN's first match (re.MULTILINE).",
+  "manifest_version": "1",
+  "dimensions": {
+    "umbrella_profile": {
+      "value": "2.1",
+      "note": "The umbrella profile revision. DISTINCT from the evidence version, which is also 2.1 — do not conflate the two dimensions.",
+      "bindings": [
+        {
+          "kind": "text",
+          "file": "README.md",
+          "pattern": "Umbrella profile \\|\\s*(\\d+\\.\\d+)"
+        }
+      ]
+    },
+    "umbrella_edition": {
+      "value": "2026-09-18",
+      "note": "D10-04 (round 10): the umbrella's edition date, BOUND. It was metadata on `umbrella_profile` bound nowhere, so three places stated three dates — the umbrella's `**Date:**` 2026-07-06, its §0 paragraph 2026-07-31, the README 2026-09-18 — and `make versions` was green over all of them.",
+      "bindings": [
+        {
+          "kind": "text",
+          "file": "README.md",
+          "pattern": "Umbrella profile \\|\\s*\\d+\\.\\d+ \\(edition (\\d{4}-\\d{2}-\\d{2})\\)"
+        },
+        {
+          "kind": "text",
+          "file": "Secure-Business-Messaging-Profile.md",
+          "pattern": "^\\*\\*Date:\\*\\* (\\d{4}-\\d{2}-\\d{2})"
+        },
+        {
+          "kind": "text",
+          "file": "Secure-Business-Messaging-Profile.md",
+          "pattern": "umbrella edition \\*\\*(\\d{4}-\\d{2}-\\d{2})\\*\\*"
+        }
+      ]
+    },
+    "evidence": {
+      "value": "2.8",
+      "note": "Evidence objects SE/DE/NDE/RE/CE/EP/Relay. Schema const + CDDL body + sample projection are the authoritative sources; README row and schema titles must agree.",
+      "bindings": [
+        {
+          "kind": "json",
+          "file": "schemas/evidence-se.schema.json",
+          "path": "properties.version.const"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-de.schema.json",
+          "path": "properties.version.const"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-nde.schema.json",
+          "path": "properties.version.const"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-re.schema.json",
+          "path": "properties.version.const"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-ce.schema.json",
+          "path": "properties.version.const"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-ep.schema.json",
+          "path": "properties.version.const"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-relay.schema.json",
+          "path": "properties.version.const"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-se.schema.json",
+          "path": "title",
+          "pattern": "\\(v(\\d+\\.\\d+)\\)"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-de.schema.json",
+          "path": "title",
+          "pattern": "\\(v(\\d+\\.\\d+)\\)"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-nde.schema.json",
+          "path": "title",
+          "pattern": "\\(v(\\d+\\.\\d+)\\)"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-re.schema.json",
+          "path": "title",
+          "pattern": "\\(v(\\d+\\.\\d+)\\)"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-ce.schema.json",
+          "path": "title",
+          "pattern": "\\(v(\\d+\\.\\d+)\\)"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-ep.schema.json",
+          "path": "title",
+          "pattern": "\\(v(\\d+\\.\\d+)\\)"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-relay.schema.json",
+          "path": "title",
+          "pattern": "\\(v(\\d+\\.\\d+)\\)"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-common.schema.json",
+          "path": "title",
+          "pattern": "\\(v(\\d+\\.\\d+)\\)"
+        },
+        {
+          "kind": "text",
+          "file": "cddl/sm-mls-erd.cddl",
+          "pattern": "type: \"SE-v1\", version: \"(\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "text",
+          "file": "cddl/sm-mls-erd.cddl",
+          "pattern": "type: \"DE-v1\", version: \"(\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "text",
+          "file": "cddl/sm-mls-erd.cddl",
+          "pattern": "type: \"NDE-v1\", version: \"(\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "text",
+          "file": "cddl/sm-mls-erd.cddl",
+          "pattern": "type: \"RE-v1\", version: \"(\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "text",
+          "file": "cddl/sm-mls-erd.cddl",
+          "pattern": "type: \"CE-v1\", version: \"(\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "text",
+          "file": "cddl/sm-mls-erd.cddl",
+          "pattern": "type: \"RelayEvidence-v1\", version: \"(\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "text",
+          "file": "cddl/sm-mls-erd.cddl",
+          "pattern": "type: \"EP-v1\", version: \"(\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "json",
+          "file": "samples/sample-SE.json",
+          "path": "projection.version"
+        },
+        {
+          "kind": "json",
+          "file": "samples/sample-DE.json",
+          "path": "projection.version"
+        },
+        {
+          "kind": "json",
+          "file": "samples/sample-NDE.json",
+          "path": "projection.version"
+        },
+        {
+          "kind": "json",
+          "file": "samples/sample-RE.json",
+          "path": "projection.version"
+        },
+        {
+          "kind": "json",
+          "file": "samples/sample-CE.json",
+          "path": "projection.version"
+        },
+        {
+          "kind": "json",
+          "file": "samples/sample-EP.json",
+          "path": "projection.version"
+        },
+        {
+          "kind": "json",
+          "file": "samples/sample-RELAY-b1.json",
+          "path": "projection.version"
+        },
+        {
+          "kind": "text",
+          "file": "README.md",
+          "pattern": "Evidence objects[^|]*\\|\\s*\\*{0,2}(\\d+\\.\\d+)"
+        },
+        {
+          "kind": "text",
+          "file": "Secure-Business-Messaging-Profile.md",
+          "pattern": "Evidence objects \\*\\*(\\d+\\.\\d+)\\*\\*"
+        },
+        {
+          "kind": "text",
+          "file": "docs/evidence-layer-explainer.md",
+          "pattern": "`version` \\(`\"(\\d+\\.\\d+)\"` at this edition"
+        }
+      ]
+    },
+    "discovery_bw_med": {
+      "value": "2.1",
+      "bindings": [
+        {
+          "kind": "json",
+          "file": "schemas/bw-med.schema.json",
+          "path": "properties.version.const"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/bw-med.schema.json",
+          "path": "title",
+          "pattern": "\\(v(\\d+\\.\\d+)\\)"
+        },
+        {
+          "kind": "text",
+          "file": "cddl/sm-mls-erd.cddl",
+          "pattern": "bw-med-body = \\{ type: \"BW-MED-v1\", version: \"(\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "json",
+          "file": "samples/sample-BW-MED.json",
+          "path": "projection.version"
+        },
+        {
+          "kind": "text",
+          "file": "README.md",
+          "pattern": "BW-MED / BW-ORG / BW-MEMBER \\|\\s*(\\d+\\.\\d+)"
+        },
+        {
+          "kind": "text",
+          "file": "Secure-Business-Messaging-Profile.md",
+          "pattern": "BW-MED \\*\\*(\\d+\\.\\d+)\\*\\*"
+        }
+      ]
+    },
+    "discovery_bw_org": {
+      "value": "2.6",
+      "bindings": [
+        {
+          "kind": "json",
+          "file": "schemas/bw-org.schema.json",
+          "path": "properties.version.const"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/bw-org.schema.json",
+          "path": "title",
+          "pattern": "\\(v(\\d+\\.\\d+)\\)"
+        },
+        {
+          "kind": "text",
+          "file": "cddl/sm-mls-erd.cddl",
+          "pattern": "bw-org-body = \\{ type: \"BW-ORG-v1\", version: \"(\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "json",
+          "file": "samples/sample-BW-ORG.json",
+          "path": "projection.version"
+        },
+        {
+          "kind": "text",
+          "file": "README.md",
+          "pattern": "BW-MED / BW-ORG / BW-MEMBER \\|\\s*\\d+\\.\\d+ / (\\d+\\.\\d+)"
+        },
+        {
+          "kind": "text",
+          "file": "Secure-Business-Messaging-Profile.md",
+          "pattern": "BW-ORG \\*\\*(\\d+\\.\\d+)\\*\\*"
+        }
+      ]
+    },
+    "discovery_bw_member": {
+      "value": "2.2",
+      "bindings": [
+        {
+          "kind": "json",
+          "file": "schemas/bw-member.schema.json",
+          "path": "properties.version.const"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/bw-member.schema.json",
+          "path": "title",
+          "pattern": "\\(v(\\d+\\.\\d+)\\)"
+        },
+        {
+          "kind": "text",
+          "file": "cddl/sm-mls-erd.cddl",
+          "pattern": "bw-member-body = \\{ type: \"BW-MEMBER-v1\", version: \"(\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "json",
+          "file": "samples/sample-BW-MEMBER.json",
+          "path": "projection.version"
+        },
+        {
+          "kind": "text",
+          "file": "README.md",
+          "pattern": "BW-MED / BW-ORG / BW-MEMBER \\|\\s*\\d+\\.\\d+ / \\d+\\.\\d+ / (\\d+\\.\\d+)"
+        },
+        {
+          "kind": "text",
+          "file": "Secure-Business-Messaging-Profile.md",
+          "pattern": "BW-MEMBER \\*\\*(\\d+\\.\\d+)\\*\\*"
+        }
+      ]
+    },
+    "discovery_bw_provider": {
+      "value": "1.0",
+      "note": "BW-PROVIDER-v1, the provider's own signed descriptor (Batch A / A3). Its OWN stream: it describes a federation participant, not an entity, so it does not move when the entity documents do.",
+      "bindings": [
+        {
+          "kind": "json",
+          "file": "schemas/bw-provider.schema.json",
+          "path": "properties.version.const"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/bw-provider.schema.json",
+          "path": "title",
+          "pattern": "\\(v(\\d+\\.\\d+)\\)"
+        },
+        {
+          "kind": "text",
+          "file": "cddl/sm-mls-erd.cddl",
+          "pattern": "bw-provider-body = \\{ type: \"BW-PROVIDER-v1\", version: \"(\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "json",
+          "file": "samples/sample-BW-PROVIDER.json",
+          "path": "projection.version"
+        }
+      ]
+    },
+    "application_envelope": {
+      "value": "1.2",
+      "note": "Plaintext application-envelope headers. Version is carried only in the schema title and the README row (no sealed artefact, no version const).",
+      "bindings": [
+        {
+          "kind": "json",
+          "file": "schemas/envelope.schema.json",
+          "path": "title",
+          "pattern": "v(\\d+\\.\\d+)\\)"
+        },
+        {
+          "kind": "text",
+          "file": "README.md",
+          "pattern": "Application envelope \\|\\s*(\\d+\\.\\d+)"
+        },
+        {
+          "kind": "text",
+          "file": "Secure-Business-Messaging-Profile.md",
+          "pattern": "application envelope \\*\\*(\\d+\\.\\d+)\\*\\*"
+        }
+      ]
+    },
+    "edd_openapi": {
+      "value": "1.12.0",
+      "note": "EDD resolver OpenAPI contract; versions independently of the evidence family (umbrella §9.3).",
+      "bindings": [
+        {
+          "kind": "text",
+          "file": "edd-resolver-openapi.yaml",
+          "pattern": "^  version: \"(\\d+\\.\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "text",
+          "file": "edd-resolver-openapi.yaml",
+          "pattern": "contract v(\\d+\\.\\d+\\.\\d+)"
+        },
+        {
+          "kind": "text",
+          "file": "README.md",
+          "pattern": "EDD resolver contract \\(OpenAPI\\) \\|\\s*(\\d+\\.\\d+\\.\\d+)"
+        },
+        {
+          "kind": "text",
+          "file": "Secure-Business-Messaging-Profile.md",
+          "pattern": "EDD resolver contract \\*\\*(\\d+\\.\\d+\\.\\d+)\\*\\*"
+        }
+      ]
+    },
+    "federation_register_openapi": {
+      "value": "3.0.0",
+      "note": "Federation membership register OpenAPI contract (umbrella §13.1, the ADMISSION instrument); versions independently of the evidence family and of the EDD, because §13.1 keeps the four instruments distinct.",
+      "bindings": [
+        {
+          "kind": "text",
+          "file": "federation-register-openapi.yaml",
+          "pattern": "^  version: \"(\\d+\\.\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "text",
+          "file": "federation-register-openapi.yaml",
+          "pattern": "contract v(\\d+\\.\\d+\\.\\d+)"
+        },
+        {
+          "kind": "text",
+          "file": "README.md",
+          "pattern": "Federation register contract \\(OpenAPI\\) \\|\\s*(\\d+\\.\\d+\\.\\d+)"
+        },
+        {
+          "kind": "text",
+          "file": "Secure-Business-Messaging-Profile.md",
+          "pattern": "federation register contract \\*\\*(\\d+\\.\\d+\\.\\d+)\\*\\*"
+        }
+      ]
+    },
+    "ts": {
+      "value": "v0.35",
+      "note": "TS-shaped QERDS-binding revision. In the source repository the TS's change history (formerly its Annex B) is bound in CHANGELOG.md; that table does not travel into this export, so the binding was removed here deliberately and the TS front matter, the README table and the umbrella carry the value.",
+      "bindings": [
+        {
+          "kind": "text",
+          "file": "README.md",
+          "pattern": "TS \\(QERDS binding\\) \\|\\s*(v\\d+\\.\\d+)"
+        },
+        {
+          "kind": "text",
+          "file": "Secure-Business-Messaging-Profile.md",
+          "pattern": "TS \\*\\*(v\\d+\\.\\d+)\\*\\*"
+        },
+        {
+          "kind": "text",
+          "file": "etsi/TS-SBM-QERDS-Binding-v0.1.md",
+          "pattern": "Draft TS-shaped profile — (v\\d+\\.\\d+)"
+        }
+      ]
+    },
+    "status_assertion": {
+      "value": "1.0",
+      "note": "STATUS-v1 signed short-lived status capability (D6, F-10/X-07); versions independently (umbrella §9.3).",
+      "bindings": [
+        {
+          "kind": "json",
+          "file": "schemas/status-assertion.schema.json",
+          "path": "properties.version.const"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/status-assertion.schema.json",
+          "path": "title",
+          "pattern": "v(\\d+\\.\\d+)"
+        },
+        {
+          "kind": "json",
+          "file": "samples/sample-STATUS.json",
+          "path": "projection.version"
+        },
+        {
+          "kind": "text",
+          "file": "cddl/sm-mls-erd.cddl",
+          "pattern": "status-assertion-body = \\{ type: \"STATUS-v1\", version: \"(\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "text",
+          "file": "Secure-Business-Messaging-Profile.md",
+          "pattern": "status assertion \\*\\*(\\d+\\.\\d+)\\*\\*"
+        }
+      ]
+    },
+    "roster_snapshot": {
+      "value": "1.0",
+      "note": "ROSTER-v1 signed atomic roster snapshot (F-12); versions independently (umbrella §9.3).",
+      "bindings": [
+        {
+          "kind": "json",
+          "file": "schemas/roster-snapshot.schema.json",
+          "path": "properties.version.const"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/roster-snapshot.schema.json",
+          "path": "title",
+          "pattern": "v(\\d+\\.\\d+)"
+        },
+        {
+          "kind": "json",
+          "file": "samples/sample-ROSTER.json",
+          "path": "projection.version"
+        },
+        {
+          "kind": "text",
+          "file": "cddl/sm-mls-erd.cddl",
+          "pattern": "roster-snapshot-body = \\{ type: \"ROSTER-v1\", version: \"(\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "text",
+          "file": "Secure-Business-Messaging-Profile.md",
+          "pattern": "roster snapshot \\*\\*(\\d+\\.\\d+)\\*\\*"
+        }
+      ]
+    },
+    "companion_contracts": {
+      "value": "9.0.0",
+      "note": "F-15 profile-2 companion contracts (wallet-RDP, Delivery Service, RDP relay); version independently (umbrella §9.3).",
+      "bindings": [
+        {
+          "kind": "text",
+          "file": "wallet-rdp-openapi.yaml",
+          "pattern": "^  version: \"(\\d+\\.\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "text",
+          "file": "delivery-service-openapi.yaml",
+          "pattern": "^  version: \"(\\d+\\.\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "text",
+          "file": "rdp-relay-openapi.yaml",
+          "pattern": "^  version: \"(\\d+\\.\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "text",
+          "file": "README.md",
+          "pattern": "Profile-2 companion contracts[^|]*\\|\\s*(\\d+\\.\\d+\\.\\d+)"
+        },
+        {
+          "kind": "text",
+          "file": "Secure-Business-Messaging-Profile.md",
+          "pattern": "companion contracts\\s+\\*\\*(\\d+\\.\\d+\\.\\d+)\\*\\*"
+        }
+      ]
+    }
+  },
+  "active_claim_sweep": [
+    "Secure-Business-Messaging-Profile.md",
+    "etsi/TS-SBM-QERDS-Binding-v0.1.md",
+    "wallet-rdp-openapi.yaml",
+    "delivery-service-openapi.yaml",
+    "rdp-relay-openapi.yaml",
+    "edd-resolver-openapi.yaml",
+    "federation-register-openapi.yaml"
+  ],
+  "active_prose_sweep": [
+    "README.md",
+    "docs/*.md",
+    "docs/adr/*.md"
+  ],
+  "prose_sweep_historical": {
+    "$comment": "DOC-02 (documentation completeness review): the prose sweep covered five named files, so a companion outside them said `evidence v2.0` for six versions. It now covers every Markdown file under docs/ except these historical records, excluded BY PATH rather than edited to satisfy the sweep: they record what was true, or what was decided, at a named revision.",
+    "paths": [
+      "docs/DESIGN_DECISIONS.md",
+      "docs/DESIGN_FINDINGS.md",
+      "docs/DESIGN_REVIEW_FINDINGS_HANDOFF.md",
+      "docs/DESIGN_REVIEW_ROUND11.md",
+      "docs/DESIGN_REVIEW_ROUND12.md",
+      "docs/DOCUMENTATION_COMPLETENESS_REVIEW.md",
+      "docs/FEDERATION_PARTICIPANT_PLAN.md",
+      "docs/OCTET_AUTHORITATIVE_DESIGN.md",
+      "docs/lint-catalogue.md",
+      "docs/rule-ownership.md"
+    ]
+  }
+}

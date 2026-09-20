@@ -1,0 +1,93 @@
+<svg viewBox="0 0 1000 470" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif" role="img">
+<!-- figure
+owner: the maintainer (README, Feedback)
+source: docs/diagrams/evidence-timeline.svg (hand-written SVG; this file is the source)
+question: Which event dates which fact, and on whose clock? Where do the delivery grades take their instant from, and which instants are claims rather than observations?
+profile: all; the relay hop's own timestamp exists from profile 2
+status: current
+references: docs/evidence-layer-explainer.md (entry section); docs/message-lifecycle.md §4 (five clocks); I-D "Timing"; decisions R11-X2 (S3/S4 clock), R10-X5 (the EP composer), R10-X1 and R11-X3 (admission assertions), R12-X4 (formation)
+alt: Five lanes, one per clock owner, with events in time order. Devices declare: the formation instant of the suite decision, the submission's sent_at, a member's verified_at and, later, a reveal's read_at; declared instants never decide timeliness. The Delivery Service observes its acceptance of the octets and the acknowledged handover, S2, at its own server_time. RDP(in) observes when it received and verified the confirmation that completed the policy. The time-stamping service attests the seals of the SE, the DE and the Evidence Package; the package's composer must be admitted at that instant. The Federation Authority's assertion covers acts before its own asserted_at. The SE's expires_at is a deadline: a confirmation received after it is late. At the availability grade the DE is dated by S2; at the verification and acceptance grades by RDP(in)'s observation of the completing confirmation.
+-->
+  <title>Which event dates which fact</title>
+  <desc>A timeline in five lanes — devices, Delivery Service, RDP(in), time-stamping, Federation Authority — showing the declared, observed and attested instants of one message, the deadline, and which instant dates the DE at each grade.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1d4ed8"/>
+    </marker>
+    <marker id="t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="470" fill="#ffffff"/>
+  <text x="500" y="26" text-anchor="middle" font-size="18" font-weight="bold" fill="#1f2937">Which event dates which fact</text>
+
+  <!-- lanes -->
+  <g font-size="11" fill="#334155" font-weight="bold">
+    <text x="16" y="94">Devices</text>
+    <text x="16" y="154">Delivery Service</text>
+    <text x="16" y="214">RDP(in)</text>
+    <text x="16" y="274">Time-stamping</text>
+    <text x="16" y="334">Federation Authority</text>
+  </g>
+  <g font-size="9.5" fill="#64748b">
+    <text x="16" y="107">declared — never decides timeliness</text>
+    <text x="16" y="167">observed on its own clock</text>
+    <text x="16" y="227">observed on its own clock</text>
+    <text x="16" y="287">attests a seal, not an event</text>
+    <text x="16" y="347">asserts admission history</text>
+  </g>
+  <g stroke="#e2e8f0" stroke-width="1">
+    <line x1="190" y1="90" x2="985" y2="90"/>
+    <line x1="190" y1="150" x2="985" y2="150"/>
+    <line x1="190" y1="210" x2="985" y2="210"/>
+    <line x1="190" y1="270" x2="985" y2="270"/>
+    <line x1="190" y1="330" x2="985" y2="330"/>
+  </g>
+
+  <!-- events -->
+  <g font-size="10" fill="#1f2937" text-anchor="middle">
+    <circle cx="215" cy="90" r="5" fill="#ffffff" stroke="#1f2937" stroke-width="1.5"/>
+    <text x="215" y="76">formed_at</text><text x="215" y="118" fill="#64748b">suite decision</text>
+    <circle cx="290" cy="90" r="5" fill="#ffffff" stroke="#1f2937" stroke-width="1.5"/>
+    <text x="290" y="76">sent_at</text><text x="290" y="118" fill="#64748b">submission</text>
+    <circle cx="360" cy="150" r="5" fill="#1f2937"/>
+    <text x="360" y="136">accepted</text><text x="360" y="178" fill="#64748b">the octets</text>
+    <rect x="420" y="265" width="10" height="10" fill="#475569"/>
+    <text x="425" y="258">SE sealed</text>
+    <circle cx="495" cy="150" r="5" fill="#1f2937"/>
+    <text x="495" y="136">server_time</text><text x="495" y="178" fill="#64748b">S2 — handover</text>
+    <circle cx="570" cy="90" r="5" fill="#ffffff" stroke="#1f2937" stroke-width="1.5"/>
+    <text x="570" y="76">verified_at</text><text x="570" y="118" fill="#64748b">S3 — declared</text>
+    <circle cx="645" cy="210" r="5" fill="#1f2937"/>
+    <text x="645" y="196">completing act</text><text x="645" y="238" fill="#64748b">received, verified</text>
+    <rect x="730" y="265" width="10" height="10" fill="#475569"/>
+    <text x="735" y="258">DE sealed</text>
+    <rect x="800" y="265" width="10" height="10" fill="#475569"/>
+    <text x="805" y="258">EP sealed</text>
+    <text x="805" y="298" fill="#64748b">composer admitted then</text>
+    <circle cx="870" cy="90" r="5" fill="#ffffff" stroke="#1f2937" stroke-width="1.5"/>
+    <text x="870" y="76">read_at</text><text x="870" y="118" fill="#64748b">a later reveal</text>
+    <circle cx="935" cy="330" r="5" fill="#1f2937"/>
+    <text x="935" y="316">asserted_at</text><text x="935" y="358" fill="#64748b">covers acts before it</text>
+  </g>
+
+  <!-- deadline -->
+  <line x1="690" y1="60" x2="690" y2="370" stroke="#b45309" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <text x="694" y="384" font-size="10" fill="#b45309">expires_at — a confirmation</text>
+  <text x="694" y="396" font-size="10" fill="#b45309">received after it is late</text>
+
+  <!-- what dates the DE -->
+  <path d="M 495 400 L 495 186" fill="none" stroke="#1d4ed8" stroke-width="1.4" marker-end="url(#a)"/>
+  <path d="M 645 420 L 645 246" fill="none" stroke="#1d4ed8" stroke-width="1.4" marker-end="url(#a)"/>
+  <text x="489" y="414" font-size="10.5" font-weight="bold" fill="#1d4ed8" text-anchor="end">availability grade: the DE is dated here</text>
+  <text x="639" y="434" font-size="10.5" font-weight="bold" fill="#1d4ed8" text-anchor="end">verification and acceptance grades: the DE is dated here</text>
+
+  <!-- time axis -->
+  <line x1="190" y1="452" x2="985" y2="452" stroke="#475569" stroke-width="1.2" marker-end="url(#t)"/>
+  <text x="985" y="444" font-size="10" fill="#475569" text-anchor="end">time — later verification reads every instant here, years on</text>
+  <g font-size="9.5" fill="#64748b">
+    <circle cx="200" cy="464" r="4" fill="#ffffff" stroke="#1f2937" stroke-width="1.2"/><text x="208" y="467">declared</text>
+    <circle cx="265" cy="464" r="4" fill="#1f2937"/><text x="273" y="467">observed or asserted</text>
+    <rect x="376" y="460" width="8" height="8" fill="#475569"/><text x="390" y="467">seal instant</text>
+  </g>
+</svg>

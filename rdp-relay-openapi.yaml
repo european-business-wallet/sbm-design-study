@@ -1,0 +1,145 @@
+# SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors
+# SPDX-License-Identifier: CC-BY-4.0
+openapi: "3.1.0"
+info:
+  title: SM-MLS RDP-RDP relay companion contract (profile 2)
+  version: "9.0.0"
+  description: |
+    F-15: the normative four-corner RDP-to-RDP relay surface — scoped to
+    HOMOGENEOUS SM-MLS federations (the X-09 claim matrix: both RDPs
+    implement this profile; the B.x relay evidence objects and the clause
+    8.1 reason/stage/event table ARE the interchange format). Contract
+    v1.0.0. PEER AUTHENTICATION (FC-3, normative): before exchanging
+    messages or evidence, each RDP authenticates the peer against the EU
+    Trusted Lists AND the federation membership register — both checks,
+    fail-closed. Relay retry/deadline behaviour per the TS clause 4.1
+    (timeout => B.3, the sender-facing NDE routing-failed).
+paths:
+  /relay/messages:
+    post:
+      summary: Relay a message to the recipient-side RDP
+      description: |
+        The sender-side RDP relays the transmitted MLSMessage octets (the
+        bytes the SE envelope_hash commits to — the receiving RDP MUST
+        recompute and refuse a differing hop, F-02/LINT-BND-25) with the
+        submission metadata. IDEMPOTENT per (origin RDP, message_id): a
+        retried relay never opens a second delivery. The response is
+        asynchronous: the B.1/B.2 result returns via /result (below).
+
+        LOCAL DELIVERY KEEPS THE ORIGIN (R12-03, R12-X2). The receiving RDP
+        hands these octets to its own Delivery Service as a FORWARDED
+        submission (`POST /messages` with `origin`: this `origin_rdp_id` and
+        this SE). The DS keys the message on the origin's namespace, proven by
+        that SE, and records the receiving RDP as the forwarder — so equal
+        local ids from two origins stay two messages there, and every item
+        and receipt names the origin.
+      security: [{ peerRdpAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message_id, origin_rdp_id, recipient_uid,
+                         mls_message_b64, se_artifact_b64]
+              properties:
+                message_id: { type: string }
+                origin_rdp_id:
+                  $ref: 'schemas/evidence-common.schema.json#/$defs/RdpId'
+                  description: >-
+                    The issuing environment — (origin RDP, message_id) is the
+                    global handle (INTF-4). R8-05: declared an unconstrained
+                    string although it is half of that handle, so the relay
+                    admitted values every other layer refuses.
+                recipient_uid: { type: string }
+                mls_message_b64: { type: string, description: 'The transmitted MLSMessage octets (D3).' }
+                se_artifact_b64: { type: string, description: 'The sealed SE (the receiving RDP verifies the seal and the envelope commitment).' }
+      responses:
+        '202': { description: Accepted for relay processing (idempotent on retry) }
+        '401': { description: Peer authentication failed (FC-3 - Trusted List or register) }
+        '422':
+          description: Immediate typed rejection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /relay/messages/{message_id}/result:
+    post:
+      summary: Return the B.1/B.2 hop result to the sender-side RDP
+      description: |
+        The recipient-side RDP returns its sealed RelayEvidence-v1 artefact:
+        B.1 RelayAcceptance, or B.2 RelayRejection with the typed reason.
+        The sender-side RDP translates a B.2 to the sender-facing NDE per
+        the clause 4.1 mapping — reason preserved (LINT-BND-19), event
+        B.3-RelayFailure (X-28/LINT-BND-31). Idempotent: re-posting the
+        same hop result is a 200 no-op.
+      security: [{ peerRdpAuth: [] }]
+      parameters:
+        - { in: path, name: message_id, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [relay_artifact_b64]
+              properties:
+                relay_artifact_b64: { type: string, description: 'The sealed RelayEvidence-v1 (B.1 or B.2), hop-timestamped.' }
+      responses:
+        '200': { description: Recorded (idempotent) }
+        '401': { description: Peer authentication failed (FC-3) }
+  /relay/evidence/{message_id}:
+    get:
+      summary: Exchange hop evidence for EP composition (CF-5)
+      description: |
+        The sender-side RDP (the EP composer, D2) retrieves the peer's
+        sealed per-hop evidence for rdp_chain[].evidence references; each
+        seal_digest is SHA-256 of the DECODED COSE_Sign1 bytes and is
+        recomputable (CF-5/LINT-BND-20). Uniform 404 for unknown/
+        unauthorised.
+      security: [{ peerRdpAuth: [] }]
+      parameters:
+        - { in: path, name: message_id, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The hop evidence artefacts
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [artifacts]
+                properties:
+                  artifacts:
+                    type: array
+                    items: { type: string, description: 'Sealed relay/consignment artefact bytes (base64).' }
+        '404':
+          description: Unknown or unauthorised — uniform
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+components:
+  securitySchemes:
+    peerRdpAuth:
+      type: mutualTLS
+      description: >-
+        FC-3 (normative, fail-closed): the peer RDP is authenticated against
+        the EU Trusted Lists AND the federation membership register (umbrella
+        §13.1) — BOTH, before any message or evidence exchange. The register
+        half is a LIVE decision (R11-X3): taken once, at the start of the
+        exchange, on this provider's own clock, against an authenticated
+        record that states `admitted`, was not asserted after that instant,
+        and is no older than the maximum assertion age the Federation
+        Authority publishes (`federation-register-openapi.yaml`, LIVE USE). It
+        authorises the exchange; it is not evidence of admission at any act
+        in it, which is verified later against a record asserted after the
+        act.
+  schemas:
+    Error:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          description: >-
+            The typed B.2 relay-rejection reasons (registries relay_b2_reasons)
+            or a registry-governed NDE reason.
+        detail: { type: string }

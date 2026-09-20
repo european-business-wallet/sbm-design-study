@@ -1,0 +1,200 @@
+<svg viewBox="0 0 1000 740" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif" role="img">
+<!-- figure
+owner: the maintainer (README, Feedback)
+source: docs/diagrams/four-corner-architecture-technology-neutral.svg (hand-written SVG; this file is the source). Export: four-corner-architecture-technology-neutral.png (docs/diagrams/exports.json)
+question: The same question as architecture-four-corner.svg, for a reader who needs no technology named: who carries the encrypted content, who observes the handover, who validates confirmations and who evaluates the acceptance policy?
+profile: 2 (four-corner). Where one provider plays both registered delivery roles, no relay occurs.
+status: current
+references: architecture-four-corner.svg (the technology-named twin, which must say the same); umbrella §7.1, §7.2; TS clause 6; docs/REVIEW_AGENDA.md A1, A6, A9, A10
+alt: The sending entity's endpoint submits the encrypted content to its registered delivery provider, which hands the same content to its messaging provider and seals the sending evidence only once that provider accepts it. The registered delivery providers relay the encrypted content with the sealed sending evidence to each other; the messaging providers do not relay. The recipient side's registered delivery provider hands the content to its messaging provider, the origin proven by the sending evidence. The receiving entity's endpoints collect and acknowledge it there, and the messaging provider signs a receipt; no published operation carries that receipt to the provider that issues the delivery evidence (open, A1). Confirmations reach the recipient side's registered delivery provider, which alone validates them and evaluates the acceptance policy. The creating endpoint reserves key material, deposits invitations, registers as the channel's founder and collects replies at the counterparty's messaging provider; which messaging provider routes a channel spanning two after formation is open (A10). Keys are negotiated end to end, so every provider carries only encrypted content. Registered delivery providers are admitted through the federation register; the admission of messaging providers is planned, not implemented. The EU Trusted Lists establish qualification, which is distinct from admission and from the directory's pin of an entity's seal keys. No technology, standard family or product is named.
+-->
+  <title>Four-corner federated architecture — functional roles (technology-neutral)</title>
+  <desc>The technology-neutral twin of the four-corner architecture: the registered delivery providers relay the encrypted content with the sealed sending evidence; the messaging providers do not relay to each other. Confirmations reach the recipient side's registered delivery provider, the sole evaluator of the acceptance policy. The receipt's path to the delivery-evidence issuer (open, A1), post-formation routing (open, A10) and the planned admission of messaging providers are marked. No technology or product is named.</desc>
+
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f2937"/>
+    </marker>
+    <marker id="arrg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
+    <marker id="arrb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1d4ed8"/>
+    </marker>
+    <marker id="arro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="740" fill="#ffffff"/>
+  <text x="500" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1f2937">Four-corner federated architecture — functional roles</text>
+
+  <!-- Directory -->
+  <rect x="300" y="46" width="400" height="60" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="500" y="68" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1f2937">Directory of entities</text>
+  <text x="500" y="85" text-anchor="middle" font-size="11" fill="#475569">core registry: identifier → where to resolve + the entity's seal keys</text>
+  <text x="500" y="99" text-anchor="middle" font-size="11" fill="#64748b">entity-sealed profiles, policies and members, served by its provider</text>
+
+  <!-- Federation authority -->
+  <rect x="735" y="46" width="250" height="74" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.4"/>
+  <text x="860" y="65" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1f2937">Federation authority</text>
+  <text x="860" y="81" text-anchor="middle" font-size="10.5" fill="#475569">admits registered delivery providers</text>
+  <text x="860" y="95" text-anchor="middle" font-size="10.5" fill="#475569">messaging providers — PLANNED</text>
+  <text x="860" y="109" text-anchor="middle" font-size="10.5" fill="#475569">central control of the protocol</text>
+
+  <!-- Discovery -->
+  <path d="M 55 248 C 55 170, 180 90, 297 80" fill="none" stroke="#64748b" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arrg)"/>
+  <text x="66" y="118" font-size="10.5" fill="#64748b">resolve identifier</text>
+
+  <!-- End-to-end keys -->
+  <path d="M 140 248 L 140 146 L 907 146 L 907 248" fill="none" stroke="#1d4ed8" stroke-width="1.6" stroke-dasharray="6 4" marker-start="url(#arrb)" marker-end="url(#arrb)"/>
+  <text x="523" y="140" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#1d4ed8">Keys negotiated end to end between endpoint devices — every provider carries only encrypted content</text>
+
+  <!-- Sending entity -->
+  <rect x="10" y="250" width="165" height="112" rx="8" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.8"/>
+  <text x="92" y="272" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1f2937">Sending entity</text>
+  <text x="92" y="290" text-anchor="middle" font-size="11" fill="#475569">Business Wallet endpoints</text>
+  <text x="92" y="306" text-anchor="middle" font-size="11" fill="#475569">creates the channel,</text>
+  <text x="92" y="320" text-anchor="middle" font-size="11" fill="#475569">fingerprints the content</text>
+  <text x="92" y="340" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">content in clear only here</text>
+
+  <!-- Receiving entity -->
+  <rect x="825" y="250" width="165" height="112" rx="8" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.8"/>
+  <text x="907" y="272" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1f2937">Receiving entity</text>
+  <text x="907" y="290" text-anchor="middle" font-size="11" fill="#475569">endpoints of its members</text>
+  <text x="907" y="306" text-anchor="middle" font-size="11" fill="#475569">confirms: signed by the</text>
+  <text x="907" y="320" text-anchor="middle" font-size="11" fill="#475569">endpoint, or session-bound</text>
+  <text x="907" y="340" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">content in clear only here</text>
+
+  <!-- Registered delivery provider, sender side -->
+  <rect x="250" y="178" width="195" height="90" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.6"/>
+  <text x="347" y="196" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1f2937">Registered delivery</text>
+  <text x="347" y="211" text-anchor="middle" font-size="11" fill="#475569">provider · sender side</text>
+  <text x="347" y="226" text-anchor="middle" font-size="11" fill="#475569">seals sending evidence once</text>
+  <text x="347" y="240" text-anchor="middle" font-size="11" fill="#475569">its messaging provider accepts</text>
+  <text x="347" y="258" text-anchor="middle" font-size="10.5" fill="#64748b">admitted: federation register</text>
+
+  <!-- Registered delivery provider, recipient side -->
+  <rect x="555" y="178" width="195" height="90" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.6"/>
+  <text x="652" y="196" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1f2937">Registered delivery</text>
+  <text x="652" y="211" text-anchor="middle" font-size="11" fill="#475569">provider · recipient side</text>
+  <text x="652" y="226" text-anchor="middle" font-size="11" fill="#475569">validates confirmations,</text>
+  <text x="652" y="240" text-anchor="middle" font-size="11" fill="#475569">sole evaluator of the policy</text>
+  <text x="652" y="258" text-anchor="middle" font-size="10.5" fill="#64748b">admitted: federation register</text>
+
+  <!-- Messaging provider, sender side -->
+  <rect x="250" y="348" width="195" height="84" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="347" y="366" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1f2937">Messaging provider</text>
+  <text x="347" y="381" text-anchor="middle" font-size="11" fill="#475569">sender side · accepts what</text>
+  <text x="347" y="395" text-anchor="middle" font-size="11" fill="#475569">its delivery provider submits</text>
+  <text x="347" y="423" text-anchor="middle" font-size="10.5" fill="#64748b">own admission: PLANNED</text>
+
+  <!-- Messaging provider, recipient side -->
+  <rect x="555" y="348" width="195" height="84" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="652" y="366" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1f2937">Messaging provider</text>
+  <text x="652" y="381" text-anchor="middle" font-size="11" fill="#475569">recipient side · key material,</text>
+  <text x="652" y="395" text-anchor="middle" font-size="11" fill="#475569">queues; observes the handover</text>
+  <text x="652" y="423" text-anchor="middle" font-size="10.5" fill="#64748b">own admission: PLANNED</text>
+
+  <!-- 1 submit -->
+  <line x1="176" y1="292" x2="247" y2="232" stroke="#1f2937" stroke-width="1.7" marker-end="url(#arr)"/>
+  <text x="180" y="190" font-size="10" fill="#1f2937">① submit</text>
+  <text x="180" y="202" font-size="10" fill="#1f2937">encrypted</text>
+  <text x="180" y="214" font-size="10" fill="#1f2937">content +</text>
+  <text x="180" y="226" font-size="10" fill="#1f2937">metadata</text>
+  <!-- evidence back to the sender -->
+  <line x1="248" y1="258" x2="178" y2="318" stroke="#64748b" stroke-width="1.2" stroke-dasharray="2 3" marker-end="url(#arrg)"/>
+  <text x="182" y="332" font-size="10" fill="#64748b">sending</text>
+  <text x="182" y="344" font-size="10" fill="#64748b">evidence,</text>
+  <text x="182" y="356" font-size="10" fill="#64748b">package</text>
+
+  <!-- 2 acceptance by the messaging provider -->
+  <line x1="305" y1="269" x2="305" y2="345" stroke="#1f2937" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="299" y="296" text-anchor="end" font-size="10" fill="#1f2937">② the same</text>
+  <text x="299" y="308" text-anchor="end" font-size="10" fill="#1f2937">content</text>
+  <line x1="390" y1="345" x2="390" y2="270" stroke="#64748b" stroke-width="1.2" stroke-dasharray="2 3" marker-end="url(#arrg)"/>
+  <text x="396" y="296" font-size="10" fill="#64748b">acceptance</text>
+  <text x="396" y="308" font-size="10" fill="#64748b">record</text>
+
+  <!-- 3 relay between the registered delivery providers -->
+  <line x1="446" y1="205" x2="552" y2="205" stroke="#1f2937" stroke-width="2.2" marker-end="url(#arr)"/>
+  <text x="500" y="161" text-anchor="middle" font-size="10" font-weight="bold" fill="#1f2937">③ relay</text>
+  <text x="500" y="173" text-anchor="middle" font-size="10" fill="#1f2937">encrypted content</text>
+  <text x="500" y="185" text-anchor="middle" font-size="10" fill="#1f2937">+ sealed sending</text>
+  <text x="500" y="197" text-anchor="middle" font-size="10" fill="#1f2937">evidence</text>
+  <line x1="553" y1="238" x2="448" y2="238" stroke="#64748b" stroke-width="1.2" stroke-dasharray="2 3" marker-end="url(#arrg)"/>
+  <text x="500" y="252" text-anchor="middle" font-size="10" fill="#64748b">hop evidence</text>
+  <text x="500" y="378" text-anchor="middle" font-size="10" fill="#475569">the messaging</text>
+  <text x="500" y="390" text-anchor="middle" font-size="10" fill="#475569">providers do not</text>
+  <text x="500" y="402" text-anchor="middle" font-size="10" fill="#475569">relay to each</text>
+  <text x="500" y="414" text-anchor="middle" font-size="10" fill="#475569">other</text>
+
+  <!-- 4 hand over to the messaging provider -->
+  <line x1="570" y1="269" x2="570" y2="345" stroke="#1f2937" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="564" y="288" text-anchor="end" font-size="10" fill="#1f2937">④ hand over the</text>
+  <text x="564" y="300" text-anchor="end" font-size="10" fill="#1f2937">content; origin</text>
+  <text x="564" y="312" text-anchor="end" font-size="10" fill="#1f2937">proven by the</text>
+  <text x="564" y="324" text-anchor="end" font-size="10" fill="#1f2937">sending evidence</text>
+
+  <!-- A1 -->
+  <line x1="610" y1="346" x2="610" y2="271" stroke="#b45309" stroke-width="1.4" stroke-dasharray="7 4" marker-end="url(#arro)"/>
+  <text x="617" y="288" font-size="10" fill="#b45309">receipt → delivery</text>
+  <text x="617" y="300" font-size="10" fill="#b45309">evidence issuer: no</text>
+  <text x="617" y="312" font-size="10" fill="#b45309">published path —</text>
+  <text x="617" y="324" font-size="10" fill="#b45309">OPEN (A1)</text>
+
+  <!-- 5 collect and acknowledge -->
+  <line x1="751" y1="400" x2="823" y2="345" stroke="#1f2937" stroke-width="1.5" marker-start="url(#arr)" marker-end="url(#arr)"/>
+  <text x="768" y="402" font-size="10" fill="#1f2937">⑤ collect,</text>
+  <text x="768" y="414" font-size="10" fill="#1f2937">acknowledge;</text>
+  <text x="768" y="426" font-size="10" fill="#1f2937">provider signs</text>
+  <text x="768" y="438" font-size="10" fill="#1f2937">a receipt</text>
+
+  <!-- 6 confirmations -->
+  <line x1="823" y1="262" x2="753" y2="212" stroke="#1f2937" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="757" y="172" font-size="10" fill="#1f2937">⑥ confirmations</text>
+  <text x="757" y="184" font-size="10" fill="#1f2937">match · mismatch ·</text>
+  <text x="757" y="196" font-size="10" fill="#1f2937">refusal · reveal</text>
+  <!-- evidence to the receiver -->
+  <line x1="753" y1="252" x2="823" y2="290" stroke="#64748b" stroke-width="1.2" stroke-dasharray="2 3" marker-end="url(#arrg)"/>
+  <text x="755" y="302" font-size="9.5" fill="#64748b">delivery,</text>
+  <text x="755" y="313" font-size="9.5" fill="#64748b">non-delivery,</text>
+  <text x="755" y="324" font-size="9.5" fill="#64748b">refusal</text>
+
+  <!-- The creator uses the counterparty's messaging provider -->
+  <path d="M 92 363 L 92 458 L 680 458 L 680 434" fill="none" stroke="#64748b" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arrg)"/>
+  <text x="385" y="476" text-anchor="middle" font-size="10.5" fill="#475569">creating endpoint ↔ counterparty's messaging provider: sealed profiles · key material reservation ·</text>
+  <text x="385" y="490" text-anchor="middle" font-size="10.5" fill="#475569">invitations · founder registration · collection of the replies</text>
+  <line x1="690" y1="458" x2="770" y2="458" stroke="#b45309" stroke-width="1.4" stroke-dasharray="7 4"/>
+  <text x="776" y="454" font-size="10" fill="#b45309">which provider routes a</text>
+  <text x="776" y="466" font-size="10" fill="#b45309">channel spanning two,</text>
+  <text x="776" y="478" font-size="10" fill="#b45309">after formation — OPEN (A10)</text>
+
+  <!-- Trusted Lists -->
+  <rect x="150" y="510" width="700" height="62" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="1.2" stroke-dasharray="2 3"/>
+  <text x="500" y="532" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">EU Trusted Lists — Regulation (EU) No 910/2014</text>
+  <text x="500" y="549" text-anchor="middle" font-size="11" fill="#64748b">qualification: identifier issuers, seal certificates, registered delivery providers</text>
+  <text x="500" y="564" text-anchor="middle" font-size="11" fill="#64748b">distinct from federation admission and from the directory's pin of an entity's seal keys</text>
+
+  <!-- Legend -->
+  <g font-size="10.5" fill="#475569">
+    <line x1="30" y1="600" x2="62" y2="600" stroke="#1f2937" stroke-width="1.7"/>
+    <text x="68" y="604">encrypted content and its submission path</text>
+    <line x1="320" y1="600" x2="352" y2="600" stroke="#64748b" stroke-width="1.2" stroke-dasharray="2 3"/>
+    <text x="358" y="604">evidence, receipts and records</text>
+    <line x1="560" y1="600" x2="592" y2="600" stroke="#64748b" stroke-width="1.3" stroke-dasharray="5 4"/>
+    <text x="598" y="604">discovery and channel formation</text>
+    <line x1="800" y1="600" x2="832" y2="600" stroke="#1d4ed8" stroke-width="1.6" stroke-dasharray="6 4"/>
+    <text x="838" y="604">end-to-end keys</text>
+    <line x1="30" y1="622" x2="62" y2="622" stroke="#b45309" stroke-width="1.4" stroke-dasharray="7 4"/>
+    <text x="68" y="626">OPEN — no published operation or decision yet (review agenda reference)</text>
+    <text x="560" y="626">PLANNED — decided, not implemented</text>
+  </g>
+
+  <!-- Notes -->
+  <g font-size="10.5" fill="#64748b">
+    <text x="30" y="660">Four-corner case. Where one provider plays both registered delivery roles, no relay occurs. A messaging provider may carry confirmations</text>
+    <text x="30" y="675">verbatim; it validates, counts and decides nothing. Who observes the handover, and what a messaging provider alone could make a registered</text>
+    <text x="30" y="690">delivery provider attest, is open (A9). No technology, standard family or product is named.</text>
+  </g>
+</svg>

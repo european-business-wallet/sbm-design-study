@@ -1,0 +1,47 @@
+{
+  "sm_artifact_b64": "hFGiAScETGVudGl0eS1hZG1pbqBZA9itY2tpZG5xc2VhbGMtMjAyNi0wMWNtbHOjZmRzX3VybHgdaHR0cHM6Ly9tc3AuZXhhbXBsZS5mci9tc3AvdjFtY2lwaGVyX3N1aXRlc4N4LE1MU18xMjhfREhLRU1YMjU1MTlfQUVTMTI4R0NNX1NIQTI1Nl9FZDI1NTE5eCdNTFNfMTI4X0RIS0VNUDI1Nl9BRVMxMjhHQ01fU0hBMjU2X1AyNTZ4L01MU18xMjhfTUxLRU03NjhYMjU1MTlfQUVTMTI4R0NNX1NIQTI1Nl9FZDI1NTE5bmtleXBhY2thZ2VfdXJseExodHRwczovL21zcC5leGFtcGxlLmZyLy53ZWxsLWtub3duL2J3L2tleXBhY2thZ2VzL0VVLUZSLVBTQklELVpZV1ZUU1JRUE5NOE00Y21zcHZodHRwczovL21zcC5leGFtcGxlLmZyY3JkcKJoZXZpZGVuY2V4LGh0dHBzOi8vcmRwLmV4YW1wbGUuZnIvZXZpZGVuY2Uve21lc3NhZ2VfaWR9aWRpc2NvdmVyeXgmaHR0cHM6Ly9yZHAuZXhhbXBsZS5mci8ud2VsbC1rbm93bi9yZHBjdWlkeBpFVS1GUi1QU0JJRC1aWVdWVFNSUVBOTThNNGR0eXBlaUJXLU1FRC12MWZwb2xpY3miaXR0bF9tYXhfcxoACTqAbm1heF9wYXlsb2FkX2tiGSgAZ3ZlcnNpb25jMi4xaXByb3RvY29sc4FqU00tTUxTLTEuMGpleHBpcmVzX2F0dDIwMjctMDQtMDRUMTA6MDA6MDBaa2Fzc2VydGVkX2F0dDIwMjYtMDQtMDRUMTA6MDA6MDBab2RzX3JlY2VpcHRfa2V5c4GkY2FsZ2VFZERTQWNraWRsZHMtZGVtby0yMDI2anZhbGlkX2Zyb210MjAyNi0wMS0wMVQwMDowMDowMFpucHVibGljX2tleV9iNjR4LGFqZXlwN0o5dXVVakZqWk14YzVMbzJ1S2FLMU9XdFhMVWx3Z1gzS3Q3MlE9c2lkZW50aXR5X2NyZWRlbnRpYWyiZHR5cGVkeDUwOWp4NTA5X2NoYWlugnhSLS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUIuLi5FTlRJVFlfUVNFQUxDX0RFTU8uLi4KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLXhWLS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUIuLi5JTlRFUk1FRElBVEVfUVRTUF9ERU1PLi4uCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS1YQIFLfzCm8pPXlHmzEvyh/ZxncDmW8DM+U8SOYvat+QeV8GueDKrY9AqKHUvQEbJvSYqN0CRKf1336jGIszNH3ww=",
+  "projection": {
+    "type": "BW-MED-v1",
+    "version": "2.1",
+    "uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+    "protocols": [
+      "SM-MLS-1.0"
+    ],
+    "msp": "https://msp.example.fr",
+    "rdp": {
+      "discovery": "https://rdp.example.fr/.well-known/rdp",
+      "evidence": "https://rdp.example.fr/evidence/{message_id}"
+    },
+    "mls": {
+      "cipher_suites": [
+        "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519",
+        "MLS_128_DHKEMP256_AES128GCM_SHA256_P256",
+        "MLS_128_MLKEM768X25519_AES128GCM_SHA256_Ed25519"
+      ],
+      "keypackage_url": "https://msp.example.fr/.well-known/bw/keypackages/EU-FR-PSBID-ZYWVTSRQPNM8M4",
+      "ds_url": "https://msp.example.fr/msp/v1"
+    },
+    "identity_credential": {
+      "type": "x509",
+      "x509_chain": [
+        "-----BEGIN CERTIFICATE-----\nMIIB...ENTITY_QSEALC_DEMO...\n-----END CERTIFICATE-----",
+        "-----BEGIN CERTIFICATE-----\nMIIB...INTERMEDIATE_QTSP_DEMO...\n-----END CERTIFICATE-----"
+      ]
+    },
+    "kid": "qsealc-2026-01",
+    "asserted_at": "2026-04-04T10:00:00Z",
+    "expires_at": "2027-04-04T10:00:00Z",
+    "policy": {
+      "max_payload_kb": 10240,
+      "ttl_max_s": 604800
+    },
+    "ds_receipt_keys": [
+      {
+        "kid": "ds-demo-2026",
+        "alg": "EdDSA",
+        "public_key_b64": "ajeyp7J9uuUjFjZMxc5Lo2uKaK1OWtXLUlwgX3Kt72Q=",
+        "valid_from": "2026-01-01T00:00:00Z"
+      }
+    ]
+  }
+}

@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install the canonical test environment
+        run: pip install -r scripts/requirements.txt
+      - name: Install the CDDL tool (pinned) — REQUIRED for the non-divergence gate
+        run: cargo install cddl --version 0.9.5 --locked
+      - name: Version matrix consistency (R-01 — versions.json is the single source of truth)
+        run: make versions
+      - name: Normative lint catalogue consistency (X-20 — docs/lint-catalogue.json)
+        run: make lint-catalogue
+      - name: Rule-ownership inventory (X-34 — one normative owner per rule)
+        run: make rule-ownership
+      - name: Architecture decision records (docs/adr/ well-formed, decisions index current)
+        run: make adr-index
+      - name: Test suite (dependency preflight + pytest)
+        run: make test
+      - name: Schema smoke test
+        run: make schema-smoke
+      - name: Conformance lint (schema-valid AND lint-clean)
+        run: make lint
+      - name: Demo-key seal verification lint (make conformance parity)
+        run: make lint-demo
+      - name: CDDL / JSON-Schema non-divergence gate (fail-closed in CI — N4)
+        env:
+          CI: 'true'
+        run: make cddl-check
+      - name: Documentation prose guard
+        run: make doc-lint
+      - name: Internet-Draft structure check (no-toolchain fallback)
+        run: make id
+
+  render-id:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: Install the I-D render toolchain
+        run: |
+          gem install kramdown-rfc
+          pip install xml2rfc pyyaml
+      - name: Render the Internet-Draft (kramdown-rfc + xml2rfc, strict)
+        env:
+          ID_RENDER_STRICT: '1'
+        run: make id
+
+  reuse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: REUSE / SPDX compliance
+        run: |
+          pip install reuse
+          reuse lint
+
+  dco:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: DCO — every pull-request commit is signed off
+        run: |
+          base='${{ github.event.pull_request.base.sha }}'
+          head='${{ github.event.pull_request.head.sha }}'
+          missing=0
+          for c in $(git rev-list "$base..$head"); do
+            if ! git log -1 --format=%B "$c" | grep -qiE '^Signed-off-by: .+ <.+@.+>'; then
+              echo "::error::commit $c is missing a Signed-off-by line (DCO)"; missing=1
+            fi
+          done
+          if [ "$missing" = 0 ]; then echo "All pull-request commits are signed off."; fi
+          exit $missing

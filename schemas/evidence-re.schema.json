@@ -1,0 +1,141 @@
+{
+  "$id": "https://bw.example.eu/schemas/evidence-re.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "evidence-re (v2.8)",
+  "description": "Refusal Evidence. Issued by RDP(in) when the recipient explicitly declines the message.",
+  "type": "object",
+  "required": [
+    "event",
+    "evidence_id",
+    "message_id",
+    "payload_hash",
+    "policy_id",
+    "profile",
+    "rdp_id",
+    "reason",
+    "recipient_uid",
+    "refusal_kind",
+    "refused_at",
+    "scope_ref",
+    "type",
+    "version"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "RE-v1"
+    },
+    "version": {
+      "type": "string",
+      "const": "2.8"
+    },
+    "profile": {
+      "$ref": "evidence-common.schema.json#/$defs/Profile"
+    },
+    "message_id": {
+      "type": "string"
+    },
+    "event": {
+      "type": "string",
+      "const": "C.4-ConsignmentRejection",
+      "description": "ETSI EN 319 522-1 clause 6 event (component G03). RE-v1 attests C.4 ConsignmentRejection (the recipient, upon proper authentication, rejected the user content)."
+    },
+    "evidence_id": {
+      "$ref": "evidence-common.schema.json#/$defs/EvidenceId"
+    },
+    "policy_id": {
+      "$ref": "evidence-common.schema.json#/$defs/PolicyId"
+    },
+    "recipient_uid": {
+      "$ref": "evidence-common.schema.json#/$defs/Uid"
+    },
+    "reason": {
+      "type": "string",
+      "pattern": "^(x-)?[a-z][a-z0-9-]{1,62}$",
+      "description": "X-25: the value space is REGISTRY-GOVERNED, not spec-versioned — the schema bounds only the LEXICAL form (lowercase-kebab; x- = private use, never registered). The registered set and its event bindings live in registries/reason-codes.json (umbrella §13.4); registering a code is a registry action, NOT a version bump (§9.3). An unregistered well-formed code is accepted, preserved verbatim and treated generically (LINT-NDE-W1)."
+    },
+    "refused_at": {
+      "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+    },
+    "rdp_id": {
+      "$ref": "evidence-common.schema.json#/$defs/RdpId"
+    },
+    "payload_hash": {
+      "$ref": "evidence-common.schema.json#/$defs/Hash"
+    },
+    "refusal_kind": {
+      "type": "string",
+      "enum": [
+        "member",
+        "organisation-policy"
+      ],
+      "description": "X-29 (evidence 2.3): WHO refused. 'member' = an individual recipient member's act — REQUIRES mid, auth_context and a recipient-produced refusal_confirmation, reason MUST be refused-by-user; 'organisation-policy' = the published policy refused — REQUIRES acceptance_policy_ref, no user action is claimed or implied, reason is one of the policy grounds. An RDP-only assertion claiming a user act (refused-by-user without member proof) is rejected (LINT-RE-01). TODO(legal): the respective Article 43(2) weight of the two kinds awaits counsel."
+    },
+    "scope_ref": {
+      "$ref": "evidence-common.schema.json#/$defs/ScopeRef"
+    },
+    "mid": {
+      "type": "string",
+      "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+    },
+    "auth_context": {
+      "$ref": "evidence-common.schema.json#/$defs/AuthContext"
+    },
+    "refusal_confirmation": {
+      "$ref": "evidence-common.schema.json#/$defs/RefusalConfirmation"
+    },
+    "acceptance_policy_ref": {
+      "$ref": "evidence-common.schema.json#/$defs/AcceptancePolicyRef"
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "refusal_kind": {
+            "const": "member"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "mid",
+          "auth_context",
+          "refusal_confirmation"
+        ],
+        "properties": {
+          "reason": {
+            "const": "refused-by-user"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "refusal_kind": {
+            "const": "organisation-policy"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "acceptance_policy_ref"
+        ],
+        "not": {
+          "required": [
+            "refusal_confirmation"
+          ]
+        },
+        "properties": {
+          "reason": {
+            "not": {
+              "const": "refused-by-user"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

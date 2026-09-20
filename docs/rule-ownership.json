@@ -1,0 +1,149 @@
+{
+  "$comment": "X-34 RULE-OWNERSHIP INVENTORY (single source of truth). Each rule family has exactly ONE normative owner document; other documents carry only informative summaries that reference the owner. scripts/rule_ownership.py (make rule-ownership) and tests/test_rule_ownership.py enforce: the owner states the rule, no non-owner document carries a BARE normative restatement, and the I-D's deployment-defined-interface count matches the bullets it lists. docs/rule-ownership.md is generated from this file. Registry / well-known ownership layering is deferred to X-25 (Batch 4) and deliberately NOT covered here.",
+  "inventory_version": "1",
+  "doc_keys": {
+    "umbrella": "Secure-Business-Messaging-Profile.md",
+    "id": "ietf/draft-sbm-mls-erd-00.md",
+    "ts": "etsi/TS-SBM-QERDS-Binding-v0.1.md"
+  },
+  "families": [
+    {
+      "id": "intermediary-plaintext-prohibition",
+      "title": "Intermediaries (MSP / Delivery Service / RDP) never access plaintext",
+      "owner": "id",
+      "owner_anchor": "Object model, Delivery-Service mapping, and Security Considerations",
+      "owner_present": "MUST NOT (have access to|access|store)[^.\\n]*plaintext",
+      "non_owner_forbidden": "(MSP|RDPs?|Delivery Service|provider)\\s*\\**\\s*MUST NOT\\**\\s+(have access to|access|store)[^.\\n]*plaintext",
+      "rule_ids": [],
+      "informative_refs": [
+        {
+          "doc": "umbrella",
+          "note": "§7.3 actor list and the §9 privacy summary describe the property and defer to the I-D"
+        },
+        {
+          "doc": "ts",
+          "note": "ICS row 051 (Evidence carries no plaintext) tagged [I-D]"
+        }
+      ],
+      "note": "An E2EE property, not a sample-checkable LINT rule; owned by the wire/security document."
+    },
+    {
+      "id": "keypackage-single-use",
+      "title": "KeyPackages are single-use; the MSP removes a consumed KeyPackage and rejects reuse",
+      "owner": "id",
+      "owner_anchor": "KeyPackage rules ({{keypackage-rules}})",
+      "owner_present": "KeyPackages MUST be single-use",
+      "non_owner_forbidden": "KeyPackages?\\s*\\**\\s*(MUST|shall)\\**\\s+be single-use",
+      "rule_ids": [],
+      "informative_refs": [
+        {
+          "doc": "ts",
+          "note": "ICS rows 024 and 149 tagged [I-D] (single-use / pool integrity)"
+        },
+        {
+          "doc": "id",
+          "note": "the Deployment-Defined-Interfaces Delivery-Service bullet adds the DISTINCT pool-integrity rule (idempotent reserve->commit, per-peer quota) and explicitly complements {{keypackage-rules}}; the T4 Security-Considerations mention is an in-document analytical echo"
+        }
+      ],
+      "note": "The reserve->commit pool-integrity rule is a distinct, complementary I-D-owned requirement, not a restatement of single-use."
+    },
+    {
+      "id": "availability-grade-declaration",
+      "title": "The availability delivery grade is declared per content class in the signed BW-ORG and is never implicit or default",
+      "owner": "umbrella",
+      "owner_anchor": "§8.3b (delivery grades)",
+      "owner_present": "never implicit",
+      "non_owner_forbidden": "availability[^.\\n]*(MUST|shall)[^.\\n]*(never implicit|explicitly declared)",
+      "rule_ids": [
+        "LINT-DISC-17",
+        "LINT-DISC-18",
+        "LINT-BND-11"
+      ],
+      "informative_refs": [
+        {
+          "doc": "id",
+          "note": "the delivery-state model owns the DISTINCT anchoring rule: availability anchors at authenticated S2 -> event D.1-ContentConsignment"
+        },
+        {
+          "doc": "ts",
+          "note": "clause 6 owns the DISTINCT legal-effect rule (Article 44(1)(c) gating); ICS row 113 (GRD-1) indexes the declaration rule to [UMB]"
+        }
+      ],
+      "note": "Not one rule in three documents but three ASPECTS with three owners: declaration (umbrella §8.3b), state anchoring (I-D), legal effect (TS clause 6). The inventory records the decomposition that resolves the apparent duplication."
+    },
+    {
+      "id": "registry-ownership",
+      "title": "Federation registries (reason codes, content classes) are owned by the design authority under umbrella §13.4, as machine-readable artefacts",
+      "owner": "umbrella",
+      "owner_anchor": "§13.4 (registry operation) + the registries/ artefacts",
+      "owner_present": "registries/reason-codes\\.json",
+      "non_owner_forbidden": "maintained registry \\(initially this document",
+      "rule_ids": [
+        "LINT-NDE-07",
+        "LINT-NDE-W1",
+        "LINT-DISC-16"
+      ],
+      "informative_refs": [
+        {
+          "doc": "id",
+          "note": "the I-D defines the FIELDS, the lexical value spaces and the unknown-code ingest rule only (IANA Considerations, X-25 registry layering); registry contents/governance are not restated"
+        },
+        {
+          "doc": "ts",
+          "note": "clause 8.1/8.3 owns the ERD event mappings the registered reasons bind to"
+        }
+      ],
+      "note": "X-25 / X-34 residual: the transport I-D previously claimed to BE the registry ('initially this document') and registered well-known resources defined elsewhere; the split gives each registry one owner and moves the well-known registration to umbrella §8.1."
+    },
+    {
+      "id": "acceptance-policy-evaluator",
+      "title": "RDP(in) is the sole evidence-authoritative acceptance-policy evaluator",
+      "owner": "ts",
+      "owner_anchor": "Acceptance-policy evaluation — the evaluator of record",
+      "owner_present": "RDP\\(in\\) shall be the \\*\\*sole evidence-authoritative evaluator\\*\\*",
+      "non_owner_forbidden": "MSP[^.\\n]{0,90}evaluates?[^.\\n]{0,40}polic",
+      "rule_ids": [],
+      "informative_refs": [
+        {
+          "doc": "umbrella",
+          "note": "§7.2 responsibility table and the §8.3 bullet describe the split and defer to the TS"
+        },
+        {
+          "doc": "id",
+          "note": "the delivery-state model consumes the evaluated outcome; it does not evaluate"
+        }
+      ],
+      "note": "X-10: the former two-owner text (umbrella: the MSP evaluates; TS: RDP(in) evaluates) is collapsed to one owner. A prose-ownership family, not a sample-checkable LINT rule."
+    },
+    {
+      "id": "status-capability",
+      "title": "Legal-effect issuance is gated on the signed short-lived status assertion (D6)",
+      "owner": "umbrella",
+      "owner_anchor": "Legal-effect gating (fail-closed, capability-bounded — D6",
+      "owner_present": "MUST NOT\\*\\* issue DE-v1 against a recipient UID unless it holds a \\*\\*valid \\(unexpired\\) signed status assertion",
+      "non_owner_forbidden": "MUST NOT[^.\\n]{0,30}issue DE-v1[^.\\n]{0,80}status assertion",
+      "rule_ids": [
+        "LINT-DISC-25"
+      ],
+      "informative_refs": [
+        {
+          "doc": "ts",
+          "note": "ICS row 172 tags the requirement [UMB]"
+        },
+        {
+          "doc": "id",
+          "note": "the delivery-state model consumes the gate; the hold note defers to the umbrella"
+        }
+      ],
+      "note": "D6 (F-10/X-07): one mechanism, two findings. The capability object is STATUS-v1; the EDD contract v1.8.0 serves it; LINT-DISC-25 checks it."
+    }
+  ],
+  "interfaces": {
+    "doc": "id",
+    "section_heading": "# Deployment-Defined Interfaces",
+    "count_regex": "(\\w+)\\s+HTTP surfaces are deliberately NOT defined",
+    "bullet_regex": "(?m)^- \\*\\*[^*]+ (?:interface|surface)\\.\\*\\*",
+    "expected": 4,
+    "note": "The prose count of deployment-defined HTTP surfaces MUST equal the number of interface bullets in the section (the review found 'Two' while four are listed)."
+  }
+}

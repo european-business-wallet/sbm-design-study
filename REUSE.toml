@@ -1,0 +1,26 @@
+version = 1
+
+# Reference code and machine-readable artefacts — MIT.
+[[annotations]]
+path = ["scripts/**", "tests/**", "schemas/**", "samples/**", "registries/**", "edd-resolver-openapi.yaml", "versions.json", "Makefile", ".github/**", ".gitignore", "requirements-dev.txt"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2025-2026 Paolo De Rosa and contributors"
+SPDX-License-Identifier = "MIT"
+
+# Specification text and documentation — CC BY 4.0.
+[[annotations]]
+path = ["README.md", "CHANGELOG.md", "OPEN-ITEMS.md", "Secure-Business-Messaging-Profile.md", "etsi/**", "ietf/**", "docs/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2025-2026 Paolo De Rosa and contributors"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+# The outward-facing brief: the executive brief, the requirements grid and the
+# diagrams. Covered BY PATH rather than by per-file headers because most of the
+# set is binary (.docx, .xlsx) or generated (.svg) — a header there either
+# cannot be carried or is lost on the next export, so a newly exported diagram
+# is licensed the moment it lands rather than only if someone remembers.
+[[annotations]]
+path = "brief/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2025-2026 Paolo De Rosa and contributors"
+SPDX-License-Identifier = "CC-BY-4.0"

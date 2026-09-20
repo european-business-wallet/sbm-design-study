@@ -1,0 +1,21 @@
+# Canonical test environment (spec §9.4, W4). `make test` runs
+# scripts/check_env.py first and FAILS if any of these is missing.
+pytest>=7.0
+jsonschema>=4.0   # JSON-Schema validation (schema tests, schema_smoke)
+cbor2>=5.6        # REQUIRED for the conformance lint: COSE structural/alg checks (LINT-PKG-01/02/05)
+flask>=3.0        # reference mock RDP (mock evidence tests)
+pyyaml>=6.0       # EDD OpenAPI smoke test
+pynacl>=1.5       # REQUIRED: real Ed25519 signing is the default (X2); samples carry real signatures
+openapi-spec-validator>=0.9  # REQUIRED (DR-09): meta-validates the four published contracts; the
+                             # release bar had no OpenAPI validation step, so two structurally
+                             # invalid documents shipped green. Third-party BY DESIGN — a checker
+                             # written from our own reading would agree with our own mistakes.
+
+cryptography>=41.0  # REQUIRED (DR-12): BW-MEMBER permits EdDSA, ES256 and ES384, so the
+                    # reference verifier must dispatch to P-256/P-384 as well as Ed25519.
+                    # It previously interpreted every key as raw Ed25519 — a conforming
+                    # ES256 confirmation was REJECTED and an algorithm mismatch was not
+                    # detected.
+
+# Optional (only for the HTTP client demos).
+requests>=2.31

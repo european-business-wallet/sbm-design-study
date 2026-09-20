@@ -1,0 +1,53 @@
+{
+  "sm_artifact_b64": "hFGiAScETGVudGl0eS1hZG1pbqBZBDGqY3VpZHgaRVUtRlItUFNCSUQtWllXVlRTUlFQTk04TTRkdHlwZWlST1NURVItdjFnbWVtYmVyc4OkY21pZGlGMU4yQzNENFBmc3RhdHVzZmFjdGl2ZWdkZXZpY2VzgqJpZGV2aWNlX2lkZmRldi0wMXJzaWduYXR1cmVfa2V5X2hhc2h4QDAxN2NhM2U0OGM5MDM2YWYxYWJlOGNiOTE2OTNjYzYyYjA4OTM5MzhjYTE3ZWU1ZjdmNTgwMTMxNmYyMjE0ZjGiaWRldmljZV9pZGpkZXYtMDItaHNtcnNpZ25hdHVyZV9rZXlfaGFzaHhAYTE1ZDUzNGZhYmJjYWE5Zjg0YWE1YjgwYWZiZjY0Y2U1OTRmYjFhOWZkN2JmOWVlZGFiMzgzMmIyODQ3NzBiY3FtZW1iZXJfZG9jX2RpZ2VzdHhAYzdjNjFlYTE0YzNkMTEzM2RkM2I1NTljNjAzZjc1YWU3OTRjYzVhODI4MTc4NTQ5ZGI2NjZkNjRmZWJhMWY5YqRjbWlkaUYyWDNZNFo1NWZzdGF0dXNmYWN0aXZlZ2RldmljZXOBomlkZXZpY2VfaWRmZGV2LTAxcnNpZ25hdHVyZV9rZXlfaGFzaHhAMWU1MWJhNTYzMzg1NDIzNDI5MGU4MDlkOTA4OGM5MDRhNzRjYjJlNjMyMjIyOWE3NDVkNjIxNDM5NmExZmUzOHFtZW1iZXJfZG9jX2RpZ2VzdHhAOGFmYjJiMjhjZGZmNWFjMmQ2OWEwYWZlNjE0ZTkwZWJmMDQ4Mjg3ZTVjNzNhZTc2NGMxMzdhODZiMDBlZmU0N6RjbWlkaVJFQ1JEUzAxTmZzdGF0dXNmYWN0aXZlZ2RldmljZXOBomlkZXZpY2VfaWRucmVjb3Jkcy1oc20tMDFyc2lnbmF0dXJlX2tleV9oYXNoeEBjZTJlMjMwMDg4ZWQ5MThiMWM1MzA3MGJjYjNiYTI4YTZiNzg1YjM4OGIwOWQ0MzkxYzJmNzJiNDgxYzgyZWVlcW1lbWJlcl9kb2NfZGlnZXN0eEBjNTQ1ZDk4MGQxNWE4ODM2NTc4MjlhZTY5ZDI5OWVjNDg2ODk5YmVjNGFkNTM3YTdiYzE0MWI5ZDcwZTIzOWViZ3ZlcnNpb25jMS4waHNjb3BlX2lkZ2ZpbmFuY2VpbWxzX2Vwb2NoYTNpdHJlZV9oYXNoeEA0MDg4OWQwNGEzMDU1NjA5YTYyNDhlNTg4ODNjOWJhMmU1ZDA2NjU2NmEyYjMwNzdmOWZkMzEyMzE3YTRiOTA2a3NuYXBzaG90X2F0dDIwMjYtMDQtMDRUMTA6MTU6MDBaa3NuYXBzaG90X2lkeBowMUo4WlIwU1RFUjAwMDAwMDAwMDAwMEExWGxtbHNfZ3JvdXBfaWR2Wnp3MVM0cFdxOVQ1bjd4WWJYYzJkUVhAl8xRXWyZlniNHNNYE1OKznyJGRx479pGvKUfsEBPUxa5wB6q5LDMg2n01MlJuUgz0UchMPcxkAWBOBZZHpuOBA==",
+  "projection": {
+    "type": "ROSTER-v1",
+    "version": "1.0",
+    "uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+    "scope_id": "finance",
+    "mls_group_id": "Zzw1S4pWq9T5n7xYbXc2dQ",
+    "mls_epoch": "3",
+    "snapshot_at": "2026-04-04T10:15:00Z",
+    "snapshot_id": "01J8ZR0STER000000000000A1X",
+    "members": [
+      {
+        "mid": "F1N2C3D4P",
+        "status": "active",
+        "member_doc_digest": "c7c61ea14c3d1133dd3b559c603f75ae794cc5a828178549db666d64feba1f9b",
+        "devices": [
+          {
+            "device_id": "dev-01",
+            "signature_key_hash": "017ca3e48c9036af1abe8cb91693cc62b0893938ca17ee5f7f5801316f2214f1"
+          },
+          {
+            "device_id": "dev-02-hsm",
+            "signature_key_hash": "a15d534fabbcaa9f84aa5b80afbf64ce594fb1a9fd7bf9eedab3832b284770bc"
+          }
+        ]
+      },
+      {
+        "mid": "F2X3Y4Z55",
+        "status": "active",
+        "member_doc_digest": "8afb2b28cdff5ac2d69a0afe614e90ebf048287e5c73ae764c137a86b00efe47",
+        "devices": [
+          {
+            "device_id": "dev-01",
+            "signature_key_hash": "1e51ba5633854234290e809d9088c904a74cb2e6322229a745d6214396a1fe38"
+          }
+        ]
+      },
+      {
+        "mid": "RECRDS01N",
+        "status": "active",
+        "member_doc_digest": "c545d980d15a883657829ae69d299ec486899bec4ad537a7bc141b9d70e239eb",
+        "devices": [
+          {
+            "device_id": "records-hsm-01",
+            "signature_key_hash": "ce2e230088ed918b1c53070bcb3ba28a6b785b388b09d4391c2f72b481c82eee"
+          }
+        ]
+      }
+    ],
+    "tree_hash": "40889d04a3055609a6248e58883c9ba2e5d066566a2b3077f9fd312317a4b906"
+  }
+}

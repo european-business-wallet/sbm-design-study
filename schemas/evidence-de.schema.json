@@ -1,0 +1,345 @@
+{
+  "$id": "https://bw.example.eu/schemas/evidence-de.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "evidence-de (v2.8)",
+  "description": "Delivery Evidence. Issued by RDP(in) upon recipient acceptance (or quorum satisfaction for role addressing).",
+  "type": "object",
+  "required": [
+    "type",
+    "version",
+    "profile",
+    "message_id",
+    "recipient_uid",
+    "delivered_at",
+    "rdp_id",
+    "payload_hash",
+    "recipient_auth_method",
+    "auth_context",
+    "event",
+    "evidence_id",
+    "policy_id",
+    "acceptance_policy_ref",
+    "scope_ref",
+    "delivery_grade",
+    "integrity_basis"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "DE-v1"
+    },
+    "version": {
+      "type": "string",
+      "const": "2.8"
+    },
+    "profile": {
+      "$ref": "evidence-common.schema.json#/$defs/Profile"
+    },
+    "message_id": {
+      "type": "string"
+    },
+    "event": {
+      "type": "string",
+      "enum": [
+        "E.1-ContentHandover",
+        "D.6-ContentAccessTracking",
+        "C.3-ConsignmentAcceptance",
+        "D.1-ContentConsignment"
+      ],
+      "description": "ETSI EN 319 522-1 clause 6 event (component G03), selected by the delivery grade (the I-D (Message Flows and Delivery States); spec §8.3b): E.1 ContentHandover (default) or D.6 ContentAccessTracking for the verification grade (S4 == S3 under any-one); C.3 ConsignmentAcceptance for the acceptance grade (S4 under quorum/all); D.1 ContentConsignment ONLY at the declared availability grade (authenticated S2, the TS clause 6) — at every other grade D.1 is a non-operative EP.states[] record, never a DE event. See Annex I."
+    },
+    "evidence_id": {
+      "$ref": "evidence-common.schema.json#/$defs/EvidenceId"
+    },
+    "policy_id": {
+      "$ref": "evidence-common.schema.json#/$defs/PolicyId"
+    },
+    "acceptance_policy_ref": {
+      "$ref": "evidence-common.schema.json#/$defs/AcceptancePolicyRef"
+    },
+    "scope_ref": {
+      "$ref": "evidence-common.schema.json#/$defs/ScopeRef"
+    },
+    "acceptance_policy_kind": {
+      "type": "string",
+      "enum": [
+        "any-one",
+        "quorum",
+        "all",
+        "device-class"
+      ],
+      "description": "Kind of the BW-ORG-v1 acceptance policy that was satisfied (the I-D (Evidence Objects and COSE Packaging), §8.3). Recorded so the quorum-required constraint is schema-checkable. When 'quorum', the quorum array is REQUIRED."
+    },
+    "recipient_uid": {
+      "$ref": "evidence-common.schema.json#/$defs/Uid"
+    },
+    "delivered_at": {
+      "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+    },
+    "rdp_id": {
+      "$ref": "evidence-common.schema.json#/$defs/RdpId"
+    },
+    "payload_hash": {
+      "$ref": "evidence-common.schema.json#/$defs/Hash"
+    },
+    "quorum": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Present (and non-empty) when acceptance_policy_kind is 'quorum'; lists the members that acknowledged the message. X-05 (evidence 2.3): each entry states HOW its act is attested — 'wallet-signed' is an independently portable per-member proof (the same construction as the s3 signed arm, resolved per (mid, device_id) against the roster and verified against the published confirmation_key anchor); 'provider' is an RDP assertion and EXPLICITLY NARROWS the DE's acceptance claim for that member (the entry itself says so). The pre-2.3 bare {mid, ack_at} shape is rejected. TODO(legal): the Article 43(2) weight of a provider-attested quorum member awaits counsel.",
+      "items": {
+        "type": "object",
+        "required": [
+          "mid",
+          "ack_at",
+          "attestation"
+        ],
+        "properties": {
+          "mid": {
+            "type": "string",
+            "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+          },
+          "ack_at": {
+            "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+          },
+          "attestation": {
+            "type": "string",
+            "enum": [
+              "wallet-signed",
+              "provider"
+            ]
+          },
+          "message_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "device_id": {
+            "type": "string"
+          },
+          "verified_at": {
+            "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+          },
+          "wallet_signature_b64": {
+            "type": "string",
+            "minLength": 64
+          }
+        },
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "attestation": {
+                  "const": "wallet-signed"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "message_id",
+                "device_id",
+                "verified_at",
+                "wallet_signature_b64"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "attestation": {
+                  "const": "provider"
+                }
+              }
+            },
+            "then": {
+              "not": {
+                "required": [
+                  "wallet_signature_b64"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "recipient_auth_method": {
+      "$ref": "evidence-common.schema.json#/$defs/RecipientAuthMethod"
+    },
+    "auth_context": {
+      "$ref": "evidence-common.schema.json#/$defs/AuthContext"
+    },
+    "s3_attestation": {
+      "$ref": "evidence-common.schema.json#/$defs/S3Attestation"
+    },
+    "delivery_grade": {
+      "type": "string",
+      "enum": [
+        "availability",
+        "verification",
+        "acceptance"
+      ],
+      "description": "The delivery grade in force for the message's content class (spec §8.3b, v1.10): which act made delivery legally operative. availability is valid only where the recipient's signed BW-ORG (frozen by acceptance_policy_ref) explicitly declares it for the content class — never implicit (LINT-BND-11)."
+    },
+    "integrity_basis": {
+      "type": "string",
+      "enum": [
+        "recipient-verified-digest",
+        "sender-declared-digest"
+      ],
+      "description": "What the payload_hash in this DE rests on (v2.3). recipient-verified-digest: an authorised recipient re-computed and matched the digest (s3_attestation present; verification/acceptance grades). sender-declared-digest: availability grade — the DE attests availability of the sealed content to an authenticated endpoint and the sender-declared digest only; there is no recipient confirmation (the TS clause 6)."
+    },
+    "grade_commitment": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "Salted grade commitment (v1.15, the I-D (Grade Commitment)): REQUIRED at the availability grade, absent at every other grade. SHA-256 over the deterministic-CBOR fixed-position array [dst=sm-mls:grade-commitment:v2, salt, content_class, grade, org_digest]; the salt travels only in the E2EE envelope; verification via the TS clause 6 reveal procedure (LINT-DE-11, LINT-BND-11)."
+    },
+    "envelope_hash": {
+      "$ref": "evidence-common.schema.json#/$defs/EnvelopeHash",
+      "description": "F-02 (evidence 2.2): REQUIRED at the availability grade — the one grade with no recipient confirmation now binds the exact TLS-serialized MLSMessage octets made available to the authenticated endpoint; within an EP it MUST equal the SE's (LINT-DE-17). At the confirmed grades the commitment lives in s3_attestation.envelope_hash (LINT-DE-16)."
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "acceptance_policy_kind"
+        ],
+        "properties": {
+          "acceptance_policy_kind": {
+            "const": "quorum"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "quorum"
+        ]
+      }
+    },
+    {
+      "$comment": "V5/LINT-DE-05: acceptance under a quorum or all policy is an acceptance event (EN 319 522-1 C.3), not a handover (E.1) or access-tracking (D.6). Annex I.1.",
+      "if": {
+        "required": [
+          "acceptance_policy_kind"
+        ],
+        "properties": {
+          "acceptance_policy_kind": {
+            "enum": [
+              "quorum",
+              "all"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "event": {
+            "const": "C.3-ConsignmentAcceptance"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "delivery_grade": {
+            "const": "availability"
+          }
+        },
+        "required": [
+          "delivery_grade"
+        ]
+      },
+      "then": {
+        "properties": {
+          "event": {
+            "const": "D.1-ContentConsignment"
+          },
+          "integrity_basis": {
+            "const": "sender-declared-digest"
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "s3_attestation"
+              ]
+            },
+            {
+              "required": [
+                "acceptance_policy_kind"
+              ]
+            },
+            {
+              "required": [
+                "quorum"
+              ]
+            }
+          ]
+        },
+        "required": [
+          "envelope_hash",
+          "grade_commitment"
+        ]
+      },
+      "else": {
+        "required": [
+          "s3_attestation",
+          "acceptance_policy_kind"
+        ],
+        "properties": {
+          "integrity_basis": {
+            "const": "recipient-verified-digest"
+          }
+        },
+        "not": {
+          "required": [
+            "grade_commitment"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "delivery_grade": {
+            "const": "acceptance"
+          }
+        },
+        "required": [
+          "delivery_grade"
+        ]
+      },
+      "then": {
+        "properties": {
+          "event": {
+            "const": "C.3-ConsignmentAcceptance"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "delivery_grade": {
+            "const": "verification"
+          }
+        },
+        "required": [
+          "delivery_grade"
+        ]
+      },
+      "then": {
+        "properties": {
+          "event": {
+            "enum": [
+              "E.1-ContentHandover",
+              "D.6-ContentAccessTracking"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

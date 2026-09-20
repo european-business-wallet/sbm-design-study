@@ -1,0 +1,865 @@
+{
+  "$id": "https://bw.example.eu/schemas/evidence-common.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Common Evidence Definitions (v2.8)",
+  "description": "Shared definitions for Business Wallet evidence objects. hash_mode selects raw-byte hashing (the default) or the optional JSON-canonicalisation modes (jcs-sha256/jcs-sha512); the alg/hash_mode/hex triple is constrained to be internally coherent (SHA-256 => 64 hex, SHA-512 => 128 hex); the Uid pattern uses the canonical hyphen separator.",
+  "$defs": {
+    "Uid": {
+      "type": "string",
+      "pattern": "^EU-[A-Z]{2}-(EOID|PSBID)-[0-9A-HJ-NP-TV-Z]{14}$",
+      "description": "Canonical UID form: EU-CC-SCHEME-PAYLOAD(12)C1C2, where C1 C2 are two Crockford Base32 Reed-Solomon check symbols over GF(2^5) (umbrella §3.3 / Annex F). Hyphen is the only valid separator; canonical form is upper-case."
+    },
+    "BwAddress": {
+      "type": "string",
+      "pattern": "^bw:uid:EU-[A-Z]{2}-(EOID|PSBID)-[0-9A-HJ-NP-TV-Z]{14}(/(u/[0-9A-HJ-NP-TV-Z]{9}|r/[a-z0-9\\-_.]{1,32}))?$",
+      "description": "Canonical bw: address (umbrella Annex A): bw:uid:<UID> (entity), .../u/<MID> (member), or .../r/<role> (role). The role token is RoleName (case-sensitive, lowercase); the MID token is a well-formed MID. Addresses are compared byte-exact after normalisation; percent-encoding is not permitted."
+    },
+    "RoleName": {
+      "type": "string",
+      "pattern": "^[a-z0-9._-]{1,32}$",
+      "description": "A role token (X-16): the SAME grammar used in a bw: address .../r/<role> and in every BW-ORG role declaration, so every declared role is addressable. Case-sensitive, lowercase [a-z0-9._-], 1-32 chars (umbrella Annex A)."
+    },
+    "Hash": {
+      "type": "object",
+      "description": "Payload hash descriptor. hash_mode selects raw-byte hashing (the default) or the optional JSON-canonicalisation modes (jcs-sha256/jcs-sha512).",
+      "required": [
+        "alg",
+        "hex",
+        "hash_mode"
+      ],
+      "properties": {
+        "alg": {
+          "type": "string",
+          "enum": [
+            "SHA-256",
+            "SHA-512"
+          ]
+        },
+        "hex": {
+          "type": "string",
+          "pattern": "^([a-f0-9]{64}|[a-f0-9]{128})$",
+          "description": "Lowercase hex digest."
+        },
+        "hash_mode": {
+          "type": "string",
+          "enum": [
+            "jcs-sha256",
+            "jcs-sha512",
+            "raw-sha256",
+            "raw-sha512",
+            "manifest-sha256",
+            "manifest-sha512"
+          ],
+          "description": "jcs-* modes apply RFC 8785 canonicalisation to a JSON payload before hashing; raw-* modes hash the raw payload bytes; manifest-* modes hash the deterministic-CBOR message manifest of a multipart payload (the I-D (Canonicalisation and Payload Hashing) Mode C)."
+        }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "alg": {
+              "const": "SHA-256"
+            },
+            "hash_mode": {
+              "enum": [
+                "jcs-sha256",
+                "raw-sha256",
+                "manifest-sha256"
+              ]
+            },
+            "hex": {
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        {
+          "properties": {
+            "alg": {
+              "const": "SHA-512"
+            },
+            "hash_mode": {
+              "enum": [
+                "jcs-sha512",
+                "raw-sha512",
+                "manifest-sha512"
+              ]
+            },
+            "hex": {
+              "pattern": "^[a-f0-9]{128}$"
+            }
+          }
+        }
+      ]
+    },
+    "RdpId": {
+      "type": "string",
+      "pattern": "^urn:sbm:rdp:[A-Za-z0-9._~-]+$",
+      "description": "R7-04/R7-X1: the CANONICAL provider identifier, one value space. It was `{type: string, minLength: 1}` — so the grammar `rdpAuth` derives from a client certificate governed nothing downstream: every sample used `RDP:MockEU:001`, the reference path defaulted to `RDP:DEMO:OUT`, and `ds_accept_message(principal='not-a-canonical-rdp')` was accepted and stored as the ledger key. A precise identity rule over an unconstrained value space is a rule about nothing. Deployed legacy identifiers are NOT aliased: no alias policy is defined, because an alias that resolves to the same namespace is a second name for one thing, and two names is how R4-U3's collision returns."
+    },
+    "KeyPackageRef": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{43,86}$",
+      "description": "R9-03/R9-X1: the MLS reference to a KeyPackage, RFC 9420 §5.2 — `RefHash(\"MLS 1.0 KeyPackage Reference\", KeyPackage)` over the ENCODED KeyPackage, using the hash function of the reservation's own cipher suite, encoded base64url WITHOUT padding. ONE definition, referenced everywhere the value appears: the reservation response that produces it, the invitation that quotes it, and the device credential bound to it. It was previously required by `InvitationDeposit` and produced by nothing — a value on the wire that no conforming client could construct, because neither the reservation request nor its response carried it and no document defined it. MLS already defines a reference for this object, so SBM does not define a second one.",
+      "$comment": "43 characters is an unpadded base64url SHA-256; 86 an unpadded SHA-512. The suite decides which, so the bound is a range rather than a fixed length."
+    },
+    "GroupInfoCommitment": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{43,86}$",
+      "description": "R9-03 requirement 6: the commitment to the GroupInfo a Welcome delivers — `RefHash(\"SBM 1.0 GroupInfo Commitment\", GroupInfo)` under the invitation's `offered_suite`, base64url without padding. Same construction as `KeyPackageRef` with its OWN label, so neither can be replayed as the other. Validated by the invited DEVICE after it decrypts the Welcome; the Delivery Service retains and echoes it and cannot parse what it commits to, which is why the earlier `{type: string}` claimed a binding no component could check."
+    },
+    "IsoTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$",
+      "description": "RFC 3339 timestamp in Zulu (UTC, trailing Z) form (X-35). The Zulu form is normative: instant comparison (trust-store windows, as-of resolution, expiry ordering) is byte-wise on Zulu strings, which sort chronologically. format is asserted (FormatChecker) wherever schemas are validated."
+    },
+    "MlsGroupId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+={0,2}$",
+      "minLength": 1,
+      "description": "MLS group identifier (RFC 9420), base64url-encoded (X-35: the base64url alphabet is schema-enforced; RFC 9420 leaves the length opaque)."
+    },
+    "MlsEpoch": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "maxLength": 20,
+      "description": "MLS epoch at the time of the evidence event, as a DECIMAL STRING (no leading zeros). MLS defines the epoch as uint64 (RFC 9420), whose range exceeds the JSON safe-integer bound (2^53-1); a decimal string carries the full range exactly (M1/J0+; the I-D (Canonicalisation and Payload Hashing))."
+    },
+    "AuthMethod": {
+      "type": "string",
+      "enum": [
+        "mls-x509",
+        "mls-uid-qeaa",
+        "mls-x509+oidc4vp",
+        "mls-uid-qeaa+oidc4vp",
+        "two-factor",
+        "wallet-eid-high",
+        "wallet-eid-substantial",
+        "mtls-ncp",
+        "ncp-signature",
+        "cab-confirmed"
+      ],
+      "description": "Sender-side authentication method bound to the SE-v1 submission, mapped to Regulation (EU) No 910/2014 CIR 2025/1944 REQ-QERDS-5.2.2-03. The mls-x509 / mls-uid-qeaa values are the profile default: authentication is performed inside the MLS handshake using the leaf-node QSealC or UID QEAA credential, corresponding to REQ-QERDS-5.2.2-03(c) (mutual TLS with an NCP certificate) or (d) (a digital signature under an NCP certificate). The +oidc4vp variants indicate an additional OpenID4VP ceremony at session setup for wallet-level policy enforcement (OPTIONAL). The remaining values record an alternative sender-authentication binding: two-factor = 5.2.2-03(a); wallet-eid-high / wallet-eid-substantial = 5.2.2-03(b) (European Digital Identity Wallet or notified eID at assurance level high/substantial); mtls-ncp = 5.2.2-03(c); ncp-signature = 5.2.2-03(d); cab-confirmed = 5.2.2-03(e)."
+    },
+    "RecipientAuthMethod": {
+      "type": "string",
+      "enum": [
+        "mfa",
+        "wallet-eid-high",
+        "wallet-eid-substantial",
+        "qes-qseal-cert",
+        "cab-confirmed"
+      ],
+      "description": "Recipient-side authentication method bound to DE-v1 issuance, mapped to Regulation (EU) No 910/2014 CIR 2025/1944 REQ-QERDS-5.2.2-03A. The means (or their combination) MUST ensure a very high level of confidence in the recipient's identity, and recipient identification MUST precede content delivery (Article 44(1)(c)). mfa = 5.2.2-03A(a); wallet-eid-high / wallet-eid-substantial = 5.2.2-03A(b); qes-qseal-cert = 5.2.2-03A(c) (certificate of a qualified electronic signature or seal); cab-confirmed = 5.2.2-03A(d)."
+    },
+    "EvidenceId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique identifier of this evidence object (ETSI EN 319 522-2 clause 8 component G01), distinct from message_id. RECOMMENDED: a UUIDv7, ULID, or URN."
+    },
+    "PolicyId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identifier (URI or OID URN) of the RDP evidence-issuance policy under which this evidence is produced (ETSI EN 319 522-2 clause 8 component R01)."
+    },
+    "Profile": {
+      "type": "string",
+      "enum": [
+        "pilot",
+        "production"
+      ],
+      "description": "Conformance profile under which this evidence is issued (spec §9.3, §13.3). 'production' is a CLAIM of QERDS-qualified status and the Regulation (EU) No 910/2014, Article 43(2) presumption — verifiable only in conjunction with the Trusted-List status of rdp_id, federation membership, the certificate chain, policy_id, and qualified-timestamp validation; a verifier MUST NOT treat this string alone as qualification. 'pilot' is non-qualified transitional evidence."
+    },
+    "S3Attestation": {
+      "type": "object",
+      "description": "Recipient digest-confirmation object for state S3 (the I-D (Message Flows and Delivery States), the I-D (Canonicalisation and Payload Hashing)): an authorised member/device decrypted the content and re-verified payload_hash within an authenticated recipient session (the TS clause 6), and signed or session-authenticated the FULL confirmation object bound to (message_id, mls_group_id, mls_epoch, acceptance_policy_ref, payload_hash, result, verified_at) — the wallet_signature_b64, when present, is a COSE_Sign1 whose payload is the deterministic-CBOR encoding of the object with the signature field removed (the I-D (Canonicalisation and Payload Hashing)), not a field subset. A precondition of DE-v1; result is always 'match' (a mismatch produces NDE-v1 payload-hash-mismatch with a recipient_confirmation instead). At least one proof — wallet_signature_b64 or session_authenticated — is REQUIRED.",
+      "required": [
+        "mid",
+        "hash_verified",
+        "verified_at",
+        "payload_hash",
+        "result",
+        "message_id",
+        "mls_group_id",
+        "mls_epoch",
+        "mls_state",
+        "envelope_hash",
+        "acceptance_policy_ref"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "wallet_signature_b64"
+          ]
+        },
+        {
+          "required": [
+            "session_authenticated"
+          ]
+        }
+      ],
+      "allOf": [
+        {
+          "$comment": "R3 (twenty-fourth review): the SIGNED variant MUST identify the confirming device, so the COSE signer resolves to exactly that device's published confirmation_key (BW-MEMBER, TS INTF-1a/D) and its active-at-verified_at status is checkable. Without device_id the RDP can only confirm the MID has SOME ack-capable device — a retired or compromised one could sign.",
+          "if": {
+            "required": [
+              "wallet_signature_b64"
+            ]
+          },
+          "then": {
+            "required": [
+              "device_id"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "mid": {
+          "type": "string",
+          "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+        },
+        "device_id": {
+          "type": "string"
+        },
+        "hash_verified": {
+          "const": true
+        },
+        "envelope_hash": {
+          "$ref": "#/$defs/EnvelopeHash"
+        },
+        "mls_state": {
+          "$ref": "#/$defs/MlsStateHash"
+        },
+        "verified_at": {
+          "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+        },
+        "message_id": {
+          "type": "string"
+        },
+        "mls_group_id": {
+          "$ref": "evidence-common.schema.json#/$defs/MlsGroupId"
+        },
+        "mls_epoch": {
+          "$ref": "evidence-common.schema.json#/$defs/MlsEpoch"
+        },
+        "acceptance_policy_ref": {
+          "$ref": "evidence-common.schema.json#/$defs/AcceptancePolicyRef"
+        },
+        "payload_hash": {
+          "$ref": "evidence-common.schema.json#/$defs/Hash"
+        },
+        "result": {
+          "const": "match"
+        },
+        "wallet_signature_b64": {
+          "type": "string",
+          "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$",
+          "minLength": 64,
+          "description": "Recipient wallet advanced electronic signature: a COSE_Sign1 whose payload is the deterministic-CBOR encoding of the confirmation object with wallet_signature_b64 removed (the same signed-payload construction as the RDP seal, the I-D (Evidence Objects and COSE Packaging)/the I-D (Canonicalisation and Payload Hashing)) — not over a chosen field subset. Base64 of the COSE_Sign1; the protected-header alg MUST be EdDSA(-8)/ES256(-7)/ES384(-35) (LINT-PKG-05). Present as an alternative to session_authenticated."
+        },
+        "session_authenticated": {
+          "const": true,
+          "description": "The confirmation is bound to the authenticated recipient session of the TS clause 6 rather than to a standalone signature."
+        },
+        "session_binding": {
+          "$ref": "#/$defs/SessionBinding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RecipientConfirmation": {
+      "type": "object",
+      "description": "Recipient confirmation carried on NDE-v1 with reason payload-hash-mismatch (the I-D (Canonicalisation and Payload Hashing), R11): the recipient re-verified payload_hash after decryption and it did NOT match. At least one proof — wallet_signature_b64 or session_authenticated — is REQUIRED.",
+      "required": [
+        "mid",
+        "payload_hash",
+        "result",
+        "verified_at",
+        "message_id",
+        "mls_group_id",
+        "mls_epoch",
+        "mls_state",
+        "acceptance_policy_ref"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "wallet_signature_b64"
+          ]
+        },
+        {
+          "required": [
+            "session_authenticated"
+          ]
+        }
+      ],
+      "allOf": [
+        {
+          "$comment": "R3 (twenty-fourth review): the SIGNED variant MUST identify the confirming device, so the COSE signer resolves to exactly that device's published confirmation_key (BW-MEMBER, TS INTF-1a/D) and its active-at-verified_at status is checkable. Without device_id the RDP can only confirm the MID has SOME ack-capable device — a retired or compromised one could sign.",
+          "if": {
+            "required": [
+              "wallet_signature_b64"
+            ]
+          },
+          "then": {
+            "required": [
+              "device_id"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "mid": {
+          "type": "string",
+          "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+        },
+        "device_id": {
+          "type": "string"
+        },
+        "payload_hash": {
+          "$ref": "evidence-common.schema.json#/$defs/Hash"
+        },
+        "result": {
+          "const": "mismatch"
+        },
+        "mls_state": {
+          "$ref": "#/$defs/MlsStateHash"
+        },
+        "verified_at": {
+          "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+        },
+        "message_id": {
+          "type": "string"
+        },
+        "mls_group_id": {
+          "$ref": "evidence-common.schema.json#/$defs/MlsGroupId"
+        },
+        "mls_epoch": {
+          "$ref": "evidence-common.schema.json#/$defs/MlsEpoch"
+        },
+        "acceptance_policy_ref": {
+          "$ref": "evidence-common.schema.json#/$defs/AcceptancePolicyRef"
+        },
+        "wallet_signature_b64": {
+          "type": "string",
+          "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$",
+          "minLength": 64,
+          "description": "Recipient wallet advanced electronic signature: a COSE_Sign1 whose payload is the deterministic-CBOR encoding of the confirmation object with wallet_signature_b64 removed (the same signed-payload construction as the RDP seal, the I-D (Evidence Objects and COSE Packaging)/the I-D (Canonicalisation and Payload Hashing)) — not over a chosen field subset. Base64 of the COSE_Sign1; the protected-header alg MUST be EdDSA(-8)/ES256(-7)/ES384(-35) (LINT-PKG-05). Present as an alternative to session_authenticated."
+        },
+        "session_authenticated": {
+          "const": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "AuthContext": {
+      "type": "object",
+      "description": "Records which of the three identities (the TS clause 6 (identity proofing)) was authenticated for this evidence, by what method, at what assurance level, under whose authority. On SE-v1 it describes the sender side (method = auth_method); on DE-v1 the recipient side (method = recipient_auth_method).",
+      "required": [
+        "identity",
+        "method",
+        "loa"
+      ],
+      "properties": {
+        "identity": {
+          "type": "string",
+          "enum": [
+            "entity",
+            "member",
+            "system",
+            "device"
+          ],
+          "description": "Which identity was authenticated: the legal entity (UID), a human member (MID/role), a system member / agent acting under a mandate (MID/role; member_type=system, Annex R), or the device/wallet instance (MLS leaf). identity=system records that an agent, not a person, was the acting identity (A1)."
+        },
+        "mid": {
+          "type": "string",
+          "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$",
+          "description": "The acting member's MID (pseudonymous), recorded when identity is member or system so the accountability chain resolves the acting member (Annex R, A1/A5). REQUIRED where identity=system (the acting agent must be identifiable); the MID resolves to a BW-MEMBER whose member_type matches the identity (bundle_lint LINT-BND-14)."
+        },
+        "method": {
+          "type": "string",
+          "description": "The authentication method; equals the sibling auth_method (SE) or recipient_auth_method (DE)."
+        },
+        "loa": {
+          "type": "string",
+          "enum": [
+            "high",
+            "substantial",
+            "very-high",
+            "n/a"
+          ]
+        },
+        "authority": {
+          "type": "string",
+          "description": "Reference to the QTSP/issuer or the organisation authorisation authority under whose authority the identity was established."
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$comment": "A1 (Annex R): a system acting identity must name the acting agent's MID.",
+          "if": {
+            "properties": {
+              "identity": {
+                "const": "system"
+              }
+            },
+            "required": [
+              "identity"
+            ]
+          },
+          "then": {
+            "required": [
+              "mid"
+            ]
+          }
+        }
+      ]
+    },
+    "Mandate": {
+      "type": "object",
+      "description": "A system member's STANDING mandate — its scoped delegated authority (Annex R, A2). Reference-only: the mandate credential itself (an EAA / verifiable credential) travels end-to-end encrypted; only this reference is published in the signed BW-MEMBER so a counterparty can check the agent's authority before treating its messages as binding.",
+      "required": [
+        "issuer",
+        "id",
+        "scope",
+        "valid_from",
+        "valid_until"
+      ],
+      "properties": {
+        "issuer": {
+          "type": "string",
+          "description": "Issuer of the mandate attestation (a QTSP / the delegating entity's authority)."
+        },
+        "id": {
+          "type": "string",
+          "description": "Stable identifier of the mandate attestation."
+        },
+        "scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          },
+          "description": "The content classes the agent is authorised to act on (two-tier registry, §8.3a)."
+        },
+        "valid_from": {
+          "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+        },
+        "valid_until": {
+          "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+        }
+      },
+      "additionalProperties": false
+    },
+    "MandateRef": {
+      "type": "object",
+      "description": "Reference on SE-v1 to the mandate an agent acted under for THIS message (Annex R, A2): issuer + id link to the system member's standing mandate (BW-MEMBER mandate_ref). REQUIRED on an SE whose auth_context.identity=system, forbidden otherwise (evidence_lint LINT-DE-14). The OPTIONAL mandate_commitment is a salted digest over (mandate id, scope, content_class) — salt confined to the E2EE envelope — so a verifier can confirm the acted-under scope covered the content class without the mandate or the class leaking (reveal procedure mirrors the grade commitment, TS clause 6).",
+      "required": [
+        "issuer",
+        "id"
+      ],
+      "properties": {
+        "issuer": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "opposable": {
+          "type": "boolean",
+          "description": "Whether the agent's act is intended to be externally opposable (A1, nineteenth review). Default true (absent = opposable). When opposable, mandate_commitment is REQUIRED (evidence_lint LINT-DE-15) so a verifier can show the act was within the mandate's class scope without the mandate or class leaking. opposable=false marks a NON-opposable act: mandate_commitment is forbidden and mandate-scope conformance is then establishable only by internal audit, payload reveal, or the dispute path — never by external verification."
+        },
+        "mandate_commitment": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Salted SHA-256 commitment binding the acted-under mandate to the message's content class, anchored to the published BW-ORG version: SHA-256 of the deterministic-CBOR fixed-position array [dst=sm-mls:mandate-commitment:v2, salt, mandate_id, content_class, org_digest]. REQUIRED on an opposable system-member SE, FORBIDDEN where mandate_ref.opposable=false (LINT-DE-15). The 16-byte salt travels only in the E2EE envelope (mandate_commitment_salt); reveal mirrors the grade commitment (TS clause 6): recompute + check content_class is in the mandate's scope."
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "opposable": {
+                "const": false
+              }
+            },
+            "required": [
+              "opposable"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "mandate_commitment"
+              ]
+            }
+          },
+          "else": {
+            "required": [
+              "mandate_commitment"
+            ]
+          }
+        }
+      ]
+    },
+    "AcceptancePolicyRef": {
+      "type": "object",
+      "description": "Reference to the BW-ORG-v1 acceptance policy IN FORCE at SE-v1 issuance (submission time), fixing BOTH the policy document (policy_version + doc_digest, stable across re-seals) AND the exact key selected within it (policy_key, F-08). A later policy change does not affect in-flight messages.",
+      "required": [
+        "policy_version",
+        "doc_digest",
+        "policy_key"
+      ],
+      "properties": {
+        "policy_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "doc_digest": {
+          "$ref": "evidence-common.schema.json#/$defs/Hash"
+        },
+        "policy_key": {
+          "$ref": "#/$defs/RoleName",
+          "description": "F-08 (evidence 2.4): the EXACT acceptance_policy key selected for this message by the umbrella §8.3 deterministic selection (scoped -> the scope's acceptance_policy_ref key; default-scope role-addressed -> the role's key if present, else 'default'; entity-addressed -> 'default'). Makes every policy selection self-contained: two keys in the same BW-ORG can never produce indistinguishable evidence. Recomputed and enforced bundle-level (LINT-BND-30); signed by the sender (the X-03 tuple copies this ref)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ScopeRef": {
+      "type": "object",
+      "description": "Reference to the confidentiality-scope descriptor (BW-ORG scope_map, spec §8.3a) in force at submission and applicable to the message. scope_id 'default' denotes the baseline (whole-pair) scope. Echoed in SE-v1 and DE-v1 for auditability (D6); the content_class that selected the scope is NOT carried in evidence.",
+      "required": [
+        "scope_id",
+        "version"
+      ],
+      "properties": {
+        "scope_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "Manifest": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Ordered list of message parts for a multipart payload (the I-D (Canonicalisation and Payload Hashing) Mode C). The message-level payload_hash (hash_mode manifest-sha256/-sha512) is computed over the deterministic-CBOR manifest. Carries structure/metadata only — media types, lengths, per-part digests — never content. uniqueItems catches exact-duplicate entries; full part_id uniqueness and canonical byte-wise-ascending ordering are enforced by evidence_lint (LINT-MAN-01/02).",
+      "items": {
+        "type": "object",
+        "required": [
+          "part_id",
+          "role",
+          "media_type",
+          "length",
+          "digest"
+        ],
+        "properties": {
+          "part_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]{1,64}$",
+            "description": "Unique, stable identifier of the part within the message. part_id values MUST be unique; the canonical manifest ordering is byte-wise ascending by part_id (the I-D (Canonicalisation and Payload Hashing))."
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "body",
+              "attachment",
+              "evidence-bundle",
+              "signature",
+              "metadata"
+            ],
+            "description": "Role of the part in the message (closed registry, the I-D (Canonicalisation and Payload Hashing))."
+          },
+          "media_type": {
+            "type": "string"
+          },
+          "length": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "maxLength": 20,
+            "description": "Byte length of the part's decoded octets, as a DECIMAL STRING (no leading zeros) — a byte count has no natural safe-integer bound, so it is carried as a string for type-uniformity with mls_epoch (M1/J0+)."
+          },
+          "filename": {
+            "type": "string",
+            "description": "Optional normalised (Unicode NFC) filename."
+          },
+          "digest": {
+            "$ref": "evidence-common.schema.json#/$defs/Hash"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "EnvelopeHash": {
+      "type": "object",
+      "description": "R-02/D3 (evidence 2.2): the transmitted-octet commitment — SHA-256 (fixed by this type; no alg/mode selector, so SHA-512/JCS/manifest modes are unrepresentable) over the TLS-serialized RFC 9420 MLSMessage as handed to transport (the exact wire object, not the PrivateMessage alone; scripts/mls_wire.py is the reference serializer). `format` names the wire format/version. Independently recomputable by every party that handles the octets: RDP(out) at acceptance, every relaying RDP, RDP(in)/the wallet at receipt.",
+      "required": [
+        "format",
+        "hex"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "const": "mls10-message",
+          "description": "The committed wire object + version: RFC 9420 MLSMessage, protocol mls10, wire_format mls_private_message."
+        },
+        "hex": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Lowercase hex SHA-256 of the serialized MLSMessage octets."
+        }
+      }
+    },
+    "MlsStateHash": {
+      "type": "object",
+      "description": "R-02/F-03/D3 (evidence 2.2): the MLS state commitment — SHA-256 (fixed by this type) over the TLS-serialized RFC 9420 §8.1 GroupContext. ONE value replacing the former enumerated {tree_hash, confirmed_transcript_hash} pair: the GroupContext contains protocol version, cipher_suite, group_id, epoch, tree_hash, confirmed_transcript_hash AND the extensions, so all are pinned together (two forks sharing group_id+epoch produce different commitments). Verification from evidence time: resolve the retained historical GroupContext, recompute this hash, then verify the retained ratchet tree against the GroupContext's tree_hash (the I-D, MLS state retention).",
+      "required": [
+        "format",
+        "hex"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "const": "mls10-group-context",
+          "description": "The committed struct + version: RFC 9420 §8.1 GroupContext, protocol mls10."
+        },
+        "hex": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Lowercase hex SHA-256 of the serialized GroupContext octets."
+        }
+      }
+    },
+    "SessionBinding": {
+      "type": "object",
+      "description": "X-05 (evidence 2.3): a retained, privacy-aware binding of a session-authenticated confirmation to VERIFIABLE session material — a digest of the token / TLS exporter / session transcript, retained under the §4.3 duty for the evidence-retention period. Without it, a session confirmation is the provider-attested (narrowed) mode: a bare session_authenticated boolean cannot claim the member-grade proof mode (LINT-DE-20). TODO(legal): the narrowed claim's Article 43(2) weight for provider-attested confirmations awaits counsel.",
+      "required": [
+        "kind",
+        "digest"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "token-digest",
+            "tls-exporter",
+            "session-transcript-digest"
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Lowercase-hex SHA-256 of the session material (never the material itself — privacy-aware)."
+        }
+      }
+    },
+    "RefusalConfirmation": {
+      "description": "X-29 (evidence 2.3): the RECIPIENT-PRODUCED proof of a member refusal — the s3-style choice: wallet-signed (device_id + wallet_signature_b64 over this object's own content minus the signature, the standard construction) or session-authenticated (with an optional SessionBinding; a bare boolean is the provider-attested narrowed mode). Covers the refused message and context so the refusal is independently attributable.",
+      "type": "object",
+      "required": [
+        "mid",
+        "result",
+        "message_id",
+        "payload_hash",
+        "refused_at"
+      ],
+      "properties": {
+        "mid": {
+          "type": "string",
+          "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+        },
+        "result": {
+          "const": "refused"
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payload_hash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "scope_ref": {
+          "$ref": "#/$defs/ScopeRef"
+        },
+        "refused_at": {
+          "$ref": "#/$defs/IsoTimestamp"
+        },
+        "device_id": {
+          "type": "string"
+        },
+        "wallet_signature_b64": {
+          "type": "string",
+          "minLength": 64
+        },
+        "session_authenticated": {
+          "const": true
+        },
+        "session_binding": {
+          "$ref": "#/$defs/SessionBinding"
+        }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "device_id",
+            "wallet_signature_b64"
+          ],
+          "not": {
+            "required": [
+              "session_authenticated"
+            ]
+          }
+        },
+        {
+          "required": [
+            "session_authenticated"
+          ],
+          "not": {
+            "required": [
+              "wallet_signature_b64"
+            ]
+          }
+        }
+      ]
+    },
+    "SenderConfirmation": {
+      "description": "X-03/D4 (evidence 2.3): the SENDER-WALLET-PRODUCED proof that the named sender authorised THESE bytes to THIS recipient — a wallet advanced electronic signature (the s3-signed construction: COSE_Sign1 over this object's deterministic CBOR with the signature field removed) under the sender member's published confirmation_key anchor, resolved per (mid, device_id) from the SENDER entity's BW-MEMBER (INTF-1b). The tuple includes the Batch-5 byte-exact commitments, so the sender independently signs the exact transmitted octets, and (R3-01) the sender and recipient ADDRESSES, so the sender signs the addressing decision that selects the acceptance policy. TODO(legal): the clause stating this signature's relation to the Article 44(1)(b) provider attestation (an additive second proof, never a substitute) and its Article 43(2) weight awaits counsel — D4 LEGAL-CONFIRM.",
+      "type": "object",
+      "required": [
+        "mid",
+        "device_id",
+        "message_id",
+        "sender_uid",
+        "recipient_uid",
+        "payload_hash",
+        "envelope_hash",
+        "mls_state",
+        "acceptance_policy_ref",
+        "scope_ref",
+        "sent_at",
+        "expires_at",
+        "wallet_signature_b64",
+        "recipient_addr",
+        "sender_addr"
+      ],
+      "properties": {
+        "mid": {
+          "type": "string",
+          "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+        },
+        "device_id": {
+          "type": "string"
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sender_uid": {
+          "$ref": "#/$defs/Uid"
+        },
+        "recipient_uid": {
+          "$ref": "#/$defs/Uid"
+        },
+        "payload_hash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "envelope_hash": {
+          "$ref": "#/$defs/EnvelopeHash"
+        },
+        "mls_state": {
+          "$ref": "#/$defs/MlsStateHash"
+        },
+        "acceptance_policy_ref": {
+          "$ref": "#/$defs/AcceptancePolicyRef"
+        },
+        "scope_ref": {
+          "$ref": "#/$defs/ScopeRef"
+        },
+        "sent_at": {
+          "$ref": "#/$defs/IsoTimestamp"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/IsoTimestamp"
+        },
+        "wallet_signature_b64": {
+          "type": "string",
+          "minLength": 64
+        },
+        "recipient_addr": {
+          "$ref": "#/$defs/BwAddress",
+          "description": "R3-01/R3-T1: the address the message was sent TO. It was not a property of this tuple at all, so the addressing decision — which SELECTS the acceptance policy — sat outside the sender's signature and could be changed without invalidating it. Dropping it from a role-addressed submission silently selected the weaker 'default' policy. It is signed here now, and REQUIRED."
+        },
+        "sender_addr": {
+          "$ref": "#/$defs/BwAddress",
+          "description": "R3-01: the acting address the message was sent FROM, signed for the same reason — a confirmation that does not say who acted, in which role, leaves the acting identity outside the proof."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RecipientRevealConfirmation": {
+      "type": "object",
+      "description": "DR-03 / R2-M1 (evidence 2.7): the RECIPIENT-PRODUCED proof accompanying a grade-commitment dispute. The recipient device's wallet advanced electronic signature (the s3-signed construction: COSE_Sign1 over this object's deterministic CBOR with the signature field removed) over the full dispute tuple, resolved against that device's published confirmation_key AS IT STOOD AT read_at (the as-of read; INTF-1/1a/2). HONEST SCOPE: this proves an ATTRIBUTABLE RECIPIENT ASSERTION — a named device of a named member asserted these values and is accountable for them. It does NOT prove the values were extracted from the disputed ciphertext; objective ciphertext-to-reveal proof would need a construction this profile does not define (recorded as specified future work). Before this existed, commitment INEQUALITY ALONE was treated as a valid rebuttal — and inequality is manufacturable by inventing a salt, so any provider could rebut any availability delivery.",
+      "required": [
+        "message_id",
+        "envelope_hash",
+        "grade_commitment",
+        "salt",
+        "content_class",
+        "read_at",
+        "recipient_uid",
+        "mid",
+        "device_id",
+        "wallet_signature_b64"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "envelope_hash": {
+          "$ref": "#/$defs/EnvelopeHash"
+        },
+        "grade_commitment": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "salt": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$"
+        },
+        "content_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "read_at": {
+          "$ref": "#/$defs/IsoTimestamp"
+        },
+        "recipient_uid": {
+          "$ref": "#/$defs/Uid"
+        },
+        "mid": {
+          "type": "string",
+          "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+        },
+        "device_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "wallet_signature_b64": {
+          "type": "string",
+          "minLength": 64
+        }
+      }
+    }
+  }
+}

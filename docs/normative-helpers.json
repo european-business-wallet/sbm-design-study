@@ -1,0 +1,208 @@
+{
+  "$comment": "R4 meta-finding, REBUILT in round 5 (R5-07/3). This is the registry of helpers that IMPLEMENT A NORMATIVE RULE. Round 4 stored each helper's integration STATUS here, and round 5 found two entries false: `resolve_ds_receipt_key` and `check_certificate_binds_key` still said `unintegrated` with a reason beginning 'RED ON ARRIVAL' — a description of round 4's STARTING state, never revised after round 4's own Batch 3 wired both in. A registry whose entries can be false is worse than no registry, because it is consulted instead of the code. So THE STATUS IS NO LONGER STORED: it is DERIVED from the AST by scripts/helper_integration.py, in both directions. What stays here is the part no analysis can infer — which helpers carry a normative obligation, which arguments make them do their work, and which exemptions a human accepted and signed for.",
+  "registry_version": "2",
+  "helpers": [
+    {
+      "name": "as_of_resolve",
+      "module": "lint_cli.py",
+      "rule": "X-17/DR-11 as-of resolution: the version whose half-open window contains the act instant",
+      "required_arguments": [
+        "at"
+      ]
+    },
+    {
+      "name": "resolve_ds_receipt_key",
+      "module": "lint_cli.py",
+      "rule": "R3-04: the DS receipt key named by kid, valid at the receipt's own server_time",
+      "required_arguments": [
+        "at"
+      ]
+    },
+    {
+      "name": "check_certificate_binds_key",
+      "module": "lint_cli.py",
+      "rule": "R3-05: the leaf certificate carries the published confirmation key, and was valid at the act",
+      "required_arguments": [
+        "at"
+      ],
+      "argument_exemptions": {
+        "discovery_lint.py::_production_confirmation_keys": "R4-04, recorded properly in round 5. Discovery lint sees a DOCUMENT, not an EVENT: there is no act at discovery time, so there is no instant to judge the certificate against and `at` cannot be supplied. LINT-DISC-31 owns the production requirement that a certificate EXIST and bind the published key; LINT-BND-39 owns validity AT THE ACT, where the act is known. Round 4's finding was about THIS call site and round 4 fixed a different one — it added _bnd39 in bundle_lint and left this call unchanged — so the gate went green on a site that was never examined. That is invariant 4 committed by the fix for invariant 4. The exemption is correct; its ABSENCE was the defect."
+      }
+    },
+    {
+      "name": "verify_cose_signature",
+      "module": "lint_cli.py",
+      "rule": "DR-12: multi-algorithm confirmation verification with three-way alg agreement"
+    },
+    {
+      "name": "select_policy_key",
+      "module": "lint_cli.py",
+      "rule": "X-12/umbrella 8.3: the deterministic acceptance-policy selection"
+    },
+    {
+      "name": "compute_grade_commitment",
+      "module": "lint_cli.py",
+      "rule": "X0: the salted grade commitment"
+    },
+    {
+      "name": "compute_mandate_commitment",
+      "module": "lint_cli.py",
+      "rule": "A1/Annex R: the mandate commitment"
+    },
+    {
+      "name": "compute_seal_digest",
+      "module": "lint_cli.py",
+      "rule": "CF-5: the seal digest over the decoded COSE bytes"
+    },
+    {
+      "name": "instant",
+      "module": "lint_cli.py",
+      "rule": "DR-05: RFC 3339 instants are parsed, never string-compared"
+    },
+    {
+      "name": "check_bundle",
+      "module": "bundle_lint.py",
+      "rule": "The cross-document verifier: every LINT-BND rule over a retained bundle. Registered in round 5 because the coverage scan read only lint_cli.py and this is where the retained-material inputs arrive. R5-05: the RETAINED-MATERIAL inputs must be passed by every production caller. R4-06 added `group_contexts` here and never to `lint_bundle`, and no manifest carried the material, so LINT-BND-40 was reachable only from a hand-built unit test — the integration failure round 4 existed to eliminate, committed in the batch that eliminated it. A parameter a verifier can accept and the CLI can never supply is a capability that does not exist.",
+      "required_arguments": [
+        "policy_history",
+        "receipts",
+        "group_contexts",
+        "counterparty_members",
+        "formation_inputs",
+        "suite_registry"
+      ]
+    },
+    {
+      "name": "check_auth_assurance",
+      "module": "evidence_lint.py",
+      "rule": "X-27: the (identity, method, loa) tuple is admissible for the evidence context."
+    },
+    {
+      "name": "check_trust",
+      "module": "lint_cli.py",
+      "rule": "The seal resolves to a configured trust anchor. Round 4 hard-coded this name into the coverage test's exclusion set with NO reason; it is in fact integrated, so the exclusion was an unexplained stored claim of exactly the kind R5-07/3 is about."
+    },
+    {
+      "name": "check_directory_pin",
+      "module": "lint_cli.py",
+      "rule": "The document is pinned by the directory entry that governs it. Same unexplained round-4 exclusion as check_trust; also in fact integrated."
+    },
+    {
+      "name": "select_suite_for_devices",
+      "module": "mls_suite.py",
+      "rule": "DR-08/DR-15: the strongest suite published AND package-backed for EVERY addressable device — per device, not per member."
+    },
+    {
+      "name": "verify_group_params",
+      "module": "mls_suite.py",
+      "rule": "R4-06: the pinned cipher-suite decision is RECOMPUTED from the published inputs, not read. Registered in round 5 so R5-05's remediation is verifiable by this gate rather than by inspection. R6-05: the semantic arguments are REQUIRED at every call site. The helper gate could not see their absence because this entry declared none, so `_bnd40` passed only the current roster and the strongest-usable arm never ran from the CLI. R12-X4: members and package availability are no longer separate arguments read from whatever the caller holds today; the retained `formation` the record's inputs_digest commits to is required, and a mismatched or v1 record raises UnverifiableDecision rather than returning a verdict.",
+      "required_arguments": [
+        "registry",
+        "formation"
+      ]
+    },
+    {
+      "name": "check_prose_field_lists",
+      "module": "schema_shapes.py",
+      "rule": "R4-07: a 'full field list' is a completeness claim and is compared with the schema's property set."
+    },
+    {
+      "name": "select_suite",
+      "module": "mls_suite.py",
+      "rule": "N-03: the highest-preference suite in the intersection of every member's advertised capabilities.",
+      "unintegrated_reason": "Found by the REBUILT gate (R5-07/3) — it has no production caller at all, and round 4's coverage scan could not see it because that scan read only lint_cli.py. This is MEMBER-LEVEL selection, which DR-08/DR-15 superseded with device-level selection (`select_suite_for_devices`, whose docstring says so: a stronger suite must not be skipped 'because some other member's device was absent from a member-level intersection'). So this looks SUPERSEDED, and invariant 3 says a superseded check is DELETED rather than left reachable. The decision is OPEN and deliberately not taken here: deleting it touches three test modules and is not Batch 1's remit. Recorded rather than blessed — a reason that asserted this was fine would be the stored-false-claim defect again."
+    },
+    {
+      "name": "select_usable_suite",
+      "module": "mls_suite.py",
+      "rule": "N-03: the highest-preference suite that is both capability-supported and KeyPackage-backed for every member.",
+      "unintegrated_reason": "Found by the REBUILT gate (R5-07/3), same family as `select_suite`: no production caller, MEMBER-LEVEL, and superseded by `select_suite_for_devices` per DR-08/DR-15. Invariant 3 points at deletion; the decision is OPEN and recorded here rather than settled silently in the batch that fixed the instrument."
+    },
+    {
+      "name": "check_reservation",
+      "module": "mls_suite.py",
+      "rule": "DR-08: the CLIENT verifies that a KeyPackage reservation corresponds one-for-one with its targets.",
+      "unintegrated_reason": "Found by the REBUILT gate (R5-07/3). Unlike select_suite/select_usable_suite this is NOT superseded — it is a live part of the published protocol. It has no caller here because this repository's tools verify RETAINED EVIDENCE and contain no group-creation client to reserve packages. That is a real absence of a consumer, not a routed-around defect: R4-03's resolver had a consumer (bundle_lint) and was not wired, which is the distinction that matters."
+    },
+    {
+      "name": "verify_ds_receipt",
+      "module": "lint_cli.py",
+      "rule": "R5-03/R5-V4 + R6-03: THE DS-receipt check — resolve the published key at the receipt's own SIGNED server_time, require the key the payload NAMES, verify, and compare the MANDATORY signed set (DS_RECEIPT_MANDATORY_SIGNED) rather than the intersection of whatever appears in both objects. The caller states the delivery context it is processing and every stated field must equal the signed payload. The earlier description claimed it compared 'every asserted field' while the implementation omitted ds_kid/ds_alg and compared only an intersection — a registry entry stronger than the code it describes.",
+      "required_arguments": [
+        "expect"
+      ]
+    },
+    {
+      "name": "check_identity_coherence",
+      "module": "lint_cli.py",
+      "rule": "R6-01: the submission's identity statements must name ONE entity, member, role and authorisation state — recipient_uid == uid(recipient_addr) == BW-ORG.uid; sender_uid == uid(sender_addr) == the signing BW-MEMBER's uid; the address kind bound to what signed; the member active and the device sign-capable at the act. R5-01 verified each statement individually and never compared them, so a re-signed tuple naming two legal entities sealed.",
+      "required_arguments": [
+        "at"
+      ]
+    },
+    {
+      "name": "check_scope_in_force",
+      "module": "lint_cli.py",
+      "rule": "R6-01 point 6: the EXACT scope descriptor (id AND version) exists and was in force at the act. select_policy_key matched on scope_id alone, so an undeclared version reached a real policy key and a not-yet-effective descriptor was equally acceptable.",
+      "required_arguments": [
+        "at"
+      ]
+    },
+    {
+      "name": "resolve_transferred",
+      "module": "mock_rdp.py",
+      "rule": "R7-02/R7-X3: the delivery item a receipt may attest — resolved from SERVER-OWNED state and required to be in `transferred`, with the recipient, member, device and session matching what the DS recorded. receipt_ack used to sign its own arguments, so a valid receipt existed for a message the DS had never accepted, under an issuing_rdp_id the caller chose. Nothing is signed until this returns: a signature over a refusal is still a signature somebody can present."
+    },
+    {
+      "name": "resolve_committed_target",
+      "module": "mock_rdp.py",
+      "rule": "R8-04 requirement 3: an invitation may only be created against a COMMITTED reservation held by the same creator, naming this device, quoting the KeyPackage that reservation actually consumed for it. `reservation_id` and `keypackage_ref` were required at deposit and read nowhere.",
+      "required_arguments": [
+        "keypackage_ref",
+        "device_id",
+        "creator"
+      ]
+    },
+    {
+      "name": "published_device_floor",
+      "module": "mock_rdp.py",
+      "rule": "R8-04 requirement 5: the refusal's `required_floor` is RESOLVED from published discovery (BW-MEMBER `min_cipher_suite`, never below the mandatory mls-suite-floor/v1) rather than retained from the refusing device's own claim."
+    },
+    {
+      "name": "admission_at",
+      "module": "lint_cli.py",
+      "rule": "Batch A / A4 — federation admission: the status the membership register attributes to a participant AT THE INSTANT OF THE ACT, over half-open windows. `at` is required BY NAME for the same reason it is on as_of_resolve and resolve_ds_receipt_key: a caller that lets the instant default, or passes the verifier's clock, asks a question about today rather than about the act.",
+      "required_arguments": [
+        "at"
+      ]
+    },
+    {
+      "name": "check_register_pin",
+      "module": "lint_cli.py",
+      "rule": "Batch A / A5 — LINT-TRUST-07: a provider descriptor's seal key is one the membership register pins to that participant, and the register admits the participant at the descriptor's own `asserted_at`. `check_directory_pin` one level up, and integrated the same way (discovery_lint.lint)."
+    }
+  ],
+  "$entry_points": "R5-07/3: reachability is from a PUBLIC ENTRY POINT, not from any call site — a helper called by a function nobody reaches is not integrated. These are the names a user or a conformance gate can actually invoke. A MISSING entry here makes a helper look unreachable and the gate FAIL, which is the safe direction and the opposite of the stored status, whose staleness made the gate PASS. R8-04: the group-establishment and delivery-collection operations were MISSING from this list although each realises a published contract operation (POST /welcome, POST /welcome/{welcome_id}/refusal, GET+DELETE /group-establishment/outcomes, GET /messages, POST /keypackages/{uid}/reservations, POST /reservations/{id}/commit). Anything reachable only from them therefore looked unintegrated — the safe direction, but it meant the gate could not distinguish 'nobody calls this' from 'the caller is not on the list'. The rule for this list is now explicit: a published contract operation's reference realisation IS an entry point.",
+  "entry_points": [
+    "main",
+    "lint_bundle",
+    "check_bundle",
+    "lint",
+    "submit",
+    "receipt_ack",
+    "delivered_at_from_receipt",
+    "ds_accept_message",
+    "accept_submission",
+    "evidence_artifact",
+    "regen",
+    "deposit_welcome",
+    "refuse_welcome",
+    "collect_outcomes",
+    "ack_outcome",
+    "collect_messages",
+    "reserve_keypackages",
+    "commit_reservation"
+  ],
+  "$required_arguments": "R5-07/3: EVERY call site must pass these by name, not merely one of them. Round 4 asserted `at least one` caller passed the act time, which one correct site satisfies for ever — and that is how the live receipt path went on passing `at` positionally behind a green gate.",
+  "$argument_exemptions": "A call site that legitimately cannot pass a required argument is named HERE, individually, with the reason — never left to a coverage rule that accepts one correct caller. Keyed by module::function, not by line, because an exemption is a signed statement about a piece of code and a line number is not."
+}

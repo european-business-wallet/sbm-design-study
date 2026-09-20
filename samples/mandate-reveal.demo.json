@@ -1,0 +1,10 @@
+{
+  "_comment": "Demo mandate-commitment reveal fixture (nineteenth review, A1): the published (salt, content_class) for the opposable agent demo message, letting bundle_lint perform the FULL mandate-commitment verification (LINT-BND-15) on an agent bundle. DEMO material — the salt is ASCII 'demo-mandate-slt'; a production salt is secret until deliberately revealed in a dispute (the TS clause 6 reveal procedure).",
+  "reveals": [
+    {
+      "message_id": "01HZ3AGENT0000000000000001",
+      "salt": "64656d6f2d6d616e646174652d736c74",
+      "content_class": "invoice"
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+%% SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors
+%% SPDX-License-Identifier: CC-BY-4.0
+%% figure
+%% owner: the maintainer (README, Feedback)
+%% source: docs/diagrams/federated-flow.mermaid (this file). Export: federated-flow.svg (docs/diagrams/exports.json)
+%% question: In what order do the public operations run for one verification-grade message between two entities on different providers, from resolution to verification years later?
+%% profile: 2 (four-corner); one grade (verification), the default scope, one message
+%% status: current
+%% references: docs/federated-flow-explainer.md (the phase-by-phase walkthrough); I-D "Message Flows and Delivery States"; TS clauses 4.1 and 6; wallet-rdp-openapi.yaml; delivery-service-openapi.yaml; rdp-relay-openapi.yaml; docs/REVIEW_AGENDA.md A1, A10
+%% alt: Seven phases. Resolution and discovery at the directory and the recipient's provider. First contact: the sender reserves and commits KeyPackages, creates the group, deposits one Welcome per device and registers as the group's founder; each recipient device collects its Welcome and acknowledges it, which is joining, or refuses it with a typed outcome the creator collects. Submission to RDP(out), which obtains its Delivery Service's acceptance of the same octets before sealing the SE. RDP-to-RDP relay of the octets with the SE; RDP(in) checks them and forwards them to its Delivery Service with the origin proven, then returns B.1 or B.2. Delivery: the device collects and acknowledges, and the Delivery Service signs the S2 receipt; no published operation carries it to an RDP (open, A1). The recipient's confirmation reaches RDP(in), which issues the DE, or on a verified mismatch or at expiry the NDE. RDP(out) composes the Evidence Package. Later verification decodes each artefact, verifies seals and timestamps and checks admission at each act's instant.
+%% end figure
+%% SBM — full four-corner federated flow: verification-grade message between
+%% two entities on different providers, from name resolution to evidence
+%% verification. Informative; the normative flow is in
+%% ietf/draft-sbm-mls-erd-00.md (Message Flows and Delivery States) and
+%% etsi/TS-SBM-QERDS-Binding-v0.1.md (clauses 4.1, 6). Actors S=sender side,
+%% R=recipient side.
+%%
+%% Rewritten in round 10 (D10-02): the previous version taught a superseded
+%% protocol — SE sealed with no DS acceptance first, S2 without the
+%% device-authenticated receipt, a digest mismatch inferred from silence, and
+%% verification by stripping seals and re-canonicalising with JCS.
+%%
+%% Round 12 (D12-01): the relay is RDP-to-RDP and carries the ciphertext WITH
+%% the SE (FED-X4; the MSP-to-MSP relay drawn here before was never published),
+%% RDP(in) forwards to its DS with the origin proven by that SE (R12-X2), the
+%% join is the Welcome acknowledgement, the creator is routed as the group's
+%% founder (R12-X3), and live admission is a lease (R11-X3).
+sequenceDiagram
+    autonumber
+    actor WS as WU-S · Sender wallet (Entity A)
+    participant EDD as EDD · Directory
+    participant MO as MSP(out) · DS
+    participant RO as RDP(out) · QERDS
+    participant RI as RDP(in) · QERDS
+    participant MI as MSP(in) · DS
+    actor WR as WU-R · Recipient wallet (Entity B)
+
+    Note over WS,WR: Phase 1 — Resolution & discovery
+    WS->>EDD: resolve(UID-B)
+    EDD-->>WS: DirectoryRecord (status, med_url, pinned seal keys) — sealed
+    WS->>MI: GET BW-MED / BW-ORG / BW-MEMBER
+    MI-->>WS: sealed documents — verified against the pinned keys (LINT-TRUST-05)
+
+    Note over WS,WR: Phase 2 — First contact (MLS group, E2EE)
+    WS->>MI: reserve KeyPackages for B's devices (Idempotency-Key)
+    MI-->>WS: reservation + keypackage_ref per device (RFC 9420 RefHash)
+    WS->>MI: commit reservation — packages CONSUMED from here (R10-X2)
+    WS->>WS: create group (A+B devices), pin sbm_group_params, Commit
+    WS->>MI: deposit one Welcome per device (+ group_info_commitment)
+    WS->>MI: register as the group's founder · device-authenticated — MLS adds no Welcome for its creator (R12-X3)
+    WR->>MI: collect WelcomeQueue (Welcome + commitment + offered_suite)
+    WR->>WR: decrypt Welcome, recompute GroupInfo commitment, verify credentials
+    alt commitment matches, suite ≥ floor
+        WR->>WR: join group
+        WR->>MI: acknowledge (DELETE /welcome/{welcome_id}) — joining: the routing claim outlives the Welcome's expiry
+    else mismatch / suite below floor
+        WR->>MI: refuse (POST /welcome/{welcome_id}/refusal · group-info-mismatch / suite-below-published-floor)
+        MI-->>WS: creator collects the typed outcome (GET /group-establishment/outcomes)
+    end
+
+    Note over WS,WR: Phase 3 — Submit (content stays E2E encrypted)
+    WS->>WS: build envelope, payload_hash, encrypt · SIGN the submission tuple (sender_confirmation)
+    WS->>RO: submit(exact MLSMessage octets + metadata) · authenticated member session
+    RO->>RO: validate request, identity, expiry (X-22), policy, sender signature — before anything moves
+    RO->>MO: POST /messages (the SAME octets) · RDP credential
+    MO->>MO: accept — digest computed HERE · items only for devices it observed joining (here: none)
+    MO-->>RO: AcceptanceRecord (binds octets, issuing RDP, message_id)
+    RO-->>WS: SE (A.1-SubmissionAcceptance) — sealed + qualified timestamp, AFTER acceptance
+
+    Note over RO,MI: Phase 4 — Four-corner relay (RDP-to-RDP: ciphertext + SE)
+    Note over RO,RI: peer-RDP auth: Trusted List + register<br/>admission: a LEASE decided at the exchange's start (R11-X3)<br/>— not evidence of admission at any act
+    RO->>RI: POST /relay/messages — the SAME octets + the sealed SE
+    RI->>RI: verify the SE's seal · SHA-256(octets) == the SE's envelope_hash, or refuse the hop
+    RI->>MI: POST /messages as forwarder · origin = RDP(out) + its sealed SE (R12-X2)
+    MI->>MI: origin proven by the SE · keyed (RDP(out), message_id) · one item per device it observed joining (B's, and the founder)
+    MI-->>RI: AcceptanceRecord — issuing_rdp_id RDP(out), forwarding_rdp_id RDP(in)
+    RI-->>RO: POST /relay/messages/{message_id}/result — B.1 RelayAcceptance (or B.2), sealed + QTS at this hop
+
+    Note over WS,WR: Phase 5 — Deliver & decrypt (S1 → S2 → S3)
+    WR->>MI: collect (device-authenticated) → transferred + collection token
+    WR->>MI: acknowledge (receipt-ack, collection token)
+    MI-->>WR: DeliveryReceipt — DS-signed, server-observed instant = S2
+    Note over MI,RI: OPEN (R10-13): the DE issuer MUST verify this receipt, and no published operation delivers it to any RDP
+    WR->>WR: decrypt, recompute payload_hash
+
+    alt digest matches (S3)
+        WR->>RI: confirmation s3 (wallet-signed or member-bound session)
+        RI->>RI: verify signer · roster (active ack-capable member) · tuple == SE
+        RI->>RI: evaluate acceptance_policy — S4 when the completing member's confirmation arrives (any-one ⇒ S4 == S3)
+        RI-->>WR: DE — delivered_at = when RDP(in) verified the completing confirmation, never the S2 receipt (R11-04) · embeds s3_attestation
+    else digest mismatch
+        WR->>RI: confirmation mismatch — the recipient's signed proof (R10-07)
+        RI-->>RO: NDE (D.2, payload-hash-mismatch) — carries that proof
+    else no confirmation before expiry
+        RI-->>RO: NDE (expired) — silence is never a mismatch
+    end
+
+    Note over WS,WR: Phase 6 — Evidence Package
+    RO->>RO: compose EP: se + outcome + rdp_chain[RDP(out), RDP(in)] — sealed + QTS
+    Note over RO: composing is an act: RDP(out) admitted at the EP's own QTS instant (R10-X5)
+    RO-->>WS: EP (wallet-storable)
+    RI-->>WR: EP / DE (wallet-storable)
+
+    Note over WS,WR: Phase 7 — Verification (later, by any relying party)
+    WR->>WR: decode artefact [COSE_Sign1, QTS] · verify seal over dCBOR(body) · QTS imprints SHA-256(seal)
+    WR->>WR: validate decoded body against its JSON Schema (authoritative) · payload_hash == held plaintext
+    WR->>WR: admission of every provider at its act's instant (authenticated register) · QSealC → Trusted Lists (production)
+    Note over WS,WR: qualification and admission are independent gates — neither implies the other

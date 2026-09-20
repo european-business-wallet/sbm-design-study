@@ -1,0 +1,222 @@
+{
+  "$id": "https://bw.example.eu/schemas/bw-med.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BW-MED-v1 (v2.1)",
+  "description": "Messaging Entity Descriptor. Carries MLS capabilities, KeyPackage discovery URL, and the entity's identity credential (x509 chain or UID QEAA). v1.2 adds the optional mls.scopes_supported capability flag (confidentiality scopes, spec §8.3a).",
+  "type": "object",
+  "required": [
+    "type",
+    "version",
+    "uid",
+    "protocols",
+    "msp",
+    "rdp",
+    "mls",
+    "identity_credential"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "BW-MED-v1"
+    },
+    "version": {
+      "type": "string",
+      "const": "2.1"
+    },
+    "uid": {
+      "$ref": "evidence-common.schema.json#/$defs/Uid"
+    },
+    "protocols": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "contains": {
+        "const": "SM-MLS-1.0"
+      },
+      "description": "Supported messaging profiles. MUST include SM-MLS-1.0."
+    },
+    "msp": {
+      "type": "string",
+      "format": "uri"
+    },
+    "rdp": {
+      "type": "object",
+      "required": [
+        "discovery",
+        "evidence"
+      ],
+      "properties": {
+        "discovery": {
+          "type": "string",
+          "format": "uri"
+        },
+        "evidence": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "mls": {
+      "type": "object",
+      "description": "MLS-specific discovery data: cipher suites, KeyPackage retrieval URL, and Delivery Service endpoint.",
+      "required": [
+        "cipher_suites",
+        "keypackage_url",
+        "ds_url"
+      ],
+      "properties": {
+        "cipher_suites": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "contains": {
+            "const": "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
+          },
+          "description": "Supported MLS cipher suite identifiers. MUST include the baseline suite."
+        },
+        "keypackage_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL from which MLS KeyPackages for the entity's devices can be retrieved."
+        },
+        "ds_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "MLS Delivery Service endpoint for message submission."
+        },
+        "scopes_supported": {
+          "type": "boolean",
+          "description": "Capability flag (v2.1): true ⇒ this entity supports confidentiality scopes (one MLS group per (entity pair, scope); spec §8.3a). Absent or false ⇒ default-scope only."
+        }
+      },
+      "additionalProperties": false
+    },
+    "identity_credential": {
+      "type": "object",
+      "description": "Entity identity credential. Either an x509 certificate chain rooted in an EU Trusted List, or a reference to a UID QEAA.",
+      "required": [
+        "type"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "type": {
+              "const": "x509"
+            },
+            "x509_chain": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "description": "PEM-encoded certificate chain (entity QSealC + intermediates up to a Trusted List root)."
+            }
+          },
+          "required": [
+            "type",
+            "x509_chain"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "bw_uid_qeaa"
+            },
+            "qeaa_ref": {
+              "type": "string",
+              "description": "Reference to the UID QEAA: either a status URL or the full SD-JWT-VC string."
+            }
+          },
+          "required": [
+            "type",
+            "qeaa_ref"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "kid": {
+      "type": "string"
+    },
+    "asserted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "org": {
+      "type": "string",
+      "format": "uri"
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "max_payload_kb": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967295
+        },
+        "ttl_max_s": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967295
+        }
+      }
+    },
+    "wia_ref": {
+      "type": "string",
+      "description": "Optional reference to the Wallet Instance Attestation (ARF)."
+    },
+    "ds_receipt_keys": {
+      "type": "array",
+      "minItems": 1,
+      "description": "R3-04/R3-T3: the keys that verify this entity's Delivery-Service delivery receipts. The I-D and the DS contract both required RDP(out) to verify `ds_signature` against 'the DS's published key' — and no field, endpoint, `kid`, algorithm, history or rotation existed anywhere, so two conforming implementations could not discover which key verifies a receipt, and a historical receipt could not be validated after a rotation. Published HERE, inside an object that is already signed and already retained for the evidence period, rather than behind a new endpoint that would need its own rotation, history and retention machinery for one key.\n\nValidity is judged at the receipt's `server_time`, NOT at verification time — that is what keeps an old receipt verifiable after the key that signed it is retired.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kid",
+          "alg",
+          "public_key_b64",
+          "valid_from"
+        ],
+        "properties": {
+          "kid": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Unique within this entity's key set; the receipt names it."
+          },
+          "alg": {
+            "type": "string",
+            "enum": [
+              "EdDSA",
+              "ES256",
+              "ES384"
+            ],
+            "description": "The COSE algorithm, encoded per the I-D's confirmation-key table (DR-12)."
+          },
+          "public_key_b64": {
+            "type": "string",
+            "minLength": 1,
+            "description": "base64, in the one encoding the declared alg defines."
+          },
+          "valid_from": {
+            "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+          },
+          "valid_until": {
+            "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp",
+            "description": "Exclusive; absent means current. Half-open, as elsewhere."
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

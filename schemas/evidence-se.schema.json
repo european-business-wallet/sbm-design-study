@@ -1,0 +1,171 @@
+{
+  "$id": "https://bw.example.eu/schemas/evidence-se.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "evidence-se (v2.8)",
+  "description": "Sending Evidence. Issued by RDP(out) upon accepted submission. It binds the evidence to the MLS session state via mls_group_id and mls_epoch, and records the authentication method used at session setup.",
+  "type": "object",
+  "required": [
+    "acceptance_policy_ref",
+    "auth_context",
+    "auth_method",
+    "envelope_hash",
+    "event",
+    "evidence_id",
+    "expires_at",
+    "message_id",
+    "mls_epoch",
+    "mls_group_id",
+    "mls_state",
+    "origin_proof",
+    "payload_hash",
+    "policy_id",
+    "profile",
+    "rdp_id",
+    "recipient_addr",
+    "recipient_uid",
+    "scope_ref",
+    "sender_addr",
+    "sender_uid",
+    "sent_at",
+    "transport",
+    "type",
+    "version"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "SE-v1"
+    },
+    "version": {
+      "type": "string",
+      "const": "2.8"
+    },
+    "profile": {
+      "$ref": "evidence-common.schema.json#/$defs/Profile"
+    },
+    "message_id": {
+      "type": "string"
+    },
+    "event": {
+      "type": "string",
+      "const": "A.1-SubmissionAcceptance",
+      "description": "ETSI EN 319 522-1 clause 6 event (component G03). SE-v1 attests A.1 SubmissionAcceptance."
+    },
+    "evidence_id": {
+      "$ref": "evidence-common.schema.json#/$defs/EvidenceId"
+    },
+    "policy_id": {
+      "$ref": "evidence-common.schema.json#/$defs/PolicyId"
+    },
+    "acceptance_policy_ref": {
+      "$ref": "evidence-common.schema.json#/$defs/AcceptancePolicyRef"
+    },
+    "scope_ref": {
+      "$ref": "evidence-common.schema.json#/$defs/ScopeRef"
+    },
+    "sender_uid": {
+      "$ref": "evidence-common.schema.json#/$defs/Uid"
+    },
+    "recipient_uid": {
+      "$ref": "evidence-common.schema.json#/$defs/Uid"
+    },
+    "sender_addr": {
+      "$ref": "evidence-common.schema.json#/$defs/BwAddress"
+    },
+    "recipient_addr": {
+      "$ref": "evidence-common.schema.json#/$defs/BwAddress",
+      "description": "R3-01/R3-T1, REQUIRED: what the message is addressed to — entity, role or member. Its absence used to select the 'default' acceptance policy exactly as an explicit entity address did, so omitting it downgraded the governing policy silently. Absence is now the typed intake rejection `unaddressed-submission`; entity addressing is written down, not reached by omission."
+    },
+    "transport": {
+      "type": "string",
+      "const": "SM-MLS-1.0"
+    },
+    "mls_group_id": {
+      "$ref": "evidence-common.schema.json#/$defs/MlsGroupId"
+    },
+    "mls_epoch": {
+      "$ref": "evidence-common.schema.json#/$defs/MlsEpoch"
+    },
+    "auth_method": {
+      "$ref": "evidence-common.schema.json#/$defs/AuthMethod"
+    },
+    "auth_context": {
+      "$ref": "evidence-common.schema.json#/$defs/AuthContext"
+    },
+    "payload_hash": {
+      "$ref": "evidence-common.schema.json#/$defs/Hash"
+    },
+    "envelope_hash": {
+      "$ref": "evidence-common.schema.json#/$defs/EnvelopeHash",
+      "description": "The transmitted-octet commitment for THIS message (R-02/D3): SHA-256 of the TLS-serialized MLSMessage handed to transport. Unlike payload_hash (sender-plaintext, RDP-unverifiable), the wire octets are observable by every handling provider, so this is independently checkable at each boundary; the confirmation echoes it (LINT-DE-16) and the availability DE and every relay hop carry it too (F-02)."
+    },
+    "mls_state": {
+      "$ref": "evidence-common.schema.json#/$defs/MlsStateHash"
+    },
+    "manifest": {
+      "$ref": "evidence-common.schema.json#/$defs/Manifest"
+    },
+    "sent_at": {
+      "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+    },
+    "expires_at": {
+      "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp",
+      "description": "Absolute expiry the sender wallet computed as sent_at + the envelope `ttl` (I-D, Application Envelope), supplied with the submission metadata and echoed verbatim by the RDP (v1.15, finding R1). This is the AUTHENTICATED deadline the RDP and any verifier evaluate expiry against — the `ttl` itself lives only in the E2EE envelope and is not otherwise verifiable. An NDE `expired` must reference a message whose expires_at is at or before the NDE's issuance; a DE's EVENT time must not post-date expires_at AT ANY GRADE — the availability exemption this description used to state was removed by X-21 and its residue by DR-06, which found the I-D, this schema and a lint comment stating the OLD rule while the code enforced the new one. The sealing instant (the qualified timestamp) may be later than the event; the event may not be later than the deadline. A tie is delivered (bundle_lint LINT-BND-22)."
+    },
+    "rdp_id": {
+      "$ref": "evidence-common.schema.json#/$defs/RdpId"
+    },
+    "grade_commitment": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "Salted grade commitment (v1.15, the I-D (Grade Commitment)): present exactly when the message's content class is availability-declared — supplied by the sender with the submission and echoed verbatim by the RDP (the TS clause 6); binds (content_class, published delivery_grades version) without revealing the class. Schema-OPTIONAL here (SE carries no grade marker); presence parity and equality with the DE are LINT-DE-11."
+    },
+    "mandate_ref": {
+      "$ref": "evidence-common.schema.json#/$defs/MandateRef"
+    },
+    "origin_proof": {
+      "type": "string",
+      "enum": [
+        "sender-signed",
+        "provider-attested"
+      ],
+      "description": "X-03/D4 (evidence 2.3): HOW the sender's act is proven. 'sender-signed' (the default posture — opposable submissions REQUIRE it) => a sender_confirmation is present: the named sender's wallet signed the full submission tuple. 'provider-attested' is the EXPLICITLY-NARROWED fallback for constrained senders: the evidence proves the provider attested a submission by an authenticated session of the sender entity — it does NOT prove the named sender authorised these bytes, and the sending RDP (or anyone with its seal key) could technically fabricate it; the claim is narrowed to provider attestation. TODO(legal): the Article 44(1)(b)/43(2) clause awaits counsel (D4 LEGAL-CONFIRM)."
+    },
+    "sender_confirmation": {
+      "$ref": "evidence-common.schema.json#/$defs/SenderConfirmation"
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "origin_proof": {
+            "const": "sender-signed"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "sender_confirmation"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "origin_proof": {
+            "const": "provider-attested"
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "sender_confirmation"
+          ]
+        }
+      }
+    }
+  ]
+}

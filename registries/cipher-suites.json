@@ -1,0 +1,42 @@
+{
+  "$comment": "DR-15/R2-M5 MACHINE-READABLE CIPHER-SUITE REGISTRY — the versioned preference vector AND the MANDATORY FLOOR, in one place, owned by the federation design authority (umbrella §13.4). The floor is a versioned CONSTANT rather than a number in prose precisely so that raising it is a GOVERNANCE action with an audit trail, not an edit. Before this file the profile said a member MAY refuse a suite below its 'locally configured floor': optional, unpublished, unverifiable, and ambiguous because the same advertised list also contains the mandatory baseline. A floor each participant declares protects only the participants who declare one — and a member that publishes nothing is exactly where a provider-induced downgrade lands.",
+  "registry_version": "2",
+  "preference_vector": {
+    "id": "mls-suite-preference/v2",
+    "$comment": "Strongest-first total order. Deterministic selection (N3): two conforming creators pick the same suite from the same capability sets. Post-quantum resistance ranks first (harvest-now-decrypt-later), then classical margin, then hardware-holdability, then the baseline.",
+    "order": [
+      "MLS_128_MLKEM768X25519_AES128GCM_SHA256_Ed25519",
+      "MLS_256_DHKEMP384_AES256GCM_SHA384_P384",
+      "MLS_128_DHKEMP256_AES128GCM_SHA256_P256",
+      "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
+    ],
+    "$revision": "v2 (18 September 2026, R10-11): the post-quantum hybrid is renamed to the name its source defines — draft-ietf-mls-pq-ciphersuites-06 calls it MLKEM768X25519, components in the opposite order to the name v1 used — and nothing else moves: same members, same order. v1 stays resolvable for any group that pinned it (the retained samples/suite-registry.demo.json is revision 1, as it stood when the demo group was formed) — for its IANA-allocated suites: revision 1 published no wire values, so a revision-1 group on any other code point is unverifiable, reported INCOMPLETE rather than decoded by a later revision's map (R11-X4); a renamed member is a different vector, so it is a new id rather than an edit to the old one."
+  },
+  "floor": {
+    "id": "mls-suite-floor/v1",
+    "suite": "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519",
+    "$comment": "MANDATORY, binding on EVERY conforming deployment including one that publishes nothing, and evaluable with no discovery fetch — so two creators with the same capability sets always reach the same decision. Set at the BASELINE deliberately: the baseline is REQUIRED of every implementation and ranks LAST in the preference vector, so a floor here adds no cryptographic STRENGTH — it adds uniform ENFORCEMENT, which is what was missing ('MAY refuse' becomes 'MUST NOT form'). Setting it at the hardware-holdable P-256 was considered and rejected: it would exclude software-only wallets and break the invariant that the baseline is in every intersection, so a selection always exists — a new requirement DR-15 does not ask for. A device MAY publish a HIGHER floor (BW-MEMBER 2.2 `min_cipher_suite`); it may never publish a lower one."
+  },
+  "code_points": {
+    "$comment": "R10-11: the wire value of each suite, stated once and read by the reference (scripts/mls_wire.py derives its decoder from this). `iana` means allocated in the IANA 'MLS Cipher Suites' registry; `private-use` means a value from the RFC 9420 private-use range 0xF000-0xFFFF, meaningful only by agreement — here, this profile's. v1 mapped the post-quantum hybrid to 0x004D, which IANA has NOT allocated to it (the registry assigns 0x0001-0x0007 and GREASE, and no ML-KEM suite at all); a value that looks allocated and is not is worse than one that is plainly private. R11-X4: wire maps are PER REVISION and retained with it; a verifier decodes a retained group by the revision the group pinned (`mls_wire.wire_map`), never by today's map, so moving a suite to a new value in a later revision strands no group formed under an earlier one. 0x004D stays forbidden for new groups: no revision defines it.",
+    "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519": {
+      "value": "0x0001",
+      "status": "iana"
+    },
+    "MLS_128_DHKEMP256_AES128GCM_SHA256_P256": {
+      "value": "0x0002",
+      "status": "iana"
+    },
+    "MLS_256_DHKEMP384_AES256GCM_SHA384_P384": {
+      "value": "0x0007",
+      "status": "iana"
+    },
+    "MLS_128_MLKEM768X25519_AES128GCM_SHA256_Ed25519": {
+      "value": "0xF5C1",
+      "status": "private-use",
+      "upstream": "draft-ietf-mls-pq-ciphersuites-06 (21 July 2026), code point TBD1",
+      "migration": "When IANA allocates this suite a value, a NEW revision of this registry maps it there; nothing changes automatically on an external event. Groups formed under 0xF5C1 keep it — changing a group's suite is a ReInit, which forms a new group — and a verifier resolves a retained group by the registry revision it was formed under.",
+      "interop": "No cross-implementation known-answer vectors exist for the hybrid KEM: draft-06 publishes none, and this repository implements no ML-KEM. The vectors this profile publishes (samples/cipher-suite-vectors.json) cover what IT defines for the suite — the wire value and the RefHash constructions under the suite's hash — and nothing more."
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "sm_artifact_b64": "hFGiAScETGVudGl0eS1hZG1pbqBZAXCrY3VpZHgZRVUtREUtRU9JRC03SzNEOVcwUTJNNUZXMGR0eXBlaUJXLU9SRy12MWVyb2xlc4FoaW52b2ljZXNndmVyc2lvbmMyLjZqbGVnYWxfbmFtZXgjU3RhZHQgS8O2bG4sIERlciBPYmVyYsO8cmdlcm1laXN0ZXJqdmFsaWRfZnJvbXQyMDI2LTAzLTAxVDAwOjAwOjAwWmtjb250YWN0X3VybHgiaHR0cHM6Ly93d3cuc3RhZHQta29lbG4uZGUva29udGFrdGxkaXNwbGF5X25hbWVrU3RhZHQgS8O2bG5ucG9saWN5X3ZlcnNpb25uMjAyNi0wNi0wMS5ERTFvbWVtYmVyX2VuZHBvaW50eChodHRwczovL21zcC5leGFtcGxlLmV1L3VpZC97dWlkfS9tZW1iZXJzcWFjY2VwdGFuY2VfcG9saWN5omdkZWZhdWx0Z2FueS1vbmVoaW52b2ljZXNnYW55LW9uZVhA56ckG0qpBPpMw7fSkuVq1HYEtj/EyJwQaunPrzK3pKjONHpyCFqyuIIVzjnZIdfRryEE3/lCgIbk02h1A1tiAA==",
+  "projection": {
+    "type": "BW-ORG-v1",
+    "version": "2.6",
+    "uid": "EU-DE-EOID-7K3D9W0Q2M5FW0",
+    "policy_version": "2026-06-01.DE1",
+    "valid_from": "2026-03-01T00:00:00Z",
+    "display_name": "Stadt Köln",
+    "legal_name": "Stadt Köln, Der Oberbürgermeister",
+    "roles": [
+      "invoices"
+    ],
+    "acceptance_policy": {
+      "invoices": "any-one",
+      "default": "any-one"
+    },
+    "member_endpoint": "https://msp.example.eu/uid/{uid}/members",
+    "contact_url": "https://www.stadt-koeln.de/kontakt"
+  }
+}

@@ -1,0 +1,103 @@
+<svg viewBox="0 0 860 672" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif" role="img">
+<!-- figure
+owner: the maintainer (README, Feedback)
+source: docs/diagrams/functional-stack-technology-neutral.svg (hand-written SVG; this file is the source). Export: functional-stack-technology-neutral.png (docs/diagrams/exports.json)
+question: The same question as protocol-stack.svg, for a reader who needs no technology named: which functional layer does what, what can each actor see, and which regulatory text anchors each layer?
+profile: all (1 to 5); the relay row applies where two providers relay
+status: current
+references: protocol-stack.svg (the technology-named twin, which must say the same); umbrella §7.1; the regulatory anchors are cited as the figure states them and carry no new legal determination
+alt: Functional layers over a hop-by-hop transport underlay. Registered delivery: sealed, time-stamped evidence over content fingerprints, issued without provider access to the content in clear; providers see encrypted content, events, identities, times and fingerprints, never content in clear. Message envelope, encrypted: content classes, policies and delivery semantics; no intermediary sees it. Confidentiality: content encrypted between endpoint devices only, keys held by those devices. Addressing, discovery and key distribution: public records and routing metadata. Transport: registered delivery providers relay asynchronously; security per hop only. The EU Trusted Lists are the qualification root; federation admission and an entity's authorised seal keys are separate anchors. No technology, standard family or product is named.
+-->
+  <title>Secure communication channel — functional layers (technology-neutral)</title>
+  <desc>Five functional layers over a hop-by-hop transport underlay, with the qualification root beneath: evidence and legal effect, message envelope, confidentiality, addressing and discovery, transport. The left column states what each actor can see at that layer; the right column gives the regulatory anchor. No technology or product is named.</desc>
+
+  <text x="430" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#1f2937">Secure communication channel — functional layers</text>
+
+  <text x="188" y="52" text-anchor="end" font-size="10" fill="#94a3b8" letter-spacing="0.5">WHAT EACH ACTOR CAN SEE</text>
+  <text x="640" y="52" font-size="10" fill="#94a3b8" letter-spacing="0.5">REGULATORY ANCHOR</text>
+
+  <!-- Evidence and legal effect -->
+  <rect x="205" y="62" width="420" height="88" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="1.6"/>
+  <text x="220" y="84" font-size="11" fill="#64748b">REGISTERED DELIVERY — EVIDENCE AND LEGAL EFFECT</text>
+  <text x="220" y="105" font-size="13.5" font-weight="bold" fill="#1f2937">Proof of sending and receipt, over content fingerprints</text>
+  <text x="220" y="124" font-size="12" fill="#475569">sealed, time-stamped evidence for every delivery event</text>
+  <text x="220" y="140" font-size="12" fill="#475569">issued without any provider access to the content</text>
+
+  <!-- Message envelope -->
+  <rect x="205" y="162" width="420" height="82" rx="8" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.2" stroke-dasharray="5 3"/>
+  <text x="220" y="184" font-size="11" fill="#1d4ed8">MESSAGE ENVELOPE (encrypted)</text>
+  <text x="220" y="205" font-size="13.5" font-weight="bold" fill="#1f2937">Content classes, policies and delivery semantics</text>
+  <text x="220" y="221" font-size="12" fill="#475569">content fingerprint bound to the message · declared content classes</text>
+  <text x="220" y="236" font-size="12" fill="#475569">acceptance policy per class · configurable legal delivery grade</text>
+
+  <!-- Confidentiality -->
+  <rect x="205" y="256" width="420" height="88" rx="8" fill="#eff6ff" stroke="#1d4ed8" stroke-width="2"/>
+  <text x="220" y="278" font-size="11" fill="#1d4ed8" font-weight="bold">CONFIDENTIALITY — END-TO-END BOUNDARY</text>
+  <text x="220" y="299" font-size="13.5" font-weight="bold" fill="#1f2937">Content encrypted between endpoint devices only</text>
+  <text x="220" y="318" font-size="12" fill="#475569">forward secrecy · post-compromise security · verified audience</text>
+  <text x="220" y="334" font-size="12" fill="#475569">role-scoped boundaries · multi-device · post-quantum readiness</text>
+
+  <!-- Addressing and discovery -->
+  <rect x="205" y="356" width="420" height="88" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="220" y="378" font-size="11" fill="#64748b">ADDRESSING, DISCOVERY AND KEY DISTRIBUTION</text>
+  <text x="220" y="399" font-size="13.5" font-weight="bold" fill="#1f2937">Legal-entity addressing and counterparty lookup</text>
+  <text x="220" y="418" font-size="12" fill="#475569">identifier linked to the business registers · declared policies</text>
+  <text x="220" y="434" font-size="12" fill="#475569">authenticated key discovery with anti-substitution controls</text>
+
+  <!-- Transport underlay -->
+  <rect x="205" y="456" width="420" height="72" rx="8" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="220" y="478" font-size="11" fill="#64748b">UNDERLAY · TRANSPORT (hop-by-hop)</text>
+  <text x="220" y="499" font-size="13.5" font-weight="bold" fill="#1f2937">Delivery providers relay, asynchronously</text>
+  <text x="220" y="518" font-size="12" fill="#475569">store-and-forward · replay protection · security per hop only</text>
+
+  <!-- Left annotations -->
+  <text x="188" y="90" text-anchor="end" font-size="11.5" fill="#334155" font-weight="bold">Providers see</text>
+  <text x="188" y="105" text-anchor="end" font-size="11.5" fill="#64748b">encrypted content, events,</text>
+  <text x="188" y="120" text-anchor="end" font-size="11.5" fill="#64748b">identities, times, fingerprints</text>
+  <text x="188" y="135" text-anchor="end" font-size="11.5" fill="#64748b">— never content in clear</text>
+
+  <text x="188" y="196" text-anchor="end" font-size="11.5" fill="#1d4ed8" font-weight="bold">No intermediary</text>
+  <text x="188" y="211" text-anchor="end" font-size="11.5" fill="#1d4ed8">sees this</text>
+
+  <text x="188" y="294" text-anchor="end" font-size="11.5" fill="#1d4ed8" font-weight="bold">Keys held by</text>
+  <text x="188" y="309" text-anchor="end" font-size="11.5" fill="#1d4ed8">endpoint devices only</text>
+
+  <text x="188" y="392" text-anchor="end" font-size="11.5" fill="#334155" font-weight="bold">Public records,</text>
+  <text x="188" y="407" text-anchor="end" font-size="11.5" fill="#64748b">routing metadata</text>
+
+  <text x="188" y="490" text-anchor="end" font-size="11.5" fill="#334155" font-weight="bold">Endpoint↔provider,</text>
+  <text x="188" y="505" text-anchor="end" font-size="11.5" fill="#64748b">delivery provider relay</text>
+
+  <!-- Right annotations: regulatory anchor -->
+  <text x="640" y="92" font-size="11.5" fill="#64748b">Reg. (EU) No 910/2014</text>
+  <text x="640" y="107" font-size="11.5" fill="#64748b">Art. 43 and 44</text>
+  <text x="640" y="122" font-size="11.5" fill="#64748b">CIR (EU) 2025/1944</text>
+  <text x="640" y="137" font-size="11.5" fill="#64748b">ETSI EN 319 521 / 522</text>
+
+  <text x="640" y="200" font-size="11.5" fill="#64748b">Business Wallet proposal</text>
+  <text x="640" y="215" font-size="11.5" fill="#64748b">Annex, point 11(2)(b)</text>
+
+  <text x="640" y="290" font-size="11.5" fill="#64748b">Business Wallet proposal</text>
+  <text x="640" y="305" font-size="11.5" fill="#64748b">Annex, point 11(2)(d)</text>
+  <text x="640" y="320" font-size="11.5" fill="#64748b">end-to-end encryption</text>
+
+  <text x="640" y="392" font-size="11.5" fill="#64748b">Business Wallet proposal</text>
+  <text x="640" y="407" font-size="11.5" fill="#64748b">Art. 6(1)(i) and 6(1)(j)</text>
+  <text x="640" y="422" font-size="11.5" fill="#64748b">Directory · digital address</text>
+
+  <text x="640" y="486" font-size="11.5" fill="#64748b">CIR (EU) 2025/1944</text>
+  <text x="640" y="501" font-size="11.5" fill="#64748b">transport encryption</text>
+  <text x="640" y="516" font-size="11.5" fill="#64748b">per the ENISA ACM</text>
+
+  <!-- Trust root -->
+  <rect x="205" y="554" width="420" height="62" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.2" stroke-dasharray="2 3"/>
+  <text x="415" y="575" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1f2937">Qualification root: EU Trusted Lists</text>
+  <text x="415" y="593" text-anchor="middle" font-size="11" fill="#64748b">qualified certificates and time-stamps</text>
+  <text x="415" y="608" text-anchor="middle" font-size="11" fill="#64748b">admission, entity authorisation: separate anchors</text>
+
+  <line x1="415" y1="444" x2="415" y2="456" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 3"/>
+  <line x1="415" y1="528" x2="415" y2="554" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 3"/>
+
+  <text x="430" y="638" text-anchor="middle" font-size="10.5" fill="#94a3b8">No technology, standard family or product is named at any layer.</text>
+  <text x="430" y="653" text-anchor="middle" font-size="10.5" fill="#94a3b8">Article references follow the Council general approach 9684/26; Annex point numbering follows COM(2025) 838, to be confirmed against it.</text>
+</svg>

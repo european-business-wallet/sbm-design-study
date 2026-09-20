@@ -1,0 +1,13 @@
+{
+  "message_id": "01HZ3ABCDEFGH9JKMN0PQRSTVW",
+  "ttl": 259200,
+  "content_type": "application/json",
+  "content_class": "invoice",
+  "content_digest": {
+    "alg": "SHA-256",
+    "hex": "d8bae9a71f8d30c5cf47817ac8299037541d1a46aa1ee2edd476e3b1119ec77e",
+    "hash_mode": "raw-sha256"
+  },
+  "sender_addr": "bw:uid:EU-DE-EOID-7K3D9W0Q2M5FW0",
+  "recipient_addr": "bw:uid:EU-FR-PSBID-ZYWVTSRQPNM8M4"
+}

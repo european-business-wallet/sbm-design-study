@@ -1,0 +1,419 @@
+; SPDX-License-Identifier: CC-BY-4.0
+; SPDX-FileCopyrightText: 2026 Secure Business Messaging contributors
+;
+; SM-MLS-ERD — CDDL (RFC 8610) for the wire structures of draft-sbm-mls-erd.
+;
+; AUTHORITATIVE FORM (M4, octet-authoritative, evidence >= 2.0): the COSE_Sign1
+; payload is the DETERMINISTIC-CBOR (RFC 8949 §4.2) encoding of the *-body maps
+; defined here. The JSON in schemas/ is the NON-AUTHORITATIVE projection, equal
+; to decode(payload). CDDL fixes SHAPE; deterministic CBOR fixes BYTES; the two
+; are orthogonal. Field VALUES mirror the JSON projection (hex-string digests,
+; decimal-string counters, tstr enums), so decode(payload) is the projection
+; verbatim — only the encoding differs.
+;
+; Cross-field invariants that CDDL cannot express stay prose + lint (evidence_lint
+; / discovery_lint): message_id agreement across nested objects, commitment reveal
+; recompute, seal imprint, EP outcome finality, trust-store bindings, manifest
+; canonical order. CDDL fixes shape; the linters keep the semantics.
+
+; ============================================================================
+; Validation root (first rule): the coherence gate `make cddl-check` validates
+; each sample's authoritative artefact AND its decoded body against this union.
+; A map body matches an *-body rule; an array artefact matches an *-artifact
+; rule; the `type` discriminators keep the choice unambiguous.
+; ============================================================================
+
+sm-any = evidence-body / discovery-body
+       / sm-evidence-artifact / sm-discovery-artifact
+
+; ============================================================================
+; Artefact envelopes (the authoritative wire objects)
+; ============================================================================
+
+sm-evidence-artifact = [
+  cose-sign1-bytes,      ; serialised COSE_Sign1 (bstr); payload = dCBOR(evidence-body)
+  qualified-timestamp,   ; RFC 3161 token; imprint = SHA-256(cose-sign1 bytes)
+]
+
+; a discovery artefact IS the COSE_Sign1 (no timestamp); as CBOR it is the
+; 4-element COSE_Sign1 array.
+sm-discovery-artifact = cose-sign1-struct
+
+cose-sign1-bytes  = bstr   ; the serialised COSE_Sign1 (opaque; payload = a *-body map)
+cose-sign1-struct = [ bstr, { * int => any }, bstr, bstr ]  ; [protected, unprotected, payload, signature]
+
+evidence-body = se-body / de-body / nde-body / re-body / ce-body / ep-body / relay-body / gcm-body
+discovery-body = bw-med-body / bw-org-body / bw-member-body / status-assertion-body
+               / roster-snapshot-body / bw-provider-body
+
+; F-12: the entity's signed atomic roster snapshot per MLS epoch.
+roster-snapshot-body = { type: "ROSTER-v1", version: "1.0", uid: uid,
+                         scope_id: tstr, mls_group_id: mls-group-id,
+                         mls_epoch: mls-epoch, snapshot_at: iso-timestamp,
+                         snapshot_id: tstr,
+                         members: [+ { mid: member-id, status: "active",
+                                       member_doc_digest: hex-digest,
+                                       devices: [+ { device_id: tstr,
+                                                     signature_key_hash: hex-digest }] }],
+                         tree_hash: hex-digest }
+
+; D6 (F-10/X-07): the EDD registry's signed short-lived status capability.
+status-assertion-body = { type: "STATUS-v1", version: "1.0", uid: uid,
+                          status: "active" / "suspended" / "retired" / "merged",
+                          ? redirect_uid: uid,
+                          issued_at: iso-timestamp, expires_at: iso-timestamp,
+                          assertion_id: tstr, registry_id: tstr }
+
+; ============================================================================
+; Common value types (values mirror the JSON projection)
+; ============================================================================
+
+uid           = tstr
+bw-address    = tstr
+iso-timestamp = tstr            ; RFC 3339 Zulu
+mls-group-id  = tstr            ; base64url
+mls-epoch     = tstr   ; MLS uint64 as a decimal string (M1)
+; R-02/D3 (2.2): dedicated fixed commitment types — SHA-256 fixed by the type,
+; over the TLS-serialized RFC 9420 wire structs (scripts/mls_wire.py); the
+; generic `hash` (with its alg/mode selectors) is NOT used here.
+envelope-hash = { format: "mls10-message", hex: hex-digest }        ; SHA-256(TLS-serialize(MLSMessage))
+mls-state     = { format: "mls10-group-context", hex: hex-digest }  ; SHA-256(TLS-serialize(GroupContext))
+decimal-str   = tstr   ; safe-range counter as a decimal string
+member-id     = tstr
+rdp-id        = tstr
+evidence-id   = tstr
+policy-id     = tstr
+profile       = "pilot" / "production"
+hex-digest    = tstr
+commitment    = tstr
+cose-b64      = tstr            ; base64 COSE (nested wallet signatures in a projection)
+b64           = tstr            ; base64 token
+
+hash = {
+  alg: "SHA-256" / "SHA-512",
+  hex: hex-digest,
+  hash_mode: "jcs-sha256" / "jcs-sha512" / "raw-sha256" / "raw-sha512"
+           / "manifest-sha256" / "manifest-sha512",
+}
+
+auth-method = "mls-x509" / "mls-uid-qeaa" / "mls-x509+oidc4vp" / "mls-uid-qeaa+oidc4vp"
+            / "two-factor" / "wallet-eid-high" / "wallet-eid-substantial"
+            / "mtls-ncp" / "ncp-signature" / "cab-confirmed"
+
+recipient-auth-method = "mfa" / "wallet-eid-high" / "wallet-eid-substantial"
+                      / "qes-qseal-cert" / "cab-confirmed"
+
+acceptance-policy-ref = { policy_version: tstr, doc_digest: hash,
+                          policy_key: tstr }  ; F-08 (2.4): the selected key
+scope-ref             = { scope_id: tstr, version: tstr }
+
+auth-context = {
+  identity: "entity" / "member" / "system" / "device",
+  ? mid: member-id,
+  method: tstr,
+  loa: "high" / "substantial" / "very-high" / "n/a",
+  ? authority: tstr,
+}
+
+qualified-timestamp = {
+  format: "rfc3161" / "etsi-ts-token",
+  token_b64: b64,
+  ? tsa_id: tstr,
+}
+
+mandate-ref = {
+  issuer: tstr,
+  id: tstr,
+  ? opposable: bool,
+  ? mandate_commitment: commitment,
+}
+
+manifest-def  = [+ manifest-part]
+manifest-part = {
+  part_id: tstr,
+  role: "body" / "attachment" / "evidence-bundle" / "signature" / "metadata",
+  media_type: tstr,
+  length: decimal-str,          ; decoded-octet length (M1: decimal string)
+  digest: hash,
+  ? filename: tstr,
+}
+
+; Recipient confirmation — signed (wallet_signature_b64, device_id required) OR
+; session-authenticated. Modelled as a choice, per the interface-security rule.
+s3-attestation = s3-signed / s3-session
+s3-common = (
+  mid: member-id,
+  hash_verified: true,
+  verified_at: iso-timestamp,
+  message_id: tstr,
+  mls_group_id: mls-group-id,
+  mls_epoch: mls-epoch,
+  mls_state: mls-state,
+  envelope_hash: envelope-hash,
+  acceptance_policy_ref: acceptance-policy-ref,
+  payload_hash: hash,
+  result: "match",
+)
+s3-signed  = { s3-common, device_id: tstr, wallet_signature_b64: cose-b64 }
+s3-session = { s3-common, ? device_id: tstr, session_authenticated: true,
+               ? session_binding: session-binding }  ; X-05 (2.3): retained binding
+session-binding = { kind: "token-digest" / "tls-exporter" /
+                          "session-transcript-digest", digest: hex-digest }
+
+recipient-confirmation = rc-signed / rc-session
+rc-common = (
+  mid: member-id,
+  payload_hash: hash,
+  result: "mismatch",
+  verified_at: iso-timestamp,
+  message_id: tstr,
+  mls_group_id: mls-group-id,
+  mls_epoch: mls-epoch,
+  mls_state: mls-state,
+  acceptance_policy_ref: acceptance-policy-ref,
+)
+rc-signed  = { rc-common, device_id: tstr, wallet_signature_b64: cose-b64 }
+rc-session = { rc-common, ? device_id: tstr, session_authenticated: true }
+
+; ============================================================================
+; Evidence bodies (the dCBOR payload the COSE_Sign1 signs; the projection decodes it)
+; ============================================================================
+
+se-body = {
+  type: "SE-v1", version: "2.8", profile: profile,
+  message_id: tstr, event: "A.1-SubmissionAcceptance",
+  evidence_id: evidence-id, policy_id: policy-id,
+  acceptance_policy_ref: acceptance-policy-ref, scope_ref: scope-ref,
+  sender_uid: uid, recipient_uid: uid,
+  ? sender_addr: bw-address, ? recipient_addr: bw-address,
+  transport: "SM-MLS-1.0",
+  mls_group_id: mls-group-id, mls_epoch: mls-epoch,
+  auth_method: auth-method, auth_context: auth-context,
+  payload_hash: hash, envelope_hash: envelope-hash, mls_state: mls-state,
+  ? manifest: manifest-def,
+  sent_at: iso-timestamp, expires_at: iso-timestamp,
+  rdp_id: rdp-id,
+  origin_proof: "sender-signed" / "provider-attested",  ; X-03/D4 (2.3)
+  ? sender_confirmation: sender-confirmation,
+  ? grade_commitment: commitment,
+  ? mandate_ref: mandate-ref,
+}
+
+; X-03/D4 (2.3): the sender-wallet-produced proof over the full submission
+; tuple (incl. the byte-exact commitments) — the s3-signed construction under
+; the SENDER member's published confirmation_key anchor (INTF-1b).
+; R3-01: the ADDRESSES are inside the signed tuple — they select the
+; acceptance policy, so their absence let the governing policy be changed
+; without invalidating the sender's signature.
+sender-confirmation = { mid: member-id, device_id: tstr, message_id: tstr,
+                        sender_uid: uid, sender_addr: bw-address,
+                        recipient_uid: uid, recipient_addr: bw-address,
+                        payload_hash: hash, envelope_hash: envelope-hash,
+                        mls_state: mls-state,
+                        acceptance_policy_ref: acceptance-policy-ref,
+                        scope_ref: scope-ref,
+                        sent_at: iso-timestamp, expires_at: iso-timestamp,
+                        wallet_signature_b64: cose-b64 }
+
+; DE — a CHOICE between the availability grade (no s3_attestation,
+; sender-declared-digest, grade_commitment present, D.1 event) and the
+; confirmation-bearing grades (s3_attestation present, recipient-verified-digest).
+de-body = de-availability / de-confirmed
+de-common = (
+  type: "DE-v1", version: "2.8", profile: profile,
+  message_id: tstr,
+  evidence_id: evidence-id, policy_id: policy-id,
+  acceptance_policy_ref: acceptance-policy-ref, scope_ref: scope-ref,
+  recipient_uid: uid, delivered_at: iso-timestamp, rdp_id: rdp-id,
+  payload_hash: hash,
+  recipient_auth_method: recipient-auth-method, auth_context: auth-context,
+)
+de-availability = {
+  de-common,
+  event: "D.1-ContentConsignment",
+  delivery_grade: "availability",
+  envelope_hash: envelope-hash,  ; F-02 (2.2): the availability grade binds the transmitted octets
+  integrity_basis: "sender-declared-digest",
+  grade_commitment: commitment,
+}
+de-confirmed = {
+  de-common,
+  event: "E.1-ContentHandover" / "D.6-ContentAccessTracking" / "C.3-ConsignmentAcceptance",
+  delivery_grade: "verification" / "acceptance",
+  integrity_basis: "recipient-verified-digest",
+  ? acceptance_policy_kind: "any-one" / "quorum" / "all" / "device-class",
+  s3_attestation: s3-attestation,
+  ? quorum: [+ quorum-ack],
+}
+; X-05 (2.3): each quorum act states HOW it is attested — wallet-signed is a
+; portable per-member proof; provider explicitly narrows the claim.
+quorum-ack = { mid: member-id, ack_at: iso-timestamp,
+               attestation: "wallet-signed" / "provider",
+               ? message_id: tstr, ? device_id: tstr,
+               ? verified_at: iso-timestamp, ? wallet_signature_b64: cose-b64 }
+
+; NDE — reason drives event and the conditional fields; recipient_confirmation
+; is required for payload-hash-mismatch, redirect_uid for uid-merged.
+nde-body = nde-mismatch / nde-merged / nde-plain
+nde-common = (
+  type: "NDE-v1", version: "2.8", profile: profile,
+  message_id: tstr,
+  event: "A.2-SubmissionRejection" / "B.3-RelayFailure" / "C.5-AcceptanceRejectionExpiry"
+       / "D.2-ContentConsignmentFailure" / "E.2-ContentHandoverFailure",
+  evidence_id: evidence-id, policy_id: policy-id,
+  recipient_uid: uid, observed_at: iso-timestamp, rdp_id: rdp-id,
+  ? payload_hash: hash,        ; F-14 (2.6): content domain — post-acceptance
+  ? submission_hash: hash,     ; F-14 (2.6): intake domain — A.2 only
+)
+; X-25: the reason value space is REGISTRY-GOVERNED (registries/reason-codes.json,
+; umbrella 13.4) — structurally OPEN here (outer bound); the lexical form is
+; bounded by the JSON Schema, the recognized set + event bindings by the lint.
+nde-reason = tstr
+nde-plain    = { nde-common, reason: nde-reason }
+nde-mismatch = { nde-common, reason: "payload-hash-mismatch", recipient_confirmation: recipient-confirmation }
+nde-merged   = { nde-common, reason: "uid-merged", redirect_uid: uid }
+
+; X-29 (2.3): the refusal carries WHO refused and the recipient-produced proof.
+refusal-confirmation = { mid: member-id, result: "refused", message_id: tstr,
+                         payload_hash: hash, refused_at: iso-timestamp,
+                         ? scope_ref: scope-ref, ? device_id: tstr,
+                         ? wallet_signature_b64: cose-b64,
+                         ? session_authenticated: true,
+                         ? session_binding: session-binding }
+re-body = {
+  type: "RE-v1", version: "2.8", profile: profile,
+  message_id: tstr, event: "C.4-ConsignmentRejection",
+  evidence_id: evidence-id, policy_id: policy-id,
+  recipient_uid: uid,
+  refusal_kind: "member" / "organisation-policy",
+  scope_ref: scope-ref,
+  ? mid: member-id, ? auth_context: auth-context,
+  ? refusal_confirmation: refusal-confirmation,
+  ? acceptance_policy_ref: acceptance-policy-ref,
+  reason: tstr,  ; registry-governed (X-25): registries/reason-codes.json
+  refused_at: iso-timestamp, rdp_id: rdp-id, payload_hash: hash,
+}
+
+ce-body = {
+  type: "CE-v1", version: "2.8", profile: profile,
+  message_id: tstr, event: "change-of-data",
+  evidence_id: evidence-id, policy_id: policy-id,
+  transformation: "re-packaging" / "chunking",  ; X-24 (2.5): observable only
+  envelope_hash_before: envelope-hash,
+  ? envelope_hash_after: envelope-hash,
+  ? part_envelope_hashes: [2* envelope-hash],
+  ? envelope_digest_before: hash, ? envelope_digest_after: hash,
+  rdp_id: rdp-id, changed_at: iso-timestamp,
+}
+
+; RelayEvidence — B.1 acceptance (no reason) vs B.2 rejection (typed reason).
+relay-body = relay-accept / relay-reject
+relay-common = (
+  type: "RelayEvidence-v1", version: "2.8",
+  ? profile: tstr, ? evidence_id: tstr,
+  message_id: tstr,
+  sending_rdp_id: tstr, receiving_rdp_id: tstr, hop_at: iso-timestamp,
+  envelope_hash: envelope-hash,  ; F-02 (2.2): each hop attests the octets it handled
+)
+; X-04/D5 (2.2): grade-commitment-mismatch dispute evidence — rebuts (never
+; retracts) an availability DE; carried in the EP's OPTIONAL disputes[].
+gcm-body = {
+  type: "GCM-v1", version: "2.8", profile: profile,
+  message_id: tstr, event: "D.6-ContentAccessTracking",
+  evidence_id: evidence-id, policy_id: policy-id,
+  recipient_uid: uid, mid: member-id, auth_context: auth-context,
+  read_at: iso-timestamp,
+  reveal: { salt: tstr, content_class: tstr },
+  envelope_hash: envelope-hash,                 ; DR-03 (2.7): the disputed octets
+  reveal_confirmation: { * tstr => any },       ; DR-03 (2.7): attributable proof
+  grade_commitment: commitment,
+  acceptance_policy_ref: acceptance-policy-ref,
+  rdp_id: rdp-id,
+}
+
+relay-accept = { relay-common, event: "B.1-RelayAcceptance" }
+relay-reject = { relay-common, event: "B.2-RelayRejection",
+                 reason: tstr }  ; registry-governed (X-25): registries/reason-codes.json
+
+; EP — bundles the SE, terminal outcomes, the relay chain. The nested objects are
+; themselves *-body maps (their own seals are separate artefacts in the wire form).
+; In the AUTHORITATIVE EP body the sub-objects are embedded as their artefact
+; BYTES (dCBOR([cose, qts])) so each issuer's seal is preserved; decoding a
+; sub-artefact yields an evidence-body validated in turn. (The JSON PROJECTION
+; nests the decoded sub-bodies — see the evidence-ep JSON Schema.)
+ep-body = {
+  type: "EP-v1", version: "2.8",
+  message_id: tstr,
+  se: bstr,                 ; embedded SE artefact bytes
+  outcomes: [+ bstr],       ; embedded DE/NDE/RE artefact bytes
+  rdp_chain: [+ rdp-hop],
+  ? changes: [+ bstr],      ; embedded CE artefact bytes
+  ? disputes: [+ bstr],     ; embedded GCM artefact bytes (X-04/D5, 2.2)
+  ? states: [+ any],
+}
+rdp-hop = { rdp_id: rdp-id, ? timestamp: iso-timestamp, ? evidence: rdp-hop-evidence }
+rdp-hop-evidence = { message_id: tstr, event: tstr, seal_digest: seal-digest }
+seal-digest = { alg: "SHA-256" / "SHA-512", hex: hex-digest }
+
+; ============================================================================
+; Discovery bodies (the decoded projection; the seal is the enclosing COSE artefact)
+;
+; This CDDL is a STRUCTURAL OUTER BOUND, NOT the definition of the language (N2):
+; it pins the artefact shape and each body's `type`/`version` discriminator. The
+; per-field constraints (required `uid`, patterns, enums) are defined ONCE, and
+; authoritatively, by the JSON Schemas in schemas/, which validate the decoded
+; body — so the constraints are not duplicated here (and the `cddl` crate could
+; not enforce them anyway: no map-choice backtracking, no strict multi-`tstr`).
+; cddl_check.py additionally asserts decoded-body == projection, so the two
+; descriptions cannot describe different documents.
+; ============================================================================
+
+bw-med-body = { type: "BW-MED-v1", version: "2.1", * tstr => any }
+
+bw-org-body = { type: "BW-ORG-v1", version: "2.6", * tstr => any }
+
+bw-member-body = { type: "BW-MEMBER-v1", version: "2.2", * tstr => any }
+
+; Batch A / A3: the PROVIDER speaking for itself, rather than being named by
+; URL inside every customer's BW-MED.
+bw-provider-body = { type: "BW-PROVIDER-v1", version: "1.0", * tstr => any }
+
+mandate = {
+  issuer: tstr, id: tstr, scope: [* tstr],
+  valid_from: iso-timestamp, valid_until: iso-timestamp,
+}
+
+; ============================================================================
+; Application envelope (E2EE message headers) — not sealed evidence, but part of
+; the wire protocol; a JSON object today, described here for completeness.
+; ============================================================================
+
+app-envelope = {
+  message_id: tstr, ? correlation_id: tstr,
+  ttl: uint, content_type: tstr,
+  ? content_class: tstr,
+  content_digest: hash, sender_addr: bw-address, recipient_addr: bw-address,
+  ? grade_commitment_salt: tstr,
+  ? mandate_commitment_salt: tstr,
+}
+
+; ============================================================================
+; Constructed cryptographic inputs — deterministic CBOR fixed-position arrays
+; (M3/T4). Hashed, never on the wire as such; shown so the digest is reproducible.
+; ============================================================================
+
+grade-commitment-input = [
+  "sm-mls:grade-commitment:v2",
+  bstr .size 16,        ; salt (hex-decoded)
+  tstr,                 ; content_class
+  tstr,                 ; grade
+  bstr .size 32,        ; org_digest (hex-decoded)
+]
+
+mandate-commitment-input = [
+  "sm-mls:mandate-commitment:v2",
+  bstr .size 16,        ; salt
+  tstr,                 ; mandate_id
+  tstr,                 ; content_class
+  bstr .size 32,        ; org_digest
+]

@@ -1,0 +1,10 @@
+{
+  "_comment": "Demo grade-commitment reveal fixture (fourteenth review, X0): the published (salt, content_class) for the availability-grade demo message, letting bundle_lint perform the FULL grade-commitment verification (LINT-BND-11) on the default bundle. DEMO material — the salt is ASCII 'demo-grade-salt!'; a production salt is secret until deliberately revealed in a dispute (the TS clause 6 reveal procedure).",
+  "reveals": [
+    {
+      "message_id": "01HZ3AVLBCDEFGH9JKMN0PQRST",
+      "salt": "64656d6f2d67726164652d73616c7421",
+      "content_class": "regulatory-filing"
+    }
+  ]
+}

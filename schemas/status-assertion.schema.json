@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bw.example.eu/schemas/status-assertion.schema.json",
+  "title": "StatusAssertion (STATUS-v1, v1.0) — signed short-lived per-UID status capability",
+  "description": "D6 (F-10/X-07): the EDD core registry's signed, SHORT-LIVED assertion of a UID's lifecycle status. An RDP may rely on a valid (unexpired) assertion — even offline — for legal-effect issuance (umbrella §5.7); a suspension simply stops new assertions being issued, so after the held assertion expires the RDP fails closed. The hard expiry bounds the concealment window: a suspension can hide for AT MOST the remaining validity of the last assertion issued before it — bounded and disclosed (≤ 5 minutes). Sealed as a COSE_Sign1 artefact under the EDD core-registry key (directory registry_seal_keys pin; production: Trusted-List-anchored). Emergency revocation = stop issuing + the hard expiry; no revocation list exists at this validity.",
+  "type": "object",
+  "required": [
+    "type",
+    "version",
+    "uid",
+    "status",
+    "issued_at",
+    "expires_at",
+    "assertion_id",
+    "registry_id"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "STATUS-v1"
+    },
+    "version": {
+      "const": "1.0"
+    },
+    "uid": {
+      "$ref": "evidence-common.schema.json#/$defs/Uid"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "suspended",
+        "retired",
+        "merged"
+      ]
+    },
+    "redirect_uid": {
+      "$ref": "evidence-common.schema.json#/$defs/Uid",
+      "description": "REQUIRED iff status is merged — the surviving entity's UID."
+    },
+    "issued_at": {
+      "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+    },
+    "expires_at": {
+      "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp",
+      "description": "Hard expiry. expires_at − issued_at MUST NOT exceed the suspension-propagation bound (5 minutes) — LINT-DISC-25."
+    },
+    "assertion_id": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "ULID replay guard — unique per issuance."
+    },
+    "registry_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The issuing EDD core-registry identifier."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "merged"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "redirect_uid"
+        ]
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "status": {
+              "const": "merged"
+            }
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "redirect_uid"
+          ]
+        }
+      }
+    }
+  ]
+}

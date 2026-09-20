@@ -1,0 +1,47 @@
+{
+  "sm_artifact_b64": "hFGiAScETGVudGl0eS1hZG1pbqBZA7+tY2tpZG5xc2VhbGMtMjAyNi0wMWNtbHOkZmRzX3VybHgdaHR0cHM6Ly9tc3AuZXhhbXBsZS5ldS9tc3AvdjFtY2lwaGVyX3N1aXRlc4J4LE1MU18xMjhfREhLRU1YMjU1MTlfQUVTMTI4R0NNX1NIQTI1Nl9FZDI1NTE5eC9NTFNfMTI4X01MS0VNNzY4WDI1NTE5X0FFUzEyOEdDTV9TSEEyNTZfRWQyNTUxOW5rZXlwYWNrYWdlX3VybHhLaHR0cHM6Ly9tc3AuZXhhbXBsZS5ldS8ud2VsbC1rbm93bi9idy9rZXlwYWNrYWdlcy9FVS1ERS1FT0lELTdLM0Q5VzBRMk01RlcwcHNjb3Blc19zdXBwb3J0ZWT1Y21zcHZodHRwczovL21zcC5leGFtcGxlLmV1Y3JkcKJoZXZpZGVuY2V4LGh0dHBzOi8vcmRwLmV4YW1wbGUuZXUvZXZpZGVuY2Uve21lc3NhZ2VfaWR9aWRpc2NvdmVyeXgmaHR0cHM6Ly9yZHAuZXhhbXBsZS5ldS8ud2VsbC1rbm93bi9yZHBjdWlkeBlFVS1ERS1FT0lELTdLM0Q5VzBRMk01RlcwZHR5cGVpQlctTUVELXYxZnBvbGljeaJpdHRsX21heF9zGgAJOoBubWF4X3BheWxvYWRfa2IZKABndmVyc2lvbmMyLjFpcHJvdG9jb2xzgWpTTS1NTFMtMS4wamV4cGlyZXNfYXR0MjAyNy0wNC0wNFQxMDowMDowMFprYXNzZXJ0ZWRfYXR0MjAyNi0wNC0wNFQxMDowMDowMFpvZHNfcmVjZWlwdF9rZXlzgaRjYWxnZUVkRFNBY2tpZGxkcy1kZW1vLTIwMjZqdmFsaWRfZnJvbXQyMDI2LTAxLTAxVDAwOjAwOjAwWm5wdWJsaWNfa2V5X2I2NHgsYWpleXA3Sjl1dVVqRmpaTXhjNUxvMnVLYUsxT1d0WExVbHdnWDNLdDcyUT1zaWRlbnRpdHlfY3JlZGVudGlhbKJkdHlwZWR4NTA5ang1MDlfY2hhaW6CeFItLS0tLUJFR0lOIENFUlRJRklDQVRFLS0tLS0KTUlJQi4uLkVOVElUWV9RU0VBTENfREVNTy4uLgotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0teFYtLS0tLUJFR0lOIENFUlRJRklDQVRFLS0tLS0KTUlJQi4uLklOVEVSTUVESUFURV9RVFNQX0RFTU8uLi4KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLVhASkyE/PbNqFEyguB7/FwRxvBd3P++ufxcOVmdaXmZWkYeYaEyJBpQKL8AsF/MIaejDnD5JtDUXBPmi0AWiZ/uBg==",
+  "projection": {
+    "type": "BW-MED-v1",
+    "version": "2.1",
+    "uid": "EU-DE-EOID-7K3D9W0Q2M5FW0",
+    "protocols": [
+      "SM-MLS-1.0"
+    ],
+    "msp": "https://msp.example.eu",
+    "rdp": {
+      "discovery": "https://rdp.example.eu/.well-known/rdp",
+      "evidence": "https://rdp.example.eu/evidence/{message_id}"
+    },
+    "mls": {
+      "cipher_suites": [
+        "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519",
+        "MLS_128_MLKEM768X25519_AES128GCM_SHA256_Ed25519"
+      ],
+      "keypackage_url": "https://msp.example.eu/.well-known/bw/keypackages/EU-DE-EOID-7K3D9W0Q2M5FW0",
+      "ds_url": "https://msp.example.eu/msp/v1",
+      "scopes_supported": true
+    },
+    "identity_credential": {
+      "type": "x509",
+      "x509_chain": [
+        "-----BEGIN CERTIFICATE-----\nMIIB...ENTITY_QSEALC_DEMO...\n-----END CERTIFICATE-----",
+        "-----BEGIN CERTIFICATE-----\nMIIB...INTERMEDIATE_QTSP_DEMO...\n-----END CERTIFICATE-----"
+      ]
+    },
+    "kid": "qsealc-2026-01",
+    "asserted_at": "2026-04-04T10:00:00Z",
+    "expires_at": "2027-04-04T10:00:00Z",
+    "policy": {
+      "max_payload_kb": 10240,
+      "ttl_max_s": 604800
+    },
+    "ds_receipt_keys": [
+      {
+        "kid": "ds-demo-2026",
+        "alg": "EdDSA",
+        "public_key_b64": "ajeyp7J9uuUjFjZMxc5Lo2uKaK1OWtXLUlwgX3Kt72Q=",
+        "valid_from": "2026-01-01T00:00:00Z"
+      }
+    ]
+  }
+}

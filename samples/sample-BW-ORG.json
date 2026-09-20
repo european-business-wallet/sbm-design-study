@@ -1,0 +1,36 @@
+{
+  "sm_artifact_b64": "hFGiAScETGVudGl0eS1hZG1pbqBZAlOtY3VpZHgaRVUtRlItUFNCSUQtWllXVlRTUlFQTk04TTRkdHlwZWlCVy1PUkctdjFlcm9sZXODaGludm9pY2Vza3Byb2N1cmVtZW50ZWxlZ2FsZ3ZlcnNpb25jMi42amxlZ2FsX25hbWVvTWFpcmllIGRlIFBhcmlzanN1cGVyc2VkZXOiamRvY19kaWdlc3SjY2FsZ2dTSEEtMjU2Y2hleHhANjc0ZDIwMWIzN2RkZDY5YjU2MGYwOGE5ZWEzY2E1ZDAxZmIyMDZmZDVhY2E3NTA0ZjY1ZDg0MzkzOTFkMjhjOWloYXNoX21vZGVqcmF3LXNoYTI1Nm5wb2xpY3lfdmVyc2lvbmwyMDI2LTAyLTAxLjFqdmFsaWRfZnJvbXQyMDI2LTAzLTAxVDAwOjAwOjAwWmtjb250YWN0X3VybHgcaHR0cHM6Ly93d3cucGFyaXMuZnIvY29udGFjdGxkaXNwbGF5X25hbWVuVmlsbGUgZGUgUGFyaXNucG9saWN5X3ZlcnNpb25sMjAyNi0wMy0wMS4xb2RlbGl2ZXJ5X2dyYWRlc6FxcmVndWxhdG9yeS1maWxpbmdsYXZhaWxhYmlsaXR5b21lbWJlcl9lbmRwb2ludHgoaHR0cHM6Ly9tc3AuZXhhbXBsZS5mci91aWQve3VpZH0vbWVtYmVyc3FhY2NlcHRhbmNlX3BvbGljeaRlbGVnYWxjYWxsZ2RlZmF1bHRnYW55LW9uZWhpbnZvaWNlc2dhbnktb25la3Byb2N1cmVtZW50aHF1b3J1bToyWEAs4lsnmeZz9Z/LP7r+3uyI1X+zT6JsmpR9tIGk8o6TlSD4gChcH3eALmE11XHbnixefHvApISQxuoUGju0h4kL",
+  "projection": {
+    "type": "BW-ORG-v1",
+    "version": "2.6",
+    "uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+    "policy_version": "2026-03-01.1",
+    "valid_from": "2026-03-01T00:00:00Z",
+    "display_name": "Ville de Paris",
+    "legal_name": "Mairie de Paris",
+    "roles": [
+      "invoices",
+      "procurement",
+      "legal"
+    ],
+    "acceptance_policy": {
+      "invoices": "any-one",
+      "procurement": "quorum:2",
+      "legal": "all",
+      "default": "any-one"
+    },
+    "delivery_grades": {
+      "regulatory-filing": "availability"
+    },
+    "member_endpoint": "https://msp.example.fr/uid/{uid}/members",
+    "contact_url": "https://www.paris.fr/contact",
+    "supersedes": {
+      "policy_version": "2026-02-01.1",
+      "doc_digest": {
+        "alg": "SHA-256",
+        "hash_mode": "raw-sha256",
+        "hex": "674d201b37ddd69b560f08a9ea3ca5d01fb206fd5aca7504f65d8439391d28c9"
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "$comment": "X-25 MACHINE-READABLE CONTENT-CLASS REGISTRY (tier 1) \u2014 the single source of truth, owned by the federation design authority under umbrella \u00a713.4. discovery_lint loads STANDARD_CONTENT_CLASSES from this file (LINT-DISC-16), so promoting a class is a registry action here, not a lint-code release. Tier 2 = entity-defined private classes under the mandatory x- prefix (never registered). Lexical rule (both tiers): ^(x-)?[a-z][a-z0-9-]{0,62}$ with a non-empty name after x-.",
+  "registry_version": "1",
+  "tier1": {
+    "invoice": {
+      "status": "active"
+    },
+    "legal-notice": {
+      "status": "active"
+    },
+    "regulatory-filing": {
+      "status": "active"
+    },
+    "procurement": {
+      "status": "active"
+    },
+    "employment": {
+      "status": "active"
+    },
+    "tax": {
+      "status": "active"
+    },
+    "board": {
+      "status": "active"
+    },
+    "general": {
+      "status": "active"
+    }
+  }
+}

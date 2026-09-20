@@ -1,0 +1,33 @@
+%% SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors
+%% SPDX-License-Identifier: CC-BY-4.0
+%% figure
+%% owner: the maintainer (README, Feedback)
+%% source: docs/diagrams/minimal-message.mermaid (this file). Export: minimal-message.svg (docs/diagrams/exports.json)
+%% question: What is the smallest complete run of the public operations, from first contact to delivery evidence, and in what order may its steps happen?
+%% profile: 1 (one operator runs the RDP and the Delivery Service; no relay); verification grade; the default scope; one recipient device
+%% status: current
+%% references: docs/message-lifecycle.md (this figure's walkthrough); wallet-rdp-openapi.yaml; delivery-service-openapi.yaml; I-D "Message Flows and Delivery States"; docs/federated-flow-explainer.md (the four-corner version)
+%% alt: Wallet A reserves and commits Wallet B's KeyPackages at the Delivery Service, deposits one Welcome per device of B and registers as the group's founder. Wallet B collects its Welcome and acknowledges it, which is joining; this may happen before or after A submits. A submits the ciphertext and metadata to the RDP, which has the Delivery Service accept the same octets before it seals the Sending Evidence and returns it. B collects the message, which marks it transferred and returns a collection token, and acknowledges with that token; the Delivery Service signs the S2 receipt. B decrypts, recomputes the digest and sends its confirmation to the RDP, which issues the Delivery Evidence dated when it verified the confirmation, and the Evidence Package to A.
+%% end figure
+sequenceDiagram
+    autonumber
+    actor A as Wallet A · sender
+    participant R as Provider · RDP
+    participant D as Provider · Delivery Service
+    actor B as Wallet B · recipient
+    Note over A,B: Profile 1 — one operator runs the RDP and the Delivery Service, so nothing is relayed
+    A->>D: reserve B's KeyPackages (Idempotency-Key) and commit them — consumed from here
+    A->>D: deposit one Welcome per device of B · register as the group's founder
+    B->>D: collect the Welcome · acknowledge it (DELETE) — this is joining
+    Note over B,D: may come before or after steps 4–7 — the open invitation already routes B's device
+    A->>R: submit the ciphertext + metadata, with the sender's signature
+    R->>D: the same octets
+    D-->>R: acceptance record
+    R-->>A: SE — sealed only after the acceptance
+    B->>D: collect → transferred, with a collection token
+    B->>D: acknowledge with the token
+    D-->>B: signed receipt — S2, the Delivery Service's own clock
+    B->>B: decrypt · recompute the digest — S3
+    B->>R: confirmation (s3), wallet-signed or session-bound
+    R-->>B: DE — dated when the RDP verified the confirmation
+    R-->>A: Evidence Package

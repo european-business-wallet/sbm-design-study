@@ -1,0 +1,4 @@
+{
+  "$comment": "The number of completed rounds of adversarial design review behind this revision. Declared here rather than derived, because this export's CHANGELOG records artefact history rather than process history. Quoted by scripts/project_counts.py and, through it, by the outward-facing documents.",
+  "completed_rounds": 12
+}

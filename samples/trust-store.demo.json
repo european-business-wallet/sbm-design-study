@@ -1,0 +1,48 @@
+{
+  "_comment": "DEMO trust store for the --trust-store minimal slice (ninth review, P10): COSE kid -> expected signer role, allowed identities (evidence: rdp_id; discovery: the entity uid the key may sign for), Ed25519 public key and validity window (LINT-TRUST-01..03, fail-closed). DEMO material only — a production trust store is QSealC / EU-Trusted-List material, which this format deliberately does NOT represent (see README, production verification roadmap). The keys are the published demo keys from the README.",
+  "entries": {
+    "rdp": {
+      "role": "evidence-rdp",
+      "identities": [
+        "urn:sbm:rdp:mockeu-001",
+        "urn:sbm:rdp:mockeu-002"
+      ],
+      "pubkey_b64": "peni1HM+ZD1qbhm3SeKDlR5WTB3k87OcVWEWhqDd2oo=",
+      "not_before": "2026-01-01T00:00:00Z",
+      "not_after": "2027-06-30T23:59:59Z"
+    },
+    "entity-admin": {
+      "role": "discovery-publisher",
+      "identities": [
+        "EU-DE-EOID-7K3D9W0Q2M5FW0",
+        "EU-FR-PSBID-ZYWVTSRQPNM8M4"
+      ],
+      "pubkey_b64": "FmS2pIFL/WZQpTPR0ppF3jYkqzPf/TRBq1aLTHRZg/o=",
+      "not_before": "2026-01-01T00:00:00Z",
+      "not_after": "2027-06-30T23:59:59Z"
+    },
+    "design-authority": {
+      "role": "design-authority",
+      "pubkey_b64": "Srmbe3Arb9aHk2dYr5sED05RNwVyJxu6KqWD3dwPocs=",
+      "not_before": "2026-01-01T00:00:00Z",
+      "not_after": "2027-06-30T23:59:59Z"
+    },
+    "federation-authority": {
+      "role": "federation-authority",
+      "_comment": "§13.1 gives the Federation Authority and the design authority DIFFERENT rows, so the demonstration gives them different keys. A membership record signed by the design-authority key is refused: a register whose admission decisions were signed by the protocol's own maintainer would demonstrate the opposite of the independence §13.1 requires.",
+      "pubkey_b64": "DOU6fWO0UWWwousGzJ7ZB4ogwyIP1J1JyCg4tFy6zYY=",
+      "not_before": "2026-01-01T00:00:00Z",
+      "not_after": "2027-06-30T23:59:59Z"
+    },
+    "mockeu-001-descriptor": {
+      "role": "discovery-publisher",
+      "_comment": "Batch A / A5: a provider descriptor (BW-PROVIDER-v1) is sealed by the PARTICIPANT, not by an entity's wallet-administration function, so its identity space is `participant_id` and not a UID. The same key is pinned to this participant in federation.stage1.demo.json (`authorized_seal_keys`), which is what LINT-TRUST-07 checks. DEMO key, seed 'mockeu-001-descriptor-demo'.",
+      "identities": [
+        "urn:sbm:rdp:mockeu-001"
+      ],
+      "pubkey_b64": "fQIS4oLHUjnCWieqKkICATtSgstIJVJ/delzHSAYsss=",
+      "not_before": "2026-01-01T00:00:00Z",
+      "not_after": "2027-06-30T23:59:59Z"
+    }
+  }
+}

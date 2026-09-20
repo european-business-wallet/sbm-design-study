@@ -1,0 +1,110 @@
+{
+  "$id": "https://bw.example.eu/schemas/evidence-gcm.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Grade-Commitment Mismatch (GCM-v1) (v2.8)",
+  "description": "X-04/D5 dispute evidence: the recipient, on eventually reading an availability-grade message, finds the actual content_class differs from what the grade commitment binds, and REVEALS the envelope's true (salt, content_class). Verification (the I-D, Grade-Commitment Mismatch): recompute the commitment from the reveal against the pinned BW-ORG version — the GCM is a valid rebuttal iff EITHER the recomputation differs from the sealed grade_commitment (the commitment never bound the actual envelope) OR it matches but the revealed class's declared grade is not availability (a truthfully-committed non-availability class obtained availability treatment). A GCM whose reveal matches AND whose class IS availability-declared proves nothing and is REJECTED (LINT-BND-26). The availability DE remains FINAL at authenticated S2; a valid GCM REBUTS it in dispute — it does not retract it (no terminal-outcome change; EP carriage is the OPTIONAL disputes[] array). TODO(legal): the Article 43(2) rebuttable-presumption clause awaits external counsel (DESIGN_DECISIONS.md D5).",
+  "type": "object",
+  "required": [
+    "acceptance_policy_ref",
+    "auth_context",
+    "envelope_hash",
+    "event",
+    "evidence_id",
+    "grade_commitment",
+    "message_id",
+    "mid",
+    "policy_id",
+    "profile",
+    "rdp_id",
+    "read_at",
+    "recipient_uid",
+    "reveal",
+    "reveal_confirmation",
+    "type",
+    "version"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "GCM-v1"
+    },
+    "version": {
+      "type": "string",
+      "const": "2.8"
+    },
+    "profile": {
+      "$ref": "evidence-common.schema.json#/$defs/Profile"
+    },
+    "message_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event": {
+      "type": "string",
+      "const": "D.6-ContentAccessTracking",
+      "description": "The read/access event at which the mismatch was discovered (EN 319 522-1); the GCM is supplementary dispute evidence, never a terminal outcome."
+    },
+    "evidence_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "policy_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recipient_uid": {
+      "$ref": "evidence-common.schema.json#/$defs/Uid"
+    },
+    "mid": {
+      "type": "string",
+      "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$",
+      "description": "The member who read the content and asserts the mismatch."
+    },
+    "auth_context": {
+      "$ref": "evidence-common.schema.json#/$defs/AuthContext"
+    },
+    "read_at": {
+      "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+    },
+    "reveal": {
+      "type": "object",
+      "description": "The envelope's true (salt, content_class) — the salt travels only in the E2EE envelope, so both endpoints hold it (TS grade-commitment reveal).",
+      "required": [
+        "salt",
+        "content_class"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "salt": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$",
+          "description": "DR-03: EXACTLY 16 bytes = 32 lowercase hex characters. The former `^[a-f0-9]{2,128}$` admitted 1..64 bytes AND odd lengths; an odd-length salt was schema-valid and raised an uncaught ValueError inside the cross-document validator — a denial of validation, not a lint failure."
+        },
+        "content_class": {
+          "type": "string",
+          "pattern": "^(x-)?[a-z][a-z0-9-]{0,62}$"
+        }
+      }
+    },
+    "grade_commitment": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "The DISPUTED sealed commitment, echoed from the SE/DE (bundle-checked equal, LINT-BND-26)."
+    },
+    "acceptance_policy_ref": {
+      "$ref": "evidence-common.schema.json#/$defs/AcceptancePolicyRef"
+    },
+    "rdp_id": {
+      "$ref": "evidence-common.schema.json#/$defs/RdpId",
+      "description": "Sealed by RDP(in) — the provider of the recipient asserting the mismatch."
+    },
+    "envelope_hash": {
+      "$ref": "evidence-common.schema.json#/$defs/EnvelopeHash",
+      "description": "DR-03: the transmitted-octet commitment of the DISPUTED message — the dispute is bound to specific bytes, not merely to a message_id (LINT-GCM-02)."
+    },
+    "reveal_confirmation": {
+      "$ref": "evidence-common.schema.json#/$defs/RecipientRevealConfirmation"
+    }
+  },
+  "additionalProperties": false
+}

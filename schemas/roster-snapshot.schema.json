@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bw.example.eu/schemas/roster-snapshot.schema.json",
+  "title": "RosterSnapshot (ROSTER-v1, v1.0) — signed atomic roster snapshot per MLS epoch",
+  "description": "F-12: the entity's SIGNED manifest of its complete scope roster at one MLS epoch — what makes the member enumeration ATOMIC and historically verifiable. Sealed by the entity's wallet-administration key (the same authority that seals BW-MEMBER/ORG; directory-pinned, X-01). COMPLETENESS IS WHAT THE SIGNATURE ATTESTS: the members[] list is the entire active roster of (uid, scope, epoch) — no pagination of the signed set; each member_doc_digest pins the EXACT sealed BW-MEMBER version in force, so an omitted active member or a mixed-version enumeration is detectable (LINT-DISC-26). tree_hash MUST equal the ratchet-tree hash inside the retained GroupContext the evidence mls_state commits to (F-03) — the snapshot chains enumeration ↔ tree ↔ evidence. Served current and as-of under the evidence-retention duty (EDD contract v1.9.0).",
+  "type": "object",
+  "required": [
+    "type",
+    "version",
+    "uid",
+    "scope_id",
+    "mls_group_id",
+    "mls_epoch",
+    "snapshot_at",
+    "snapshot_id",
+    "members",
+    "tree_hash"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ROSTER-v1"
+    },
+    "version": {
+      "const": "1.0"
+    },
+    "uid": {
+      "$ref": "evidence-common.schema.json#/$defs/Uid"
+    },
+    "scope_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "mls_group_id": {
+      "$ref": "evidence-common.schema.json#/$defs/MlsGroupId"
+    },
+    "mls_epoch": {
+      "$ref": "evidence-common.schema.json#/$defs/MlsEpoch"
+    },
+    "snapshot_at": {
+      "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+    },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "members": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "mid",
+          "status",
+          "member_doc_digest",
+          "devices"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "mid": {
+            "type": "string",
+            "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active"
+            ]
+          },
+          "member_doc_digest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "SHA-256 (lowercase hex) of the sealed BW-MEMBER's dCBOR body — pins the EXACT document version in force at this epoch."
+          },
+          "devices": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "device_id",
+                "signature_key_hash"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "device_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "signature_key_hash": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "tree_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "The epoch's ratchet-tree hash (lowercase hex) — MUST equal the tree hash inside the retained GroupContext committed by the evidence mls_state (F-03/D3)."
+    }
+  }
+}

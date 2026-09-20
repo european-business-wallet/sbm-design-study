@@ -1,0 +1,27 @@
+{
+  "$comment": "R10-11 known-answer bytes for the post-quantum hybrid, covering exactly what THIS profile defines for the suite and nothing more. Computed independently of the reference: the RefHashInput is assembled by hand from RFC 9420 §5.2 and §2.1.2, and tests/test_pq_suite_pin.py re-derives every value without importing scripts/mls_wire.py before checking the reference against them. NOT COVERED, and said so rather than implied: the hybrid KEM itself. draft-ietf-mls-pq-ciphersuites-06 publishes no test vectors and this repository implements no ML-KEM, so no cross-implementation vector exists for encapsulation, decapsulation or the HPKE key schedule under this suite. An implementation agreeing with these bytes has agreed on the suite's wire value and its RefHash constructions — not on its KEM.",
+  "suite": "MLS_128_MLKEM768X25519_AES128GCM_SHA256_Ed25519",
+  "registry_revision": "2",
+  "upstream": "draft-ietf-mls-pq-ciphersuites-06 (21 July 2026), R. Mahy and R. L. Barnes; code point TBD1",
+  "code_point": {
+    "value": "0xF5C1",
+    "status": "private-use",
+    "wire_hex": "f5c1",
+    "note": "uint16, network order, as the CipherSuite field of a KeyPackage or GroupContext carries it"
+  },
+  "hash": "SHA-256",
+  "refhash": [
+    {
+      "label": "MLS 1.0 KeyPackage Reference",
+      "value_hex": "64656d6f2d6b65797061636b6167653a46314e3243334434507c4445562d317c4d4c535f3132385f4d4c4b454d3736385832353531395f41455331323847434d5f5348413235365f45643235353139",
+      "refhash_input_hex": "1c4d4c5320312e30204b65795061636b616765205265666572656e6365404f64656d6f2d6b65797061636b6167653a46314e3243334434507c4445562d317c4d4c535f3132385f4d4c4b454d3736385832353531395f41455331323847434d5f5348413235365f45643235353139",
+      "sha256_b64url": "SqbzEyKDXKHF0YYVPp0CLCjWU6hSoYzU_2DRncTdjQk"
+    },
+    {
+      "label": "SBM 1.0 GroupInfo Commitment",
+      "value_hex": "612064656d6f2047726f7570496e666f",
+      "refhash_input_hex": "1c53424d20312e302047726f7570496e666f20436f6d6d69746d656e7410612064656d6f2047726f7570496e666f",
+      "sha256_b64url": "YQrX0BiBOyvBrxKKA8lMxjuhlaeRvJG_q7uWwjGhqeU"
+    }
+  ]
+}

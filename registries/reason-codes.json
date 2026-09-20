@@ -1,0 +1,528 @@
+{
+  "$comment": "X-25 MACHINE-READABLE REASON-CODE REGISTRY — the single source of truth, owned by the federation design authority under umbrella §13.4 (registry lifecycle: additive, deprecate-never-delete, quarterly + expedited security path). The reference linters LOAD their recognized-set tables from this file (evidence_lint NDE_REASON_EVENT, lint_cli RELAY_B2_*), so registering a code is a REGISTRY ACTION here — not a schema, CDDL or lint-code change, and NOT an evidence-version bump (umbrella §9.3). The wire value space is lexically bounded by the schemas (^(x-)?[a-z][a-z0-9-]{1,62}$; x- = private use, never registered). An UNREGISTERED well-formed code is accepted structurally, preserved verbatim and treated as a generic non-delivery (LINT-NDE-W1; the I-D, IANA Considerations). allowed_events: null = the reason-to-event binding is not yet registered (finding X-30) — a producer SHOULD NOT emit it until bound.",
+  "registry_version": "1",
+  "nde_reasons": {
+    "duplicate-message-id": {
+      "allowed_events": [
+        "A.2-SubmissionRejection"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection"
+      },
+      "en_319_522": "SubmissionRejection — duplicate submission identifier (A.2)"
+    },
+    "envelope-hash-mismatch": {
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection"
+      },
+      "allowed_events": [
+        "A.2-SubmissionRejection"
+      ],
+      "en_319_522": "no-equivalent (SM-MLS transport-commitment coherence, DR-02; exported as SubmissionRejection): the submitted octets do not hash to the supplied envelope_hash, so RDP(out) refuses to attest them"
+    },
+    "expired": {
+      "allowed_events": [
+        "C.5-AcceptanceRejectionExpiry"
+      ],
+      "status": "active",
+      "stages": {
+        "expiry": "C.5-AcceptanceRejectionExpiry"
+      },
+      "en_319_522": "AcceptanceRejectionExpiry (C.5)"
+    },
+    "expiry-mismatch": {
+      "allowed_events": [
+        "D.2-ContentConsignmentFailure"
+      ],
+      "status": "active",
+      "stages": {
+        "consignment": "D.2-ContentConsignmentFailure"
+      },
+      "en_319_522": "no-equivalent (envelope-ttl/SE-expiry coherence; exported as ContentConsignmentFailure)"
+    },
+    "keypackage-pool-exhausted": {
+      "allowed_events": [
+        "A.2-SubmissionRejection"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection"
+      },
+      "en_319_522": "no-equivalent (MLS KeyPackage pool; exported as SubmissionRejection)"
+    },
+    "keypackage-replay": {
+      "allowed_events": [
+        "A.2-SubmissionRejection",
+        "D.2-ContentConsignmentFailure"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection",
+        "consignment": "D.2-ContentConsignmentFailure"
+      },
+      "en_319_522": "no-equivalent (MLS KeyPackage single-use rule; exported as SubmissionRejection / ContentConsignmentFailure per stage)"
+    },
+    "keypackage-target-duplicate": {
+      "allowed_events": [
+        "A.2-SubmissionRejection"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection"
+      },
+      "en_319_522": "no-equivalent (one device named twice in a reservation's targets — two packages for one device and none for another is the failure this catches (DR-08); exported as SubmissionRejection)"
+    },
+    "keypackage-target-unavailable": {
+      "allowed_events": [
+        "A.2-SubmissionRejection"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection"
+      },
+      "en_319_522": "no-equivalent (a SELECTED device has no current KeyPackage for the group's suite — the reservation is refused whole rather than served partially (DR-08); exported as SubmissionRejection)"
+    },
+    "keypackage-target-unrequested": {
+      "allowed_events": [
+        "A.2-SubmissionRejection"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection"
+      },
+      "en_319_522": "no-equivalent (the pool offered a package for a device that was NOT selected — accepting it would add a device the scope resolution excluded (DR-08); exported as SubmissionRejection)"
+    },
+    "malformed-envelope": {
+      "allowed_events": [
+        "A.2-SubmissionRejection",
+        "B.3-RelayFailure"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection",
+        "relay": "B.3-RelayFailure"
+      },
+      "en_319_522": "SubmissionRejection — technical (A.2) / RelayFailure at the relay stage (X-28)"
+    },
+    "mls-group-invalid": {
+      "allowed_events": [
+        "D.2-ContentConsignmentFailure"
+      ],
+      "status": "active",
+      "stages": {
+        "consignment": "D.2-ContentConsignmentFailure"
+      },
+      "en_319_522": "no-equivalent (SM-MLS-specific; exported as ContentConsignmentFailure)"
+    },
+    "no-matching-scope": {
+      "allowed_events": [
+        "A.2-SubmissionRejection"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection"
+      },
+      "en_319_522": "no-equivalent (confidentiality-scope model; exported as SubmissionRejection)"
+    },
+    "payload-hash-mismatch": {
+      "allowed_events": [
+        "D.2-ContentConsignmentFailure"
+      ],
+      "status": "active",
+      "stages": {
+        "consignment": "D.2-ContentConsignmentFailure"
+      },
+      "en_319_522": "no-equivalent (SM-MLS integrity re-verification; exported as ContentConsignmentFailure)"
+    },
+    "policy-block": {
+      "allowed_events": [
+        "A.2-SubmissionRejection",
+        "B.3-RelayFailure"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection",
+        "relay": "B.3-RelayFailure"
+      },
+      "en_319_522": "SubmissionRejection — policy non-acceptance (A.2) / RelayFailure at the relay stage (X-28)"
+    },
+    "quota-exceeded": {
+      "allowed_events": [
+        "A.2-SubmissionRejection"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection"
+      },
+      "en_319_522": "SubmissionRejection — technical (A.2)"
+    },
+    "recipient-unreachable": {
+      "allowed_events": [
+        "D.2-ContentConsignmentFailure"
+      ],
+      "status": "active",
+      "stages": {
+        "consignment": "D.2-ContentConsignmentFailure"
+      },
+      "en_319_522": "ContentConsignmentFailure — recipient ERDS unreachable (EN 319 522-1 clause 6, D.2)"
+    },
+    "routing-failed": {
+      "allowed_events": [
+        "B.3-RelayFailure",
+        "D.2-ContentConsignmentFailure"
+      ],
+      "status": "active",
+      "stages": {
+        "relay": "B.3-RelayFailure",
+        "consignment": "D.2-ContentConsignmentFailure"
+      },
+      "en_319_522": "RelayFailure / ContentConsignmentFailure per stage"
+    },
+    "scope-violation": {
+      "allowed_events": [
+        "A.2-SubmissionRejection"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection"
+      },
+      "en_319_522": "no-equivalent (confidentiality-scope model; exported as SubmissionRejection)"
+    },
+    "uid-merged": {
+      "allowed_events": [
+        "A.2-SubmissionRejection",
+        "B.3-RelayFailure",
+        "D.2-ContentConsignmentFailure"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection",
+        "relay": "B.3-RelayFailure",
+        "consignment": "D.2-ContentConsignmentFailure"
+      },
+      "en_319_522": "recipient status prevents delivery (redirect carried in redirect_uid) — SubmissionRejection / RelayFailure / ContentConsignmentFailure per stage"
+    },
+    "uid-retired": {
+      "allowed_events": [
+        "A.2-SubmissionRejection",
+        "B.3-RelayFailure",
+        "D.2-ContentConsignmentFailure"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection",
+        "relay": "B.3-RelayFailure",
+        "consignment": "D.2-ContentConsignmentFailure"
+      },
+      "en_319_522": "recipient status prevents delivery — SubmissionRejection / RelayFailure / ContentConsignmentFailure per stage"
+    },
+    "uid-suspended": {
+      "allowed_events": [
+        "A.2-SubmissionRejection",
+        "B.3-RelayFailure",
+        "D.2-ContentConsignmentFailure"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection",
+        "relay": "B.3-RelayFailure",
+        "consignment": "D.2-ContentConsignmentFailure"
+      },
+      "en_319_522": "recipient status prevents delivery — SubmissionRejection / RelayFailure / ContentConsignmentFailure per stage"
+    },
+    "unaddressed-submission": {
+      "allowed_events": [
+        "A.2-SubmissionRejection"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection"
+      },
+      "en_319_522": "no-equivalent (a submission carrying no recipient address; the acceptance policy cannot be selected without one — R3-01; exported as SubmissionRejection)"
+    },
+    "unknown-uid": {
+      "allowed_events": [
+        "A.2-SubmissionRejection",
+        "B.3-RelayFailure"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection",
+        "relay": "B.3-RelayFailure"
+      },
+      "en_319_522": "SubmissionRejection — unknown recipient (A.2) / RelayFailure at the relay stage (X-28)"
+    },
+    "unsupported-protocol": {
+      "allowed_events": [
+        "A.2-SubmissionRejection"
+      ],
+      "status": "active",
+      "stages": {
+        "intake": "A.2-SubmissionRejection"
+      },
+      "en_319_522": "SubmissionRejection — technical non-acceptance (A.2)"
+    }
+  },
+  "re_reasons": {
+    "refused-by-user": {
+      "status": "active",
+      "refusal_kind": "member"
+    },
+    "refused-by-organisation": {
+      "status": "active",
+      "refusal_kind": "organisation-policy"
+    },
+    "legal-hold": {
+      "status": "active",
+      "refusal_kind": "organisation-policy"
+    },
+    "content-type-unsupported": {
+      "status": "active",
+      "refusal_kind": "organisation-policy"
+    },
+    "scope-violation": {
+      "status": "active",
+      "refusal_kind": "organisation-policy"
+    }
+  },
+  "relay_b2_reasons": {
+    "unknown-uid": {
+      "nde_reason": "unknown-uid",
+      "status": "active"
+    },
+    "uid-suspended": {
+      "nde_reason": "uid-suspended",
+      "status": "active"
+    },
+    "policy-violation": {
+      "nde_reason": "policy-block",
+      "status": "active"
+    },
+    "malformed": {
+      "nde_reason": "malformed-envelope",
+      "status": "active"
+    }
+  },
+  "$comment_x30": "X-30: every ACTIVE nde_reason MUST carry the complete reason x stage x event x external-mapping row - stages (stage -> EN 319 522-1 clause 6 event), allowed_events (== the stage events, kept for the LINT-NDE-07 table), en_319_522 (the EN 319 522-2 semantic mapping, or an explicit no-equivalent with the exported translation). lint_cli REFUSES to load an incomplete registration - a complete mapping is a PREREQUISITE for adding a value. Stages: intake | relay | consignment | expiry | handover.",
+  "group_establishment_reasons": {
+    "$comment": "R3-08: outcomes of GROUP ESTABLISHMENT, which happens BEFORE any submission. These are not NDE reasons: an NDE reports the fate of a message, and here there is no message — no message_id, no SE, no chain. `suite-below-published-floor` was registered as the intake event A.2-SubmissionRejection, which cannot be issued for a declined Welcome. R5-04/R5-V2: the outcome travels as `POST /welcome/{welcome_id}/refusal` on the Delivery Service, authenticated by the refusing device's KeyPackage credential and bound to the Welcome it declines. R4-U4 routed it over MLS on the reasoning that the device was 'already an invited member' — INVITED IS NOT JOINED: sending an authenticated message in that group means running the key schedule under the very suite being refused, which is the thing the refusal exists to avoid. The standalone `GroupEstablishmentRefusal-v1` object stays WITHDRAWN: this outcome must ARRIVE, not be retained.",
+    "suite-below-published-floor": {
+      "status": "active",
+      "stage": "group-establishment",
+      "en_319_522": "no-equivalent (pre-submission group establishment; EN 319 522 events describe the fate of a MESSAGE and none exists at this point)",
+      "detail": "the selected cipher suite is below the mandatory mls-suite-floor/v1 or below a device's published raise; the invited member declines the Welcome and the group is not formed (DR-15/R2-M5)"
+    },
+    "group-info-mismatch": {
+      "status": "active",
+      "stage": "group-establishment",
+      "en_319_522": "no-equivalent (pre-submission group establishment; no message exists yet)",
+      "detail": "R10-05: the GroupInfo carried by the decrypted Welcome does not match the invitation's group_info_commitment, which the invited device reads from its WelcomeQueue item; the device declines and the group is not formed with it. The Delivery Service cannot verify the claim — the Welcome is encrypted to the device — and records the authenticated refusal for the creator. Not a cipher-suite refusal, and it carries no floor."
+    }
+  },
+  "$comment_submission": "R5-01: the typed reasons RDP(out) may return from POST /submissions, BEFORE any evidence exists. The wallet-RDP contract already promised 'the registry reasons (no-matching-scope, ...)' while no registry section held them, so 'typed' meant 'a string the mock happened to use'. Registered here and asserted against the code by tests/test_intake_obligations.py, so a new rejection reason cannot be invented silently at a surface a client has to switch on.",
+  "submission_rejection_reasons": {
+    "device-not-in-force": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "device-not-sign-capable": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "duplicate-message-id": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "envelope-hash-mismatch": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "evidence-schema-invalid": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "identity-incoherent": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "malformed-envelope": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "member-not-active": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "mls-group-invalid": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "no-matching-scope": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "policy-digest-mismatch": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "policy-key-mismatch": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "policy-not-in-force": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "policy-ref-missing": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "policy-unresolvable": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "rdp-identity-absent": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "rdp-identity-ambiguous": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "rdp-identity-invalid": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "scope-not-in-force": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "sender-confirmation-invalid": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "sender-confirmation-mismatch": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "sender-confirmation-missing": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "sender-confirmation-unverifiable": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "submission-incomplete": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "submission-invalid": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "submission-malformed": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "submission-unexpected-field": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "unaddressed-submission": {
+      "status": "active",
+      "stage": "intake"
+    },
+    "expiry-not-after-sent": {
+      "status": "active",
+      "stage": "intake",
+      "detail": "X-22 (R10-08): expires_at is not strictly later than sent_at — a reversed or zero TTL. Refused at intake, before any ledger or remote effect."
+    },
+    "expiry-beyond-max-ttl": {
+      "status": "active",
+      "stage": "intake",
+      "detail": "X-22 (R10-08): the TTL (expires_at − sent_at) exceeds the recipient's declared maximum, BW-ORG.max_ttl (absent = the profile default P30D). Refused at intake."
+    },
+    "sent-at-in-future": {
+      "status": "active",
+      "stage": "intake",
+      "detail": "X-22 (R10-08): sent_at lies more than the 5-minute propagation bound ahead of the accepting RDP's own clock. Refused at intake."
+    }
+  },
+  "membership_register_reasons": {
+    "$comment": "Batch A / A2: why a MembershipRecord cannot answer an as-of admission question. These are not submission rejections — no message is involved — so they get their own block rather than being swept into the intake one because they happen to live in the same module. Raised by lint_cli.validate_status_history: the closed `MembershipRecord` Schema constrains the shape of each history entry and cannot express the relations BETWEEN entries, which is what all of these are about.",
+    "membership-history-bounded": {
+      "status": "active",
+      "stage": "membership-register"
+    },
+    "membership-history-discontinuous": {
+      "status": "active",
+      "stage": "membership-register"
+    },
+    "membership-history-empty": {
+      "status": "active",
+      "stage": "membership-register"
+    },
+    "membership-history-inverted": {
+      "status": "active",
+      "stage": "membership-register"
+    },
+    "membership-history-unbounded": {
+      "status": "active",
+      "stage": "membership-register"
+    },
+    "membership-history-unparsable": {
+      "status": "active",
+      "stage": "membership-register"
+    },
+    "membership-status-disagrees": {
+      "status": "active",
+      "stage": "membership-register"
+    }
+  },
+  "confirmation_rejection_reasons": {
+    "$comment": "R11-02/R11-03: the typed refusals of wallet-RDP POST /confirmations (422, and 409 for confirmation-conflict). The contract promised 'a typed reason' and no public artefact listed them, so a client could not switch on them — invariant 8. Stage `confirmation`: raised before anything is stored or sealed.",
+    "confirmation-conflict": {
+      "status": "active",
+      "stage": "confirmation"
+    },
+    "confirmation-malformed": {
+      "status": "active",
+      "stage": "confirmation"
+    },
+    "confirmation-member-ineligible": {
+      "status": "active",
+      "stage": "confirmation"
+    },
+    "confirmation-message-mismatch": {
+      "status": "active",
+      "stage": "confirmation"
+    },
+    "confirmation-not-member-bound": {
+      "status": "active",
+      "stage": "confirmation"
+    },
+    "confirmation-policy-mismatch": {
+      "status": "active",
+      "stage": "confirmation"
+    },
+    "confirmation-policy-unresolvable": {
+      "status": "active",
+      "stage": "confirmation"
+    },
+    "confirmation-rejected": {
+      "status": "active",
+      "stage": "confirmation"
+    },
+    "confirmation-signature-invalid": {
+      "status": "active",
+      "stage": "confirmation"
+    },
+    "confirmation-time-invalid": {
+      "status": "active",
+      "stage": "confirmation"
+    }
+  }
+}
