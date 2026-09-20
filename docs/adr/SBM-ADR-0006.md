@@ -31,8 +31,9 @@ The recipient's confirmation that a message was verified or accepted is
 produced by the wallet, in an authenticated session, and is what the RDP
 relies on to issue delivery evidence. The sender's act, by contrast, was
 attested only by the sender's provider, so the recipient's act was
-independently provable and the sender's was not, in a system whose legal
-argument covers sending by the identified sender as much as delivery.
+attributable to its device in the wallet-signed mode while the sender's was
+attributable only through its provider, in a system whose legal argument
+covers sending by the identified sender as much as delivery.
 
 ## Requirement and constraint
 
@@ -74,9 +75,9 @@ of the evidence story, and with the endpoint's honesty still assumed.
 
 Wallet providers and entities carry key custody and the assurance floor of
 the wallet assurance profile; suspension and revocation of a member binding
-fail the member closed at the directory and trigger MLS removal, and evidence
-produced before a credential's suspension keeps its standing under the TS's
-credential-validity baseline. The legal weight of each authentication
+fail the member closed at the directory and trigger MLS removal, and a
+confirmation made before a credential's suspension keeps its standing under
+the TS's credential-validity baseline whenever the evidence was sealed. The legal weight of each authentication
 combination, and whether a mandatory sender signature sits well beside the
 provider-attestation model of the regulation, are questions for counsel and
 stay flagged.

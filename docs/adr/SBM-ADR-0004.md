@@ -76,35 +76,58 @@ axis orthogonal to the deployment ladder, not a new rung on it.
 The separation leaves one question this record does not decide: who observes
 the acknowledged handover, and what an MSP acting alone could make an RDP
 attest. The study's historical trust analysis (not part of the public
-snapshot) compares three models. They are alternatives, and this record
-chooses none:
+snapshot) compares three models. They are alternatives, this record chooses
+none, and the costs below are the analysis's qualitative expectations, not
+measurements:
 
-1. **The MSP as an accountable trusted observer.** Trusted party: the MSP,
-   admitted and named in the DE (`observed_by`). A malicious MSP could still
-   fabricate or withhold a handover; the binding makes that attributable,
-   not impossible. The event clock is the MSP's `server_time`. Cost: the
-   lowest — one retained receipt. Remaining assumption: no collusion between
-   the MSP and the party the fabrication favours, and no censorship the
-   sender cannot detect.
-2. **A handover proof authenticated independently of the MSP.** Trusted
-   party: the recipient device, whose key signs the acknowledgement the DE
-   rests on. A malicious MSP could still withhold or delay, but not
-   fabricate. The event clock becomes contestable: the device's instant is
-   client-declared, and the profile has rejected client clocks for S2 once
-   already. Cost: availability and retry semantics at the device, and a
-   second retained artefact. Remaining assumption: an honest device
-   implementation, and a resolution for the offline recipient.
-3. **The handover inside the RDP's trust boundary.** Trusted party: the
-   qualified RDP, which then operates or co-locates the delivery service. A
-   malicious MSP disappears from the evidence path, at the price of the
-   separation this record introduces: transport and evidence stop being
-   separable markets. The event clock is the RDP's. Cost: the highest, in
-   deployment freedom. Remaining assumption: the RDP's honesty, which the
-   design already assumes for the seal.
+1. **The MSP as an accountable trusted observer.** The MSP stays the transport
+   provider and the sole witness of the handover, but it is identified,
+   admitted, named in the DE (`observed_by`) and subject to assurance and
+   audit. What a malicious MSP could still cause: a fabricated or withheld
+   handover — attributable, no longer anonymous, but possible. Event clock:
+   the MSP's `server_time`. Cost: governance and audits, retention of the
+   receipt and its history so a challenge works without the MSP online,
+   retries and reconciliation. Remaining assumption: the MSP's honesty for
+   the decisive fact; the gain is verifiable accountability, not new
+   independent proof.
+2. **An independent endpoint proof.** The MSP stays the transport provider;
+   the recipient's wallet adds an application-level acknowledgement, signed
+   with its own key over the bytes it received, the message and device
+   identity, the RDP it is for and a freshness context, and sends it to the
+   RDP over an end-to-end authenticated path — directly, not through the MSP.
+   What a malicious MSP could still cause: withholding or delaying the bytes,
+   but not inventing the decisive input. Event clock: the RDP's, which
+   changes what "timely" means — an acknowledgement the RDP receives and
+   verifies after the deadline counts as late even if the device received the
+   bytes earlier, a semantic change to declare, not a detail; a different
+   temporal-proof protocol would be a further project. Cost: a signature and
+   its verification, a control channel and an outbox at the wallet with
+   persistent retries, the RDP's deduplication index, an availability
+   dependency on the RDP for the decisive fact, and a freshness challenge that
+   survives lost responses and failover. Remaining assumption: an honest
+   endpoint — the acknowledgement is a wallet statement, not proof of reading
+   by a dishonest device.
+3. **The handover inside the RDP's trust boundary.** The point that
+   authenticates the recipient, transfers the ciphertext and observes the
+   application-level acknowledgement comes under the RDP's control; the MSP
+   **keeps storage and queues**, and the RDP verifies the digest before
+   serving the bytes. Control must be effective — a co-located or renamed
+   delivery service is not this option, and a completed TLS connection or a
+   write is not the application-level confirmation; the handover point and
+   the authenticated principal have to be defined. What a malicious MSP could
+   still cause: nothing decisive for S2; the verifier now trusts the RDP's
+   testimony, which the design assumes already. Event clock: the RDP's.
+   Cost: on the data plane — RDP capacity, connections, backpressure,
+   possible ciphertext copies, and the RDP in the path of every delivery so
+   that its outage blocks them all; in return, reconciliation inside one
+   operational boundary. Remaining assumption: the RDP's honesty; and the
+   S3/S4 confirmations gain no independence if their channel stays delegated
+   to the MSP.
 
 The analysis recommends the second *if* resistance to an MSP acting alone is
-to be claimed. Nothing in the specification claims that resistance, and no
-model is selected.
+to be claimed, and the third where the RDP already controls the data path and
+an interoperable wallet proof is not practicable. Nothing in the specification
+claims that resistance, and no model is selected.
 
 ## Trade-off
 

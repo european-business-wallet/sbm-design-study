@@ -94,7 +94,7 @@ def test_the_level_is_the_baseline_and_the_reason_is_recorded():
     note = " ".join(REGISTRY["floor"]["$comment"].split())
     assert "adds no cryptographic STRENGTH" in note
     assert "uniform ENFORCEMENT" in note
-    assert "would exclude software-only wallets" in note
+    assert "would exclude implementations that support only the mandatory baseline suite" in note
 
 
 def test_two_creators_with_the_same_signed_inputs_decide_alike():

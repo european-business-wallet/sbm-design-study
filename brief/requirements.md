@@ -14,16 +14,10 @@ so that the two are not mistaken for each other.
 that correction is worth more to the study than anything else in this
 package. The specification's own compliance mapping, clause by clause with an
 implementation conformance statement, is in the TS-shaped document
-(`etsi/TS-SBM-QERDS-Binding-v0.1.md`); this list is the starting point, the TS
+([`etsi/TS-SBM-QERDS-Binding-v0.1.md`](../etsi/TS-SBM-QERDS-Binding-v0.1.md)); this list is the starting point, the TS
 is where the mapping is made and can be checked.
 
-**Sources.** Regulation (EU) No 910/2014 as amended, consolidated text of
-18 October 2024, Articles 3(36), 43 and 44 · Commission Implementing
-Regulation (EU) 2025/1944, Annex I (ETSI EN 319 521 adapted, `REQ-*`
-identifiers) and Annex II (the EN 319 522 series) · ETSI EN 319 521 and
-EN 319 522 parts 1 to 4 · the European Business Wallet proposal, COM(2025)
-838 of 19 November 2025, Annex points 11 and 12 · RFC 9420 (MLS) and the
-ENISA Agreed Cryptographic Mechanisms, for the security properties.
+**Sources.** [Regulation (EU) No 910/2014 as amended](https://eur-lex.europa.eu/eli/reg/2014/910/2024-10-18/eng), consolidated text of 18 October 2024, Articles 3(36), 43 and 44 · [Commission Implementing Regulation (EU) 2025/1944](https://eur-lex.europa.eu/eli/reg_impl/2025/1944/oj/eng), Annex I (ETSI EN 319 521 adapted, `REQ-*` identifiers, quoted in this list by their clause) and Annex II (the EN 319 522 series) · ETSI [EN 319 521](https://www.etsi.org/deliver/etsi_en/319500_319599/319521/) and [EN 319 522 parts 1 to 4](https://www.etsi.org/deliver/etsi_en/319500_319599/) · the European Business Wallet proposal, [COM(2025) 838](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:52025PC0838) of 19 November 2025, Annex points 11 and 12 · [RFC 9420](https://www.rfc-editor.org/rfc/rfc9420) (MLS) and the [Agreed Cryptographic Mechanisms](https://www.sogis.eu/documents/cc/crypto/SOGIS-Agreed-Cryptographic-Mechanisms-1.3.pdf) of SOG-IS (version 1.3), for the security properties. Where a row abbreviates a provision, the provision governs; the rows for the CIR quote the options the provision lists.
 
 ## A — Regulation (EU) No 910/2014: the qualified registered delivery service
 
@@ -45,13 +39,14 @@ ENISA Agreed Cryptographic Mechanisms, for the security properties.
 | ID | Source | Category | Requirement | Kind |
 |---|---|---|---|---|
 | C1 | REQ-ERDS-5.1.1-01 | Security | Availability, integrity and confidentiality of user content while handled by the service, with ACM-approved cryptography | external |
-| C2 | REQ-QERDS-5.2.1.1-01 | Identity | Recipient identity proofing at very high confidence: physical presence, eID at high, the Wallet, or a qualified signature or seal | external |
-| C3 | REQ-QERDS-5.2.1.1-01A | Identity | Sender identity proofing: the Wallet, eID at substantial on prior physical presence, or a certificate for a non-natural person | external |
-| C4 | REQ-QERDS-5.2.2-03, -03A | Identity | Authentication binding: two-factor, Wallet or eID, mutual TLS for a non-natural person, or a qualified signature or seal; very high for the recipient | external |
+| C2 | [REQ-QERDS-5.2.1.1-01](https://eur-lex.europa.eu/eli/reg_impl/2025/1944/oj/eng) | Identity | **Recipient identity proofing** at a very high level of confidence, directly or through a third party, by one or a combination of: (a) physical presence of the natural person or of the legal person's authorised representative; (b) remotely, a notified eID at assurance level *high*, or the European Digital Identity Wallet; (c) a certificate of a qualified electronic signature or seal; (d) other methods giving a very high level of confidence | external |
+| C3 | [REQ-QERDS-5.2.1.1-01A](https://eur-lex.europa.eu/eli/reg_impl/2025/1944/oj/eng) | Identity | **Sender identity proofing**, directly or through a third party, by one or a combination of: (a) physical presence of the natural person or of the legal person's authorised representative; (b) remotely, the Wallet, or a notified eID at assurance level *substantial* issued on prior physical presence; (c) a certificate of an advanced electronic signature or seal issued to the natural person or to the legal person's authorised representative under a Normalised Certificate Policy (ETSI EN 319 411-1); (d) other methods giving a very high level of confidence | external |
+| C4a | [REQ-QERDS-5.2.2-03](https://eur-lex.europa.eu/eli/reg_impl/2025/1944/oj/eng) | Identity | **Sender authentication**, bound to the identity proofed under C3, by one of: (a) two-factor authentication; (b) the Wallet, or a notified eID at *high* or *substantial*; (c) mutual TLS with a certificate issued to the sender under NCP; (d) a digital signature supported by an NCP certificate; (e) other means ensuring the identified sender's authentication | external |
+| C4b | [REQ-QERDS-5.2.2-03A](https://eur-lex.europa.eu/eli/reg_impl/2025/1944/oj/eng) | Identity | **Recipient authentication**, bound to the identity proofed under C2, by one of, provided the means give a very high level of confidence: (a) multi-factor authentication; (b) the Wallet, or a notified eID at *high* or *substantial*; (c) a certificate of a qualified electronic signature or seal; (d) other means ensuring the identified recipient's authentication | external |
 | C5 | REQ-ERDS-5.4.1-06 | Evidence | Evidence generated for the registered-delivery events of EN 319 522-1 clause 6: submission, relay, consignment, handover and the rest | external |
 | C6 | REQ-ERDS-5.4.1-08 | Evidence | Evidence complying with the semantics of EN 319 522-2 clause 8: event codes, evidence identifiers, policy identifiers | external |
 | C7 | REQ-ERDS-5.4.1-07 | Evidence | Archival of issued evidence, or of evidence digests | external |
-| C8 | REQ-ERDS-7.5-01A | Cryptography | All cryptographic techniques taken from the ENISA Agreed Cryptographic Mechanisms | external |
+| C8 | REQ-ERDS-7.5-01A | Cryptography | All cryptographic techniques taken from the Agreed Cryptographic Mechanisms | external |
 | C9 | REQ-ERDSP-7.5-03 | Cryptography | The evidence-seal key held in a certified secure cryptographic device | external |
 | C10 | REQ-ERDSP-7.8-04 | Cryptography | State-of-the-art transport-layer encryption per the ACM | external |
 | C11 | EN 319 522-2 clause 9 | Interoperability | A common service interface across providers: routing, trust establishment, capability management | external |
@@ -91,7 +86,7 @@ obligation.
 | E9 | the study | Function | Asynchronous store-and-forward: the parties need not be online at the same time | the study's own |
 | E10 | ACM; IETF | Cryptography | Cryptographic agility with a credible post-quantum path for content encryption | external property, the study's requirement |
 | E11 | the study | Privacy | Metadata minimisation towards the providers | the study's own |
-| E12 | the study | Evidence | Evidence without content access: the provider certifies digests it cannot read | the study's own — its central claim |
+| E12 | the study | Evidence | Evidence without content access: the provider certifies digests of content it cannot read | the study's own — its central claim |
 | E13 | the study | Evidence | Defined evidence-validity semantics on endpoint credential compromise: validity at the act, disputed windows reviewable | the study's own |
 
 ## E — Functional and ecosystem requirements

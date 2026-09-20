@@ -6,7 +6,7 @@ question: What must a verifier hold, years later, besides the Evidence Package �
 profile: all; the relay hop evidence in the package exists from profile 2
 status: current
 references: docs/production-verifier-architecture.md (this figure's note); docs/required-properties.json; scripts/bundle_lint.py; README "What a green bar means"; decisions R6-W1 (maximality), R11-X3 (live lease), R12-X4 (formation inputs)
-alt: Three columns feeding one verdict. The Evidence Package carries the Sending Evidence, the outcome (DE, NDE or RE), the RDP chain with per-hop evidence, and optionally change records, non-operative state records and disputes. Beside it, the retained material that must accompany it: the policy chain, the counterparty roster, the retained GroupContext, the formation inputs, the suite registry and the federation register, each with the gap rule reported when it is absent, plus optional Delivery Service receipts and grade reveals. On the right, what is configured rather than retained: the EU Trusted Lists for qualification and the Federation Authority anchor for admission; the demo store: demo keys for both for the first only. The verdict is one of three: a pass, INCOMPLETE with exit code 3 when a required property cannot be established, or FAIL with exit code 1 for a violation. Two facts no retained material can establish are marked: that no later policy version existed, and that an observation reported by a Delivery Service is true.
+alt: Three columns feeding one verdict. The Evidence Package carries the Sending Evidence, the outcome (DE, NDE or RE), the RDP chain with per-hop evidence, and optionally change records, non-operative state records and disputes. Beside it, the retained material that must accompany it: the policy chain, the counterparty roster, the retained GroupContext, the formation inputs, the suite registry and the federation register, each with the gap rule reported when it is absent, plus optional Delivery Service receipts and grade reveals. On the right, what is configured rather than retained: the EU Trusted Lists for qualification and the Federation Authority anchor for admission; the demo store holds demonstration keys for both roles in one file. The verdict is one of three: a pass, INCOMPLETE with exit code 3 when a required property cannot be established, or FAIL with exit code 1 for a violation. Two facts no retained material can establish are marked: that no later policy version existed, and that an observation reported by a Delivery Service is true.
 -->
   <title>What a verifier must hold, besides the package</title>
   <desc>The Evidence Package, the retained material that must accompany it with the gap rule for each, and the configured trust anchors — feeding one of three verdicts: pass, INCOMPLETE (exit 3) or FAIL (exit 1).</desc>
@@ -52,7 +52,7 @@ alt: Three columns feeding one verdict. The Evidence Package carries the Sending
     <text x="356" y="336">· a reveal, for a disputed grade or mandate</text>
     <text x="368" y="351" font-size="10.5" fill="#64748b">discloses that class to the dispute's parties</text>
   </g>
-  <text x="505" y="374" text-anchor="middle" font-size="11" fill="#64748b">the claimant produces these; each is sealed, or bound by a committed digest</text>
+  <text x="505" y="374" text-anchor="middle" font-size="11" fill="#64748b">produced by the claimant; each sealed, or bound by a committed digest</text>
 
   <!-- configured -->
   <rect x="696" y="56" width="280" height="240" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.6"/>
@@ -63,12 +63,11 @@ alt: Three columns feeding one verdict. The Evidence Package carries the Sending
     <text x="712" y="143">· the Federation Authority's anchor</text>
     <text x="724" y="158" font-size="10.5" fill="#64748b">admission — without it the register</text>
     <text x="724" y="172" font-size="10.5" fill="#64748b">cannot be authenticated (I6)</text>
-    <text x="712" y="196">· the plaintext — claimant content, not trust</text>
-    <text x="724" y="211" font-size="10.5" fill="#64748b">supplied only for a claim about content</text>
   </g>
-  <text x="836" y="244" text-anchor="middle" font-size="11" fill="#64748b">the demo store: demo keys for both</text>
-  <text x="836" y="260" text-anchor="middle" font-size="11" fill="#64748b">qualification and admission roles</text>
-  <text x="836" y="282" text-anchor="middle" font-size="11" fill="#64748b">(and for the demo anchor)</text>
+  <text x="836" y="230" text-anchor="middle" font-size="11" fill="#64748b">the demo store holds demo keys</text>
+  <text x="836" y="246" text-anchor="middle" font-size="11" fill="#64748b">for both roles, in one file</text>
+  <text x="836" y="318" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#1f2937">Supplied by a claimant, not configured</text>
+  <text x="836" y="334" text-anchor="middle" font-size="10.5" fill="#64748b">the plaintext, only for a claim about content</text>
 
   <!-- arrows to verdict -->
   <line x1="169" y1="298" x2="330" y2="446" stroke="#475569" stroke-width="1.3" marker-end="url(#a)"/>

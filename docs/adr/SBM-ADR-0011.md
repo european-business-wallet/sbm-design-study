@@ -11,7 +11,7 @@ choice: >-
   a group decodes under its pinned registry revision; a suite decision recomputes only from its committed inputs ·
   the umbrella §8.3; the I-D; TS clause 6
 alternative: >-
-  a stored `valid_until` and an `as_of` endpoint — superseded; a signed head assertion — rejected
+  a mutable stored `valid_until`, and a verdict that depends on a live history endpoint — superseded (as-of retrieval itself is compatible); a signed head assertion — rejected
 benefit: >-
   a correct historical verdict survives later change
 cost: >-

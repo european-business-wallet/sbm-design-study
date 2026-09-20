@@ -310,6 +310,9 @@ def scan_figures():
         rel = svg.relative_to(ROOT).as_posix()
         problems += [(rel, f"'{m}' in figure text: {label[:100]}")
                      for label, m in _figure_hits(figure_text(svg, None))]
+        canonical = DIAGRAMS / svg.name
+        if canonical.exists() and canonical.read_bytes() != svg.read_bytes():
+            problems.append((rel, f"differs from the canonical docs/diagrams/{svg.name} — copy it, do not edit it"))
     return problems
 
 
@@ -324,7 +327,8 @@ def _figure_hits(labels):
                 break
 
 
-LINK_FILES = ["README.md", "CONTRIBUTING.md", "Secure-Business-Messaging-Profile.md"]
+LINK_FILES = ["README.md", "CONTRIBUTING.md", "Secure-Business-Messaging-Profile.md",
+              "brief/executive-brief.md", "brief/requirements.md"]   # the public brief, where one exists
 _FENCE = re.compile(r"^\s*(```|~~~)")
 
 
