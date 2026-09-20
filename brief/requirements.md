@@ -105,10 +105,6 @@ obligation.
 | F7 | the study | Conformance | An executable, machine-checkable conformance bar that any implementer can run | the study's own |
 | F8 | the study | Adoption | A staged deployment path: a pilot without the full institutional stack | the study's own |
 
-**What is not here.** A comparison of this design with other candidate
-solutions was part of an earlier edition of this package as a workbook. It
-was withdrawn on 20 September 2026 because its judgments rested on an older
-edition of the specification, on private reference folders, and on a scoring
-that added a specified property to a deployed one; it is kept in the study's
-archive and is not part of this snapshot. Any comparison of candidates is for
-the expert group to make on terms it sets.
+**What is not here.** This package does not rank or compare candidate
+solutions, this one included; any comparison of candidates is for the expert
+group to make, on terms it sets.

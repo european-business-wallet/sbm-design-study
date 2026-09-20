@@ -4,14 +4,17 @@
 # Changelog
 
 The history of the **artefacts** — what changed on the wire, in the schemas and
-in the contracts. The current version of every artefact is held in
-[`versions.json`](versions.json), enforced by `make versions`, and never
-restated by hand.
+in the contracts. This is history, not a second status page: what the current
+artefacts establish is said where it is checked — the README's
+[*What a green bar means*](README.md#what-a-green-bar-means--and-what-it-does-not),
+[`OPEN-ITEMS.md`](OPEN-ITEMS.md) for what is not proven, and the
+[decision records](docs/adr/) for why the design is the way it is. The
+current version of every artefact is held in [`versions.json`](versions.json),
+enforced by `make versions`, and never restated by hand; the tables below are
+the versions each dated edition was cut with.
 
-This snapshot was exported for review. The design study's internal development
-record is not reproduced here; [`OPEN-ITEMS.md`](OPEN-ITEMS.md) states what the
-current artefacts do and do not establish, and the
-[decision records](docs/adr/) state why the design is the way it is.
+This snapshot was exported for review; the design study's internal development
+record is not reproduced here.
 
 ---
 
@@ -29,48 +32,6 @@ current artefacts do and do not establish, and the
 | Federation register contract (OpenAPI) | **3.0.0** (new since the previous snapshot) |
 | Profile-2 companion contracts (wallet–RDP, delivery service, relay) | **9.0.0** |
 | TS — QERDS binding | **v0.35** |
-
-### What the current artefacts establish
-
-- **Evidence is bound to the transmitted octets.** `envelope_hash` commits to
-  the exact serialised MLS message accepted for transport, and `mls_state` to
-  the serialised group context — both computed by the provider from what it
-  actually received, not copied from a sender assertion.
-- **Addressing is explicit and signed.** Sender and recipient addresses are
-  required, are part of the tuple the sending wallet signs, and must name the
-  same legal entity the evidence names. Omission is a typed rejection, never a
-  silent fallback to a default policy.
-- **The acceptance policy in force at the act is recomputed**, not asserted. A
-  published policy is immutable; each version links backwards to its
-  predecessor by content digest; evidence pinned to a superseded version fails.
-  That no *later* version existed is reported as unproven, never as passed.
-- **Confirmations resolve historically, one act per member.** A member's
-  status and device key are resolved as they stood at the moment of the act;
-  each confirmation is one member's act, distinct members contribute until the
-  policy is satisfied, a verified digest mismatch or refusal ends the message,
-  and a reveal is dispute material that changes no state.
-- **Each delivery grade is dated by its own event.** The availability grade by
-  the delivery service's server-observed receipt of the acknowledged handover;
-  the verification and acceptance grades by the instant the recipient-side
-  provider received and verified the completing confirmation, on its own
-  clock, with every contributing act preceding it.
-- **Federation admission is a separate verifier input.** A membership register
-  with its own contract and its own signer records each participant's
-  admission history; every provider the evidence names must have been admitted
-  at the instant of its act, the register is authenticated at ingress against a
-  configured anchor, and a missing register or anchor leaves admission
-  unestablished rather than assumed.
-- **Delivery grades are declared per content class** — availability,
-  verification, acceptance — with a privacy-preserving commitment binding a
-  delivery to the recipient's published declaration, and a dispute path when
-  the revealed class does not match.
-- **Confidentiality boundaries can coincide with organisational roles**, with
-  the audience verified cryptographically before sending and no invisible
-  access.
-- **Profile-2 is contract-defined.** Wallet-to-provider, delivery service and
-  provider relay are published OpenAPI contracts; provider submission is
-  authenticated by mutual TLS under a canonical provider identity; principals
-  are whole — entity, member and device — never a member or device label alone.
 
 ### What changed on the wire since the previous snapshot (2026-08-01)
 
@@ -126,14 +87,9 @@ current artefacts do and do not establish, and the
 
 ### Verification
 
-Bundle verification returns three verdicts — `[OK]` (0), INCOMPLETE (3) and
-`[FAIL]` (1). Run with the demonstration trust store, the shipped bundles exit
-**3** with two unproven properties, both the completeness of a retained policy
-chain, which cannot be established locally; run without a trust store they exit
-3 with a third, federation admission, because the register's authenticity
-cannot be established without an anchor. The verifier reports both rather than
-passing; the README's [*three verdicts*](README.md#the-three-verdicts-and-the-two-invocations)
-section shows both invocations and what each says.
+The shipped bundles verify INCOMPLETE at this edition, by design; the README's
+[*three verdicts*](README.md#the-three-verdicts-and-the-two-invocations)
+section shows both invocations and what each leaves unproven.
 
 ---
 

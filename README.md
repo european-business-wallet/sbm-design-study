@@ -7,38 +7,30 @@
 set of requirements — a message between two organisations that carries the legal
 effect of registered delivery, across borders and across providers, while its
 content stays end-to-end encrypted — and works out what a system satisfying them
-would have to look like. What is in this repository is the result of taking that
-seriously: a specification set, a reference implementation, and the machinery
-that checks the two against each other.
+would have to look like: a specification set, a reference implementation, and
+the machinery that checks the two against each other. Where a question is open,
+this repository names it rather than choosing quietly, and the choices it does
+make are written down with what they cost.
 
-The purpose is to bring the architectural and technical problems into focus,
-including the ones that turn out to have no settled answer. Where a question is
-open, this repository names it rather than choosing quietly, and the choices it
-does make are written down with what they cost.
-
-> **⚠️ Exploratory design study — not an official proposal.** An independent
+> **Exploratory design study — not an official proposal.** An independent
 > technical exploration of how existing EU building blocks — Regulation (EU) No
 > 910/2014 as amended by Regulation (EU) 2024/1183, qualified electronic
 > registered delivery, IETF MLS and the EUDI Wallet — *could* be composed into a
-> secure business-messaging profile. It is **not** an official proposal,
-> deliverable, or position of the European Commission, any Member State, or any
-> standards body, and it confers no status; it is shared to invite technical
-> discussion.
+> secure business-messaging profile. It is not an official proposal, deliverable
+> or position of the European Commission, any Member State or any standards
+> body, and it confers no status; it is a draft, shared to invite technical
+> discussion. Interoperability between independent implementations, and the
+> qualification of any operating provider, are **not** demonstrated here — see
+> [*What a green bar means*](#what-a-green-bar-means--and-what-it-does-not).
 
-> **Status:** draft, exploratory. Not a Commission position. Not a
-> standards-track document. Interoperability between independent
-> implementations, and qualification of any operating provider, are **not**
-> demonstrated here — see [*What a green bar means*](#what-a-green-bar-means--and-what-it-does-not).
-
-**Reading this for the first time?** The six sections below go from the problem
-to the open questions, each one making the previous more precise. If you are
-reviewing the specification rather than meeting it, the
-[reviewer guide](docs/REVIEWER_GUIDE.md) is the shorter route: one short path
-and a branch per specialism. If you want the idea in twenty minutes, the
-[executive brief](brief/executive-brief.md) is written for policy readers, and
-the [requirements list](brief/requirements.md) is the baseline the study
-started from, each requirement with its source. What this design does **not**
-prove on its own is collected in [`OPEN-ITEMS.md`](OPEN-ITEMS.md).
+**Where to start.** The six sections below go from the problem to the open
+questions. Reviewing the specification rather than meeting it? The
+[reviewer guide](docs/REVIEWER_GUIDE.md) is the shorter route, one short path
+and a branch per specialism. The [executive brief](brief/executive-brief.md)
+gives the idea in twenty minutes for policy readers; the
+[requirements list](brief/requirements.md) is the baseline the study started
+from, each requirement with its source; what the design does **not** prove on
+its own is collected in [`OPEN-ITEMS.md`](OPEN-ITEMS.md).
 
 ---
 
@@ -48,141 +40,113 @@ Registered delivery is what makes a message opposable: a qualified provider
 attests that it was sent, that it reached an identified recipient, and when.
 Traditionally that attestation rests on a provider that handles the content,
 which is why registered delivery and end-to-end encryption have been treated as
-alternatives — you could have the evidence or the confidentiality, not both.
+alternatives. The load-bearing proposition of this exercise is that they are
+not: **evidence can rest on cryptographic digests of the content and of the
+group state rather than on the content itself**, so a provider can attest what
+it observed without ever being able to read what it carried. That proposition
+is concrete, it is executable, and it is untested in law.
 
-The load-bearing proposition of this exercise is that they are not alternatives.
-**Evidence can rest on cryptographic digests of the content and of the group
-state rather than on the content itself**, so a provider can attest what it
-observed without ever being able to read what it carried. That proposition is
-concrete, it is executable, and it is untested in law.
+The second problem is that an opposable message between two organisations is
+not a message between two people. It has to reach an *entity*, with devices,
+roles and a records function; it has to be addressed through a directory that
+survives a change of provider; and who acted — which device, under whose
+authority, at which instant — has to be answerable years later from retained
+material alone.
 
-The second problem the exercise takes on is that an opposable message between
-two organisations is not a message between two people. It has to reach an
-*entity*, which has devices, roles and a records function; it has to be
-addressed through a directory that survives a change of provider; and the
-question of who acted — which device, under whose authority, at which instant —
-has to be answerable years later from retained material alone.
-
-What the exercise deliberately leaves out is as much a part of its shape as what
-it takes on. It addresses **homogeneous federations**: every participant runs
-this profile, and a gateway to a different registered-delivery system is not
-designed here. It carries a message between **two entities**, not among many:
-multiparty groups are excluded and recorded as future study. It does not mandate
-a wallet implementation, a PKI hierarchy or a storage technology. And it
-establishes neither the qualification of any operating provider nor the legal
-effect of the evidence it defines; whether the statutory presumption attaches is
-a legal question this repository states rather than answers.
-
-This profile is the first phase of a phased idea — registered entity messaging
-first, then registered attestation exchange, then a registered presentation
-profile, then governed agentic interactions — each reusing the same identity
-model, channel and evidence layer
-([vision and context](docs/vision-and-context.md)). The later phases are not
-designed here, and their absence is deliberate rather than an omission; what is
-specified today of the agent phase is its first subset, the optional agent
-profile's mandates and evidence, while the cross-deployment agent interface is
-open (A7).
+What the exercise leaves out is part of its shape. It addresses **homogeneous
+federations** — every participant runs this profile, and a gateway to another
+registered-delivery system is not designed. It carries a message between **two
+entities**; multiparty groups are future study. It mandates no wallet
+implementation, PKI hierarchy or storage technology. And it establishes neither
+the qualification of any provider nor the legal effect of the evidence it
+defines: whether the statutory presumption attaches is a legal question this
+repository states rather than answers. The profile is the first phase of a
+phased idea — entity messaging, then attestation exchange, a registered
+presentation profile and governed agentic interactions
+([vision and context](docs/vision-and-context.md)); the later phases are not
+designed here, and the cross-deployment agent interface is open (A7).
 
 ## 2. What it takes as given
 
-The requirements are the ones formalised in the specification's own scope
+The requirements are those formalised in the specification's own scope
 ([umbrella §0](Secure-Business-Messaging-Profile.md#0-scope)); this section
 summarises them and introduces none.
 
-**What the specification is required to define.** A unique identifier scheme for
-economic operators and public-sector bodies, assignable only by EU-listed
-qualified trust service providers (QEAA) and public-sector attestation
-providers (PubEAA). A directory and resolution model with its governance
-framework and its linkage to the existing company registers. A messaging profile
-binding IETF MLS to the business-wallet context, with registered delivery
-providers operating under a defined trust framework and a standardised evidence
-model. The integration points with the EUDI Wallet architecture, the identifier
-carried as an attestation and the evidence storable in the wallet. And the
-validation rules, conformance requirements and interoperability guidance that
-make all of it checkable.
+**Required to define.** A unique identifier scheme for economic operators and
+public-sector bodies, assignable only by EU-listed qualified trust service
+providers and public-sector attestation providers; a directory and resolution
+model, its governance, and its linkage to the existing company registers; a
+messaging profile binding IETF MLS to the business-wallet context, with
+registered delivery providers under a defined trust framework and a
+standardised evidence model; the integration points with the EUDI Wallet; and
+the validation rules, conformance requirements and interoperability guidance
+that make all of it checkable.
 
-**What it assumes.** That registered delivery providers are admitted, qualified
-and supervised rather than joining freely, because the evidence layer's legal
-weight depends on who operates it — and that a messaging service provider,
-which need not be qualified, is admitted to the federation all the same. That the recipient's organisation can publish signed statements
-about itself — its providers, its policy, its devices — and that a counterparty
-can read them before sending. That a qualified timestamp is available from
-outside the protocol. And that a wallet can hold a key the entity is willing to
-be bound by.
+**Assumed.** That registered delivery providers are admitted, qualified and
+supervised rather than joining freely, and that a messaging service provider,
+which need not be qualified, is admitted to the federation all the same. That
+an organisation can publish signed statements about its providers, its policy
+and its devices, which a counterparty reads before sending. That a qualified
+timestamp is available from outside the protocol, and that a wallet can hold a
+key the entity is willing to be bound by.
 
-**What it does not set out to do.** It mandates no particular wallet
-implementation, PKI hierarchy or storage technology. It does not define a
-transport-security underlay: MLS is used as the end-to-end layer, not beneath
-one. It does not attempt to make every deployment identical — the deployment
-profiles in the umbrella's Annex P range from a single co-located provider with
-a static directory to a full four-corner federation — and it does not require
-the optional capabilities, so a deployment that adopts neither confidentiality
+**Not attempted.** No transport-security underlay: MLS is the end-to-end layer,
+not beneath one. No single deployment shape: the profiles in the umbrella's
+Annex P range from one co-located provider with a static directory to a full
+four-corner federation, and a deployment that adopts neither confidentiality
 scopes nor the agent profile is a complete one.
 
 ## 3. The standards, and what they ask of the service
 
-Three layers of external material constrain the design, and the exercise treats
-them as constraints to satisfy rather than as references to cite.
-
-**The registered-delivery service itself.** Regulation (EU) No 910/2014 as
-amended, Article 44(1), sets the requirements a qualified electronic registered
-delivery service must meet, and Article 43(2) attaches the presumption to data
-sent and received through one; Commission Implementing Regulation (EU) 2025/1944
-sets the technical specifications. The ETSI **EN 319 522** series is where those
-requirements become an architecture: part 1 for the framework and definitions,
-part 2 for the semantic contents — the event and evidence model this profile
-maps onto — part 3 for formats, and part 4-1 for the message-delivery binding
-to AS4, which this study's MLS binding sits beside rather than inside.
-**EN 319 521** states the policy and security requirements on the provider,
-**EN 319 401** the general ones for any trust service, and **TS 119 312** the
-cryptographic suites. The TS-shaped document in this repository is where the
-mapping is made clause by clause, with an implementation conformance statement.
+**The registered-delivery service.** Regulation (EU) No 910/2014 as amended,
+Article 44(1), sets the requirements a qualified electronic registered delivery
+service must meet, and Article 43(2) attaches the presumption to data sent and
+received through one; Commission Implementing Regulation (EU) 2025/1944 sets
+the technical specifications. The ETSI **EN 319 522** series is where those
+requirements become an architecture — part 2 carries the event and evidence
+model this profile maps onto, part 4-1 the AS4 binding this study's MLS binding
+sits beside rather than inside — with **EN 319 521**, **EN 319 401** and **TS
+119 312** for the provider, trust-service and cryptographic requirements. The
+TS-shaped document in this repository makes the mapping clause by clause, with
+an implementation conformance statement.
 
 **The protocol layer.** MLS (**RFC 9420**) is the end-to-end layer, profiled
-here rather than reinvented. The evidence objects are deterministic CBOR (**RFC
-8949 §4.2**) sealed with COSE (**RFC 9052**); the qualified timestamp is an RFC
-**3161** token over the seal. MLS architecture considerations are **RFC 9750**.
+rather than reinvented. The evidence objects are deterministic CBOR (**RFC 8949
+§4.2**) sealed with COSE (**RFC 9052**); the qualified timestamp is an RFC
+**3161** token over the seal.
 
-**Three things that are easy to run together, and are not the same.** *Design
-alignment* means the specification is written against the standards named above
-and says where it maps onto them. *Verified conformance* means a gate in this
-repository executes a check and it passes — that is what `make conformance`
-establishes, and it establishes it about the artefacts here and nothing else.
-*Qualification* is a status an operating provider holds, granted by a
-supervisory body against a conformity assessment, and nothing in a repository
-can confer it. The claim matrix in
-[*What a green bar means*](#what-a-green-bar-means--and-what-it-does-not) keeps
-the five distinct claims apart, and says which two are established.
-
-One mapping is worth flagging rather than asserting: the relay-stage mapping
-onto EN 319 522 is **this study's own reading** and has not been confirmed by
-the standards owner. It is open question A8 on the
+**Three things that are not the same.** *Design alignment*: the specification
+is written against the standards above and says where it maps onto them.
+*Verified conformance*: a gate in this repository executes a check and it
+passes — what `make conformance` establishes, about the artefacts here and
+nothing else. *Qualification*: a status an operating provider holds, granted
+by a supervisory body, which nothing in a repository can confer. The claim
+matrix under [*What a green bar means*](#what-a-green-bar-means--and-what-it-does-not)
+keeps the five claims apart. One mapping is flagged rather than asserted: the
+relay-stage mapping onto EN 319 522 is this study's own reading, not confirmed
+by the standards owner — question A8 on the
 [review agenda](docs/REVIEW_AGENDA.md).
 
 ## 4. The architecture that answers them
 
 Four parties and one instrument each. The **wallet** holds the entity's keys and
-produces the acts the entity is bound by. The **messaging service provider**
-is each side's local delivery service, carrying ciphertext it cannot read. The
+produces the acts the entity is bound by. The **messaging service provider** is
+each side's local delivery service, carrying ciphertext it cannot read. The
 **registered delivery provider** is the qualified party that seals evidence;
-between two organisations there are two of them, and the relay between them runs
-provider to provider. The **directory** resolves an identifier to the provider,
-the policy and the devices that serve it at a given moment.
+between two organisations there are two of them, and the relay runs provider to
+provider. The **directory** resolves an identifier to the provider, the policy
+and the devices that serve it at a given moment.
 
-Underneath, the separation that makes the whole thing work is between *what was
-said* and *what can be attested*. The content travels in an MLS group — one
-group per entity pair, every device a leaf, so a message is addressed to an
-organisation and delivered to its devices. The evidence travels beside it as
-sealed objects that carry digests, identifiers and instants, never content: a
-submission, a delivery, a non-delivery or a refusal, and an evidence package
-that binds a whole exchange. What a provider attests is what it observed; what
-the recipient's wallet confirms is what the recipient did. The two are separate
-acts by separate parties, and the architecture's job is to keep them separable
-years later.
-
-Two diagrams carry this: the
+Underneath, the separation that makes it work is between *what was said* and
+*what can be attested*. The content travels in an MLS group — one group per
+entity pair, every device a leaf. The evidence travels beside it as sealed
+objects that carry digests, identifiers and instants, never content: a
+submission, a delivery, a non-delivery or a refusal, and a package that binds a
+whole exchange. What a provider attests is what it observed; what the
+recipient's wallet confirms is what the recipient did; and the architecture's
+job is to keep the two separable years later. Two diagrams carry this — the
 [four-corner architecture](docs/diagrams/four-corner-architecture-technology-neutral.svg)
-for who talks to whom, and the
+for who talks to whom, the
 [identity and proof map](docs/diagrams/identity-proof-map.svg) for which record
 authorises which key. The authoritative statement is
 [umbrella §7.1](Secure-Business-Messaging-Profile.md#71-technical-architecture-authoritative);
@@ -193,45 +157,35 @@ the compact cross-actor model, including who sees what, is
 
 Thirteen architectural choices determine more of this design than all the rest
 together. Each is an **architecture decision record** under
-[`docs/adr/`](docs/adr/): the context, the requirement it answers, the decision,
-the alternatives actually considered and why they were rejected, the trade-off,
-the consequences, the status of the decision kept apart from the status of its
-implementation, and the normative document that owns it. The
-[decisions index](docs/decisions-index.md) is generated from those records and
-is the one table to read first: the choice, the alternative, the benefit, the
-cost and who pays it, and — separately — whether the choice stands and how far
-it is implemented. The umbrella's own one-page version is
+[`docs/adr/`](docs/adr/) — the requirement it answers, the alternatives
+actually considered, the trade-off, and the status of the decision kept apart
+from the status of its implementation — and the
+[decisions index](docs/decisions-index.md) generated from them is the one table
+to read first; the umbrella's one-page version is
 [§0.1](Secure-Business-Messaging-Profile.md#01-design-trade-offs-informative).
-
-Three records are worth opening before anything else, because they are where a
-first reader most often misreads the design:
+Three records are where a first reader most often misreads the design:
 [SBM-ADR-0007](docs/adr/SBM-ADR-0007.md), why delivery is a wallet confirmation
 by default and availability only a declared grade;
 [SBM-ADR-0004](docs/adr/SBM-ADR-0004.md), why the messaging service provider is
 separated from the registered delivery provider and what that separation does
-and does not protect against; and
-[SBM-ADR-0011](docs/adr/SBM-ADR-0011.md), why every verdict is read from
-retained history rather than live state, and what a retained history cannot
-prove.
+and does not protect against; and [SBM-ADR-0011](docs/adr/SBM-ADR-0011.md), why
+every verdict is read from retained history rather than live state, and what a
+retained history cannot prove.
 
 ## 6. Going deeper, and the questions still open
 
-**The questions this design does not answer** are collected in one place, each
-with the assumption it currently rests on, the claim that depends on it and the
-expertise that would settle it: the
-[review agenda](docs/REVIEW_AGENDA.md). They are not a backlog of defects. They
-are the points at which an architectural choice has not been made, and the
-material around them is written to let a reader disagree with the alternatives
-rather than to hide that a choice is pending. What the design does not prove
-on its own, as opposed to what it has not decided, is in
-[`OPEN-ITEMS.md`](OPEN-ITEMS.md); the two documents name each other's entries
-rather than restating them.
+**The questions this design does not answer** are in one place, each with the
+assumption it currently rests on, the claim that depends on it and the
+expertise that would settle it: the [review agenda](docs/REVIEW_AGENDA.md).
+They are the points at which an architectural choice has not been made, not a
+backlog of defects. What the design does not *prove*, as opposed to what it has
+not decided, is in [`OPEN-ITEMS.md`](OPEN-ITEMS.md); the two documents name
+each other's entries rather than restating them.
 
 **The specification is three documents**, and every normative prose requirement
-lives in exactly one of them. The CDDL, the JSON Schemas, the OpenAPI contracts,
-the registries and the lint catalogue are normative too, each for what it
-describes; the umbrella's *Document map* says which governs what, and what
-happens when two disagree.
+lives in exactly one of them; the CDDL, the JSON Schemas, the OpenAPI
+contracts, the registries and the lint catalogue are normative too, each for
+what it describes, and the umbrella's *Document map* says which governs what.
 
 | Document | Normative for |
 |----------|---------------|
@@ -260,35 +214,12 @@ happens when two disagree.
 | [`docs/OCTET_AUTHORITATIVE_DESIGN.md`](docs/OCTET_AUTHORITATIVE_DESIGN.md) | Why the sealed bytes are authoritative and the JSON a projection, with the options that were rejected. |
 | [`CHANGELOG.md`](CHANGELOG.md) | The history of the artefacts: versions, and what changed on the wire. |
 
-**The conceptual minimum**, if you would rather read the specification directly:
-the architecture and the delivery-semantics choice at
-[umbrella §7.1](Secure-Business-Messaging-Profile.md#71-technical-architecture-authoritative);
-the four delivery states at
-[I-D, *Delivery State Model*](ietf/draft-sbm-mls-erd-00.md#delivery-state-model);
-one evidence round trip at
-[I-D, *Evidence Objects and COSE Packaging*](ietf/draft-sbm-mls-erd-00.md#evidence-objects-and-cose-packaging)
-with [`samples/sample-SE.json`](samples/sample-SE.json),
-[`samples/sample-DE.json`](samples/sample-DE.json) and
-[`samples/sample-EP.json`](samples/sample-EP.json); and scenario 1 of
-[umbrella Annex L](Secure-Business-Messaging-Profile.md#annex-l--communication-scenarios-informative).
-Confidentiality scopes
-([umbrella §8.3a](Secure-Business-Messaging-Profile.md#83a-confidentiality-scope-descriptor-normative-where-present))
-are an advanced capability — skip them on first read.
-
-**To run a pilot**, the minimum is deployment profile 1 of
-[umbrella Annex P](Secure-Business-Messaging-Profile.md#annex-p--deployment-profiles-and-edd-staging-informative):
-a static signed directory, one co-located provider, two wallets, the default
-scope only, and pilot rather than qualified evidence. The reference mock is
-[`scripts/mock_rdp.py`](scripts/mock_rdp.py); validate everything with
-`make conformance`, below. Piloting on localhost? Sealed documents keep their
-canonical `https` URLs — map endpoints wallet-side (Annex P.3).
-
-**Generated, not hand-kept:** [`docs/lint-catalogue.md`](docs/lint-catalogue.md)
-from the rule definitions, [`docs/rule-ownership.md`](docs/rule-ownership.md)
-from the ownership inventory, [`docs/decisions-index.md`](docs/decisions-index.md)
-from the decision records, and [`docs/project-counts.json`](docs/project-counts.json)
-from the tree. Each is checked by a gate that fails when the copy drifts from
-its source.
+Four documents are generated rather than hand-kept, each checked by a gate
+that fails when the copy drifts from its source:
+[`docs/lint-catalogue.md`](docs/lint-catalogue.md),
+[`docs/rule-ownership.md`](docs/rule-ownership.md),
+[`docs/decisions-index.md`](docs/decisions-index.md) and
+[`docs/project-counts.json`](docs/project-counts.json).
 
 ---
 
@@ -308,13 +239,11 @@ what a green bar does and does not mean, and how to send feedback.
 | Profile-2 companion contracts (wallet-RDP / DS / relay) | 9.0.0 |
 | TS (QERDS binding) | v0.35 |
 
-This table is generated-and-checked from [`versions.json`](versions.json), the
-single source of truth: `make versions` (and `tests/test_version_matrix.py`)
-fail if any schema `const`, schema title, CDDL body, sample or table cell drifts
-from it. The discovery documents and the EDD contract version
-**independently** of the evidence family (umbrella §9.3). The **agent profile**
-(Annex R, deployment profile 5) is OPTIONAL: a network **MAY** run the current
-evidence version without adopting it.
+Generated-and-checked from [`versions.json`](versions.json), the single source
+of truth: `make versions` fails if any schema `const`, schema title, CDDL body,
+sample or table cell drifts from it. The discovery documents and the EDD
+contract version independently of the evidence family (umbrella §9.3); the
+**agent profile** (Annex R, deployment profile 5) is OPTIONAL.
 
 ## Running the conformance bar
 
@@ -326,15 +255,15 @@ cargo install cddl --version 0.9.5 --locked    # the CDDL gate is fail-closed wi
 make conformance                               # the bar; read the exit codes below before you run it
 ```
 
-`make conformance` runs twelve gates over the specification: the version
-manifest, the generated lint catalogue, the rule-ownership inventory, the
-decision records and their index, the dependency preflight and the test suite,
-JSON Schema validation of every sealed sample, the semantic linters with and
-without demo-key seal verification, the CDDL non-divergence gate, independent
-OpenAPI validation of the five contracts, the documentation guard, and REUSE
-compliance. The rules the linters enforce are published as a catalogue,
-[`docs/lint-catalogue.md`](docs/lint-catalogue.md), with each rule's input,
-precondition, exact predicate and error, so an assessor can reproduce every
+`make conformance` runs twelve gates: the version manifest, the generated lint
+catalogue, the rule-ownership inventory, the decision records and their index,
+the dependency preflight and the test suite, JSON Schema validation of every
+sealed sample, the semantic linters with and without demo-key seal
+verification, the CDDL non-divergence gate, OpenAPI validation of the five
+contracts, the documentation guard, and REUSE compliance. The gates one at a
+time are listed in [`CONTRIBUTING.md`](CONTRIBUTING.md). The rules the linters
+enforce are published in [`docs/lint-catalogue.md`](docs/lint-catalogue.md)
+with each rule's input, predicate and error, so an assessor can reproduce every
 verdict without reading the reference code.
 
 ### The three verdicts, and the two invocations
@@ -347,54 +276,32 @@ The bundle verifier returns **three** results, not two:
 | `INCOMPLETE` (`[GAP]`) | **3** | No violation was found, **and** a required property could not be established — an *incomplete* verification, not a pass |
 | `[FAIL]` | 1 | A violation was found |
 
-**The bundles shipped in this repository report INCOMPLETE, and that is by
-design.** Run the verifier the way the bar runs it — **anchored**, with the
-demonstration trust store:
+**The bundles shipped here report INCOMPLETE, and that is by design.** Anchored
+— with the demonstration trust store, the way the bar runs it — the default
+bundle exits 3 with two unproven properties, both the same one: the retained
+policy chain proves which version was in force at the act and that the chain
+is unbroken, but cannot prove that no *later* version existed (`LINT-BND-I3`).
+That is precisely the property this study declares it does not prove — item 3
+of [`OPEN-ITEMS.md`](OPEN-ITEMS.md), question A3 on the agenda — and the
+verifier says so rather than passing. Unanchored, with no trust store
+configured, a third joins them: federation admission (`LINT-BND-I6`), because
+without an anchor for the federation authority the membership register's
+authenticity cannot be established. That is a configuration state, not a limit
+of the design.
 
 ```sh
 python3 scripts/bundle_lint.py --trust-store samples/trust-store.demo.json samples/bundle.default.manifest.json
 # → INCOMPLETE: 0 violation(s), 2 unproven required property/properties · exit 3
-```
-
-Two unproven required properties remain, and both are the same one, reported
-once for the submission's pinned policy and once for the delivery's: the
-retained policy chain proves which version was in force at the act and that the
-chain is unbroken back to a first publication, but it cannot prove that no
-*later* version existed, because a retained prefix cannot exclude a successor
-nobody supplied (`LINT-BND-I3`). That is precisely the property this study
-declares it does not prove — item 3 of [`OPEN-ITEMS.md`](OPEN-ITEMS.md), question
-A3 on the [review agenda](docs/REVIEW_AGENDA.md) — and the verifier says so
-rather than passing.
-
-Now run it **unanchored**, with no trust store configured:
-
-```sh
 python3 scripts/bundle_lint.py samples/bundle.default.manifest.json
 # → INCOMPLETE: 0 violation(s), 3 unproven required property/properties · exit 3
 ```
 
-The third unproven property is federation admission (`LINT-BND-I6`): the bundle
-carries a membership register, but with no federation authority anchor
-configured the register's authenticity cannot be established, so it is not
-consulted and no provider's admission is resolved. In the reader's terms, this
-is a verifier that has no anchor for the *admission* authority — a different
-authority, and a different check, from the Trusted List that would vouch for a
-provider's *qualification*. It is a **configuration state, not a limit of the
-design**: give the verifier the authority's anchor and admission resolves. The
-demonstration store is one file that holds demonstration keys for both roles,
-the qualification-side signers and the federation authority; it proves nothing
-about production, where the two kinds of trust material come from different
-places.
-
 For contrast, `samples/bundle.negative.manifest.json` exits **1** with six
-violations. The full input-by-input account of what a verifier must hold, and
-which missing input leaves which property unproven, is
+violations. Which missing input leaves which property unproven is set out in
 [`docs/production-verifier-architecture.md`](docs/production-verifier-architecture.md).
-
-`make lint` passes `--allow-incomplete` deliberately, so that a known, stated gap
-does not fail the bar; the flag changes the exit code for declared gaps and
-**never** forgives a violation. If you treat any non-zero exit as "violations
-found", you will misread this repository.
+`make lint` passes `--allow-incomplete` so that a declared gap does not fail
+the bar; the flag **never** forgives a violation. If you treat any non-zero
+exit as "violations found", you will misread this repository.
 
 ## Conformance
 
@@ -415,41 +322,28 @@ this repository establishes only the first two in full:
 
 **What the response gate is.** `scripts/response_conformance.py` drives the
 **Delivery Service's published success responses** — 14 operations, with 1 declared residual — and
-validates each against its contract. Error responses,
-retries, multi-principal cases and the other four contracts are covered by their
-own tests, not by this gate; it is a sweep of one contract's success paths, not
-of the protocol.
+validates each against its contract; it is a sweep of one contract's success
+paths, not of the protocol.
 
-**Lint modes**: the default `make lint` checks the **structural** conditions
-against the reference samples and does **not** verify signatures against trust
-material. `make lint-demo` (`--verify-demo`) additionally **cryptographically
-verifies every seal** against the **published demo keys**. `--trust-store
-<path>` runs the **minimal demo slice** of a production verifier: every seal's
-`kid` must resolve to the store and verify against its key, the entry's role and
-identities must match the document, and every declared instant must lie in the
-entry's window — fail-closed. Full RFC 3161 / ETSI EN 319 422 timestamp
-validation and EU-Trusted-List verification are **production-verifier**
-obligations against a real trust store, and `evidence_lint --profile production`
-is a structural precheck, **not** legal qualification validation.
-
-### What the demo trust store pins
-
-Passing `--trust-store samples/trust-store.demo.json` is a **fail-closed gate
-against demo constants**, not just a signature check. The demo store pins:
-
-- **Signer identities.** Evidence must carry an `rdp_id` in `{urn:sbm:rdp:mockeu-001, urn:sbm:rdp:mockeu-002}` — the canonical provider identifier (`RdpId`); discovery documents must carry a `uid` among the demo entities (`EU-DE-EOID-7K3D9W0Q2M5FW0`, `EU-FR-PSBID-ZYWVTSRQPNM8M4`). A pilot minting its own `rdp_id` or entity UID **fails `LINT-TRUST-02` by design** — the gate is doing its job.
-- **A validity window.** Every declared instant must lie within `[2026-01-01, 2027-06-30]` — **all demo output stops passing the trust gate after 2027-06-30** (`LINT-TRUST-03`).
-- **One key per role.** A single `rdp` evidence key, a single `entity-admin` discovery key shared by every demo entity, a `design-authority` key sealing the Stage-1 demo registry (Annex P.1.1), a **separate** `federation-authority` key sealing the membership register — umbrella §13.1 keeps the admission signer distinct from the protocol's maintainer — and a provider-descriptor key for `urn:sbm:rdp:mockeu-001`.
-
-To run your own pilot against the gate: copy the store, replace the keys,
-identities and window with your pilot's values, and pass your copy. The checks
-are deterministic against the store you provide — no wall clock is consulted.
-
-**The sample key material is demonstration-grade.** The samples are
-cryptographically real — the signatures verify, the digests recompute — but the
-keys, the entity identifiers, the registers and the trust store are for
-demonstration. They exist so that "conformant" is machine-checkable, not to
-represent a deployment.
+**Lint modes and trust material.** `make lint` checks the structural
+conditions against the reference samples without verifying signatures; `make
+lint-demo` (`--verify-demo`) additionally verifies every seal against the
+published demo keys; `--trust-store <path>` runs the minimal demo slice of a
+production verifier, fail-closed — every seal's `kid` must resolve to the
+store, roles and identities must match the document, every declared instant
+must lie in the entry's window. The demonstration store,
+[`samples/trust-store.demo.json`](samples/trust-store.demo.json), pins the
+demo provider and entity identifiers, one key per role — the federation
+authority kept distinct from the design authority, as umbrella §13.1 requires
+— and a validity window ending on **2027-06-30**, after which demo output stops
+passing the trust gate (`LINT-TRUST-03`). A pilot minting its own identifiers
+fails `LINT-TRUST-02` by design: copy the store, replace keys, identities and
+window, and pass your copy. Full RFC 3161 / ETSI EN 319 422 timestamp
+validation and EU-Trusted-List verification are production-verifier
+obligations, and `evidence_lint --profile production` is a structural precheck,
+not legal qualification validation. The samples are cryptographically real —
+signatures verify, digests recompute — but keys, identifiers, registers and
+trust store are demonstration-grade.
 
 ## Quickstart
 
@@ -471,66 +365,55 @@ python3 scripts/eu_entity_uid_toolkit.py check EU-DE-EOID-7K3D9W0Q2M5FW0
 
 ### Produce a starter discovery document
 
-**Quick start for a publisher.** `scripts/eu_entity_uid_toolkit.py` generates a
-starter discovery document. Its `med-stub` output is a **sealed M4 artefact** —
-the authoritative COSE bytes with the JSON projection beside them — signed with
-an **ephemeral key, not a QSealC**: structurally valid for experimentation,
-never publishable. *Removed: dns-zone* — an earlier revision offered DNS-based
-alias discovery; alias layers cannot authorise a provider, key or endpoint, so
-the mechanism was withdrawn rather than left as a parallel trust path.
+`scripts/eu_entity_uid_toolkit.py` generates a starter discovery document. Its
+`med-stub` output is a **sealed M4 artefact** — the authoritative COSE bytes
+with the JSON projection beside them — signed with an **ephemeral key, not a
+QSealC**: structurally valid for experimentation, never publishable. *Removed:
+dns-zone* — an earlier revision offered DNS-based alias discovery; alias layers
+cannot authorise a provider, key or endpoint, so the mechanism was withdrawn.
 
-### Run the gates one at a time
-
-```sh
-make test            # dependency preflight, then the full pytest suite
-make schema-smoke    # every sample against its JSON Schema
-make lint            # the semantic linters and the bundle verifier, structural mode
-make lint-demo       # the same, verifying every seal against the demo keys
-make versions        # every artefact's version against versions.json
-make doc-lint        # the documentation guard: links, figures, stale mechanisms
-```
-
-### Run the mock RDP
+### Run the mock RDP, or a pilot
 
 ```sh
 python3 scripts/mock_rdp.py
 # server listens on http://localhost:8000
 ```
 
+The minimum pilot is deployment profile 1 of
+[umbrella Annex P](Secure-Business-Messaging-Profile.md#annex-p--deployment-profiles-and-edd-staging-informative):
+a static signed directory, one co-located provider, two wallets, the default
+scope only, and pilot rather than qualified evidence. Sealed documents keep
+their canonical `https` URLs on localhost — map endpoints wallet-side (Annex
+P.3).
+
 ## Feedback
 
 This is a **review snapshot** of a design study, exported for an expert group
 and published to be challenged. Start with
-[`docs/REVIEW_AGENDA.md`](docs/REVIEW_AGENDA.md): it lists, in one place, the
-questions this specification does **not** yet answer — protocol, production
-trust and legal — with the assumption each one currently rests on. It also
-names what is **not yet written**: the implementer guide — the exact pre-join
-proof, one complete trace through the public operations, provider migration and
-exit, and who sees what — deferred by decision, carried on the agenda as G1 to
-G4, and not claimed as delivered.
+[`docs/REVIEW_AGENDA.md`](docs/REVIEW_AGENDA.md): the questions this
+specification does **not** yet answer — protocol, production trust and legal —
+with the assumption each one rests on, and what is not yet written, the
+implementer guide, carried as G1 to G4.
 
-- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r4`,
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r5`,
   the git tag of that name; earlier tags of this snapshot stay where they are
   and each names the edition it was cut from. Cite the tag, or the commit you
   hold, so an answer can be matched to the text it answers. The reviewer
   guide's "tag named in the README" is this one.
-- **Technical feedback** — an ambiguity, a contradiction, a rule an
-  implementer cannot follow, a claim you think is wrong: a finding that names
-  the document and section, and ideally the artefact or command that shows it,
-  can be reproduced; that is what makes it actionable. The most useful
-  contributions, in order: run the conformance bar against a **second
-  implementation** — the confirmation-signature vectors have only ever been
-  verified by one COSE implementation; attack the evidence model — the samples
-  are real, and a construction that accepts something it should not is the
-  finding worth having; challenge the legal argument — the claim that
-  registered-delivery evidence can rest on digests rather than content is
-  carefully built and untested.
+- **Technical feedback** — an ambiguity, a contradiction, a rule an implementer
+  cannot follow, a claim you think is wrong: name the document and section, and
+  ideally the artefact or command that shows it. The most useful contributions,
+  in order: run the bar against a **second implementation** — the
+  confirmation-signature vectors have only ever been verified by one COSE
+  implementation; attack the evidence model — a construction that accepts
+  something it should not is the finding worth having; challenge the legal
+  argument that registered-delivery evidence can rest on digests rather than
+  content.
 - **Security issues:** do not describe them in public. Ask for a private
   channel first.
-- **Patent disclosures** are not technical feedback and have their own route:
-  [`IPR.md`](IPR.md) and [`IPR-DISCLOSURES.md`](IPR-DISCLOSURES.md). A comment
-  is not a Contribution and carries no patent obligation
-  ([`CONTRIBUTING.md`](CONTRIBUTING.md)).
+- **Patent disclosures** have their own route, [`IPR.md`](IPR.md) and
+  [`IPR-DISCLOSURES.md`](IPR-DISCLOSURES.md); a comment is not a Contribution
+  and carries no patent obligation ([`CONTRIBUTING.md`](CONTRIBUTING.md)).
 - **Maintainer:** [@paolo-de-rosa](https://github.com/paolo-de-rosa) on GitHub.
 
 ## Licence
@@ -546,5 +429,5 @@ machine-readable artefacts** (`scripts/`, `tests/`, `schemas/`, `samples/`,
 [`REUSE.toml`](REUSE.toml).
 
 © 2025–2026 Paolo De Rosa and contributors. This repository is an independent
-technical exploration (see the exploratory banner above); the copyright holder
-acts in a personal capacity and no institution is represented.
+technical exploration (see the notice above); the copyright holder acts in a
+personal capacity and no institution is represented.
