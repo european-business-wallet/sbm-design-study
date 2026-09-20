@@ -464,4 +464,4 @@ The `LINT-*` rule identifiers cross-referenced above are **defined normatively i
 
 ## Annex B (informative): Change History
 
-*The version-by-version change history of this document is in `CHANGELOG.md`, under "TS change history (Annex B, to 2026-09)". It was moved there so that a reader meets the binding before its history, as the umbrella's front-matter history was in round 10.*
+*The version-by-version change history of this document is kept with the source repository of this study and is not reproduced in this snapshot; the current revision is bound in `versions.json` and the wire-level changes are in `CHANGELOG.md`. It was moved out of this document so that a reader meets the binding before its history, as the umbrella's front-matter history was.*

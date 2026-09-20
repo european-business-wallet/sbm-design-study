@@ -15,7 +15,7 @@
 
 **Where to read first.** The *Document map*; §0 *Scope*; §7.1 *Technical architecture*; §9.4 on what conformance does and does not establish; §13.1 on the institutions. Then the Internet-Draft for the wire, and the TS for the qualified-service obligations.
 
-*The edition-by-edition change history that used to open this document — some 3,900 words before the document map — is in `CHANGELOG.md`, under "Umbrella change history (front matter, to 2026-09)". It was moved in round 10 so that a reader meets the design before its history.*
+*The edition-by-edition change history that used to open this document — some 3,900 words before the document map — is kept with the source repository of this study and is not reproduced in this snapshot; [`CHANGELOG.md`](CHANGELOG.md) records the artefacts' versions and what changed on the wire. It was moved out so that a reader meets the design before its history.*
 
 ---
 
