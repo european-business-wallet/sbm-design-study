@@ -1,116 +1,190 @@
-<svg viewBox="0 0 940 660" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif" role="img">
-  <title>Four-corner federated architecture</title>
-  <desc>Entity A and Entity B wallet devices exchange MLS ciphertext through their Messaging Service Providers. Registered Delivery Providers exchange evidence metadata. Discovery goes through the European Directory of Entities. All trust chains to the EU Trusted Lists.</desc>
+<svg viewBox="0 0 1000 740" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif" role="img">
+<!-- figure
+owner: the maintainer (README, Feedback)
+source: docs/diagrams/architecture-four-corner.svg (hand-written SVG; this file is the source)
+question: In the four-corner case, who carries the ciphertext, who observes the handover, who validates confirmations and who evaluates the acceptance policy?
+profile: 2 (four-corner). In profile 1 one operator runs both RDPs and no relay occurs.
+status: current
+references: umbrella §7.1, §7.2; I-D "Message Flows and Delivery States"; TS clauses 4.1 and 6; delivery-service-openapi.yaml; rdp-relay-openapi.yaml; wallet-rdp-openapi.yaml; docs/federated-flow-explainer.md; docs/REVIEW_AGENDA.md A1, A6, A9, A10
+alt: Entity A's wallet submits the MLS ciphertext and its metadata to RDP(out), which hands the same octets to its Delivery Service, MSP(out), and seals the Sending Evidence only after that service accepts them. RDP(out) relays the ciphertext with the sealed SE to RDP(in); the MSPs do not relay to each other. RDP(in) forwards the octets to its Delivery Service, MSP(in), with the origin proven by the SE. Entity B's devices collect and acknowledge them there, and MSP(in) signs the S2 receipt; no published operation carries that receipt to the RDP that issues the Delivery Evidence (open, A1). Entity B's confirmations reach RDP(in), which alone validates them and evaluates the acceptance policy, then issues DE, NDE or RE. The creating wallet reserves KeyPackages, deposits Welcomes, registers as the group's founder and later collects replies at the counterparty's Delivery Service; which Delivery Service routes a group spanning two after formation is open (A10). MLS keys are negotiated end to end, so every provider carries only ciphertext. RDPs are admitted through the federation register; the MSP as a federation participant is planned (Batch B), not implemented. The EU Trusted Lists establish qualification, which is distinct from admission and from the directory's pin of an entity's seal keys.
+-->
+  <title>Four-corner federated architecture — who carries what</title>
+  <desc>Entity A's wallet submits ciphertext to RDP(out), which obtains its Delivery Service's acceptance before sealing the Sending Evidence and relays the ciphertext with that SE to RDP(in); RDP(in) forwards it to the recipient's Delivery Service, where Entity B's devices collect and acknowledge it. Confirmations reach RDP(in), the sole evaluator of the acceptance policy. The creator's use of the counterparty's Delivery Service, the receipt's path to the DE issuer (open, A1) and post-formation routing (open, A10) are marked. The MSP as a federation participant is planned (Batch B).</desc>
 
   <defs>
     <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f2937"/>
+    </marker>
+    <marker id="arrg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
     </marker>
     <marker id="arrb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#1d4ed8"/>
     </marker>
+    <marker id="arro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/>
+    </marker>
   </defs>
 
-  <text x="470" y="32" text-anchor="middle" font-size="18" font-weight="bold" fill="#1f2937">Four-corner federated architecture</text>
+  <rect x="0" y="0" width="1000" height="740" fill="#ffffff"/>
+  <text x="500" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1f2937">Four-corner federated architecture — who carries what</text>
 
   <!-- EDD -->
-  <rect x="270" y="56" width="400" height="62" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
-  <text x="470" y="80" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1f2937">EDD — European Directory of Entities</text>
-  <text x="470" y="98" text-anchor="middle" font-size="11.5" fill="#64748b">EU-governed core registry (UIDs, lifecycle) + federated discovery (MED, KeyPackages)</text>
+  <rect x="300" y="46" width="400" height="60" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="500" y="68" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1f2937">EDD — European Directory of Entities</text>
+  <text x="500" y="85" text-anchor="middle" font-size="11" fill="#475569">core registry: UID → where to resolve (med_url) + pinned entity seal keys</text>
+  <text x="500" y="99" text-anchor="middle" font-size="11" fill="#64748b">entity-sealed MED / ORG / MEMBER served by the entity's provider</text>
 
   <!-- Federation governance -->
-  <rect x="700" y="56" width="210" height="62" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.4"/>
-  <text x="805" y="76" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1f2937">Federation governance</text>
-  <text x="805" y="92" text-anchor="middle" font-size="10.5" fill="#475569">gated admission · membership registry</text>
-  <text x="805" y="107" text-anchor="middle" font-size="10.5" fill="#475569">design authority — central protocol control</text>
+  <rect x="735" y="46" width="250" height="74" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.4"/>
+  <text x="860" y="65" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1f2937">Federation Authority</text>
+  <text x="860" y="81" text-anchor="middle" font-size="10.5" fill="#475569">membership register: admits RDPs</text>
+  <text x="860" y="95" text-anchor="middle" font-size="10.5" fill="#475569">MSP as participant — PLANNED (Batch B)</text>
+  <text x="860" y="109" text-anchor="middle" font-size="10.5" fill="#475569">design authority: protocol change control</text>
 
-  <!-- Discovery arrows -->
-  <path d="M 120 208 C 140 150, 220 115, 268 100" fill="none" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arr)"/>
-  <text x="128" y="145" font-size="10.5" fill="#64748b">resolve UID</text>
-  <text x="128" y="159" font-size="10.5" fill="#64748b">fetch MED + KeyPackages</text>
-  <path d="M 820 208 C 805 165, 735 130, 672 105" fill="none" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arr)"/>
-  <text x="742" y="145" font-size="10.5" fill="#64748b">publish MED,</text>
-  <text x="742" y="159" font-size="10.5" fill="#64748b">KeyPackages</text>
+  <!-- Discovery -->
+  <path d="M 60 248 C 60 170, 180 90, 297 80" fill="none" stroke="#64748b" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arrg)"/>
+  <text x="70" y="118" font-size="10.5" fill="#64748b">resolve UID</text>
+
+  <!-- End-to-end keys -->
+  <path d="M 150 248 L 150 146 L 900 146 L 900 248" fill="none" stroke="#1d4ed8" stroke-width="1.6" stroke-dasharray="6 4" marker-start="url(#arrb)" marker-end="url(#arrb)"/>
+  <text x="525" y="140" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#1d4ed8">MLS keys negotiated end to end between devices — every provider carries only ciphertext</text>
 
   <!-- Wallet A -->
-  <rect x="30" y="210" width="180" height="112" rx="8" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.8"/>
-  <text x="120" y="234" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1f2937">Entity A</text>
-  <text x="120" y="252" text-anchor="middle" font-size="12" fill="#475569">Wallet Units — devices / MIDs</text>
-  <text x="120" y="270" text-anchor="middle" font-size="11.5" fill="#64748b">QSealC · UID QEAA credentials</text>
-  <text x="120" y="288" text-anchor="middle" font-size="11.5" fill="#1d4ed8">E2EE endpoint — plaintext here</text>
-
-  <!-- MSP out -->
-  <rect x="290" y="226" width="150" height="82" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
-  <text x="365" y="250" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">MSP (out)</text>
-  <text x="365" y="268" text-anchor="middle" font-size="11.5" fill="#475569">MLS Delivery Service</text>
-  <text x="365" y="285" text-anchor="middle" font-size="11.5" fill="#64748b">ciphertext only</text>
-
-  <!-- MSP in -->
-  <rect x="500" y="226" width="150" height="82" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
-  <text x="575" y="250" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">MSP (in)</text>
-  <text x="575" y="268" text-anchor="middle" font-size="11.5" fill="#475569">store &amp; forward, queues</text>
-  <text x="575" y="285" text-anchor="middle" font-size="11.5" fill="#64748b">ciphertext only</text>
+  <rect x="15" y="250" width="170" height="112" rx="8" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.8"/>
+  <text x="100" y="272" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1f2937">Entity A — sender</text>
+  <text x="100" y="290" text-anchor="middle" font-size="11" fill="#475569">Business Wallet devices</text>
+  <text x="100" y="306" text-anchor="middle" font-size="11" fill="#475569">creates the group,</text>
+  <text x="100" y="320" text-anchor="middle" font-size="11" fill="#475569">computes the content digest</text>
+  <text x="100" y="340" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">plaintext only here</text>
 
   <!-- Wallet B -->
-  <rect x="730" y="210" width="180" height="112" rx="8" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.8"/>
-  <text x="820" y="234" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1f2937">Entity B</text>
-  <text x="820" y="252" text-anchor="middle" font-size="12" fill="#475569">Wallet Units — devices / MIDs</text>
-  <text x="820" y="270" text-anchor="middle" font-size="11.5" fill="#64748b">roles · quorum acceptance</text>
-  <text x="820" y="288" text-anchor="middle" font-size="11.5" fill="#1d4ed8">E2EE endpoint — plaintext here</text>
+  <rect x="815" y="250" width="170" height="112" rx="8" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.8"/>
+  <text x="900" y="272" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1f2937">Entity B — recipient</text>
+  <text x="900" y="290" text-anchor="middle" font-size="11" fill="#475569">devices of its members</text>
+  <text x="900" y="306" text-anchor="middle" font-size="11" fill="#475569">confirms: wallet-signed</text>
+  <text x="900" y="320" text-anchor="middle" font-size="11" fill="#475569">or session-bound</text>
+  <text x="900" y="340" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">plaintext only here</text>
 
-  <!-- Message flow arrows -->
-  <line x1="212" y1="262" x2="288" y2="262" stroke="#475569" stroke-width="1.6" marker-end="url(#arr)"/>
-  <line x1="442" y1="262" x2="498" y2="262" stroke="#475569" stroke-width="1.6" marker-end="url(#arr)"/>
-  <line x1="652" y1="262" x2="728" y2="262" stroke="#475569" stroke-width="1.6" marker-end="url(#arr)"/>
-  <text x="470" y="250" text-anchor="middle" font-size="10.5" fill="#475569">MLS ciphertext (HTTPS)</text>
+  <!-- RDP out -->
+  <rect x="265" y="178" width="180" height="86" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.6"/>
+  <text x="355" y="199" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">RDP (out) — QERDS</text>
+  <text x="355" y="216" text-anchor="middle" font-size="11" fill="#475569">seals SE only after the</text>
+  <text x="355" y="230" text-anchor="middle" font-size="11" fill="#475569">DS accepted the octets · EP</text>
+  <text x="355" y="252" text-anchor="middle" font-size="10.5" fill="#64748b">admitted: federation register</text>
 
-  <!-- E2EE key line -->
-  <path d="M 120 324 L 120 356 L 820 356 L 820 324" fill="none" stroke="#1d4ed8" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#arrb)" marker-start="url(#arrb)"/>
-  <text x="470" y="349" text-anchor="middle" font-size="11.5" fill="#1d4ed8" font-weight="bold">MLS group keys — negotiated end-to-end between devices; the federation sees only ciphertext</text>
+  <!-- RDP in -->
+  <rect x="555" y="178" width="180" height="86" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.6"/>
+  <text x="645" y="199" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">RDP (in) — QERDS</text>
+  <text x="645" y="216" text-anchor="middle" font-size="11" fill="#475569">validates confirmations,</text>
+  <text x="645" y="230" text-anchor="middle" font-size="11" fill="#475569">sole evaluator of the policy</text>
+  <text x="645" y="244" text-anchor="middle" font-size="11" fill="#475569">DE · NDE · RE</text>
+  <text x="645" y="258" text-anchor="middle" font-size="10.5" fill="#64748b">admitted: federation register</text>
 
-  <!-- RDPs -->
-  <rect x="290" y="408" width="150" height="86" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.6"/>
-  <text x="365" y="432" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">RDP (out)</text>
-  <text x="365" y="450" text-anchor="middle" font-size="11.5" fill="#475569">QERDS-qualified QTSP</text>
-  <text x="365" y="467" text-anchor="middle" font-size="11.5" fill="#64748b">SE · Evidence Package</text>
+  <!-- MSP out -->
+  <rect x="265" y="348" width="180" height="82" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="355" y="368" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">MSP (out) — Delivery Service</text>
+  <text x="355" y="385" text-anchor="middle" font-size="11" fill="#475569">accepts what RDP(out) submits;</text>
+  <text x="355" y="399" text-anchor="middle" font-size="11" fill="#475569">routes devices it saw join</text>
+  <text x="355" y="419" text-anchor="middle" font-size="10.5" fill="#64748b">own identity: PLANNED (Batch B)</text>
 
-  <rect x="500" y="408" width="150" height="86" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.6"/>
-  <text x="575" y="432" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">RDP (in)</text>
-  <text x="575" y="450" text-anchor="middle" font-size="11.5" fill="#475569">QERDS-qualified QTSP</text>
-  <text x="575" y="467" text-anchor="middle" font-size="11.5" fill="#64748b">DE · NDE · RE</text>
+  <!-- MSP in -->
+  <rect x="555" y="348" width="180" height="82" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="645" y="368" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">MSP (in) — Delivery Service</text>
+  <text x="645" y="385" text-anchor="middle" font-size="11" fill="#475569">KeyPackages · Welcomes · queues;</text>
+  <text x="645" y="399" text-anchor="middle" font-size="11" fill="#475569">observes the handover (S2)</text>
+  <text x="645" y="419" text-anchor="middle" font-size="10.5" fill="#64748b">own identity: PLANNED (Batch B)</text>
 
-  <!-- Evidence flow -->
-  <line x1="442" y1="451" x2="498" y2="451" stroke="#475569" stroke-width="1.4" marker-end="url(#arr)" marker-start="url(#arr)"/>
-  <text x="470" y="441" text-anchor="middle" font-size="10.5" fill="#475569">evidence metadata</text>
+  <!-- 1 submit -->
+  <line x1="186" y1="292" x2="262" y2="230" stroke="#1f2937" stroke-width="1.7" marker-end="url(#arr)"/>
+  <text x="190" y="202" font-size="10" fill="#1f2937">① submit</text>
+  <text x="190" y="214" font-size="10" fill="#1f2937">ciphertext</text>
+  <text x="190" y="226" font-size="10" fill="#1f2937">+ metadata</text>
+  <!-- SE and EP back to A -->
+  <line x1="263" y1="256" x2="188" y2="322" stroke="#64748b" stroke-width="1.2" stroke-dasharray="2 3" marker-end="url(#arrg)"/>
+  <text x="222" y="322" font-size="10" fill="#64748b">SE · EP</text>
 
-  <line x1="365" y1="310" x2="365" y2="406" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arr)"/>
-  <text x="352" y="372" text-anchor="end" font-size="10.5" fill="#64748b">evidenced events</text>
-  <line x1="575" y1="310" x2="575" y2="406" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arr)"/>
-  <text x="588" y="372" font-size="10.5" fill="#64748b">acceptance / quorum</text>
+  <!-- 2 DS acceptance -->
+  <line x1="320" y1="265" x2="320" y2="345" stroke="#1f2937" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="314" y="296" text-anchor="end" font-size="10" fill="#1f2937">② the same</text>
+  <text x="314" y="308" text-anchor="end" font-size="10" fill="#1f2937">octets</text>
+  <line x1="390" y1="345" x2="390" y2="266" stroke="#64748b" stroke-width="1.2" stroke-dasharray="2 3" marker-end="url(#arrg)"/>
+  <text x="396" y="296" font-size="10" fill="#64748b">acceptance</text>
+  <text x="396" y="308" font-size="10" fill="#64748b">record</text>
 
-  <!-- Evidence to wallets -->
-  <path d="M 288 470 C 180 470, 130 400, 122 326" fill="none" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arr)"/>
-  <text x="150" y="450" font-size="10.5" fill="#64748b">EP → wallet-storable</text>
-  <path d="M 652 470 C 760 470, 810 400, 818 326" fill="none" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arr)"/>
-  <text x="700" y="450" font-size="10.5" fill="#64748b">DE / RE notices</text>
+  <!-- 3 relay RDP to RDP -->
+  <line x1="446" y1="205" x2="552" y2="205" stroke="#1f2937" stroke-width="2.2" marker-end="url(#arr)"/>
+  <text x="500" y="173" text-anchor="middle" font-size="10" font-weight="bold" fill="#1f2937">③ relay RDP → RDP</text>
+  <text x="500" y="186" text-anchor="middle" font-size="10" fill="#1f2937">ciphertext +</text>
+  <text x="500" y="198" text-anchor="middle" font-size="10" fill="#1f2937">sealed SE</text>
+  <line x1="553" y1="238" x2="448" y2="238" stroke="#64748b" stroke-width="1.2" stroke-dasharray="2 3" marker-end="url(#arrg)"/>
+  <text x="500" y="252" text-anchor="middle" font-size="10" fill="#64748b">B.1 / B.2 hop</text>
+  <text x="500" y="264" text-anchor="middle" font-size="10" fill="#64748b">evidence</text>
+  <text x="500" y="380" text-anchor="middle" font-size="10" fill="#475569">the MSPs do not</text>
+  <text x="500" y="392" text-anchor="middle" font-size="10" fill="#475569">relay to each</text>
+  <text x="500" y="404" text-anchor="middle" font-size="10" fill="#475569">other (FED-X4)</text>
+
+  <!-- 4 forward to DS -->
+  <line x1="575" y1="265" x2="575" y2="345" stroke="#1f2937" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="569" y="292" text-anchor="end" font-size="10" fill="#1f2937">④ forward</text>
+  <text x="569" y="304" text-anchor="end" font-size="10" fill="#1f2937">octets; origin</text>
+  <text x="569" y="316" text-anchor="end" font-size="10" fill="#1f2937">proven by the SE</text>
+
+  <!-- A1: receipt to DE issuer -->
+  <line x1="610" y1="346" x2="610" y2="267" stroke="#b45309" stroke-width="1.4" stroke-dasharray="7 4" marker-end="url(#arro)"/>
+  <text x="617" y="292" font-size="10" fill="#b45309">S2 receipt → DE</text>
+  <text x="617" y="304" font-size="10" fill="#b45309">issuer: no published</text>
+  <text x="617" y="316" font-size="10" fill="#b45309">path — OPEN (A1)</text>
+
+  <!-- 5 collect and acknowledge -->
+  <line x1="736" y1="400" x2="813" y2="345" stroke="#1f2937" stroke-width="1.5" marker-start="url(#arr)" marker-end="url(#arr)"/>
+  <text x="760" y="402" font-size="10" fill="#1f2937">⑤ collect,</text>
+  <text x="760" y="414" font-size="10" fill="#1f2937">acknowledge;</text>
+  <text x="760" y="426" font-size="10" fill="#1f2937">DS signs receipt</text>
+
+  <!-- 6 confirmations -->
+  <line x1="813" y1="262" x2="738" y2="212" stroke="#1f2937" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="742" y="176" font-size="10" fill="#1f2937">⑥ confirmations</text>
+  <text x="742" y="188" font-size="10" fill="#1f2937">s3 · mismatch ·</text>
+  <text x="742" y="200" font-size="10" fill="#1f2937">refusal · reveal</text>
+  <!-- evidence to B -->
+  <line x1="738" y1="252" x2="813" y2="290" stroke="#64748b" stroke-width="1.2" stroke-dasharray="2 3" marker-end="url(#arrg)"/>
+  <text x="742" y="302" font-size="10" fill="#64748b">DE · NDE · RE</text>
+
+  <!-- Creator uses the counterparty DS -->
+  <path d="M 100 363 L 100 458 L 670 458 L 670 432" fill="none" stroke="#64748b" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arrg)"/>
+  <text x="385" y="476" text-anchor="middle" font-size="10.5" fill="#475569">creating wallet ↔ counterparty DS: sealed discovery documents · KeyPackage reservation ·</text>
+  <text x="385" y="490" text-anchor="middle" font-size="10.5" fill="#475569">Welcome deposits · founder registration (R12-X3) · collection of the replies</text>
+  <line x1="680" y1="458" x2="760" y2="458" stroke="#b45309" stroke-width="1.4" stroke-dasharray="7 4"/>
+  <text x="766" y="454" font-size="10" fill="#b45309">which DS routes a group</text>
+  <text x="766" y="466" font-size="10" fill="#b45309">spanning two, after</text>
+  <text x="766" y="478" font-size="10" fill="#b45309">formation — OPEN (A10)</text>
 
   <!-- Trusted Lists -->
-  <rect x="150" y="548" width="640" height="58" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="1.2" stroke-dasharray="2 3"/>
-  <text x="470" y="572" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">EU Trusted Lists — Regulation (EU) No 910/2014</text>
-  <text x="470" y="590" text-anchor="middle" font-size="11.5" fill="#64748b">QTSPs: UID / QEAA issuers · QSealC · QERDS providers — single trust root for identity, encryption credentials and evidence</text>
-
-  <line x1="365" y1="494" x2="365" y2="546" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 3"/>
-  <line x1="575" y1="494" x2="575" y2="546" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 3"/>
+  <rect x="150" y="510" width="700" height="62" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="1.2" stroke-dasharray="2 3"/>
+  <text x="500" y="532" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">EU Trusted Lists — Regulation (EU) No 910/2014</text>
+  <text x="500" y="549" text-anchor="middle" font-size="11" fill="#64748b">qualification: seal certificates, qualified timestamps, QERDS inscription</text>
+  <text x="500" y="564" text-anchor="middle" font-size="11" fill="#64748b">distinct from federation admission (register) and from the directory's pin of an entity's seal keys</text>
 
   <!-- Legend -->
+  <g font-size="10.5" fill="#475569">
+    <line x1="30" y1="600" x2="62" y2="600" stroke="#1f2937" stroke-width="1.7"/>
+    <text x="68" y="604">ciphertext and its submission path</text>
+    <line x1="290" y1="600" x2="322" y2="600" stroke="#64748b" stroke-width="1.2" stroke-dasharray="2 3"/>
+    <text x="328" y="604">evidence, receipts and records</text>
+    <line x1="520" y1="600" x2="552" y2="600" stroke="#64748b" stroke-width="1.3" stroke-dasharray="5 4"/>
+    <text x="558" y="604">discovery and group formation</text>
+    <line x1="760" y1="600" x2="792" y2="600" stroke="#1d4ed8" stroke-width="1.6" stroke-dasharray="6 4"/>
+    <text x="798" y="604">end-to-end keys</text>
+    <line x1="30" y1="622" x2="62" y2="622" stroke="#b45309" stroke-width="1.4" stroke-dasharray="7 4"/>
+    <text x="68" y="626">OPEN — no published operation or decision yet (review agenda reference)</text>
+    <text x="520" y="626">PLANNED — decided, not implemented (Batch B)</text>
+  </g>
+
+  <!-- Notes -->
   <g font-size="10.5" fill="#64748b">
-    <line x1="30" y1="630" x2="62" y2="630" stroke="#475569" stroke-width="1.6"/>
-    <text x="68" y="634">message flow</text>
-    <line x1="160" y1="630" x2="192" y2="630" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="5 4"/>
-    <text x="198" y="634">discovery</text>
-    <line x1="280" y1="630" x2="312" y2="630" stroke="#1d4ed8" stroke-width="1.6" stroke-dasharray="6 4"/>
-    <text x="318" y="634">end-to-end keys</text>
-    <line x1="420" y1="630" x2="452" y2="630" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3 3"/>
-    <text x="458" y="634">evidence / events</text>
+    <text x="30" y="660">Profile 2 (four-corner). In profile 1 one operator runs both RDPs and no relay occurs. An MSP may carry confirmation objects to RDP(in)</text>
+    <text x="30" y="675">verbatim; it validates, counts and decides nothing (TS clause 6). Who observes S2, and what an MSP alone could make an RDP attest, is open (A9).</text>
+    <text x="30" y="690">Informative. Normative flow: the I-D (Message Flows and Delivery States) and the TS (clauses 4.1, 6). Step by step: docs/federated-flow-explainer.md.</text>
   </g>
 </svg>

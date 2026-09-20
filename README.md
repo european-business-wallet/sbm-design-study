@@ -36,8 +36,8 @@ reviewing the specification rather than meeting it, the
 [reviewer guide](docs/REVIEWER_GUIDE.md) is the shorter route: one short path
 and a branch per specialism. If you want the idea in twenty minutes, the
 [executive brief](brief/executive-brief.md) is written for policy readers, and
-the [requirements grid](brief/requirements-grid.xlsx) compares this design with
-PEC/REM and eDelivery requirement by requirement. What this design does **not**
+the [requirements list](brief/requirements.md) is the baseline the study
+started from, each requirement with its source. What this design does **not**
 prove on its own is collected in [`OPEN-ITEMS.md`](OPEN-ITEMS.md).
 
 ---
@@ -78,7 +78,10 @@ first, then registered attestation exchange, then a registered presentation
 profile, then governed agentic interactions — each reusing the same identity
 model, channel and evidence layer
 ([vision and context](docs/vision-and-context.md)). The later phases are not
-designed here, and their absence is deliberate rather than an omission.
+designed here, and their absence is deliberate rather than an omission; what is
+specified today of the agent phase is its first subset, the optional agent
+profile's mandates and evidence, while the cross-deployment agent interface is
+open (A7).
 
 ## 2. What it takes as given
 
@@ -87,8 +90,9 @@ The requirements are the ones formalised in the specification's own scope
 summarises them and introduces none.
 
 **What the specification is required to define.** A unique identifier scheme for
-economic operators and public-sector bodies, assignable only by qualified trust
-service providers. A directory and resolution model with its governance
+economic operators and public-sector bodies, assignable only by EU-listed
+qualified trust service providers (QEAA) and public-sector attestation
+providers (PubEAA). A directory and resolution model with its governance
 framework and its linkage to the existing company registers. A messaging profile
 binding IETF MLS to the business-wallet context, with registered delivery
 providers operating under a defined trust framework and a standardised evidence
@@ -97,9 +101,10 @@ carried as an attestation and the evidence storable in the wallet. And the
 validation rules, conformance requirements and interoperability guidance that
 make all of it checkable.
 
-**What it assumes.** That providers are admitted, qualified and supervised
-rather than joining freely, because the evidence layer's legal weight depends on
-who operates it. That the recipient's organisation can publish signed statements
+**What it assumes.** That registered delivery providers are admitted, qualified
+and supervised rather than joining freely, because the evidence layer's legal
+weight depends on who operates it — and that a messaging service provider,
+which need not be qualified, is admitted to the federation all the same. That the recipient's organisation can publish signed statements
 about itself — its providers, its policy, its devices — and that a counterparty
 can read them before sending. That a qualified timestamp is available from
 outside the protocol. And that a wallet can hold a key the entity is willing to
@@ -126,7 +131,8 @@ sent and received through one; Commission Implementing Regulation (EU) 2025/1944
 sets the technical specifications. The ETSI **EN 319 522** series is where those
 requirements become an architecture: part 1 for the framework and definitions,
 part 2 for the semantic contents — the event and evidence model this profile
-maps onto — part 3 for formats, and part 4-1 for the interoperability profiles.
+maps onto — part 3 for formats, and part 4-1 for the message-delivery binding
+to AS4, which this study's MLS binding sits beside rather than inside.
 **EN 319 521** states the policy and security requirements on the provider,
 **EN 319 401** the general ones for any trust service, and **TS 119 312** the
 cryptographic suites. The TS-shaped document in this repository is where the
@@ -168,7 +174,7 @@ said* and *what can be attested*. The content travels in an MLS group — one
 group per entity pair, every device a leaf, so a message is addressed to an
 organisation and delivered to its devices. The evidence travels beside it as
 sealed objects that carry digests, identifiers and instants, never content: a
-submission, a delivery or non-delivery, a retrieval, and an evidence package
+submission, a delivery, a non-delivery or a refusal, and an evidence package
 that binds a whole exchange. What a provider attests is what it observed; what
 the recipient's wallet confirms is what the recipient did. The two are separate
 acts by separate parties, and the architecture's job is to keep them separable
@@ -371,11 +377,14 @@ The third unproven property is federation admission (`LINT-BND-I6`): the bundle
 carries a membership register, but with no federation authority anchor
 configured the register's authenticity cannot be established, so it is not
 consulted and no provider's admission is resolved. In the reader's terms, this
-is the condition of a verifier that has no Trusted List. It is a
-**configuration state, not a limit of the design**: give the verifier an anchor
-it trusts and admission resolves. And the demonstration anchor proves nothing
-about production — it is a key in a file shipped beside the samples, standing
-in for a Trusted List and for nothing else.
+is a verifier that has no anchor for the *admission* authority — a different
+authority, and a different check, from the Trusted List that would vouch for a
+provider's *qualification*. It is a **configuration state, not a limit of the
+design**: give the verifier the authority's anchor and admission resolves. The
+demonstration store is one file that holds demonstration keys for both roles,
+the qualification-side signers and the federation authority; it proves nothing
+about production, where the two kinds of trust material come from different
+places.
 
 For contrast, `samples/bundle.negative.manifest.json` exits **1** with six
 violations. The full input-by-input account of what a verifier must hold, and
@@ -389,7 +398,7 @@ found", you will misread this repository.
 
 ## Conformance
 
-> **Conformance definition.** An SM-MLS-1.0 evidence or discovery artefact is **conformant** only if it is all of: **(1) schema-valid** — validates against its JSON Schema; **(2) lint-clean** — no `evidence_lint` / `discovery_lint` violations, in the full `cbor2` mode; **(3) sealed over the authoritative payload** — the COSE_Sign1 is the authoritative artefact; its payload equals the deterministic-CBOR (RFC 8949 §4.2) body defined in the CDDL (`cddl/sm-mls-erd.cddl`), of which the JSON is a non-authoritative projection; **(4)** timestamped over the seal; and **(5) verifiable against the declared trust material**. This is the normative definition from umbrella §9.4; the reference tooling checks (1) to (3) and the demo slices of (4) and (5).
+> **Conformance definition.** An SM-MLS-1.0 evidence or discovery artefact is **conformant** only if it is all of: **(1) schema-valid** — validates against its JSON Schema; **(2) lint-clean** — no `evidence_lint` / `discovery_lint` violations, in the full `cbor2` mode; **(3) sealed over the authoritative payload** — the COSE_Sign1 is the authoritative artefact; its payload equals the deterministic-CBOR (RFC 8949 §4.2) body defined in the CDDL (`cddl/sm-mls-erd.cddl`), of which the JSON is a non-authoritative projection; **(4) for an evidence artefact only**, timestamped over the seal by a qualified timestamp — a discovery document is a bare COSE_Sign1 whose validity window is declared in its body and carries no timestamp; and **(5) verifiable against the declared trust material**. This is a summary of the normative definition in umbrella §9.4, which governs where the two differ; the reference tooling checks (1) to (3) and the demo slices of (4) and (5).
 
 ### What a green bar means — and what it does not
 
@@ -500,8 +509,10 @@ proof, one complete trace through the public operations, provider migration and
 exit, and who sees what — deferred by decision, carried on the agenda as G1 to
 G4, and not claimed as delivered.
 
-- **Snapshot.** This repository is a single commit; cite it, so an answer can
-  be matched to the text it answers.
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20`,
+  the git tag of that name; cite the tag, or the commit you hold, so an answer
+  can be matched to the text it answers. The reviewer guide's "tag named in
+  the README" is this one.
 - **Technical feedback** — an ambiguity, a contradiction, a rule an
   implementer cannot follow, a claim you think is wrong: a finding that names
   the document and section, and ideally the artefact or command that shows it,

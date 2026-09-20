@@ -71,8 +71,10 @@ INCOMPLETE (`LINT-BND-I6`).
 
 **What is not established.** The operation of a production register; the
 admission of any real participant to anything; and the standing of the
-demonstration trust store, which stands in for a Trusted List and for nothing
-else. A demonstration register admits nobody: it shows the mechanism. The
+demonstration trust store, one file of demonstration keys for both the
+qualification-side signers and the federation authority, which proves nothing
+about either kind of production trust material. A demonstration register admits
+nobody: it shows the mechanism. The
 maximum age a live admission decision should accept is agenda question A2. The
 messaging service provider's own admission — its identifier on the wire, and
 the binding of delivery evidence to what it observed — is decided and **not
