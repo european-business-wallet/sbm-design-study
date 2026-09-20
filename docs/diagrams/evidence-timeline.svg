@@ -5,7 +5,7 @@ source: docs/diagrams/evidence-timeline.svg (hand-written SVG; this file is the 
 question: Which event dates which fact, and on whose clock? Where do the delivery grades take their instant from, and which instants are claims rather than observations?
 profile: all; the relay hop's own timestamp exists from profile 2
 status: current
-references: docs/evidence-layer-explainer.md (entry section); docs/message-lifecycle.md §4 (five clocks); I-D "Timing"; decisions R11-X2 (S3/S4 clock), R10-X5 (the EP composer), R10-X1 and R11-X3 (admission assertions), R12-X4 (formation)
+references: docs/evidence-layer-explainer.md (entry section); docs/message-lifecycle.md §4 (five clocks); I-D "Timing"; decision records SBM-ADR-0007 (the clock per grade) and SBM-ADR-0011 (admission assertions, formation inputs)
 alt: Five lanes, one per clock owner, with events in time order. Devices declare: the formation instant of the suite decision, the submission's sent_at, a member's verified_at and, later, a reveal's read_at; declared instants never decide timeliness. The Delivery Service observes its acceptance of the octets and the acknowledged handover, S2, at its own server_time. RDP(in) observes when it received and verified the confirmation that completed the policy. The time-stamping service attests the seals of the SE, the DE and the Evidence Package; the package's composer must be admitted at that instant. The Federation Authority's assertion covers acts before its own asserted_at. The SE's expires_at is a deadline: a confirmation received after it is late. At the availability grade the DE is dated by S2; at the verification and acceptance grades by RDP(in)'s observation of the completing confirmation.
 -->
   <title>Which event dates which fact</title>

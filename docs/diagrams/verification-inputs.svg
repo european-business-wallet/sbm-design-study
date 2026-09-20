@@ -5,7 +5,7 @@ source: docs/diagrams/verification-inputs.svg (hand-written SVG; this file is th
 question: What must a verifier hold, years later, besides the Evidence Package — and what is the verdict when one of those inputs is missing?
 profile: all; the relay hop evidence in the package exists from profile 2
 status: current
-references: docs/production-verifier-architecture.md (this figure's note); docs/required-properties.json; scripts/bundle_lint.py; README "What a green bar means"; decisions R6-W1 (maximality), R11-X3 (live lease), R12-X4 (formation inputs)
+references: docs/production-verifier-architecture.md (this figure's note); docs/required-properties.json; scripts/bundle_lint.py; README "What a green bar means"; decision record SBM-ADR-0011 (historical state: maximality, the live lease, formation inputs)
 alt: Three columns feeding one verdict. The Evidence Package carries the Sending Evidence, the outcome (DE, NDE or RE), the RDP chain with per-hop evidence, and optionally change records, non-operative state records and disputes. Beside it, the retained material that must accompany it: the policy chain, the counterparty roster, the retained GroupContext, the formation inputs, the suite registry and the federation register, each with the gap rule reported when it is absent, plus optional Delivery Service receipts and grade reveals. On the right, what is configured rather than retained: the EU Trusted Lists for qualification and the Federation Authority anchor for admission; the demo store holds demonstration keys for both roles in one file. The verdict is one of three: a pass, INCOMPLETE with exit code 3 when a required property cannot be established, or FAIL with exit code 1 for a violation. Two facts no retained material can establish are marked: that no later policy version existed, and that an observation reported by a Delivery Service is true.
 -->
   <title>What a verifier must hold, besides the package</title>
@@ -52,7 +52,8 @@ alt: Three columns feeding one verdict. The Evidence Package carries the Sending
     <text x="356" y="336">· a reveal, for a disputed grade or mandate</text>
     <text x="368" y="351" font-size="10.5" fill="#64748b">discloses that class to the dispute's parties</text>
   </g>
-  <text x="505" y="374" text-anchor="middle" font-size="11" fill="#64748b">produced by the claimant; each sealed, or bound by a committed digest</text>
+  <text x="505" y="366" text-anchor="middle" font-size="11" fill="#64748b">produced by the claimant — each sealed,</text>
+  <text x="505" y="380" text-anchor="middle" font-size="11" fill="#64748b">or bound by a committed digest</text>
 
   <!-- configured -->
   <rect x="696" y="56" width="280" height="240" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.6"/>
@@ -66,13 +67,14 @@ alt: Three columns feeding one verdict. The Evidence Package carries the Sending
   </g>
   <text x="836" y="230" text-anchor="middle" font-size="11" fill="#64748b">the demo store holds demo keys</text>
   <text x="836" y="246" text-anchor="middle" font-size="11" fill="#64748b">for both roles, in one file</text>
-  <text x="836" y="318" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#1f2937">Supplied by a claimant, not configured</text>
-  <text x="836" y="334" text-anchor="middle" font-size="10.5" fill="#64748b">the plaintext, only for a claim about content</text>
+  <rect x="720" y="306" width="256" height="48" rx="6" fill="#ffffff" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="848" y="324" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#1f2937">Supplied by a claimant, not configured</text>
+  <text x="848" y="341" text-anchor="middle" font-size="10.5" fill="#64748b">the plaintext, only for a claim about content</text>
 
   <!-- arrows to verdict -->
   <line x1="169" y1="298" x2="330" y2="446" stroke="#475569" stroke-width="1.3" marker-end="url(#a)"/>
   <line x1="505" y1="388" x2="505" y2="446" stroke="#475569" stroke-width="1.3" marker-end="url(#a)"/>
-  <line x1="836" y1="298" x2="676" y2="446" stroke="#475569" stroke-width="1.3" marker-end="url(#a)"/>
+  <line x1="704" y1="296" x2="678" y2="446" stroke="#475569" stroke-width="1.3" marker-end="url(#a)"/>
 
   <!-- verdict -->
   <rect x="300" y="450" width="410" height="86" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="1.6"/>
@@ -84,7 +86,7 @@ alt: Three columns feeding one verdict. The Evidence Package carries the Sending
   <!-- what nothing establishes -->
   <rect x="24" y="450" width="250" height="86" rx="8" fill="#fffbeb" stroke="#b45309" stroke-width="1.3" stroke-dasharray="5 4"/>
   <text x="149" y="472" text-anchor="middle" font-size="12" font-weight="bold" fill="#b45309">No retained material shows</text>
-  <text x="149" y="492" text-anchor="middle" font-size="11" fill="#b45309">that no later policy existed (X-33)</text>
+  <text x="149" y="492" text-anchor="middle" font-size="11" fill="#b45309">that no later policy existed (agenda A3)</text>
   <text x="149" y="510" text-anchor="middle" font-size="11" fill="#b45309">that a reported observation is true</text>
   <text x="149" y="527" text-anchor="middle" font-size="11" fill="#b45309">(the S2 receipt — A9)</text>
 

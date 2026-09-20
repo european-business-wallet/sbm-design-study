@@ -6,8 +6,8 @@
       "source": "docs/diagrams/federated-flow.mermaid",
       "command": "mmdc -i docs/diagrams/federated-flow.mermaid -o docs/diagrams/federated-flow.svg -b white",
       "tool": "@mermaid-js/mermaid-cli 10.4.0",
-      "source_sha256": "2f572cbbc4faa47f4ccfc59346b78d50c30cc06c7c99dea50aeb37ed02438037",
-      "export_sha256": "8f8d8981145b5dd5ae2880c137b38d0c752728a3cf16d99a9c1f09bbb76e0b8d"
+      "source_sha256": "9133afb3132670b2334df95391cba4a667522806e35a7efff144118a085344a4",
+      "export_sha256": "e2b0aa5d5302ec0f3d697050425202a3f7d8dd33540f306da27f58537f34b2c3"
     },
     {
       "export": "docs/diagrams/four-corner-architecture-technology-neutral.png",
@@ -38,7 +38,7 @@
       "source": "docs/diagrams/state-atlas.mermaid",
       "command": "mmdc -i docs/diagrams/state-atlas.mermaid -o docs/diagrams/state-atlas.svg -b white",
       "tool": "@mermaid-js/mermaid-cli 10.4.0",
-      "source_sha256": "8e7c01968e521a04c849de59f1ed630dc6a41d9787672849969b6991a560fdc2",
+      "source_sha256": "70b8a1c0a4ff4211ae091cce7dfd6ba84666b068591047b7d0995de1ab74ea6e",
       "export_sha256": "bb572e2c05604ec8b8bebee374a40d6652546519679b53ee7586a18b70d97260"
     },
     {

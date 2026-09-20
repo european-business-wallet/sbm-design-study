@@ -16,16 +16,12 @@
 %% etsi/TS-SBM-QERDS-Binding-v0.1.md (clauses 4.1, 6). Actors S=sender side,
 %% R=recipient side.
 %%
-%% Rewritten in round 10 (D10-02): the previous version taught a superseded
-%% protocol — SE sealed with no DS acceptance first, S2 without the
-%% device-authenticated receipt, a digest mismatch inferred from silence, and
-%% verification by stripping seals and re-canonicalising with JCS.
-%%
-%% Round 12 (D12-01): the relay is RDP-to-RDP and carries the ciphertext WITH
-%% the SE (FED-X4; the MSP-to-MSP relay drawn here before was never published),
-%% RDP(in) forwards to its DS with the origin proven by that SE (R12-X2), the
-%% join is the Welcome acknowledgement, the creator is routed as the group's
-%% founder (R12-X3), and live admission is a lease (R11-X3).
+%% The relay is RDP-to-RDP and carries the ciphertext WITH the SE (an
+%% MSP-to-MSP relay was drawn here before and was never published); RDP(in)
+%% forwards to its DS with the origin proven by that SE; the join is the
+%% Welcome acknowledgement; the creator is routed as the group's founder;
+%% live admission is a lease. An earlier edition of this figure taught a
+%% superseded protocol and was replaced.
 sequenceDiagram
     autonumber
     actor WS as WU-S · Sender wallet (Entity A)
@@ -45,10 +41,10 @@ sequenceDiagram
     Note over WS,WR: Phase 2 — First contact (MLS group, E2EE)
     WS->>MI: reserve KeyPackages for B's devices (Idempotency-Key)
     MI-->>WS: reservation + keypackage_ref per device (RFC 9420 RefHash)
-    WS->>MI: commit reservation — packages CONSUMED from here (R10-X2)
+    WS->>MI: commit reservation — packages CONSUMED from here
     WS->>WS: create group (A+B devices), pin sbm_group_params, Commit
     WS->>MI: deposit one Welcome per device (+ group_info_commitment)
-    WS->>MI: register as the group's founder · device-authenticated — MLS adds no Welcome for its creator (R12-X3)
+    WS->>MI: register as the group's founder · device-authenticated — MLS adds no Welcome for its creator
     WR->>MI: collect WelcomeQueue (Welcome + commitment + offered_suite)
     WR->>WR: decrypt Welcome, recompute GroupInfo commitment, verify credentials
     alt commitment matches, suite ≥ floor
@@ -62,17 +58,17 @@ sequenceDiagram
     Note over WS,WR: Phase 3 — Submit (content stays E2E encrypted)
     WS->>WS: build envelope, payload_hash, encrypt · SIGN the submission tuple (sender_confirmation)
     WS->>RO: submit(exact MLSMessage octets + metadata) · authenticated member session
-    RO->>RO: validate request, identity, expiry (X-22), policy, sender signature — before anything moves
+    RO->>RO: validate request, identity, expiry, policy, sender signature — before anything moves
     RO->>MO: POST /messages (the SAME octets) · RDP credential
     MO->>MO: accept — digest computed HERE · items only for devices it observed joining (here: none)
     MO-->>RO: AcceptanceRecord (binds octets, issuing RDP, message_id)
     RO-->>WS: SE (A.1-SubmissionAcceptance) — sealed + qualified timestamp, AFTER acceptance
 
     Note over RO,MI: Phase 4 — Four-corner relay (RDP-to-RDP: ciphertext + SE)
-    Note over RO,RI: peer-RDP auth: Trusted List + register<br/>admission: a LEASE decided at the exchange's start (R11-X3)<br/>— not evidence of admission at any act
+    Note over RO,RI: peer-RDP auth: Trusted List + register<br/>admission: a LEASE decided at the exchange's start<br/>— not evidence of admission at any act
     RO->>RI: POST /relay/messages — the SAME octets + the sealed SE
     RI->>RI: verify the SE's seal · SHA-256(octets) == the SE's envelope_hash, or refuse the hop
-    RI->>MI: POST /messages as forwarder · origin = RDP(out) + its sealed SE (R12-X2)
+    RI->>MI: POST /messages as forwarder · origin = RDP(out) + its sealed SE
     MI->>MI: origin proven by the SE · keyed (RDP(out), message_id) · one item per device it observed joining (B's, and the founder)
     MI-->>RI: AcceptanceRecord — issuing_rdp_id RDP(out), forwarding_rdp_id RDP(in)
     RI-->>RO: POST /relay/messages/{message_id}/result — B.1 RelayAcceptance (or B.2), sealed + QTS at this hop
@@ -81,16 +77,16 @@ sequenceDiagram
     WR->>MI: collect (device-authenticated) → transferred + collection token
     WR->>MI: acknowledge (receipt-ack, collection token)
     MI-->>WR: DeliveryReceipt — DS-signed, server-observed instant = S2
-    Note over MI,RI: OPEN (R10-13): the DE issuer MUST verify this receipt, and no published operation delivers it to any RDP
+    Note over MI,RI: OPEN (agenda A1): the DE issuer MUST verify this receipt, and no published operation delivers it to any RDP
     WR->>WR: decrypt, recompute payload_hash
 
     alt digest matches (S3)
         WR->>RI: confirmation s3 (wallet-signed or member-bound session)
         RI->>RI: verify signer · roster (active ack-capable member) · tuple == SE
         RI->>RI: evaluate acceptance_policy — S4 when the completing member's confirmation arrives (any-one ⇒ S4 == S3)
-        RI-->>WR: DE — delivered_at = when RDP(in) verified the completing confirmation, never the S2 receipt (R11-04) · embeds s3_attestation
+        RI-->>WR: DE — delivered_at = when RDP(in) verified the completing confirmation, never the S2 receipt · embeds s3_attestation
     else digest mismatch
-        WR->>RI: confirmation mismatch — the recipient's signed proof (R10-07)
+        WR->>RI: confirmation mismatch — the recipient's signed proof
         RI-->>RO: NDE (D.2, payload-hash-mismatch) — carries that proof
     else no confirmation before expiry
         RI-->>RO: NDE (expired) — silence is never a mismatch
@@ -98,7 +94,7 @@ sequenceDiagram
 
     Note over WS,WR: Phase 6 — Evidence Package
     RO->>RO: compose EP: se + outcome + rdp_chain[RDP(out), RDP(in)] — sealed + QTS
-    Note over RO: composing is an act: RDP(out) admitted at the EP's own QTS instant (R10-X5)
+    Note over RO: composing is an act: RDP(out) admitted at the EP's own QTS instant
     RO-->>WS: EP (wallet-storable)
     RI-->>WR: EP / DE (wallet-storable)
 
