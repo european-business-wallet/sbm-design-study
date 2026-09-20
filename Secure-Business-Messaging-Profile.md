@@ -440,7 +440,7 @@ For Member States not yet providing native reverse lookup, the EDD core registry
 ### 6.3 Deprecated options
 
 - Option B (privacy-enhanced transform): **NOT REQUIRED** in v1.1. Implementations **MAY** support it for future use.
-- Option C (deterministic derivation): **MUST NOT** be used in production.
+- Option C (deterministic derivation of the PAYLOAD from the EUID): **MUST NOT** be used in production. The reasons are recorded with the identifier decision, `docs/adr/SBM-ADR-0001.md`, among the alternatives considered: the EUID does not exist for every entity the UID must name, it is not stable across register changes and restructurings, a derived value certifies nothing the issuer's sealed link does not already certify, and public, sequential register numbers would make every UID computable and every directory enumerable offline.
 ## 7. Messaging: SM-MLS-1.0 + Registered Delivery
 
 This section specifies the end-to-end secure messaging profile used by Business Wallets and the normative model for **Registered Electronic Delivery**. The transport layer is based on **IETF Messaging Layer Security (MLS, RFC 9420)**, bound to the Business Wallet context as the **SM-MLS-1.0** profile.

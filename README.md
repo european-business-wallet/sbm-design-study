@@ -509,7 +509,7 @@ proof, one complete trace through the public operations, provider migration and
 exit, and who sees what — deferred by decision, carried on the agenda as G1 to
 G4, and not claimed as delivered.
 
-- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r3`,
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r4`,
   the git tag of that name; earlier tags of this snapshot stay where they are
   and each names the edition it was cut from. Cite the tag, or the commit you
   hold, so an answer can be matched to the text it answers. The reviewer

@@ -10,7 +10,8 @@ choice: >-
   UID issued as a qualified attestation, resolved through the EDD, *linked* to EUID and LEI ·
   [§3.7](../../Secure-Business-Messaging-Profile.md#37-why-a-new-identifier-informative), §5.2, §6
 alternative: >-
-  reusing EUID, LEI, VAT or national numbers — none is universal, entity-faithful and cross-border resolvable
+  reusing EUID, LEI, VAT or national numbers — none is universal, entity-faithful and cross-border resolvable;
+  deriving the UID's payload from the EUID — rejected, the link stays an explicit sealed attribute
 benefit: >-
   one routing and trust anchor, stable across provider changes
 cost: >-
@@ -67,6 +68,29 @@ without re-addressing the network.
 - **Reuse national registration numbers.** Rejected: format, semantics,
   uniqueness guarantees and register access differ per Member State, so they
   cannot anchor a cross-border protocol.
+- **Derive the UID's payload from the EUID**, by encoding or hashing it, so
+  that the link to the business register is intrinsic to the identifier
+  rather than an attribute beside it. Considered on 20 September 2026 and
+  rejected; the umbrella's §6.3 forbids it in production and points here.
+  Coverage: the EUID exists only for companies and branches in the registers
+  connected through BRIS, so public-sector bodies, associations, foundations
+  and non-EU entities — the cases §3.7 names — would need a second minting
+  rule, and the UID would stop being uniform. Stability: the EUID can change
+  with the competent register, a conversion or a cross-border merger, while
+  the UID must survive everything anchored to it; a derived UID either
+  changes with it, losing the property it exists for, or stays, leaving the
+  "intrinsic" link stale and the explicit attribute needed anyway. Trust: a
+  derived value proves that the minter chose that EUID, not that the entity
+  holds it; the issuing QTSP's due diligence and its sealed `EUID-LINK`
+  attribute (§6.1) are the guarantee either way, and derivation adds nothing
+  to them. Enumerability: register numbers are public and sequential, so a
+  derived payload lets anyone compute every company's UID offline and probe
+  the directory as an existence oracle, where today discovery goes through
+  the reverse link the register controls (§6.2). Semantics: the payload is
+  semantics-free by design, and a derived one would carry another scheme's
+  lifecycle into the anchor. Where a stronger link is wanted, it belongs to
+  the attribute — a register countersignature, or a salted commitment to the
+  EUID in the record — not to the payload.
 
 ## Trade-off
 
