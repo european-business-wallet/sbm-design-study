@@ -509,10 +509,11 @@ proof, one complete trace through the public operations, provider migration and
 exit, and who sees what — deferred by decision, carried on the agenda as G1 to
 G4, and not claimed as delivered.
 
-- **Edition.** This snapshot is the review edition `design-study-2026-09-20`,
-  the git tag of that name; cite the tag, or the commit you hold, so an answer
-  can be matched to the text it answers. The reviewer guide's "tag named in
-  the README" is this one.
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r3`,
+  the git tag of that name; earlier tags of this snapshot stay where they are
+  and each names the edition it was cut from. Cite the tag, or the commit you
+  hold, so an answer can be matched to the text it answers. The reviewer
+  guide's "tag named in the README" is this one.
 - **Technical feedback** — an ambiguity, a contradiction, a rule an
   implementer cannot follow, a claim you think is wrong: a finding that names
   the document and section, and ideally the artefact or command that shows it,
