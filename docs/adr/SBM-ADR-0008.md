@@ -1,5 +1,3 @@
-<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
-<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 ---
 id: SBM-ADR-0008
 title: "Octet-authoritative encoding, JSON as a projection"
@@ -23,6 +21,8 @@ author_questions: []
 supersedes: []
 ---
 
+<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # SBM-ADR-0008 — Octet-authoritative encoding, JSON as a projection
 
 ## Context

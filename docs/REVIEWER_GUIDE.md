@@ -7,7 +7,7 @@
 
 ## What you are reviewing
 
-A design study of registered delivery between legal entities: end-to-end encrypted messaging (a profile of MLS) with qualified evidence of sending and delivery, which no provider can read. The edition you are asked to review is the git tag named in the README's [*Feedback*](../README.md#feedback) section; versions are in the README's [version table](../README.md#current-versions) and the repository's counts in [`project-counts.json`](project-counts.json) — generated, so they are not repeated here.
+A design study of registered delivery between legal entities: end-to-end encrypted messaging (a profile of MLS) with qualified evidence of sending and delivery, issued by providers that cannot read the message content; the evidence itself is readable and verifiable by anyone who holds it. The edition you are asked to review is the git tag named in the README's [*Feedback*](../README.md#feedback) section; versions are in the README's [version table](../README.md#current-versions) and the repository's counts in [`project-counts.json`](project-counts.json) — generated, so they are not repeated here.
 
 | State | What it covers |
 |---|---|

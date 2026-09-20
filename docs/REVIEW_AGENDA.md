@@ -58,7 +58,7 @@ which is not the same as specifying them.
 
 | # | Question | Current assumption | Claim that depends on it | Expertise |
 |---|---|---|---|---|
-| P1 | **The production certificate profiles** — QSealC chains to EU Trusted Lists, qualified timestamps, the certificate profile for delegated device credentials. | Production-verifier duties, not established by the reference tooling; the demo trust store stands in for the Trusted List only. | Every "qualified" claim | PKI; trust-service conformity assessment |
+| P1 | **The production certificate profiles** — QSealC chains to EU Trusted Lists, qualified timestamps, the certificate profile for delegated device credentials. | Production-verifier duties, not established by the reference tooling; the demo trust store holds demonstration keys in place of production trust material, for the qualification and the admission roles alike. | Every "qualified" claim | PKI; trust-service conformity assessment |
 
 ## Legal — the `TODO(legal)` questions
 

@@ -43,6 +43,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import lint_cli as lc  # noqa: E402
 
 
+
 def _staged(mock, *, issuing_rdp_id, message_id, recipient_uid, mid, device_id,
             octets, session_binding):
     """R7-02: a receipt now requires an item the DS ACCEPTED, QUEUED and
@@ -990,10 +991,10 @@ def test_the_transfer_transition_is_a_published_operation():
 
 
 def test_one_state_vocabulary_across_contract_decisions_and_code():
-    """One vocabulary across the contract and the code: the published
-    DeliveryItemState enum and the reference's own state set agree. (In the
-    source repository this test also reads the internal decision record, which
-    does not travel with this export.)"""
+    """R8-03 requirement 4. The decision record said `queued -> collected ->
+    acknowledged` while the reference used
+    `accepted -> queued -> transferred -> acknowledged` — different names for
+    what may be different observable moments."""
     doc = _ds_contract()
     published = doc["components"]["schemas"]["DeliveryItemState"]["enum"]
     assert published == ["accepted", "queued", "transferred", "acknowledged"]

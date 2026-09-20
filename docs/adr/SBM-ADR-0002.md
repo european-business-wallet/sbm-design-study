@@ -1,5 +1,3 @@
-<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
-<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 ---
 id: SBM-ADR-0002
 title: "A governed federation on four separate instruments"
@@ -23,6 +21,8 @@ author_questions: []
 supersedes: []
 ---
 
+<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # SBM-ADR-0002 — A governed federation on four separate instruments
 
 ## Context

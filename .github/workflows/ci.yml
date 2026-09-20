@@ -33,6 +33,8 @@ jobs:
         run: make lint
       - name: Demo-key seal verification lint (make conformance parity)
         run: make lint-demo
+      - name: OpenAPI contracts — independent validation (make conformance parity)
+        run: make openapi-validate
       - name: CDDL / JSON-Schema non-divergence gate (fail-closed in CI — N4)
         env:
           CI: 'true'

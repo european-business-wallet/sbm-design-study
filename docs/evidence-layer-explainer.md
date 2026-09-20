@@ -15,13 +15,13 @@ A registered-delivery provider (RDP) seals evidence about a message it never rea
 
 | Grade | The DE is issued when | Dated by | It establishes | It does not establish |
 |---|---|---|---|---|
-| **verification** (the default) | RDP(in) has verified an eligible member's confirmation that the digest matched — S3, which is S4 under `any-one` | RDP(in)'s receipt of that confirmation | an authenticated member of the addressee decrypted the content and re-verified its digest | acceptance by the entity under a quorum; anything about what the content means |
+| **verification** (the default) | RDP(in) has verified an eligible member's confirmation that the digest matched — S3, which is S4 under `any-one` | RDP(in)'s receipt of that confirmation | an authenticated member's device reported that it decrypted the content and re-verified its digest — attributable to the device; the truth of the report rests on the endpoint | acceptance by the entity under a quorum; anything about what the content means |
 | **acceptance** (`quorum:n`, `all`) | the confirmations of distinct eligible members satisfy the policy — S4 | RDP(in)'s receipt of the completing confirmation | the entity's published policy was satisfied | that no later policy existed ([A3](REVIEW_AGENDA.md)) |
 | **availability** (declared per class, never implicit) | a device of the addressee took the bytes and acknowledged them in an authenticated session — S2 | the Delivery Service's receipt (`server_time`) | handover to an authenticated endpoint, with the sender-declared digest; after a reveal, that the class was declared for this grade | recipient-side verification; acceptance; the handover beyond the Delivery Service's own observation ([A9](REVIEW_AGENDA.md)) |
 
 | Proof | Made by | Shows | Does not show |
 |---|---|---|---|
-| SE, with the sender's signature (the default) | RDP(out); the sending device | these octets were submitted by an authenticated sender, and accepted by the Delivery Service before sealing | delivery; the entity's legal intent ([L4](REVIEW_AGENDA.md)) |
+| SE, with the sender's signature (the default) | RDP(out); the sending device | these octets were submitted by an authenticated sender, as RDP(out) reports, and accepted by the Delivery Service before sealing; the signature attributes the submission to the device | delivery; the entity's legal intent ([L4](REVIEW_AGENDA.md)) |
 | The Delivery Service's receipt | the Delivery Service | a device of the addressee took these octets at `server_time` | that anyone decrypted them; that the observation is true (A9) |
 | A member's `s3` confirmation | the member's device | that member decrypted and the digest matched | the entity's acceptance, unless it completes the policy |
 | A mismatch proof | a member's device | an attributable claim that the digest failed; it ends the message with an NDE | why — corruption, error or attack |

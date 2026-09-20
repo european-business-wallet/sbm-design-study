@@ -45,8 +45,11 @@ The last row is where a seal stops. An RDP's seal proves the RDP made a statemen
 
 | Act | Key | Authorised by | Checked by |
 |---|---|---|---|
-| Authenticate the channel | the device's MLS credential | the Trusted Lists, and the device's leaf in BW-MEMBER | the other devices, inside MLS |
-| Sign a device's act — a confirmation, the sender's submission signature, a refusal, a reveal | the device's confirmation key | BW-MEMBER, sealed by the pinned entity key | RDP(in) at intake (INTF-1a); any verifier later |
+| Authenticate inside the MLS group | the device's MLS credential | the Trusted Lists, and the device's leaf in BW-MEMBER | the other devices, inside MLS |
+| Authenticate an API session (HTTPS) | the scheme the contract names — a device or member credential, mutual TLS between providers | the contract | the server of the operation; distinct from the MLS credential |
+| Sign the sender's submission | the sending device's confirmation key | BW-MEMBER, sealed by the pinned entity key | RDP(out) at submission, before it issues the SE; any verifier later |
+| Sign a recipient's message act — an `s3` confirmation, a mismatch proof, a message refusal, a reveal | the device's confirmation key | BW-MEMBER, sealed by the pinned entity key | RDP(in) at intake (INTF-1a); any verifier later |
+| Refuse a Welcome before joining | the private key of the KeyPackage the invitation consumed | the device's own KeyPackage | the Delivery Service, against the package it issued; the exact proof bytes are open ([G1](REVIEW_AGENDA.md)) |
 | Seal evidence | the RDP's seal (QSealC), plus a qualified timestamp | the Trusted Lists (qualification) and the register (admission at the act) | any verifier |
 | Sign the S2 receipt | the Delivery Service's receipt key, valid at the receipt's `server_time` | today BW-MED, sealed by the entity key; planned: the MSP's descriptor (Batch B) | the DE issuer — through no published path yet ([A1](REVIEW_AGENDA.md)) — and the retained verifier (`LINT-BND-38`) |
 | Seal an entity's documents | the entity's seal key | the directory record | any resolver |
@@ -58,9 +61,9 @@ The last row is where a seal stops. An RDP's seal proves the RDP made a statemen
 | Claim | Observed by | Attested by | Independently checkable | Whose honesty still matters |
 |---|---|---|---|---|
 | The sender submitted these octets | RDP(out), in an authenticated session | the SE, and by default the sender's own signature | seal, timestamp, and the signature against the device's published key | RDP(out) for `sent_at`; the signature shows the device's act, not the entity's intent ([L4](REVIEW_AGENDA.md)) |
-| The octets reached the recipient's RDP unchanged | RDP(in) recomputes the digest against the SE | the hop evidence (B.1) | yes, by anyone holding the octets | — |
+| The octets reached the recipient's RDP unchanged | RDP(in) recomputes the digest against the SE | the hop evidence (B.1) | the digest relation, by anyone holding the octets; the hop evidence's seal and timestamp | RDP(in)'s — that it received these octets at the hop's instant is its own report, like every observation in this table |
 | A device collected and acknowledged them (S2) | the Delivery Service | its signed receipt | the signature and the key's validity at `server_time` | the Delivery Service's — the event is its own observation ([A9](REVIEW_AGENDA.md)) |
-| A member decrypted and the digest matched (S3) | the recipient's device | its confirmation, wallet-signed or session-bound | wallet-signed: yes; session-bound: through RDP(in)'s record | RDP(in)'s, for a session-bound confirmation |
+| A member decrypted and the digest matched (S3) | the recipient's device | its confirmation, wallet-signed or session-bound | wallet-signed: the signature against the device's published key; session-bound: only through RDP(in)'s record | the device's, in both modes — a signature attributes the statement to the device, it does not show that an honest implementation decrypted and checked (the wallet assurance profile is where that assumption lives); and RDP(in)'s, for a session-bound confirmation |
 | The acceptance policy was satisfied (S4) | RDP(in), on receiving the completing act | the DE | re-evaluation over the retained policy and confirmations | that no later policy existed is unproven ([A3](REVIEW_AGENDA.md)) |
 | The provider was admitted at the act | the Federation Authority | its record | yes, with the configured anchor | the Authority's — two contradictory histories stay an open transparency gap |
 | The provider is qualified | the supervisory body | the Trusted List | by a production verifier | not established in this repository ([P1](REVIEW_AGENDA.md)) |

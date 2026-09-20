@@ -1,5 +1,3 @@
-<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
-<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 ---
 id: SBM-ADR-0012
 title: "A mandatory suite floor and a committed formation"
@@ -22,6 +20,8 @@ author_questions: []
 supersedes: []
 ---
 
+<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # SBM-ADR-0012 — A mandatory suite floor and a committed formation
 
 ## Context
@@ -57,9 +57,11 @@ recomputes it only from retained inputs that match the digest.
   participant declares protects only the participants who declare one, and a
   member that publishes nothing is exactly where a provider-induced downgrade
   lands.
-- **A higher mandatory floor, the hardware-holdable P-256 suite.** Rejected:
-  it would exclude software-only wallets and break the invariant that the
-  baseline is always in the intersection. The floor at the baseline adds no
+- **A higher mandatory floor, the P-256 suite.** Rejected: it would exclude
+  every implementation that supports only the mandatory baseline suite of RFC
+  9420, and break the invariant that the baseline is always in the
+  intersection. Hardware key protection is a separate property from suite
+  support and is not what a floor decides. The floor at the baseline adds no
   cryptographic strength; it adds uniform enforcement.
 - **A separate signed artefact for the decision.** Rejected: the group state
   is already a cryptographic commitment to the GroupContext, so a pin there

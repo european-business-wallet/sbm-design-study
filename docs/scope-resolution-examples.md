@@ -20,14 +20,14 @@ Each case follows the same arc: the sender resolves the **recipient's** scope ma
 
 - **Setup:** scope `legal` — `roles: [legal]`, `recoverability: strict`, `content_classes: [legal-notice]`.
 - **Resolution:** a `legal-notice` message routes to `legal`; eligible devices = the devices of active members holding `legal`; **no** records or other non-role leaf may be present.
-- **Roster check:** every group leaf resolves (via the member-enumeration surface) to a member holding `legal`. Any extra leaf ⇒ the sender **MUST NOT** send.
+- **Roster check (recipient-side):** every leaf of the recipient entity resolves (via the member-enumeration surface) to a member holding `legal`; the sender's own leaves follow the I-D's sender-side scope rules and do not count towards the recipient's audience. Any extra recipient leaf ⇒ the sender **MUST NOT** send.
 - **Reads as:** confidentiality confined to the legal role — verified, not merely declared.
 
 ## 3. Role scope, `records` (with `records_role`)
 
 - **Setup:** scope `finance` — `roles: [finance, procurement]`, `recoverability: records`, `records_role: records`, `content_classes: [invoice, x-payment-order]`.
 - **Resolution:** an `invoice` message routes to `finance`; eligible = devices of `finance`/`procurement` holders **plus** the devices of the `records`-role holders (the records leaf).
-- **Roster check:** the roster is exactly {`finance`/`procurement` holders' devices} ∪ {`records` holders' devices}; the sending wallet **surfaces the records leaf** as part of the effective audience (A10).
+- **Roster check (recipient-side):** the recipient's roster is exactly {`finance`/`procurement` holders' devices} ∪ {`records` holders' devices}; the sending wallet **surfaces the records leaf** as part of the effective audience (A10).
 - **Acceptance:** the `records` holder **recovers but does not accept** — SCOPE-8 counts scope-role holders only, so a records leaf's acknowledgement satisfies no acceptance policy.
 
 ## 4. `human_acceptance` scope

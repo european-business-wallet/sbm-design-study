@@ -7,7 +7,7 @@
 %% profile: all; the case drawn is a suspected device compromise, the richest of the administration changes
 %% status: current
 %% references: docs/lifecycle-and-custody.md (this figure's walkthrough); umbrella Annex O and §5.7; docs/wallet-assurance-profile.md §§2-4; I-D "Role Lifecycle"; TS clause 6 (CMP-1, CMP-2); docs/REVIEW_AGENDA.md A10, G3, G4
-%% alt: The entity's wallet administration publishes a sealed BW-MEMBER binding that suspends the member. The directory then fails the member closed at resolution, within the bounded propagation time. The remaining devices commit an MLS Remove at the next epoch, so the removed device loses access to future messages, while messages already on it are an endpoint-governance matter. Nothing published tells the Delivery Service, whose routing set still follows the founder and live invitations, so a removed device keeps a routing claim until its invitation expires: an open question, A10. Evidence already issued stays valid, because validity is judged at evidence time. A verifier later resolves the binding as it stood at the act, which requires the superseded confirmation key to remain published for the evidence retention period. Who keeps what after a provider exit, and for how long, is specified for evidence and open for the rest.
+%% alt: The entity's wallet administration publishes a sealed BW-MEMBER binding that suspends the member. The directory then fails the member closed at resolution, within the bounded propagation time. The remaining devices commit an MLS Remove at the next epoch, so the removed device loses access to future messages, while messages already on it are an endpoint-governance matter. Nothing published tells the Delivery Service, whose routing set still follows the founder and live invitations, so a removed device that had joined, or founded the group, keeps its routing claim — only an open invitation expires — and no removal-driven termination is published: an open question, A10. Evidence already issued stays valid, because validity is judged at evidence time. A verifier later resolves the binding as it stood at the act, which requires the superseded confirmation key to remain published for the evidence retention period. Who keeps what after a provider exit, and for how long, is specified for evidence and open for the rest.
 %% end figure
 sequenceDiagram
     autonumber
@@ -22,7 +22,7 @@ sequenceDiagram
     GR->>GR: MLS Remove + Commit at the next epoch
     Note over GR: future messages are out of reach · messages already on the device are endpoint governance
     AD--xDS: nothing published carries the change to the Delivery Service — OPEN (A10)
-    Note over DS: its routing set follows the founder and live invitations — a removed device keeps its claim until the invitation expires
+    Note over DS: its routing set follows the founder and joined or open invitations — a joined device keeps its claim, only an open invitation expires
     RD->>RD: evidence already issued stays valid — validity is judged at evidence time (CMP-1 / CMP-2)
     AD->>ED: keep the superseded binding published — as-of reads for the evidence retention period
     ED-->>VF: the binding as it stood at the act, and the confirmation key it published

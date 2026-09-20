@@ -109,7 +109,8 @@ def check(records=None):
             problems.append(f"{name}: names open questions but has no `Open questions` section")
         if (fm.get("author_questions") and "Unanswered" not in heads):
             problems.append(f"{name}: names author questions but has no `Unanswered` section")
-        if not body.lstrip().startswith(f"# {ident} — "):
+        prose = re.sub(r"^(?:\s*<!--.*?-->)+", "", body, flags=re.S)   # the SPDX comment sits after the front matter
+        if not prose.lstrip().startswith(f"# {ident} — "):
             problems.append(f"{name}: title line must be `# {ident} — <title>`")
     if numbers and numbers != list(range(1, len(numbers) + 1)):
         problems.append(f"identifiers are not 0001..{len(numbers):04d} without gaps: {numbers}")

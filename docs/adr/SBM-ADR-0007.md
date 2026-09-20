@@ -1,5 +1,3 @@
-<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
-<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 ---
 id: SBM-ADR-0007
 title: "Declared delivery grades and terminal outcomes"
@@ -25,6 +23,8 @@ author_questions: []
 supersedes: []
 ---
 
+<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # SBM-ADR-0007 — Declared delivery grades and terminal outcomes
 
 ## Context

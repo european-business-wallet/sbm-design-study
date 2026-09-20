@@ -1,5 +1,3 @@
-<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
-<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 ---
 id: SBM-ADR-0013
 title: "Pilot evidence kept apart; the agent profile optional"
@@ -12,7 +10,7 @@ choice: >-
   pilot evidence is structurally identical and makes no claim under the regulation; agents are the optional deployment profile 5 ·
   [§13.3](../../Secure-Business-Messaging-Profile.md#133-conformance-profiles-pilot-and-production); TS clause 9; Annex R
 alternative: >-
-  qualification as a property of the protocol; composition as a new rung of the deployment ladder — rejected
+  qualification as a property of the protocol — rejected
 benefit: >-
   no claim beyond what is established
 cost: >-
@@ -23,6 +21,8 @@ author_questions: []
 supersedes: []
 ---
 
+<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # SBM-ADR-0013 — Pilot evidence kept apart; the agent profile optional
 
 ## Context
@@ -47,7 +47,8 @@ keep pilot and production apart, and the TS's compliance clause states what
 each establishes. Agents are the optional deployment profile 5: the agent's
 evidence and mandate rules are specified, and the profile is complete without
 them. The deployment ladder counts pairs of independent providers that have
-proven interoperation, and provider composition is kept off it.
+proven interoperation; why provider composition is kept off it is recorded
+with the MSP's separation ([SBM-ADR-0004](SBM-ADR-0004.md)).
 
 ## Alternatives considered
 
@@ -55,9 +56,6 @@ proven interoperation, and provider composition is kept off it.
   shows that the reference tooling and the shipped artefacts are consistent;
   qualification, conformity assessment and Trusted-List status are decided
   outside the repository by the bodies that decide them.
-- **Composition as a new rung of the deployment ladder.** Rejected, as
-  recorded for the MSP's separation: it would let a deployment climb by
-  reorganising its contracts.
 
 ## Trade-off
 
@@ -67,8 +65,10 @@ repository.
 
 ## Consequences and residual limit
 
-The demonstration trust store stands in for a Trusted List and for nothing
-else; the production verifier's trust policy is stated and not implemented
+The demonstration trust store is a file of demonstration keys, one per trust
+role — the evidence and discovery signers, and the federation authority's
+anchor; it stands in for production trust material and establishes nothing
+about it. The production verifier's trust policy is stated and not implemented
 here. The agent-wallet interface between deployments is informative only.
 
 ## Status

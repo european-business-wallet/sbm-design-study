@@ -80,7 +80,7 @@ EXEMPT = {
 
 # Files scanned: the Markdown documents plus the machine-layer spec artefacts
 # whose description/comment strings are spec-facing prose.
-SCAN_GLOBS = ["*.md", "docs/*.md", "docs/adr/*.md", "ietf/*.md", "etsi/*.md",
+SCAN_GLOBS = ["*.md", "docs/*.md", "docs/adr/*.md", "brief/*.md", "ietf/*.md", "etsi/*.md",
               "schemas/*.json", "cddl/*.cddl", "edd-resolver-openapi.yaml"]
 
 # A line matching any of these presents a pre-inversion mechanism as current.
@@ -303,6 +303,13 @@ def scan_figures():
         if export.suffix == ".svg":
             problems += [(rel, f"'{m}' in figure text: {label[:100]}")
                          for label, m in _figure_hits(figure_text(export, None))]
+    # A public brief, where one exists (the design-study export carries one),
+    # embeds its own figures; a superseded mechanism must not survive there
+    # while the canonical figures are clean.
+    for svg in sorted((ROOT / "brief" / "assets").glob("*.svg")):
+        rel = svg.relative_to(ROOT).as_posix()
+        problems += [(rel, f"'{m}' in figure text: {label[:100]}")
+                     for label, m in _figure_hits(figure_text(svg, None))]
     return problems
 
 

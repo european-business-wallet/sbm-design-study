@@ -1,9 +1,7 @@
-<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
-<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 ---
 id: SBM-ADR-0011
-title: "History retained and never read live"
-label: "History is retained, never read live"
+title: "Historical signed state governs; today's state never substitutes"
+label: "Historical state governs, never today's"
 decision_status: accepted
 implementation_status: [specified, in-reference]
 implementation: >-
@@ -25,7 +23,9 @@ supersedes:
   - the signed policy chain with a stored `valid_until` and an `as_of` retrieval endpoint, an earlier decision of this study
 ---
 
-# SBM-ADR-0011 — History retained and never read live
+<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+# SBM-ADR-0011 — Historical signed state governs; today's state never substitutes
 
 ## Context
 
@@ -45,7 +45,9 @@ as not established rather than assumed.
 
 ## Decision
 
-History is retained and read as of the act, never live. A published
+The state that governs a verdict is the signed state as it stood at the act,
+retained or obtained as of that instant; today's state never substitutes for
+it. A published
 acceptance policy is never modified: its window ends where its signed
 successor begins, derived from the digest-linked chain and never stored.
 Admission is evaluated at the instant of the act over the full history of a
@@ -63,8 +65,12 @@ existed.
 - **A stored `valid_until` with an `as_of` retrieval endpoint.** Superseded:
   writing an end date into a published document changed the digest that
   evidence had already pinned, so the two rules were mutually unsatisfiable
-  for the ordinary publication; and an endpoint model makes a 2033
-  verification of a 2026 act depend on that service being online and honest.
+  for the ordinary publication; and a verdict that depends on an endpoint
+  answering makes a 2033 verification of a 2026 act depend on that service
+  being online and honest. What is rejected is the mutable end date and the
+  dependence, not as-of retrieval: obtaining an authenticated historical
+  object through a live service is compatible with this decision, and the
+  umbrella requires the directory to serve as-of reads.
 - **A separate signed history manifest.** Rejected: two artefacts that can
   disagree about the same truth.
 - **A signed head assertion to make maximality locally checkable.**

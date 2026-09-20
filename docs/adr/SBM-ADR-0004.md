@@ -1,5 +1,3 @@
-<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
-<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 ---
 id: SBM-ADR-0004
 title: "The MSP separated from the RDP, with the relay left RDP-to-RDP"
@@ -28,6 +26,8 @@ analysed_not_decided: >-
   the specification claims that resistance.
 ---
 
+<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # SBM-ADR-0004 — The MSP separated from the RDP, with the relay left RDP-to-RDP
 
 ## Context
@@ -71,6 +71,40 @@ axis orthogonal to the deployment ladder, not a new rung on it.
   interoperate; composition varies what a pair is made of, and a rung that
   measured both would let a deployment climb by reorganising its contracts
   rather than by proving anything new.
+
+**The S2 observer — three models analysed, none selected ([A9](../REVIEW_AGENDA.md)).**
+The separation leaves one question this record does not decide: who observes
+the acknowledged handover, and what an MSP acting alone could make an RDP
+attest. The study's historical trust analysis (not part of the public
+snapshot) compares three models. They are alternatives, and this record
+chooses none:
+
+1. **The MSP as an accountable trusted observer.** Trusted party: the MSP,
+   admitted and named in the DE (`observed_by`). A malicious MSP could still
+   fabricate or withhold a handover; the binding makes that attributable,
+   not impossible. The event clock is the MSP's `server_time`. Cost: the
+   lowest — one retained receipt. Remaining assumption: no collusion between
+   the MSP and the party the fabrication favours, and no censorship the
+   sender cannot detect.
+2. **A handover proof authenticated independently of the MSP.** Trusted
+   party: the recipient device, whose key signs the acknowledgement the DE
+   rests on. A malicious MSP could still withhold or delay, but not
+   fabricate. The event clock becomes contestable: the device's instant is
+   client-declared, and the profile has rejected client clocks for S2 once
+   already. Cost: availability and retry semantics at the device, and a
+   second retained artefact. Remaining assumption: an honest device
+   implementation, and a resolution for the offline recipient.
+3. **The handover inside the RDP's trust boundary.** Trusted party: the
+   qualified RDP, which then operates or co-locates the delivery service. A
+   malicious MSP disappears from the evidence path, at the price of the
+   separation this record introduces: transport and evidence stop being
+   separable markets. The event clock is the RDP's. Cost: the highest, in
+   deployment freedom. Remaining assumption: the RDP's honesty, which the
+   design already assumes for the seal.
+
+The analysis recommends the second *if* resistance to an MSP acting alone is
+to be claimed. Nothing in the specification claims that resistance, and no
+model is selected.
 
 ## Trade-off
 

@@ -38,16 +38,16 @@
       "source": "docs/diagrams/state-atlas.mermaid",
       "command": "mmdc -i docs/diagrams/state-atlas.mermaid -o docs/diagrams/state-atlas.svg -b white",
       "tool": "@mermaid-js/mermaid-cli 10.4.0",
-      "source_sha256": "fe2c6e660b9ef396a8af9eb9e894a8f610bbe70922fd3dbcab3feeee0f02988d",
-      "export_sha256": "56c576e2b48850df9bb5e26e454b4f5c30945fe68972087493313b5e36de0aab"
+      "source_sha256": "8e7c01968e521a04c849de59f1ed630dc6a41d9787672849969b6991a560fdc2",
+      "export_sha256": "bb572e2c05604ec8b8bebee374a40d6652546519679b53ee7586a18b70d97260"
     },
     {
       "export": "docs/diagrams/change-swimlane.svg",
       "source": "docs/diagrams/change-swimlane.mermaid",
       "command": "mmdc -i docs/diagrams/change-swimlane.mermaid -o docs/diagrams/change-swimlane.svg -b white",
       "tool": "@mermaid-js/mermaid-cli 10.4.0",
-      "source_sha256": "ef001b6c7d915fb94689a1c051fe40a16a6d0de01388984ba71f3602f1d96195",
-      "export_sha256": "a8fad70dfd83aeb207bac1c06aecdee6b4a694c2e15b57abf4848fecc2df3edd"
+      "source_sha256": "7c32e74c729a58ce7af081616fbcb19697617f3d6cb3f12d6477b1096a756345",
+      "export_sha256": "55125da144613e2f916221cc790a4e26f771d8733f0a764a357cbb45ff8592c2"
     }
   ]
 }

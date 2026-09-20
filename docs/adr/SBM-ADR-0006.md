@@ -1,5 +1,3 @@
-<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
-<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 ---
 id: SBM-ADR-0006
 title: "The wallet as an evidence participant"
@@ -14,7 +12,7 @@ choice: >-
 alternative: >-
   provider-attested acts only — kept as an explicitly narrowed fallback
 benefit: >-
-  both sides' acts independently attributable
+  both sides' acts attributable to a device key, independently of the providers, in the wallet-signed modes
 cost: >-
   key custody, an assurance floor and compromise handling join the evidence story — wallet providers, entities
   ([MWAP](../wallet-assurance-profile.md))
@@ -23,6 +21,8 @@ author_questions: []
 supersedes: []
 ---
 
+<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # SBM-ADR-0006 — The wallet as an evidence participant
 
 ## Context
@@ -50,7 +50,12 @@ submission by default: a wallet-signed sender confirmation over the full
 submission tuple, required for opposable acts, keyed and verified like the
 recipient's. Provider-attested acts remain an explicitly narrowed fallback
 for constrained senders, and where it is used the attribution claim is
-narrowed accordingly.
+narrowed accordingly. Two limits are part of the decision: a session-bound
+confirmation attributes the act only through RDP(in)'s record and a
+provider-attested submission only through RDP(out)'s, and the TS narrows the
+claim for both; and a signature in any mode attributes a statement to a device
+without showing that the endpoint behaved honestly — that assumption lives in
+the wallet assurance profile, not in the signature.
 
 ## Alternatives considered
 
@@ -61,8 +66,9 @@ narrowed accordingly.
 
 ## Trade-off
 
-Both acts independently attributable, at the price of key custody, an
-assurance floor and compromise handling becoming part of the evidence story.
+Both acts attributable to a device key in the wallet-signed modes, at the
+price of key custody, an assurance floor and compromise handling becoming part
+of the evidence story, and with the endpoint's honesty still assumed.
 
 ## Consequences and residual limit
 
