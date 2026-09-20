@@ -31,7 +31,7 @@ This profile is split across three documents; every normative **prose** requirem
 | QERDS conformance — seal/SCD/cryptography (ACM), identity proofing and authentication binding, change indication, ETSI EN 319 522 event/semantics mapping, pilot/production profiles, Art. 44/CIR compliance, ICS pro forma (REQ-SMB) | **TS-shaped profile** `etsi/TS-SBM-QERDS-Binding-v0.1.md` [TS] |
 | Identifiers, directory (EDD), roles, technical architecture (§7.1), MED/ORG/MEMBER, EUDI Wallet integration, governance | **this document** (umbrella) |
 
-`docs/vision-and-context.md` is an informative vision & policy-framing companion. The conformance tools, schemas, samples and tests in this repository are shared artefacts referenced by all three documents.
+The conformance tools, schemas, samples and tests in this repository are shared artefacts referenced by all three documents.
 
 **What governs what, and what happens when they disagree (normative).**
 
@@ -77,7 +77,7 @@ Six deliberate choices define this profile. Each is stated here once, with a poi
 
 **Delivery via wallet confirmation by default — availability only as a declared grade.** The legally operative act is, by default, authenticated verification and acceptance by an authorised endpoint, evidenced by a wallet-produced confirmation; deposit in an unauthenticated mailbox (S1) never establishes delivery. Availability-based delivery — which some legal contexts require, as in national certified-e-mail systems — exists **only as an explicitly declared per-content-class grade**, anchored on availability to an **authenticated** endpoint, never implicit (§8.3b, thirteenth-review revision). Normative: the I-D delivery state model and the TS [TS] clause 6; rationale and the three delivery grades: §7.1, §8.3b.
 
-**A managed federation — instead of an open one.** Providers are admitted, qualified and supervised; membership is gated and rules are central, because the evidence layer's legal weight depends on who operates it. The open, e-mail-style alternative would surrender exactly the guarantees the profile exists to provide. Normative: §13 (governance); framing: `docs/vision-and-context.md` §5.
+**A managed federation — instead of an open one.** Providers are admitted, qualified and supervised; membership is gated and rules are central, because the evidence layer's legal weight depends on who operates it. The open, e-mail-style alternative would surrender exactly the guarantees the profile exists to provide. Normative: §13 (governance); framing: the executive brief, `brief/executive-brief.md` §4.
 
 **A new identifier (UID) — instead of direct reuse of EUID/LEI/VAT.** None of the existing identifiers is simultaneously universal, entity-faithful and cross-border resolvable, so the profile mints a routing and trust anchor and *links* it to the source registers rather than replacing them. Rationale: §3.7; linkage: §5.2, §6.
 
@@ -447,7 +447,7 @@ This section specifies the end-to-end secure messaging profile used by Business 
 
 ### 7.1 Technical architecture (authoritative)
 
-This clause is the authoritative technical-architecture description for the profile. It is informative as to requirements (the normative wire and QERDS requirements live in the I-D [I-D] and the TS [TS] respectively) but authoritative as to the architecture model — the vision document (`docs/vision-and-context.md`) links here for the authoritative architecture and does not carry its own copy.
+This clause is the authoritative technical-architecture description for the profile. It is informative as to requirements (the normative wire and QERDS requirements live in the I-D [I-D] and the TS [TS] respectively) but authoritative as to the architecture model.
 
 **Actors.**
 
@@ -1208,7 +1208,7 @@ The four profiles are best read as increasing levels of **institutional risk pro
 |---|---|---|---|---|
 | **Institutional risk proven** | The round trip and the evidence model work | Independent providers interoperate | Legal effect and qualification hold | Full organisational capability operates |
 | **Does not prove** | Legal effect or federation interop | QERDS qualification or legal effect | Role-scoped confidentiality at scale | Agentic mandate governance (deployment profile 5 — the agent profile, Annex R) |
-| **Required** | Static signed EDD (a sealed registry file); **one co-located MSP/RDP**; two wallets; default scope only | **2+ independent MSP/RDPs**; an EDD resolver instance; default scope **+ ONE scoped use case**; normatively defined wallet↔RDP and Delivery-Service interfaces (the I-D [I-D], *Deployment-Defined Interfaces* — deployment-defined in profile 1) | **QERDS-qualified RDPs**; Trusted List validation; qualified timestamps; full UID lifecycle (§4.3); fail-closed directory (§5.7); **MWAP-conforming wallets** (`docs/wallet-assurance-profile.md`) | Production baseline **plus** confidentiality scopes (§8.3a), `records` recoverability, registered presentations (roadmap Phase 3, `docs/vision-and-context.md` §7) |
+| **Required** | Static signed EDD (a sealed registry file); **one co-located MSP/RDP**; two wallets; default scope only | **2+ independent MSP/RDPs**; an EDD resolver instance; default scope **+ ONE scoped use case**; normatively defined wallet↔RDP and Delivery-Service interfaces (the I-D [I-D], *Deployment-Defined Interfaces* — deployment-defined in profile 1) | **QERDS-qualified RDPs**; Trusted List validation; qualified timestamps; full UID lifecycle (§4.3); fail-closed directory (§5.7); **MWAP-conforming wallets** (`docs/wallet-assurance-profile.md`) | Production baseline **plus** confidentiality scopes (§8.3a), `records` recoverability, registered presentations (the roadmap's third phase, `brief/executive-brief.md` §5) |
 | **MAY be simulated** | EDD (static file), QTSP issuance (demo keys, §9.4 lint modes), timestamps (mock TSA) | QTSP issuance and TSA (demo trust store, `--trust-store`); register linkage | Nothing on the trust path; register linkage MAY remain stage-1/2 | Nothing |
 | **Evidence status** | **Pilot (non-qualified)** — structurally conformant (`make conformance`), no legal effect | **Pilot (non-qualified)** — plus cross-provider evidence exchange | **Qualified** (Article 44) — statutory presumptions attach | **Qualified** |
 | **EDD stage required** | Stage 1 (static) | Stage 1 (resolver) | Stage 2 | Stage 2 (Stage 3 welcome) |

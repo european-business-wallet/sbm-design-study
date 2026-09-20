@@ -62,8 +62,8 @@ the qualification of any provider nor the legal effect of the evidence it
 defines: whether the statutory presumption attaches is a legal question this
 repository states rather than answers. The profile is the first phase of a
 phased idea — entity messaging, then attestation exchange, a registered
-presentation profile and governed agentic interactions
-([vision and context](docs/vision-and-context.md)); the later phases are not
+presentation profile and governed agentic interactions (the
+[executive brief](brief/executive-brief.md) §5); the later phases are not
 designed here, and the cross-deployment agent interface is open (A7).
 
 ## 2. What it takes as given
@@ -198,7 +198,6 @@ what it describes, and the umbrella's *Document map* says which governs what.
 | Document | What it gives you |
 |----------|---------|
 | [`docs/REVIEWER_GUIDE.md`](docs/REVIEWER_GUIDE.md) | The short path: what exists today, what is planned, what is open, and a branch per specialism. |
-| [`docs/vision-and-context.md`](docs/vision-and-context.md) | Why the problem is worth solving: the framing, the design principles, the managed-network model, and where this sits in the EU framework. |
 | [`docs/architecture-identity-trust.md`](docs/architecture-identity-trust.md) | Who does what and who talks to whom; which record authorises which key; the five questions a verifier keeps apart; who sees what. |
 | [`docs/message-lifecycle.md`](docs/message-lifecycle.md) | How the published operations compose: a minimal trace, the four state machines and their owners, three different acknowledgements, five clocks, six worked cases, and where a trace stops at an open question. |
 | [`docs/evidence-layer-explainer.md`](docs/evidence-layer-explainer.md) | The evidence layer — in brief first, then the objects, the seal and timestamp, the digests, the grade commitment and the ETSI event model. |
@@ -211,7 +210,6 @@ what it describes, and the umbrella's *Document map* says which governs what.
 | [`docs/agent-profile-explainer.md`](docs/agent-profile-explainer.md) | The optional agent profile (Annex R): purpose, design, use cases and a worked example. |
 | [`docs/wallet-agent-interface.md`](docs/wallet-agent-interface.md) | Outline of the wallet–agent companion contract for the agent deployment profile. |
 | [`docs/wallet-assurance-profile.md`](docs/wallet-assurance-profile.md) | The minimum wallet assurance baseline: key protection, device binding, confirmation-key lifecycle, compromise latency, attestation. |
-| [`docs/OCTET_AUTHORITATIVE_DESIGN.md`](docs/OCTET_AUTHORITATIVE_DESIGN.md) | Why the sealed bytes are authoritative and the JSON a projection, with the options that were rejected. |
 | [`CHANGELOG.md`](CHANGELOG.md) | The history of the artefacts: versions, and what changed on the wire. |
 
 Four documents are generated rather than hand-kept, each checked by a gate
@@ -395,7 +393,7 @@ specification does **not** yet answer — protocol, production trust and legal �
 with the assumption each one rests on, and what is not yet written, the
 implementer guide, carried as G1 to G4.
 
-- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r5`,
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r6`,
   the git tag of that name; earlier tags of this snapshot stay where they are
   and each names the edition it was cut from. Cite the tag, or the commit you
   hold, so an answer can be matched to the text it answers. The reviewer
