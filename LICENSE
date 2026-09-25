@@ -4,9 +4,10 @@
 # License and IPR — Overview
 
 **Document:** Secure Business Messaging Profile
-**Version of this license overview:** 1.3
+**Version of this license overview:** 1.5
 **Applies to:** the Secure Business Messaging Profile specification set (the umbrella profile v2.1 and later, the IETF Internet-Draft, the TS-shaped QERDS binding) and the companion artefacts in this repository.
-**Date:** 2026-07-06
+**Date:** 2026-09-25
+**Changed in 1.5:** this overview names the repository this snapshot is published from, in the attribution notice and in §7, and §2.1 and §3 list only the files the snapshot contains (checked by `make doc-lint`); the vision companion listed in 1.4 is not part of this snapshot.
 
 ---
 
@@ -40,14 +41,13 @@ Part A applies to the specification and documentation files, including their fut
 - `Secure-Business-Messaging-Profile.md` — the umbrella Specification document (and its future revisions);
 - `ietf/draft-sbm-mls-erd-00.md` — the Internet-Draft for the wire protocol. NOTE: upon submission to the IETF the draft is additionally governed by the IETF Trust Legal Provisions (BCP 78 / BCP 79); the `ipr: trust200902` declaration in the draft controls for IETF purposes (see [`IPR.md`](IPR.md) §6);
 - `etsi/TS-SBM-QERDS-Binding-v0.1.md` — the TS-shaped QERDS binding profile. NOTE: this is not an ETSI deliverable; upon any adoption by ETSI, the ETSI IPR Policy and copyright regime would govern the resulting ETSI deliverable, while the text as published here remains under this Part A;
-- `docs/vision-and-context.md` — the consolidated vision & context companion;
 - `README.md`, `IPR.md`, `CONTRIBUTING.md`, `THIRD_PARTY_NOTICES.md`, this `LICENSE` overview, and other Markdown documentation files, unless a given file carries a different notice.
 
 ### 2.2 Attribution notice
 
 When reusing or adapting the Specification or its companion documentation, please include a notice substantially similar to:
 
-> © 2025–2026 Paolo De Rosa and contributors. Licensed under the Creative Commons Attribution 4.0 International License (CC BY 4.0). Original source: <https://github.com/paolo-de-rosa/secure-business-messaging>. A copy of the license is available at <https://creativecommons.org/licenses/by/4.0/legalcode>. Patent rights are subject to the Royalty-Free commitment described in `IPR.md`.
+> © 2025–2026 Paolo De Rosa and contributors. Licensed under the Creative Commons Attribution 4.0 International License (CC BY 4.0). Original source: <https://github.com/european-business-wallet/sbm-design-study>. A copy of the license is available at <https://creativecommons.org/licenses/by/4.0/legalcode>. Patent rights are subject to the Royalty-Free commitment described in `IPR.md`.
 
 ---
 
@@ -79,6 +79,6 @@ This is a licensing and IPR framework for a draft technical specification. It do
 
 ## 7. Contact and about
 
-For questions about this license, to report a patent disclosure, or to request clarification on the scope of the RAND-Z commitment, please open an issue in the source repository or contact the maintainer(s) listed in `README.md`.
+For questions about this license, to report a patent disclosure, or to request clarification on the scope of the RAND-Z commitment, please open an issue in this repository — <https://github.com/european-business-wallet/sbm-design-study> — or contact the maintainer(s) listed in `README.md`.
 
-This `LICENSE` overview and the `IPR.md` document are themselves licensed under CC BY 4.0, so other projects may adopt and adapt this framework. When doing so, update §2.1 and §3 to reflect the adopting repository's file layout and replace the attribution in §2.2.
+This `LICENSE` overview and the `IPR.md` document are themselves licensed under CC BY 4.0, so other projects may adopt and adapt this framework. When doing so, update §2.1 and §3 to reflect the adopting repository's file layout, replace the attribution in §2.2, and name that repository in §7: those four places are what make this document true of the repository it ships in, and `make doc-lint` and `make versions` check the first three.

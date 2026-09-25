@@ -49,7 +49,7 @@ def _commitment_cbor(dst, fields):
     """The commitment construction (twenty-fifth review, M3/T4; the I-D
     (Grade Commitment)/(Mandate Commitment)) — deterministic CBOR (RFC 8949
     §4.2) over a FIXED-POSITION array with a domain-separation tag at element 0,
-    replacing the former SHA-256(JCS({...})):
+    replacing the former digest over a canonicalised JSON object:
 
         commitment = lowercase-hex( SHA-256( dCBOR([ dst, f1, f2, ... ]) ) )
 
@@ -425,9 +425,12 @@ def find_unsafe_numbers(obj, path="$"):
 
     I-JSON in this profile is integers-only within [-(2^53-1), 2^53-1]: a float
     (fractional or exponent form) or an integer outside the safe range cannot be
-    round-tripped exactly through JCS's ECMAScript/IEEE-754 number domain — which
-    is the single most-cited canonicalisation hazard, and it is an INTEGER hazard,
-    not merely a decimal one. Genuinely large counters (mls_epoch, manifest
+    round-tripped exactly through the ECMAScript/IEEE-754 number domain a JSON
+    parser may impose between the wire and a verifier — which is the single
+    most-cited canonicalisation hazard, and it is an INTEGER hazard, not merely a
+    decimal one. The restriction is the profile's own, stated in the I-D, and it
+    outlives any particular canonicalisation: a projection that cannot be read
+    back exactly cannot be compared against the authoritative octets. Genuinely large counters (mls_epoch, manifest
     length) are carried as decimal STRINGS, so they never reach this walk. bool is
     a subclass of int and is correctly ignored. Returns (path, reason) pairs.
     THE single implementation — evidence_lint and discovery_lint both call it."""
@@ -446,6 +449,61 @@ def find_unsafe_numbers(obj, path="$"):
     elif isinstance(obj, list):
         for i, v in enumerate(obj):
             out.extend(find_unsafe_numbers(v, f"{path}[{i}]"))
+    return out
+
+
+# The hash modes the profile defines (schemas/evidence-common.schema.json
+# `$defs/Hash`, cddl/sm-mls-erd.cddl). A digest is ALWAYS over octets: `raw-*`
+# over the transmitted bytes (the I-D (Canonicalisation and Payload Hashing),
+# Mode A), `manifest-*` over the deterministic-CBOR manifest of a multipart
+# payload, whose part digests are over each part's own octets (Mode C). The
+# JSON-canonicalisation modes `jcs-sha256` / `jcs-sha512` were REMOVED from the
+# profile on 2026-09-25; an artefact that declares one is refused rather than
+# ignored, because it asserts a digest over canonicalised JSON, which this
+# profile no longer defines a rule to recompute.
+PROFILE_HASH_MODES = ("raw-sha256", "raw-sha512", "manifest-sha256", "manifest-sha512")
+
+# Modes a previous revision of this profile defined, named so the refusal can say
+# WHICH mode it is refusing rather than only that the value is unknown.
+RETIRED_HASH_MODES = {
+    "jcs-sha256": "removed 2026-09-25; JSON canonicalisation left the profile",
+    "jcs-sha512": "removed 2026-09-25; JSON canonicalisation left the profile",
+}
+
+
+def find_foreign_hash_modes(obj, path="$"):
+    """Paths to any `hash_mode` the profile does not define — LINT-HASH-01.
+
+    A removed enumeration value is not merely un-enumerated: a verifier that
+    accepted it would have to recompute a digest by a rule this profile no
+    longer states, so the artefact is REFUSED at the document level and not only
+    at the schema. The walk reaches every digest descriptor wherever it sits —
+    `payload_hash`, the envelope `content_digest`, `acceptance_policy_ref.
+    doc_digest`, a manifest part — including in objects a future revision adds.
+    Returns (path, mode, reason) triples. THE single implementation —
+    evidence_lint and discovery_lint both call it."""
+    out = []
+    if isinstance(obj, dict):
+        mode = obj.get("hash_mode")
+        if isinstance(mode, str) and mode not in PROFILE_HASH_MODES:
+            out.append((path, mode, RETIRED_HASH_MODES.get(mode)))
+        for k, v in obj.items():
+            out.extend(find_foreign_hash_modes(v, f"{path}.{k}"))
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            out.extend(find_foreign_hash_modes(v, f"{path}[{i}]"))
+    return out
+
+
+def hash_mode_violations(doc):
+    """(rule, message) pairs for LINT-HASH-01 over a whole document."""
+    out = []
+    for path, mode, reason in find_foreign_hash_modes(doc):
+        why = f" — {reason}" if reason else ""
+        out.append(("LINT-HASH-01",
+                    f"hash_mode {mode!r} at {path} is not part of the profile"
+                    f"{why}; the profile defines "
+                    + ", ".join(PROFILE_HASH_MODES)))
     return out
 
 
@@ -481,7 +539,8 @@ def load_ijson(text):
 
 def dcbor(obj) -> bytes:
     """Deterministic CBOR (RFC 8949 §4.2) — the authoritative canonicalisation
-    from the octet-authoritative revision (M4), replacing JCS for signed bytes."""
+    from the octet-authoritative revision (M4), and since 2026-09-25 the
+    profile's ONLY canonicalisation."""
     import cbor2
     return cbor2.dumps(obj, canonical=True)
 

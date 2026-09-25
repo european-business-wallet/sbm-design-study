@@ -1,7 +1,7 @@
 {
   "$id": "https://bw.example.eu/schemas/evidence-gcm.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Grade-Commitment Mismatch (GCM-v1) (v2.8)",
+  "title": "Grade-Commitment Mismatch (GCM-v1) (v2.9)",
   "description": "X-04/D5 dispute evidence: the recipient, on eventually reading an availability-grade message, finds the actual content_class differs from what the grade commitment binds, and REVEALS the envelope's true (salt, content_class). Verification (the I-D, Grade-Commitment Mismatch): recompute the commitment from the reveal against the pinned BW-ORG version — the GCM is a valid rebuttal iff EITHER the recomputation differs from the sealed grade_commitment (the commitment never bound the actual envelope) OR it matches but the revealed class's declared grade is not availability (a truthfully-committed non-availability class obtained availability treatment). A GCM whose reveal matches AND whose class IS availability-declared proves nothing and is REJECTED (LINT-BND-26). The availability DE remains FINAL at authenticated S2; a valid GCM REBUTS it in dispute — it does not retract it (no terminal-outcome change; EP carriage is the OPTIONAL disputes[] array). TODO(legal): the Article 43(2) rebuttable-presumption clause awaits external counsel (DESIGN_DECISIONS.md D5).",
   "type": "object",
   "required": [
@@ -30,7 +30,7 @@
     },
     "version": {
       "type": "string",
-      "const": "2.8"
+      "const": "2.9"
     },
     "profile": {
       "$ref": "evidence-common.schema.json#/$defs/Profile"

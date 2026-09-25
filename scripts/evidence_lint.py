@@ -35,12 +35,12 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import jcs  # noqa: E402  — shared RFC 8785 canonicaliser (scripts/jcs.py)
 from lint_cli import flat_projection  # noqa: E402  — R11-09
 from lint_cli import (parse_demo_qts,  # noqa: E402  — R10-X5
                       D4_COPIED_FIELDS,  # noqa: E402  — R3-01 one definition
                       parse_common_flags, load_trust_store, check_trust,  # noqa: E402  — shared (P1/P10)
                       RELAY_B2_REASONS, find_unsafe_numbers, load_ijson,
+                      hash_mode_violations,
                       DuplicateKeyError, reconstruct, dcbor, ep_signed_body,
                       projection_equals_decode, validate_body)
 
@@ -1154,6 +1154,12 @@ def lint(doc, profile="pilot", verify_demo=False, trust_store=None):
             v.add(rule, msg)
     for p, reason in find_unsafe_numbers(doc):
         v.add("LINT-PKG-09", f"{reason} at {p}")
+    # LINT-HASH-01: every digest descriptor in the reconstructed document, not
+    # only the ones a type-specific rule happens to read. A hash_mode outside
+    # the profile is refused here as well as by the Schema, because a verifier
+    # meeting one cannot recompute the digest at all.
+    for rule, msg in hash_mode_violations(doc):
+        v.add(rule, msg)
     lint_object(v, doc)
     if verify_demo:
         _verify_demo_pass(v, doc)

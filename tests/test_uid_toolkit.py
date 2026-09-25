@@ -170,4 +170,8 @@ def test_the_demo_seal_is_documented_as_a_demo():
 def test_the_readme_no_longer_teaches_the_removed_alias_layer():
     readme = _readme()
     assert "Removed: dns-zone" in readme
-    assert "sealed M4 artefact" in readme
+    # `M4` named the migration step that made the artefact authoritative and
+    # was removed from reader-facing text on 25 September 2026; what the test
+    # is about is that the README teaches the SEALED form.
+    assert "sealed artefact" in readme
+    assert "{sm_artifact_b64, projection}" in readme

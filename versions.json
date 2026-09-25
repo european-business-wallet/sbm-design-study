@@ -1,10 +1,10 @@
 {
-  "$comment": "R-01 SINGLE SOURCE OF TRUTH for CURRENT artefact versions. Every binding below MUST resolve to its dimension's `value`; scripts/version_manifest.py (make versions) and tests/test_version_matrix.py enforce equality and FAIL when the manifest OR any one artefact drifts independently. Historical values live in CHANGELOG.md and the per-document change-history tables, NEVER here. Binding kinds: `json` reads FILE, follows PATH (dotted, list indices allowed), and — if PATTERN is present — regex-extracts group 1 from that string; `text` reads FILE and regex-extracts group 1 of PATTERN's first match (re.MULTILINE).",
+  "$comment": "SINGLE SOURCE OF TRUTH for CURRENT artefact versions. Every binding below MUST resolve to its dimension's `value`; scripts/version_manifest.py (make versions) and tests/test_version_matrix.py enforce equality and FAIL when the manifest OR any one artefact drifts independently. Historical values live in CHANGELOG.md and the per-document change-history tables, NEVER here. Binding kinds: `json` reads FILE, follows PATH (dotted, list indices allowed), and — if PATTERN is present — regex-extracts group 1 from that string; `text` reads FILE and regex-extracts group 1 of PATTERN's first match (re.MULTILINE).",
   "manifest_version": "1",
   "dimensions": {
     "umbrella_profile": {
       "value": "2.1",
-      "note": "The umbrella profile revision. DISTINCT from the evidence version, which is also 2.1 — do not conflate the two dimensions.",
+      "note": "The umbrella profile revision. DISTINCT from the evidence version: the two are separate streams and their values are unrelated, whatever they happen to be.",
       "bindings": [
         {
           "kind": "text",
@@ -15,7 +15,7 @@
     },
     "umbrella_edition": {
       "value": "2026-09-18",
-      "note": "D10-04 (round 10): the umbrella's edition date, BOUND. It was metadata on `umbrella_profile` bound nowhere, so three places stated three dates — the umbrella's `**Date:**` 2026-07-06, its §0 paragraph 2026-07-31, the README 2026-09-18 — and `make versions` was green over all of them.",
+      "note": "The umbrella's edition date. Bound in every place that states it — the umbrella's front matter, its opening section and the README row — so the three cannot drift apart.",
       "bindings": [
         {
           "kind": "text",
@@ -35,7 +35,7 @@
       ]
     },
     "evidence": {
-      "value": "2.8",
+      "value": "2.9",
       "note": "Evidence objects SE/DE/NDE/RE/CE/EP/Relay. Schema const + CDDL body + sample projection are the authoritative sources; README row and schema titles must agree.",
       "bindings": [
         {
@@ -183,6 +183,27 @@
         },
         {
           "kind": "json",
+          "file": "schemas/evidence-gcm.schema.json",
+          "path": "properties.version.const"
+        },
+        {
+          "kind": "json",
+          "file": "schemas/evidence-gcm.schema.json",
+          "path": "title",
+          "pattern": "\\(v(\\d+\\.\\d+)\\)"
+        },
+        {
+          "kind": "text",
+          "file": "cddl/sm-mls-erd.cddl",
+          "pattern": "type: \"GCM-v1\", version: \"(\\d+\\.\\d+)\""
+        },
+        {
+          "kind": "json",
+          "file": "samples/sample-GCM.json",
+          "path": "projection.version"
+        },
+        {
+          "kind": "json",
           "file": "samples/sample-EP.json",
           "path": "projection.version"
         },
@@ -318,7 +339,7 @@
     },
     "discovery_bw_provider": {
       "value": "1.0",
-      "note": "BW-PROVIDER-v1, the provider's own signed descriptor (Batch A / A3). Its OWN stream: it describes a federation participant, not an entity, so it does not move when the entity documents do.",
+      "note": "BW-PROVIDER-v1, the provider's own signed descriptor. Its OWN stream: it describes a federation participant, not an entity, so it does not move when the entity documents do.",
       "bindings": [
         {
           "kind": "json",
@@ -440,7 +461,7 @@
     },
     "status_assertion": {
       "value": "1.0",
-      "note": "STATUS-v1 signed short-lived status capability (D6, F-10/X-07); versions independently (umbrella §9.3).",
+      "note": "STATUS-v1, the signed short-lived status assertion a resolver may rely on offline; versions independently of the evidence family (umbrella §9.3).",
       "bindings": [
         {
           "kind": "json",
@@ -472,7 +493,7 @@
     },
     "roster_snapshot": {
       "value": "1.0",
-      "note": "ROSTER-v1 signed atomic roster snapshot (F-12); versions independently (umbrella §9.3).",
+      "note": "ROSTER-v1, the signed per-epoch roster snapshot; versions independently of the evidence family (umbrella §9.3).",
       "bindings": [
         {
           "kind": "json",
@@ -504,7 +525,7 @@
     },
     "companion_contracts": {
       "value": "9.0.0",
-      "note": "F-15 profile-2 companion contracts (wallet-RDP, Delivery Service, RDP relay); version independently (umbrella §9.3).",
+      "note": "The profile-2 companion contracts — wallet-RDP, Delivery Service, RDP relay — versioned together as one stream; versions independently of the evidence family (umbrella §9.3).",
       "bindings": [
         {
           "kind": "text",
@@ -543,6 +564,23 @@
     "edd-resolver-openapi.yaml",
     "federation-register-openapi.yaml"
   ],
+  "repository": {
+    "$comment": "The repository this snapshot is published from, declared once so that prose about the repository can be checked where it ships: scripts/version_manifest.py compares the attribution in LICENSE against `url` and treats any other repository URL in the swept files as foreign unless `related` names it.",
+    "url": "https://github.com/european-business-wallet/sbm-design-study",
+    "related": [],
+    "note": "The design-study snapshot, published for review. `related` is empty on purpose: this snapshot names no other repository, and a document that does fails the sweep."
+  },
+  "repository_prose_sweep": {
+    "$comment": "Files carrying prose about the repository that the Markdown prose sweep does not reach: LICENSE is not Markdown, and a version manifest's notes are not prose to a Markdown scanner. Both shipped statements written from one repository about another.",
+    "files": [
+      "LICENSE",
+      "README.md"
+    ],
+    "manifest_fields": [
+      "note",
+      "$comment"
+    ]
+  },
   "active_prose_sweep": [
     "README.md",
     "docs/*.md",
@@ -551,14 +589,6 @@
   "prose_sweep_historical": {
     "$comment": "DOC-02 (documentation completeness review): the prose sweep covered five named files, so a companion outside them said `evidence v2.0` for six versions. It now covers every Markdown file under docs/ except these historical records, excluded BY PATH rather than edited to satisfy the sweep: they record what was true, or what was decided, at a named revision.",
     "paths": [
-      "docs/DESIGN_DECISIONS.md",
-      "docs/DESIGN_FINDINGS.md",
-      "docs/DESIGN_REVIEW_FINDINGS_HANDOFF.md",
-      "docs/DESIGN_REVIEW_ROUND11.md",
-      "docs/DESIGN_REVIEW_ROUND12.md",
-      "docs/DOCUMENTATION_COMPLETENESS_REVIEW.md",
-      "docs/FEDERATION_PARTICIPANT_PLAN.md",
-      "docs/OCTET_AUTHORITATIVE_DESIGN.md",
       "docs/lint-catalogue.md",
       "docs/rule-ownership.md"
     ]

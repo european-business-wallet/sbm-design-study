@@ -29,4 +29,4 @@ The reference code and tooling in this repository depend on third-party open-sou
 
 ## Referenced standards (not code dependencies)
 
-The Specification references external standards — IETF MLS (RFC 9420), COSE (RFC 9052), JCS (RFC 8785), RFC 3161 / ETSI EN 319 422, the ETSI EN 319 5xx series, and others — which are governed by their own IPR policies (see `IPR.md` §3). Referencing a standard does not incorporate its text into this repository.
+The Specification references external standards — IETF MLS (RFC 9420), COSE (RFC 9052), deterministic CBOR (RFC 8949 §4.2), RFC 3161 / ETSI EN 319 422, the ETSI EN 319 5xx series, and others — which are governed by their own IPR policies (see `IPR.md` §3). Referencing a standard does not incorporate its text into this repository.

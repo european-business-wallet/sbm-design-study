@@ -229,7 +229,7 @@ what a green bar does and does not mean, and how to send feedback.
 | Artefact | Version |
 |---|---|
 | Umbrella profile | 2.1 (edition 2026-09-18) |
-| Evidence objects (SE/DE/NDE/RE/CE/EP) | **2.8** (octet-authoritative) |
+| Evidence objects (SE/DE/NDE/RE/CE/EP) | **2.9** (octet-authoritative) |
 | Application envelope | 1.2 |
 | BW-MED / BW-ORG / BW-MEMBER | 2.1 / 2.6 / 2.2 |
 | EDD resolver contract (OpenAPI) | 1.12.0 |
@@ -364,9 +364,10 @@ python3 scripts/eu_entity_uid_toolkit.py check EU-DE-EOID-7K3D9W0Q2M5FW0
 ### Produce a starter discovery document
 
 `scripts/eu_entity_uid_toolkit.py` generates a starter discovery document. Its
-`med-stub` output is a **sealed M4 artefact** — the authoritative COSE bytes
-with the JSON projection beside them — signed with an **ephemeral key, not a
-QSealC**: structurally valid for experimentation, never publishable. *Removed:
+`med-stub` output is a **sealed artefact**, `{sm_artifact_b64, projection}` —
+the authoritative COSE bytes with the JSON projection beside them — signed with
+an **ephemeral key, not a QSealC**: structurally valid for experimentation,
+never publishable. *Removed:
 dns-zone* — an earlier revision offered DNS-based alias discovery; alias layers
 cannot authorise a provider, key or endpoint, so the mechanism was withdrawn.
 
@@ -376,6 +377,34 @@ cannot authorise a provider, key or endpoint, so the mechanism was withdrawn.
 python3 scripts/mock_rdp.py
 # server listens on http://localhost:8000
 ```
+
+Send a submission:
+
+```bash
+curl -X POST http://localhost:8000/send \
+    -H 'Content-Type: application/json' \
+    -d '{
+        "from_uid":"EU-DE-EOID-7K3D9W0Q2M5FW0",
+        "to_uid":"EU-FR-PSBID-ZYWVTSRQPNM8M4",
+        "payload_hash":{
+            "alg":"SHA-256",
+            "hex":"d8bae9a71f8d30c5cf47817ac8299037541d1a46aa1ee2edd476e3b1119ec77e",
+            "hash_mode":"raw-sha256"
+        },
+        "mls_epoch": 3,
+        "auth_method": "mls-x509"
+    }'
+```
+
+The response contains `evidence_url` and `evidence_cbor_url`. Fetch the
+evidence:
+
+```bash
+curl http://localhost:8000/evidence/<message_id>
+```
+
+This sequence is executed by a test that derives the body from this README, so
+the document and the endpoint cannot drift apart.
 
 The minimum pilot is deployment profile 1 of
 [umbrella Annex P](Secure-Business-Messaging-Profile.md#annex-p--deployment-profiles-and-edd-staging-informative):
@@ -393,7 +422,7 @@ specification does **not** yet answer — protocol, production trust and legal �
 with the assumption each one rests on, and what is not yet written, the
 implementer guide, carried as G1 to G4.
 
-- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r6`,
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r7`,
   the git tag of that name; earlier tags of this snapshot stay where they are
   and each names the edition it was cut from. Cite the tag, or the commit you
   hold, so an answer can be matched to the text it answers. The reviewer

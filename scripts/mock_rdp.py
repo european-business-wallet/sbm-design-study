@@ -19,10 +19,9 @@ The v2.0 evidence includes, in addition to the MLS session binding
 from flask import Flask, request, jsonify, Response
 import os, json, base64, copy, hashlib, datetime, hmac, secrets, sys, uuid, warnings, pathlib
 
-# Shared RFC 8785 canonicaliser (scripts/ is not a package; make it importable
-# whether this module is run directly or loaded via importlib by tests/regen).
+# scripts/ is not a package; make the shared modules importable whether this
+# module is run directly or loaded via importlib by tests/regen.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import jcs  # noqa: E402
 import cbor2  # noqa: E402  — deterministic CBOR for the authoritative body (M4)
 # R8-01: the SE output gate runs twice in `submit()` — once on the candidate
 # before the DS is contacted, once on the object about to be sealed — so the
@@ -144,7 +143,7 @@ def _dcbor(obj) -> bytes:
 
 def seal_cose(body: dict, kid: str = "rdp", seed=None, extra_ph=None) -> bytes:
     """The authoritative seal (M4/T1): a COSE_Sign1 whose payload is dCBOR(body).
-    No JCS — the body is deterministic CBOR, and those bytes ARE the artefact."""
+    The body is encoded once, deterministically, and those bytes ARE the artefact."""
     payload = _dcbor(body)
     return cose_sign(payload, kid=kid, seed=seed or os.environ.get("KEY_SEED", "demo"),
                      extra_ph=extra_ph)
@@ -2608,12 +2607,13 @@ def _sender_confirmation(se: dict, mid: str, device_id: str) -> dict:
 
 def _wallet_sign(confirmation: dict) -> str:
     """Recipient wallet advanced electronic signature (the I-D (Canonicalisation and Payload Hashing), W5): a
-    COSE_Sign1 over the FULL JCS-canonical confirmation object with the
+    COSE_Sign1 over the deterministic-CBOR encoding of the FULL confirmation
+    object with the
     wallet_signature_b64 field removed — the same signed-payload construction as
     the RDP seal, but under the recipient wallet's key (demo kid='wallet'). Alg is
     EdDSA(-8), within the LINT-PKG-05 allowlist."""
     payload = {k: v for k, v in confirmation.items() if k != "wallet_signature_b64"}
-    b = _dcbor(payload)   # M4: dCBOR, not JCS
+    b = _dcbor(payload)   # M4: the signed bytes are the dCBOR encoding
     # X-32: ONE key per (mid, device_id) — the demo seed derives from the
     # confirmation's own identity, so a signature verifies against exactly
     # one published device anchor (WALLET_SEED overrides for attacker
@@ -2719,9 +2719,11 @@ def _org_doc() -> dict:
 
 def _demo_policy_ref() -> dict:
     """Demo acceptance_policy_ref (BW-ORG policy version fixed at SE issuance;
-    §8.3). doc_digest is the REAL JCS-SHA-256 digest of the referenced ORG
-    document's signed payload — the document minus doc_cose_b64, exactly the
-    bytes the discovery seal covers — never a placeholder (F7, LINT-BND-10)."""
+    §8.3). doc_digest is the REAL SHA-256 digest of the referenced ORG
+    document's signed payload — the document minus doc_cose_b64, encoded as
+    deterministic CBOR, exactly the bytes the discovery seal covers — never a
+    placeholder (F7, LINT-BND-10). Those are transmitted octets, so the mode is
+    `raw-sha256`."""
     policy_version, digest_hex = _org_doc()
     return {
         "policy_version": os.environ.get("POLICY_VERSION", policy_version),
@@ -2731,7 +2733,7 @@ def _demo_policy_ref() -> dict:
         "doc_digest": {
             "alg": "SHA-256",
             "hex": digest_hex,
-            "hash_mode": "jcs-sha256",
+            "hash_mode": "raw-sha256",
         },
     }
 
@@ -3276,7 +3278,13 @@ def make_evidence(data: dict) -> dict:
 def send():
     data = request.get_json(force=True) or {}
     ep = make_evidence(data)
-    msg_id = ep["message_id"]
+    # `make_evidence` returns the sealed ARTEFACT — {sm_artifact_b64, projection}
+    # — since the octet-authoritative inversion, so the identifier is read from
+    # the projection. Reading it from the artefact raised KeyError and returned
+    # 500 for the request the README's own quickstart prints; the two sibling
+    # handlers below were already written for the artefact shape, which is why
+    # only this one broke. `tests/test_readme_quickstart.py` runs that sequence.
+    msg_id = ep["projection"]["message_id"]
     app.config.setdefault("EVID", {})[msg_id] = ep
     base = request.host_url.rstrip("/")
     return jsonify({

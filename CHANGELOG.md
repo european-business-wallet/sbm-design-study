@@ -18,7 +18,62 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-20
+## Current — 2026-09-25
+
+| Artefact | Version |
+|---|---|
+| Umbrella profile | 2.1, edition 2026-09-18 |
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.9** |
+| Application envelope | 1.2 |
+| BW-MED / BW-ORG / BW-MEMBER discovery documents | 2.1 / 2.6 / 2.2 |
+| BW-PROVIDER participant descriptor | 1.0 |
+| Status assertion · roster snapshot | 1.0 · 1.0 |
+| EDD resolver contract (OpenAPI) | 1.12.0 |
+| Federation register contract (OpenAPI) | 3.0.0 |
+| Profile-2 companion contracts (wallet–RDP, delivery service, relay) | 9.0.0 |
+| TS — QERDS binding | v0.35 |
+
+### What changed on the wire since the previous snapshot (2026-09-20)
+
+- **Wire-breaking: evidence objects 2.8 → 2.9**, every sample re-sealed. The
+  `jcs-sha256` and `jcs-sha512` values of `payload_hash.hash_mode` are removed from the profile.
+  An artefact that declares either is **refused by name** (`LINT-HASH-01`), not
+  ignored, and there is **no replacement mode**: deterministic CBOR is the
+  profile's only canonicalisation. An implementation that emitted those modes
+  no longer interoperates, and a sender whose original octets are gone cannot
+  produce a conformant `payload_hash` for that payload — the profile's answer
+  is to retain the bytes.
+- **Every defined hash mode is mandatory to implement**: `raw-sha256`,
+  `raw-sha512`, `manifest-sha256`, `manifest-sha512`. The set is closed; the
+  Internet-Draft owns the rule, the TS ICS carries a row for it, and a gate
+  fails if the Internet-Draft stops stating it. Adding a mode reopens the
+  question of advertisement (agenda A11).
+- **A privacy statement corrected.** The umbrella no longer offers a neutral
+  scope name as a mitigation: `scope_ref` travels in clear and the recipient's
+  published scope map resolves it, so the name hides nothing; a coarser scope
+  map does. Whether the content digest should be salted is opened as agenda
+  question A12 and left unanswered.
+- **The reference mock's `POST /send`** returned 500 on the body the README
+  documents. Fixed; the quickstart is now executed by a test that derives the
+  body from the README.
+- **Licence overview 1.5** for this snapshot: it names the repository it is
+  published from and lists only files this snapshot contains.
+- **Documentation.** The drafting ordinals and migration-step codes are out of
+  the reader-facing text; the vision note and the octet migration record left
+  the snapshot; the executive brief, README, CONTRIBUTING, OPEN-ITEMS and this
+  file were shortened to one home per topic.
+- Unchanged: the discovery documents, the envelope, the three contracts and the
+  TS revision. The catalogue holds 158 rules.
+
+### Verification
+
+The shipped bundles verify INCOMPLETE at this edition, by design; the README's
+[*three verdicts*](README.md#the-three-verdicts-and-the-two-invocations)
+section shows both invocations and what each leaves unproven.
+
+---
+
+## Previous snapshot — 2026-09-20
 
 | Artefact | Version |
 |---|---|
@@ -84,12 +139,6 @@ record is not reproduced here.
   set with a freshness gate, thirteen architecture decision records with the
   decisions index generated from them, and a review agenda that names every
   open question with the expertise that would settle it.
-
-### Verification
-
-The shipped bundles verify INCOMPLETE at this edition, by design; the README's
-[*three verdicts*](README.md#the-three-verdicts-and-the-two-invocations)
-section shows both invocations and what each leaves unproven.
 
 ---
 

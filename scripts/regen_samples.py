@@ -616,7 +616,7 @@ def emit_stage1_registry():
             "asserted_at": "2026-06-01T08:00:00Z",
             "med_url": f"https://msp.example.eu/.well-known/bw/med/{uid}",
         }
-        payload = mock._dcbor(rec)  # M4: dCBOR, not JCS
+        payload = mock._dcbor(rec)  # M4: the signed bytes are the dCBOR encoding
         sig_b64 = base64.b64encode(mock.cose_sign(
             payload, kid="design-authority", seed=seed)).decode("ascii")
         rec["signature"] = sig_b64

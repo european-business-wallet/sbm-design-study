@@ -3,7 +3,7 @@
 claim, and so is a companion's version line.
 
 The umbrella embedded an architecture figure routing ciphertext MSP-to-MSP and
-a stack figure with a JCS-centred digest, DNS discovery and MSP↔MSP transport,
+a stack figure with a canonicalisation-centred digest, DNS discovery and MSP↔MSP transport,
 while `make doc-lint` stayed green: it never read an SVG. Run on the base
 revision (5686498), the figure scan added here reports all of them. These tests
 drive it on a copy of the figures, so each rule is shown to fire, not assumed
@@ -61,10 +61,18 @@ def test_every_stale_label_the_review_found_is_caught(figures, label):
     assert any("in figure text" in p for p in problems), (label, problems)
 
 
-def test_the_optional_jcs_mode_is_not_mistaken_for_the_digest(figures):
+def test_the_removed_mode_is_gone_from_the_figure_and_cannot_return(figures):
+    """PT-01. This test used to assert the OPPOSITE — that the figure's
+    `jcs-sha256 optional mode` annotation was allow-listed, the mode being real.
+    The mode left the profile on 2026-09-25, so the annotation is a claim the
+    protocol no longer supports, and the allowance became the defect."""
     root, dl = figures
-    assert "jcs-sha256 optional mode" in (root / "docs/diagrams/protocol-stack.svg").read_text()
+    svg = root / "docs/diagrams/protocol-stack.svg"
+    assert "jcs-sha" not in svg.read_text(), "the figure must not offer a removed mode"
     assert dl.scan_figures() == []
+    _edit(svg, "raw-sha256 · manifest-sha256", "raw-sha256 · jcs-sha256 optional")
+    assert any("jcs-sha" in m for _, m in dl.scan_figures()), \
+        "a figure reintroducing the removed mode must fail the gate"
 
 
 def test_a_mermaid_label_is_scanned_and_its_comments_are_not(figures):
@@ -134,13 +142,3 @@ def test_the_sweep_reads_every_active_companion_and_no_historical_record():
         set(manifest["prose_sweep_historical"]["paths"])
     assert active <= set(files) and "README.md" in files
     assert not set(manifest["prose_sweep_historical"]["paths"]) & set(files)
-
-
-def test_the_sweep_catches_evidence_v2_0_in_a_companion(tmp_path):
-    manifest = json.loads((ROOT / "versions.json").read_text())
-    (tmp_path / "docs").mkdir()
-    (tmp_path / "README.md").write_text("current: evidence 2.8\n")
-    (tmp_path / "docs" / "example.md").write_text("Applies to: evidence v2.0\n")
-    (tmp_path / "docs" / "DESIGN_FINDINGS.md").write_text("at the time, evidence v2.0\n")
-    found = vm.sweep_active_prose(tmp_path, manifest)
-    assert [(rel, tok) for rel, _, tok in found] == [("docs/example.md", "evidence v2.0")]

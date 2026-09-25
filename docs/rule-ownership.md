@@ -30,7 +30,7 @@ Document keys: `umbrella` = `Secure-Business-Messaging-Profile.md`, `id` = `ietf
 - **Normative owner:** `id` — KeyPackage rules ({{keypackage-rules}})
 - **Informative summaries (must reference the owner):**
     - `ts` — ICS rows 024 and 149 tagged [I-D] (single-use / pool integrity)
-    - `id` — the Deployment-Defined-Interfaces Delivery-Service bullet adds the DISTINCT pool-integrity rule (idempotent reserve->commit, per-peer quota) and explicitly complements {{keypackage-rules}}; the T4 Security-Considerations mention is an in-document analytical echo
+    - `id` — the Deployment-Defined-Interfaces Delivery-Service bullet adds the DISTINCT pool-integrity rule (idempotent reserve->commit, per-peer quota) and explicitly complements {{keypackage-rules}}; the Security-Considerations key-substitution mention is an in-document analytical echo
 - **Note:** The reserve->commit pool-integrity rule is a distinct, complementary I-D-owned requirement, not a restatement of single-use.
 
 ### The availability delivery grade is declared per content class in the signed BW-ORG and is never implicit or default
@@ -71,6 +71,16 @@ Document keys: `umbrella` = `Secure-Business-Messaging-Profile.md`, `id` = `ietf
     - `ts` — ICS row 172 tags the requirement [UMB]
     - `id` — the delivery-state model consumes the gate; the hold note defers to the umbrella
 - **Note:** D6 (F-10/X-07): one mechanism, two findings. The capability object is STATUS-v1; the EDD contract v1.8.0 serves it; LINT-DISC-25 checks it.
+
+### Every defined payload hash mode is mandatory to implement; the mode is not negotiated
+
+- **Family id:** `hash-mode-mandatory-to-implement`
+- **Normative owner:** `id` — Canonicalisation and Payload Hashing
+- **Machine-checked by:** `LINT-HASH-01`
+- **Informative summaries (must reference the owner):**
+    - `ts` — ICS row 192 tagged [I-D]
+    - `umbrella` — §7.1's layer description names the modes without restating the obligation
+- **Note:** Closes review-agenda A11 (25 September 2026). The linter can refuse a mode outside the profile (LINT-HASH-01) but cannot prove a receiver implemented one, so the obligation is stated where the wire rules live and assessed through the TS ICS row.
 
 ## Interface count
 

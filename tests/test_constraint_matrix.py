@@ -55,7 +55,7 @@ MATRIX = [
      lambda b: b["mls_state"].update(format="mls10-message")),
     ("envelope_hash regressed to the generic Hash shape (alg/mode selectors)",
      lambda b: b.update(envelope_hash={"alg": "SHA-512", "hex": "a" * 128,
-                                       "hash_mode": "jcs-sha512"})),
+                                       "hash_mode": "raw-sha512"})),
 ]
 
 

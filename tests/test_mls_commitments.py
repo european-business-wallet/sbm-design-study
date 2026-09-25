@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 """R-02 / D3 — the MLS commitments are byte-exact over real wire structs.
 
-Former defect: `envelope_hash` $ref'd the generic `Hash` (a signed SE with
-SHA-512/jcs-sha512 was schema-valid), `mls_state` enumerated two hashes with no
+Former defect: `envelope_hash` $ref'd the generic `Hash` (a signed SE carrying
+a SHA-512 mode selector was schema-valid), `mls_state` enumerated two hashes with no
 cipher suite/version/extensions, and the mock hashed a SYNTHETIC string, not MLS
 octets. Evidence 2.2 introduces the dedicated fixed types EnvelopeHash
 (SHA-256 over TLS-serialize(MLSMessage)) and MlsStateHash (SHA-256 over
@@ -118,11 +118,13 @@ def test_one_byte_mutation_changes_the_commitment_and_fails_the_cross_check():
 
 
 def test_generic_hash_shape_is_unrepresentable():
-    """R-02's first acceptance criterion: SHA-512 / JCS / manifest modes are
-    schema-REJECTED for envelope_hash (the dedicated type has no selectors)."""
+    """R-02's first acceptance criterion: SHA-512 and the manifest modes are
+    schema-REJECTED for envelope_hash (the dedicated type has no selectors) —
+    including a mode the profile does define, because the selector itself is
+    what the dedicated type removes."""
     bad = copy.deepcopy(SE)
     bad["envelope_hash"] = {"alg": "SHA-512", "hex": "a" * 128,
-                            "hash_mode": "jcs-sha512"}
+                            "hash_mode": "raw-sha512"}
     assert lc.validate_body(bad), "the generic-Hash shape must be schema-invalid"
     bad2 = copy.deepcopy(SE)
     bad2["mls_state"] = {"tree_hash": "x", "confirmed_transcript_hash": "y"}

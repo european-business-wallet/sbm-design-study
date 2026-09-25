@@ -38,7 +38,8 @@ def test_float_is_flagged():
 
 
 def test_integer_above_safe_range_is_flagged():
-    # 2^53 + 1 — the exact C1 defect (a uint64 value JCS cannot round-trip).
+    # 2^53 + 1 — the exact C1 defect (a uint64 value the profile's restricted
+    # JSON number domain cannot round-trip).
     hits = lint_cli.find_unsafe_numbers({"mls_epoch": 9007199254740993})
     assert hits and hits[0][0] == "$.mls_epoch" and "safe range" in hits[0][1]
 

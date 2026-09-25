@@ -92,7 +92,7 @@ b64           = tstr            ; base64 token
 hash = {
   alg: "SHA-256" / "SHA-512",
   hex: hex-digest,
-  hash_mode: "jcs-sha256" / "jcs-sha512" / "raw-sha256" / "raw-sha512"
+  hash_mode: "raw-sha256" / "raw-sha512"
            / "manifest-sha256" / "manifest-sha512",
 }
 
@@ -180,7 +180,7 @@ rc-session = { rc-common, ? device_id: tstr, session_authenticated: true }
 ; ============================================================================
 
 se-body = {
-  type: "SE-v1", version: "2.8", profile: profile,
+  type: "SE-v1", version: "2.9", profile: profile,
   message_id: tstr, event: "A.1-SubmissionAcceptance",
   evidence_id: evidence-id, policy_id: policy-id,
   acceptance_policy_ref: acceptance-policy-ref, scope_ref: scope-ref,
@@ -220,7 +220,7 @@ sender-confirmation = { mid: member-id, device_id: tstr, message_id: tstr,
 ; confirmation-bearing grades (s3_attestation present, recipient-verified-digest).
 de-body = de-availability / de-confirmed
 de-common = (
-  type: "DE-v1", version: "2.8", profile: profile,
+  type: "DE-v1", version: "2.9", profile: profile,
   message_id: tstr,
   evidence_id: evidence-id, policy_id: policy-id,
   acceptance_policy_ref: acceptance-policy-ref, scope_ref: scope-ref,
@@ -256,7 +256,7 @@ quorum-ack = { mid: member-id, ack_at: iso-timestamp,
 ; is required for payload-hash-mismatch, redirect_uid for uid-merged.
 nde-body = nde-mismatch / nde-merged / nde-plain
 nde-common = (
-  type: "NDE-v1", version: "2.8", profile: profile,
+  type: "NDE-v1", version: "2.9", profile: profile,
   message_id: tstr,
   event: "A.2-SubmissionRejection" / "B.3-RelayFailure" / "C.5-AcceptanceRejectionExpiry"
        / "D.2-ContentConsignmentFailure" / "E.2-ContentHandoverFailure",
@@ -281,7 +281,7 @@ refusal-confirmation = { mid: member-id, result: "refused", message_id: tstr,
                          ? session_authenticated: true,
                          ? session_binding: session-binding }
 re-body = {
-  type: "RE-v1", version: "2.8", profile: profile,
+  type: "RE-v1", version: "2.9", profile: profile,
   message_id: tstr, event: "C.4-ConsignmentRejection",
   evidence_id: evidence-id, policy_id: policy-id,
   recipient_uid: uid,
@@ -295,7 +295,7 @@ re-body = {
 }
 
 ce-body = {
-  type: "CE-v1", version: "2.8", profile: profile,
+  type: "CE-v1", version: "2.9", profile: profile,
   message_id: tstr, event: "change-of-data",
   evidence_id: evidence-id, policy_id: policy-id,
   transformation: "re-packaging" / "chunking",  ; X-24 (2.5): observable only
@@ -309,7 +309,7 @@ ce-body = {
 ; RelayEvidence — B.1 acceptance (no reason) vs B.2 rejection (typed reason).
 relay-body = relay-accept / relay-reject
 relay-common = (
-  type: "RelayEvidence-v1", version: "2.8",
+  type: "RelayEvidence-v1", version: "2.9",
   ? profile: tstr, ? evidence_id: tstr,
   message_id: tstr,
   sending_rdp_id: tstr, receiving_rdp_id: tstr, hop_at: iso-timestamp,
@@ -318,7 +318,7 @@ relay-common = (
 ; X-04/D5 (2.2): grade-commitment-mismatch dispute evidence — rebuts (never
 ; retracts) an availability DE; carried in the EP's OPTIONAL disputes[].
 gcm-body = {
-  type: "GCM-v1", version: "2.8", profile: profile,
+  type: "GCM-v1", version: "2.9", profile: profile,
   message_id: tstr, event: "D.6-ContentAccessTracking",
   evidence_id: evidence-id, policy_id: policy-id,
   recipient_uid: uid, mid: member-id, auth_context: auth-context,
@@ -342,7 +342,7 @@ relay-reject = { relay-common, event: "B.2-RelayRejection",
 ; sub-artefact yields an evidence-body validated in turn. (The JSON PROJECTION
 ; nests the decoded sub-bodies — see the evidence-ep JSON Schema.)
 ep-body = {
-  type: "EP-v1", version: "2.8",
+  type: "EP-v1", version: "2.9",
   message_id: tstr,
   se: bstr,                 ; embedded SE artefact bytes
   outcomes: [+ bstr],       ; embedded DE/NDE/RE artefact bytes

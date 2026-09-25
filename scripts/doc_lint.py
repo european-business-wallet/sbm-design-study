@@ -30,6 +30,14 @@ digests of its source and of itself — a source edited without re-rendering
 fails. A figure whose front matter says `status: historical` is not
 token-scanned; it must still say what it was.
 
+THE LICENCE'S FILE LIST (publication review, PR-02). `LICENSE` lists the
+documents each licence part covers. That list is prose about the repository,
+in a file that is not Markdown and whose entries are not links, so no gate
+read it: an export shipped a list naming a document it no longer had, which is
+a licensing statement about nothing. `scan_licence_files` resolves every
+repository path named in the licence's scope sections against the repository
+the file ships in — directories and files alike.
+
 LINKS (documentation completeness review, gate 3). Every relative link and
 `#anchor` in the active Markdown — README, CONTRIBUTING, the umbrella and
 every docs/*.md except the historical records `versions.json` names — must
@@ -37,9 +45,17 @@ resolve: the file exists, and an anchor into Markdown names a heading (by
 GitHub's slug rule, duplicates numbered) or an explicit `{#id}`. A reading
 path is only as good as its links.
 
-Legitimate JCS references are allow-listed:
-  - any lowercase optional-mode token `jcs-...` (`jcs-sha256`/`jcs-sha512` enum
-    values and the descriptions of those `payload_hash` modes);
+THE MODE TOKENS (PT-01, 25 September 2026). `jcs-sha256` / `jcs-sha512` were
+enum values of `payload_hash.hash_mode`, so a lowercase `jcs-` token was
+allow-listed wholesale: it could only be the optional mode, and the mode was
+real. The mode has been removed from the profile, so that allowance has been
+NARROWED, not deleted — the tokens are now forbidden like the rest, and the only
+lines that pass are the ones that state the removal (`removed`, `retired`, `no
+longer`, `not part of the profile`, `refused`). A schema description saying the
+mode was removed is documentation; the same token in a live instruction is the
+defect this gate exists to catch.
+
+The remaining legitimate references are allow-listed:
   - the glossary term "JSON Canonicalization Scheme";
   - change-history table rows ("| v0.x | ... |");
   - whole-file exemptions for the CHANGELOG, the licence notices and the design
@@ -53,30 +69,34 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
-# Whole-file exemptions: these legitimately discuss JCS removal or retain the
-# RFC 8785 reference for the optional `jcs-sha256` mode.
+def _declared_records():
+    """The docs/ files `versions.json` declares as historical records.
+
+    DOC-02 established one declaration for what a record is — a file that says
+    what was true, or what was decided, at a named revision — and the prose
+    sweep excludes those BY PATH rather than editing them. This guard kept its
+    own hand-written copy of part of that list, which held while the two agreed.
+    Narrowing the `jcs-` allowance (PT-01) reached `DOCUMENTATION_COMPLETENESS_
+    REVIEW.md`, a completed review body quoting the very mode it asked to be
+    checked — a record by the declaration, and not by this file's copy of it.
+    Deriving the set closes that gap in the only direction that does not edit a
+    record. The token scope GREW in the same change; only the file list is
+    shared, and a record is still a record in both sweeps.
+    """
+    import json
+    manifest = json.loads((ROOT / "versions.json").read_text(encoding="utf-8"))
+    return set(manifest.get("prose_sweep_historical", {}).get("paths", []))
+
+
+# Whole-file exemptions: the documents outside docs/ that legitimately discuss
+# the removal of JCS or retain a reference to RFC 8785 which is not a live
+# instruction (IPR.md's exclusion list is a legal commitment, not prose about
+# the mechanism), plus every record `versions.json` declares.
 EXEMPT = {
-    # The round-2 review's own document. It QUOTES the defects it found —
-    # that is what a finding's evidence section is — so every guard added to
-    # stop a defect returning necessarily matches the record of that defect.
-    # A received review record is not repository prose, and editing it to
-    # satisfy our own linter would destroy its value as evidence.
-    "docs/DESIGN_REVIEW_FINDINGS_HANDOFF.md",
     "CHANGELOG.md",
     "THIRD_PARTY_NOTICES.md",
     "IPR.md",
-    "docs/OCTET_AUTHORITATIVE_DESIGN.md",
-    # Generated (docs/lint-catalogue.json -> scripts/lint_catalogue.py). A
-    # faithful transcription of the reference tools, so it legitimately names
-    # internal reconstructed field tokens (e.g. the discovery seal
-    # `doc_cose_b64`) and verbatim message strings. Its integrity is guarded by
-    # tests/test_lint_catalogue.py (completeness/phantom/drift), not doc-lint.
-    "docs/lint-catalogue.md",
-    # The design-findings backlog / decisions record quote the residues and
-    # removed fields they report (F-01, D2 etc.).
-    "docs/DESIGN_FINDINGS.md",
-    "docs/DESIGN_DECISIONS.md",
-}
+} | _declared_records()
 
 # Files scanned: the Markdown documents plus the machine-layer spec artefacts
 # whose description/comment strings are spec-facing prose.
@@ -94,6 +114,10 @@ FORBIDDEN = [
     re.compile(r"canonical JSON hashing", re.IGNORECASE),
     re.compile(r"re-?canonicali[sz]e[d]?\s+with\s+JCS", re.IGNORECASE),
     re.compile(r"\(JCS[/)]"),
+    # PT-01: the removed `payload_hash` modes. They were enum values until
+    # 2026-09-25 and were allow-listed as such; presented as available now,
+    # they instruct a sender to emit a digest no verifier can recompute.
+    re.compile(r"jcs-sha(?:256|512)", re.IGNORECASE),
     # X-33: key transparency is a ROADMAP item, not a delivered/assessable
     # production control. Guard against the over-claim returning as current prose.
     re.compile(r"key transparency applies", re.IGNORECASE),
@@ -149,6 +173,13 @@ FORBIDDEN = [
     # DOC-01: the RDP handles the ciphertext too (it relays it with the SE);
     # "no plaintext" is not "no ciphertext".
     re.compile(r"[Mm]etadata and content hashes only"),
+    # PT-03: renaming a scope hides nothing. `scope_ref` travels in clear and
+    # the `scope_map` that resolves it is signed and PUBLISHED, so the name
+    # plays no part in what an observer learns. Offering neutral naming as a
+    # mitigation told a deployer to do the one thing that does not help,
+    # instead of the one that does — publish a coarser map.
+    re.compile(r"neutral[-\s]?(?:id|identifier|name|scope)s?[^.\n]*"
+               r"(?:guidance|mitigat|does not|hides|prevents)", re.IGNORECASE),
 ]
 
 # DOC-01 — what the figures taught that the protocol does not do. Applied to
@@ -172,12 +203,16 @@ FRONT_MATTER_KEYS = ("owner", "source", "question", "profile", "status",
                      "references", "alt")
 STATUSES = ("current", "planned", "historical")
 
+# A line that names a removed mode AND says it is gone. Deliberately narrow: the
+# statement must be on the same line as the token, so a paragraph that mentions
+# the removal once cannot excuse an instruction three lines below it.
+REMOVAL_STATED = re.compile(
+    r"jcs-sha(?:256|512)[^\n]*?\b(?:removed|retired|no longer|refused|"
+    r"not part of the profile|left the profile)\b", re.IGNORECASE)
+
 # A line containing any of these is legitimate and never flagged.
 ALLOW = [
-    # Any lowercase optional-mode token: the `jcs-sha256`/`jcs-sha512` enum
-    # values and the descriptions of those modes. The stale current-mechanism
-    # prose uses uppercase "JCS"/"JCS-canonical", never the lowercase mode form.
-    re.compile(r"jcs-"),
+    REMOVAL_STATED,
     re.compile(r"JSON Canonicalization Scheme"),
     # Change-history table rows ("| v0.16 | 2026-07-21 | ... |") describe what
     # changed AT a past version and are historical by construction — they may
@@ -327,6 +362,47 @@ def _figure_hits(labels):
                 break
 
 
+LICENCE_FILE = "LICENSE"
+# The sections of LICENSE that enumerate covered files: Part A's scope and the
+# Part C list. A path named anywhere in them must exist in this repository.
+LICENCE_SCOPE_SECTIONS = ("### 2.1", "## 3.")
+_PATHISH = re.compile(r"^[\w.@-]+(?:/[\w.@-]+)*/?$")
+# Extensionless names that ARE paths. A token with neither a separator nor an
+# extension is otherwise taken for a word in backticks, which would make every
+# such word a missing file; these are named so the list's guarantee covers them.
+LICENCE_BARE_NAMES = {"Makefile", "Dockerfile", "LICENSE", "CHANGELOG", "CODEOWNERS"}
+
+
+def licence_scope_paths(path=None):
+    """[(section, path)] — every repository path the licence's scope sections
+    name, from their backticked tokens and link targets."""
+    text = (path or (ROOT / LICENCE_FILE)).read_text(encoding="utf-8")
+    out, section = [], None
+    for line in text.splitlines():
+        head = re.match(r"^(#{2,3})\s+(\S+)", line)
+        if head:
+            marker = f"{head.group(1)} {head.group(2)}"
+            section = marker if any(marker.startswith(s) for s in LICENCE_SCOPE_SECTIONS) else None
+        if not section:
+            continue
+        for token in re.findall(r"`([^`]+)`", line) + re.findall(r"\]\(([^)\s]+)\)", line):
+            token = token.strip()
+            if not token or " " in token or not _PATHISH.match(token):
+                continue
+            if "/" not in token and "." not in token and token not in LICENCE_BARE_NAMES:
+                continue                      # a word in backticks, not a path
+            out.append((section, token))
+    return out
+
+
+def scan_licence_files(root=None):
+    """[(path, section)] for licence-listed paths this repository does not have."""
+    root = root or ROOT
+    return [(token, section)
+            for section, token in licence_scope_paths(root / LICENCE_FILE)
+            if not (root / token.rstrip("/")).exists()]
+
+
 LINK_FILES = ["README.md", "CONTRIBUTING.md", "Secure-Business-Messaging-Profile.md",
               "brief/executive-brief.md", "brief/requirements.md"]   # the public brief, where one exists
 _FENCE = re.compile(r"^\s*(```|~~~)")
@@ -418,7 +494,11 @@ def main():
     links = scan_links()
     for rel, target, problem in links:
         print(f"[LINK] {rel}: ({target}) — {problem}")
-    f = f + links
+    licence = scan_licence_files()
+    for token, section in licence:
+        print(f"[LICENCE] {LICENCE_FILE} {section} lists `{token}`, which this "
+              "repository does not contain")
+    f = f + links + licence
     if v or f:
         if v:
             print(f"\n{len(v)} pre-inversion mechanism token(s) found in prose. "
@@ -429,7 +509,7 @@ def main():
         sys.exit(2)
     print("doc-lint: no pre-inversion mechanism tokens in prose or figures; "
           "every figure has front matter and a fresh export; every local link "
-          "resolves ✓")
+          "resolves; every file the licence lists exists ✓")
 
 
 if __name__ == "__main__":

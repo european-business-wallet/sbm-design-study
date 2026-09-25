@@ -19,7 +19,6 @@ normative:
   RFC2119:
   RFC8174:
   RFC9420:
-  RFC8785:
   RFC9052:
   RFC8949:
   RFC8610:
@@ -53,8 +52,8 @@ issues signed, timestamped evidence of submission, delivery, non-delivery and
 refusal — without ever seeing the plaintext. It specifies the MLS binding
 (group topology, credential mapping, cipher suites, Delivery Service mapping,
 KeyPackage rules), the application envelope, payload hashing over the
-transmitted octets (default `raw`; the authoritative encoding is deterministic
-CBOR per the CDDL, with JCS retained only as the optional `jcs-sha256` mode),
+transmitted octets (`raw`; the authoritative encoding is deterministic
+CBOR per the CDDL, which is the profile's only canonicalisation),
 the message flows and delivery states, and the COSE-based evidence packaging
 with a strict sign-then-timestamp sequencing.
 Regulatory and identity-framework material is referenced informatively so that
@@ -510,15 +509,15 @@ evidence signed payload and to the recipient confirmation signature. Two
 conforming implementations MUST produce byte-identical output for that encoding;
 `json.dumps`-style approximations (which differ in key ordering, string escaping
 and number serialisation) are NOT the authoritative form. Payload hashing is
-over the transmitted octets, and the default hash mode is `raw` (below). JCS
-survives only as the optional `jcs-sha256` mode ({{RFC8785}}) for the JSON
-semantic-equivalence case (Mode A′ below); a reference implementation of that
-optional mode is provided as `scripts/jcs.py`.
+over the transmitted octets (`raw`, below), and deterministic CBOR is the
+profile's only canonicalisation: a digest is a property of the bytes that
+travelled, never of a re-serialised structure, so a verifier keeps those bytes
+rather than re-deriving them.
 
 **Restricted data model (I-JSON, safe integers).** Every canonical byte-string
 in this profile is I-JSON {{!RFC7493}} under the following constraints, which
 close the number-domain hazard that is the principal objection to JSON
-canonicalisation (M1/J0+):
+canonicalisation:
 
 - **Integers only, within the safe range.** No floating-point numbers, and no
   integer outside `[-(2^53-1), 2^53-1]`. JSON/ECMAScript represents numbers in
@@ -542,28 +541,25 @@ canonicalisation (M1/J0+):
 
 These constraints are a property of the data model, not of any one encoder: they
 hold for the authoritative deterministic-CBOR form (RFC 8949 §4.2,
-{{cbor-structure-definitions-cddl}}) and equally for the optional `jcs-sha256`
-JSON mode.
+{{cbor-structure-definitions-cddl}}), which is the only form this profile
+signs or hashes a structure in.
 
-The `hash_mode` depends on the payload `content_type`. From the octet-authoritative
-revision the **default is `raw` over the transmitted octets** for every
-content type — the recipient receives the sender's exact bytes inside the MLS
-envelope and re-hashes them, so no divergence is possible (M4/T5). Signing the
-bytes you transmit is the mainstream position; `jcs-*` survives only as an
-OPTIONAL profile (below).
+`hash_mode` is **`raw` over the transmitted octets** for every content type:
+the recipient receives the sender's exact bytes inside the MLS envelope and
+re-hashes them, so no divergence is possible. Signing the bytes you transmit is
+the mainstream position, and every mode below follows it — a multipart digest
+binds each part's own octets through the manifest.
 
 - **Mode A — default (`raw`)**: SHA-256/512 over the payload's transmitted bytes;
   `hash_mode` = `raw-sha256` (or `raw-sha512`). Applies to JSON and non-JSON
   content alike.
-- **Mode A′ — JSON semantic-equivalence (OPTIONAL)**: an application that needs
-  the digest to be recomputable from a *stored, re-serialised* JSON document
-  (rather than the original octets) MAY use `jcs-sha256`/`jcs-sha512` — RFC 8785
-  over the JSON payload. This is the only remaining use of JCS in the profile,
-  and it is opt-in per message.
+  An application that stores a JSON payload parsed and re-serialised, its
+  original octets gone, cannot recompute the digest and MUST retain those
+  octets: that is the same rule every other artefact in this profile follows.
 - **Mode C — multipart**: build a **manifest** (an ordered list of parts, each
   `{part_id, role, media_type, length, digest}`, `digest` over the part's
   decoded octets), encode it as a **deterministic-CBOR** fixed-position array
-  (RFC 8949 §4.2; M3/T4), then SHA-256/512; `hash_mode` = `manifest-sha256` (or
+  (RFC 8949 §4.2), then SHA-256/512; `hash_mode` = `manifest-sha256` (or
   `manifest-sha512`):
 
 ~~~ cddl
@@ -572,7 +568,7 @@ manifest-part = {
     part_id: tstr,        ; ^[A-Za-z0-9._-]{1,64}$
     role: "body" / "attachment" / "evidence-bundle" / "signature" / "metadata",
     media_type: tstr,
-    length: decimal-str,  ; the part's decoded-octet length (M1: a decimal string)
+    length: decimal-str,  ; the part's decoded-octet length, as a decimal string
     digest: hash,         ; { alg, hex } over the part's decoded octets
     ? filename: tstr,
 }
@@ -595,6 +591,19 @@ forbidden; `role` is from {`body`, `attachment`, `evidence-bundle`, `signature`,
 all evidence for the same message. Every hash object MUST be internally
 coherent: SHA-256 iff a `*-sha256` mode iff 64 lowercase hex chars; SHA-512 iff
 a `*-sha512` mode iff 128.
+
+**Every defined mode is mandatory to implement.** A receiver MUST implement
+every `hash_mode` this profile defines: `raw-sha256`, `raw-sha512`,
+`manifest-sha256` and `manifest-sha512`. The mode is chosen by the sender per
+message; it is not negotiated, and no discovery document advertises which modes
+a party supports. A receiver that met a mode it had not implemented could
+neither recompute `payload_hash` nor say that it had not: a `mismatch`
+confirmation asserts a comparison that was made, and this profile defines no
+reason for one that was not. The profile therefore carries no mode that is
+optional to implement, which is also why the JSON-canonicalisation modes were
+removed in September 2026 rather than left optional — an option no party can
+advertise and no party can refuse is not optional, it is an obligation the
+specification failed to state.
 
 **Recipient re-verification.** The SE `payload_hash` is computed by the sender
 over the plaintext and cannot be verified by the RDP. The recipient wallet MUST
@@ -646,7 +655,7 @@ content-addressed and reseal-stable):
 The input is a **deterministic-CBOR fixed-position array** (RFC 8949 §4.2), not
 JSON — a typed, domain-separated construction any party recomputes from a reveal
 with a CBOR encoder (already required for COSE) and no key-ordering, number or
-parser ambiguity (M3/T4, twenty-fifth review):
+parser ambiguity:
 
 ~~~ cddl
 grade-commitment-input = [
@@ -1616,7 +1625,7 @@ service built on E2EE:
   and binds the evidence to what was transmitted, not only to what it decrypts
   to; AES-GCM's lack of key-commitment is no longer relied upon for the transport
   binding.
-- **Attribution, not deniability (T3 — corrected).** Generic MLS offers
+- **Attribution, not deniability.** Generic MLS offers
   a measure of deniability; THIS PROFILE DOES NOT, and does not want it — it
   is a registered-delivery profile whose legal-effect chain RELIES on
   attribution. The leaf credentials are X.509 QSealC chains or the UID QEAA,
@@ -1650,7 +1659,7 @@ service built on E2EE:
   way, and no legal analysis in the companion documents relies on
   deniability. A sender AdES over `(message_id, payload_hash)` remains
   OPTIONAL (the D4 sender confirmation is the profiled mechanism).
-- **Key substitution (T4).** KeyPackages MUST carry a credential, be single-use
+- **Key substitution.** KeyPackages MUST carry a credential, be single-use
   with a bounded lifetime and a replenishment pool, be cross-checked against the
   directory, and have reuse rejected and alarmed. These are the specified,
   enforced mitigations, and they all *trust the directory*. Key transparency is

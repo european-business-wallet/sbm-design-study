@@ -121,7 +121,8 @@ LINT_NEGATIVE_CASES = [
     ("ep-post-seal-mutation", "sample-EP.json", "LINT-PKG-06",
      lambda d: d.update(message_id="01HZ9999999999999999999999")),
     # M1/J0+ (twenty-fifth review): I-JSON integers must be in the safe range.
-    # 2^53+1 is the exact C1 defect — a uint64-domain value JCS cannot round-trip.
+    # 2^53+1 is the exact C1 defect — a uint64-domain value the profile's
+    # restricted JSON number domain cannot round-trip.
     # (It also breaks the seal binding, LINT-PKG-06 — realistic; membership check.)
     ("se-integer-out-of-safe-range", "sample-SE.json", "LINT-PKG-09",
      lambda d: d.update(mls_epoch=9007199254740993)),

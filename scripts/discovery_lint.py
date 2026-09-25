@@ -3,8 +3,8 @@
 """Semantic conformance validator for the discovery documents (X8): BW-MED-v1,
 BW-ORG-v1, BW-MEMBER-v1. The discovery side was previously unlinted while the
 evidence side had `evidence_lint`; this closes that gap with the same
-conventions (stable `LINT-DISC-NN` rule ids, RFC 8785 payload binding, a hard
-`cbor2` requirement).
+conventions (stable `LINT-DISC-NN` rule ids, deterministic-CBOR payload binding,
+a hard `cbor2` requirement).
 
 Usage:
     python scripts/discovery_lint.py samples/sample-BW-*.json
@@ -18,12 +18,11 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import jcs  # noqa: E402
 from lint_cli import (parse_common_flags, load_trust_store, check_trust,  # noqa: E402  — shared (P1/P10)
                       load_directory, check_directory_pin,
                       load_federation_register, check_register_pin,
                       authenticate_register, federation_authority_anchors,
-                      find_unsafe_numbers, load_ijson, DuplicateKeyError,
+                      find_unsafe_numbers, hash_mode_violations, load_ijson, DuplicateKeyError,
                       reconstruct, dcbor, projection_equals_decode, validate_body)
 import id_grammar  # noqa: E402  — X-02: the single UID/MID check-symbol algorithm
 
@@ -79,7 +78,8 @@ def _b64_ok(s):
 
 def _check_doc_seal(v, doc):
     """LINT-DISC-01/02: doc_cose_b64 is a COSE_Sign1 in the alg allowlist whose
-    payload equals the RFC 8785 canonical document (minus doc_cose_b64)."""
+    payload equals the deterministic-CBOR encoding of the document (minus
+    doc_cose_b64)."""
     b64 = doc.get("doc_cose_b64")
     if not _b64_ok(b64):
         v.add("LINT-DISC-01", "doc_cose_b64 is not valid Base64")
@@ -723,6 +723,11 @@ def lint(doc, verify_demo=False, profile="pilot", trust_store=None, directory=No
     for p, reason in find_unsafe_numbers(doc):
         # Parity with evidence_lint LINT-PKG-09 (M1/J0+: I-JSON safe integers).
         v.add("LINT-PKG-09", f"{reason} at {p}")
+    # Parity with evidence_lint LINT-HASH-01: a published ORG document pins the
+    # acceptance policy every SE will cite, so a hash_mode outside the profile
+    # is refused at the source as well as in the evidence that references it.
+    for rule, msg in hash_mode_violations(doc):
+        v.add(rule, msg)
     t = doc.get("type")
     if t == "BW-MED-v1":
         lint_med(v, doc)

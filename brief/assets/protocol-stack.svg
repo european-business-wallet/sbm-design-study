@@ -6,7 +6,7 @@ question: Which layer does what, what can each operator see at each layer, and w
 profile: all (1 to 5); the relay row applies where two providers relay (profile 2 and above)
 status: current
 references: umbrella §3, §5, §7.1 (the stack), §7.3; I-D "Canonicalisation and Payload Hashing" and "Application Envelope"; docs/evidence-layer-explainer.md §4
-alt: Four layers over an HTTPS underlay. Layer 3, registered delivery: evidence objects SE, DE, NDE and RE and the Evidence Package, each a COSE_Sign1 advanced electronic seal under a QSealC plus a qualified timestamp, binding to the content digest, the ciphertext digest and the MLS group state, never to plaintext; RDPs see ciphertext, hashes and metadata, never plaintext. Layer 2, the application envelope, encrypted: JSON headers and payload, with the content digest computed over the transmitted octets (raw-sha256 by default, jcs-sha256 an optional mode); providers never see it. Layer 1, SM-MLS-1.0: the MLS group between two entities is the end-to-end boundary; keys are held by devices only. Layer 0, addressing and discovery: UID and MID, the EDD resolver, WebFinger as an optional locator only; public records and routing metadata. Underlay: HTTPS between wallet and RDP, wallet and Delivery Service, RDP and Delivery Service, and the RDP-to-RDP relay. The EU Trusted Lists are the qualification root; federation admission and an entity's authorised seal keys are separate anchors.
+alt: Four layers over an HTTPS underlay. Layer 3, registered delivery: evidence objects SE, DE, NDE and RE and the Evidence Package, each a COSE_Sign1 advanced electronic seal under a QSealC plus a qualified timestamp, binding to the content digest, the ciphertext digest and the MLS group state, never to plaintext; RDPs see ciphertext, hashes and metadata, never plaintext. Layer 2, the application envelope, encrypted: JSON headers and payload, with the content digest computed over the transmitted octets (raw-sha256, or manifest-sha256 over the deterministic-CBOR manifest of a multipart payload); providers never see it. Layer 1, SM-MLS-1.0: the MLS group between two entities is the end-to-end boundary; keys are held by devices only. Layer 0, addressing and discovery: UID and MID, the EDD resolver, WebFinger as an optional locator only; public records and routing metadata. Underlay: HTTPS between wallet and RDP, wallet and Delivery Service, RDP and Delivery Service, and the RDP-to-RDP relay. The EU Trusted Lists are the qualification root; federation admission and an entity's authorised seal keys are separate anchors.
 -->
   <title>SM-MLS-1.0 and registered delivery — protocol stack</title>
   <desc>Four-layer stack over an HTTPS transport underlay: Layer 0 addressing and discovery, Layer 1 MLS end-to-end encryption, Layer 2 application envelope, Layer 3 registered delivery evidence. Left side shows what each operator can see, right side the underlying standards. The EU Trusted Lists are the qualification root; admission and entity authorisation are separate anchors.</desc>
@@ -60,8 +60,8 @@ alt: Four layers over an HTTPS underlay. Layer 3, registered delivery: evidence 
   <text x="640" y="122" font-size="11.5" fill="#64748b">ETSI EN 319 522 · COSE</text>
 
   <text x="640" y="200" font-size="11.5" fill="#64748b">JSON headers + payload</text>
-  <text x="640" y="215" font-size="11.5" fill="#64748b">SHA-256: raw-sha256 default,</text>
-  <text x="640" y="230" font-size="11.5" fill="#64748b">jcs-sha256 optional mode</text>
+  <text x="640" y="215" font-size="11.5" fill="#64748b">SHA-256 over the octets:</text>
+  <text x="640" y="230" font-size="11.5" fill="#64748b">raw-sha256 · manifest-sha256</text>
 
   <text x="640" y="290" font-size="11.5" fill="#64748b">MLS (RFC 9420)</text>
   <text x="640" y="305" font-size="11.5" fill="#64748b">QSealC / UID QEAA credentials</text>

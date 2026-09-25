@@ -43,7 +43,9 @@ def test_negative_the_deniability_claim_is_gone_and_forbidden():
 def test_the_attribution_model_names_object_and_chain():
     """The acceptance criterion: WHO can attribute WHICH signed object with
     WHAT credential chain."""
-    assert "Attribution, not deniability (T3" in FLAT
+    # The heading carried the migration-step code `T3` until 25 September 2026;
+    # the claim is the heading, not the step that produced it.
+    assert "Attribution, not deniability." in FLAT
     assert "attributable to the signing LEAF" in FLAT
     assert "QSealC → EU Trusted List, or UID QEAA → issuing QTSP" in FLAT
     assert "attributable to the member's DEVICE via the published confirmation_key anchor" in FLAT

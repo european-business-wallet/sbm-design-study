@@ -262,10 +262,80 @@ def check(root, manifest):
     return rows, mismatches
 
 
+# PR-01, PR-02, PR-04 — one defect: prose describing the repository, in files
+# no gate reads. LICENSE is not Markdown; a manifest's notes are not prose to a
+# Markdown scanner; a file list is not a link. The three were found by a reader
+# of the export, where a statement written from the source repository is simply
+# wrong. This sweep reads those files for two things: a repository URL that is
+# not the shipping repository's, and the internal identifier families the
+# source-prose cleanup removed from text. `doc_lint` checks the licence's file
+# list; between them the class is closed, and the export carries both gates.
+REPOSITORY_URL = re.compile(r"https?://(?:www\.)?(?:github|gitlab)\.com/[\w.-]+/[\w.-]+")
+# The families of the source-prose cleanup. Not swept: LINT-* (the rules' own
+# names), the agenda identifiers, and decision-record citations, exactly as
+# that pass defined them.
+INTERNAL_IDENTIFIER = re.compile(
+    r"\b(?:DR-\d+|R\d{1,2}-[A-Z]{1,2}\d+|R\d{1,2}-\d+|D\d{1,2}-\d+"
+    r"|X-\d+|F-\d+|R-0\d|FED-X\d|N[46])\b")
+
+
+def repository_prose_sources(root, manifest):
+    """[(label, text)] — the repository-describing prose this sweep reads."""
+    spec = manifest.get("repository_prose_sweep") or {}
+    out = []
+    for rel in spec.get("files", []):
+        path = root / rel
+        if path.exists():
+            out.append((rel, path.read_text(encoding="utf-8")))
+    fields = spec.get("manifest_fields", [])
+    if "$comment" in fields and manifest.get("$comment"):
+        out.append(("versions.json $comment", manifest["$comment"]))
+    if "note" in fields:
+        for dim, body in manifest["dimensions"].items():
+            if body.get("note"):
+                out.append((f"versions.json {dim}.note", body["note"]))
+    # The `repository` block declares which repository this is, so it is where
+    # prose about the repository accumulates — and it was invisible to the
+    # sweep that exists for exactly that prose (PR-01/PR-02/PR-04 were three
+    # instances of the same blind spot). Its own comment and note are read.
+    block = manifest.get("repository") or {}
+    for field in ("$comment", "note"):
+        if field in fields and block.get(field):
+            out.append((f"versions.json repository.{field}", block[field]))
+    return out
+
+
+def sweep_repository_prose(root, manifest):
+    """[(where, kind, detail)] — prose that describes another repository, or
+    that carries an internal identifier where the export's readers meet it."""
+    declared = (manifest.get("repository") or {}).get("url")
+    related = set((manifest.get("repository") or {}).get("related") or [])
+    findings = []
+    if not declared:
+        return [("versions.json", "no-declared-repository",
+                 "`repository.url` is not declared, so nothing can be checked against it")]
+    for label, text in repository_prose_sources(root, manifest):
+        for url in REPOSITORY_URL.findall(text):
+            if url.rstrip("/") != declared.rstrip("/") and url.rstrip("/") not in related:
+                findings.append((label, "foreign-repository-url", url))
+        for token in sorted(set(INTERNAL_IDENTIFIER.findall(text))):
+            findings.append((label, "internal-identifier", token))
+    licence = root / "LICENSE"
+    if licence.exists():
+        m = re.search(r"Original source:\s*<?(https?://[^>\s]+)>?", licence.read_text(encoding="utf-8"))
+        if not m:
+            findings.append(("LICENSE", "no-attribution-source",
+                             "the attribution notice names no source repository"))
+        elif m.group(1).rstrip("/.,>") != declared.rstrip("/"):
+            findings.append(("LICENSE", "attribution-names-another-repository", m.group(1)))
+    return findings
+
+
 def main():
     manifest = load_manifest()
     rows, mismatches = check(ROOT, manifest)
     stale = sweep_active_claims(ROOT, manifest) + sweep_active_prose(ROOT, manifest)
+    repo = sweep_repository_prose(ROOT, manifest)
     drifted = sweep_section_claims(ROOT, manifest)
     width = max((len(d) for d, *_ in rows), default=10)
     last_dim = None
@@ -292,6 +362,13 @@ def main():
               "'since'/'as of'/'introduced in':")
         for f, n, token in stale:
             print(f"  - {f}:{n}: {token!r}")
+        return 1
+    if repo:
+        print(f"[FAIL] {len(repo)} statement(s) about the repository are wrong where "
+              "they ship — a URL that is not this repository's, or an internal "
+              "identifier a reader of this repository cannot resolve:")
+        for where, kind, detail in repo:
+            print(f"  - {where}: {kind} — {detail}")
         return 1
     n = sum(len(s["bindings"]) for s in manifest["dimensions"].values())
     swept = len(manifest.get("active_claim_sweep", []))

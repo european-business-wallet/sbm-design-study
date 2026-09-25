@@ -142,8 +142,15 @@ will apply them to it afterwards.
     act is accepted for what it is about, not only for who made it; a
     historical decision is recomputed from all of its own inputs, or reported
     INCOMPLETE.
+12. **An option no party can advertise and no party can refuse is not
+    optional.** A sender's per-message choice that no discovery document
+    advertises and no reason code can decline is every receiver's obligation,
+    and a receiver that cannot meet it can only speak falsely or fall silent.
+    Either close the set and make every member mandatory to implement, or
+    advertise it and define the refusal; adding a hash mode reopens agenda
+    question A11 for exactly this reason.
 
-Two rules run through all eleven: a fixture with one of everything cannot find
+Two rules run through all twelve: a fixture with one of everything cannot find
 a defect that needs two, and a test that asserts a sentence exists is not a
 test of the behaviour the sentence describes — where normative text requires a
 value to be pinned, recorded or published, the test must find that value in the

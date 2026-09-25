@@ -1,8 +1,8 @@
 {
   "$id": "https://bw.example.eu/schemas/evidence-common.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Common Evidence Definitions (v2.8)",
-  "description": "Shared definitions for Business Wallet evidence objects. hash_mode selects raw-byte hashing (the default) or the optional JSON-canonicalisation modes (jcs-sha256/jcs-sha512); the alg/hash_mode/hex triple is constrained to be internally coherent (SHA-256 => 64 hex, SHA-512 => 128 hex); the Uid pattern uses the canonical hyphen separator.",
+  "title": "Common Evidence Definitions (v2.9)",
+  "description": "Shared definitions for Business Wallet evidence objects. hash_mode selects raw-byte hashing (raw-sha256/raw-sha512) or the multipart-manifest modes (manifest-sha256/manifest-sha512); the alg/hash_mode/hex triple is constrained to be internally coherent (SHA-256 => 64 hex, SHA-512 => 128 hex); the Uid pattern uses the canonical hyphen separator.",
   "$defs": {
     "Uid": {
       "type": "string",
@@ -21,7 +21,7 @@
     },
     "Hash": {
       "type": "object",
-      "description": "Payload hash descriptor. hash_mode selects raw-byte hashing (the default) or the optional JSON-canonicalisation modes (jcs-sha256/jcs-sha512).",
+      "description": "Payload hash descriptor. hash_mode selects raw-byte hashing (raw-sha256/raw-sha512) or the multipart-manifest modes (manifest-sha256/manifest-sha512).",
       "required": [
         "alg",
         "hex",
@@ -43,14 +43,12 @@
         "hash_mode": {
           "type": "string",
           "enum": [
-            "jcs-sha256",
-            "jcs-sha512",
             "raw-sha256",
             "raw-sha512",
             "manifest-sha256",
             "manifest-sha512"
           ],
-          "description": "jcs-* modes apply RFC 8785 canonicalisation to a JSON payload before hashing; raw-* modes hash the raw payload bytes; manifest-* modes hash the deterministic-CBOR message manifest of a multipart payload (the I-D (Canonicalisation and Payload Hashing) Mode C)."
+          "description": "raw-* modes hash the payload's transmitted bytes (the I-D (Canonicalisation and Payload Hashing) Mode A); manifest-* modes hash the deterministic-CBOR message manifest of a multipart payload, whose part digests are over each part's own octets (Mode C). A digest is always over octets: the JSON-canonicalisation modes jcs-sha256 and jcs-sha512 were removed on 2026-09-25 and an artefact declaring one is refused."
         }
       },
       "additionalProperties": false,
@@ -62,7 +60,6 @@
             },
             "hash_mode": {
               "enum": [
-                "jcs-sha256",
                 "raw-sha256",
                 "manifest-sha256"
               ]
@@ -79,7 +76,6 @@
             },
             "hash_mode": {
               "enum": [
-                "jcs-sha512",
                 "raw-sha512",
                 "manifest-sha512"
               ]

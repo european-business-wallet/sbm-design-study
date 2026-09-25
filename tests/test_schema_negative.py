@@ -452,7 +452,7 @@ def test_mock_rdp_emits_object_level_seals():
         "payload_hash": {
             "alg": "SHA-256",
             "hex": "d8bae9a71f8d30c5cf47817ac8299037541d1a46aa1ee2edd476e3b1119ec77e",
-            "hash_mode": "jcs-sha256"},
+            "hash_mode": "raw-sha256"},
     })
     proj = ep["projection"]
     se, de = proj["se"], proj["outcomes"][0]

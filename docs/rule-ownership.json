@@ -42,7 +42,7 @@
         },
         {
           "doc": "id",
-          "note": "the Deployment-Defined-Interfaces Delivery-Service bullet adds the DISTINCT pool-integrity rule (idempotent reserve->commit, per-peer quota) and explicitly complements {{keypackage-rules}}; the T4 Security-Considerations mention is an in-document analytical echo"
+          "note": "the Deployment-Defined-Interfaces Delivery-Service bullet adds the DISTINCT pool-integrity rule (idempotent reserve->commit, per-peer quota) and explicitly complements {{keypackage-rules}}; the Security-Considerations key-substitution mention is an in-document analytical echo"
         }
       ],
       "note": "The reserve->commit pool-integrity rule is a distinct, complementary I-D-owned requirement, not a restatement of single-use."
@@ -136,6 +136,28 @@
         }
       ],
       "note": "D6 (F-10/X-07): one mechanism, two findings. The capability object is STATUS-v1; the EDD contract v1.8.0 serves it; LINT-DISC-25 checks it."
+    },
+    {
+      "id": "hash-mode-mandatory-to-implement",
+      "title": "Every defined payload hash mode is mandatory to implement; the mode is not negotiated",
+      "owner": "id",
+      "owner_anchor": "Canonicalisation and Payload Hashing",
+      "owner_present": "A receiver MUST implement\\s+every `hash_mode`",
+      "non_owner_forbidden": "receivers?\\s*\\**\\s*MUST\\**\\s+implement[^.\\n]*hash_mode",
+      "rule_ids": [
+        "LINT-HASH-01"
+      ],
+      "informative_refs": [
+        {
+          "doc": "ts",
+          "note": "ICS row 192 tagged [I-D]"
+        },
+        {
+          "doc": "umbrella",
+          "note": "§7.1's layer description names the modes without restating the obligation"
+        }
+      ],
+      "note": "Closes review-agenda A11 (25 September 2026). The linter can refuse a mode outside the profile (LINT-HASH-01) but cannot prove a receiver implemented one, so the obligation is stated where the wire rules live and assessed through the TS ICS row."
     }
   ],
   "interfaces": {

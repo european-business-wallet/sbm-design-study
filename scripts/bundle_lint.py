@@ -13,7 +13,7 @@ BW-MEMBER documents + optional evidence) that per-document linters cannot see:
                evidence refs to the ORG policy_version in force
   LINT-BND-05  evidence scope_ref (id+version) resolves against the ORG scope map
                (the implicit default scope is fixed at version "1", §8.3a)
-  LINT-BND-10  evidence acceptance_policy_ref.doc_digest equals the JCS-SHA-256
+  LINT-BND-10  evidence acceptance_policy_ref.doc_digest equals the SHA-256
                of the ORG's signed payload (document minus doc_cose_b64, §8.3)
   LINT-BND-11  an availability-grade DE requires the referenced ORG to declare
                the availability grade for at least one content class (§8.3b);
@@ -147,7 +147,6 @@ from lint_cli import (parse_common_flags, compute_grade_commitment,  # noqa: E40
 import base64  # noqa: E402
 import cbor2  # noqa: E402  — R4-03: compare the SIGNED payload
 import hashlib  # noqa: E402
-import jcs  # noqa: E402  — RFC 8785, shared
 
 
 def _verify_wallet_sig(sig_b64, key):
@@ -659,7 +658,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
     # LINT-BND-04 / -05 / -10 (evidence addressed to this entity as recipient).
     orgpv = org.get("policy_version")
     org_payload = {k: v for k, v in org.items() if k != "doc_cose_b64"}
-    org_digest = hashlib.sha256(dcbor(org_payload)).hexdigest()  # M4: dCBOR, not JCS
+    org_digest = hashlib.sha256(dcbor(org_payload)).hexdigest()  # M4: over the dCBOR octets
 
     # LINT-BND-23 (X-17): MID non-reuse. A MID that is retained indefinitely in
     # sealed evidence is a permanent attribution key; reassigning it to a member

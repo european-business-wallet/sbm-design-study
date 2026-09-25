@@ -63,6 +63,17 @@ qualified timestamp is a sibling that imprints the immutable inner COSE
 bytes. Commitments over transmitted MLS octets and group state are
 byte-exact dedicated types.
 
+**Extended 25 September 2026 to the last exception.** The `payload_hash`
+modes kept one place where a digest was a property of semantic content rather
+than of octets, and `jcs-sha256` / `jcs-sha512` are removed with it. They
+hashed a JSON payload after canonicalising it, for applications that had
+stored the payload parsed and no longer held its bytes. Every mode the profile
+defines digests octets — `raw-*` the transmitted bytes, `manifest-*` a deterministic-CBOR
+manifest whose part digests are themselves over octets — and an application
+whose original bytes are gone is answered the way this record answers every
+other artefact: retain them. Deterministic CBOR is the profile's only
+canonicalisation.
+
 ## Alternatives considered
 
 - **Signing JSON canonicalised with the JSON Canonicalization Scheme.**
@@ -102,10 +113,23 @@ Implementers and archivists retain and handle bytes; the reference checks
 that every sample's authoritative artefact and its projection agree, and a
 pre-inversion mechanism reintroduced in prose fails the documentation guard.
 
+The 25 September extension is **breaking** for any implementation that emitted
+a canonicalisation mode: such an artefact is now refused by name (LINT-HASH-01)
+rather than ignored, because the profile no longer states a rule by which its
+digest could be recomputed. There is no substitute mode; introducing a
+deterministic-CBOR mode over the restricted data model would be a new decision
+and a new record, not a silent replacement.
+
 ## Status
 
 - **Decision:** accepted.
 - **Implementation:** specified; in the reference.
+- **Amended 25 September 2026**, following an external publication review: the
+  canonicalisation hash modes `jcs-sha256` / `jcs-sha512` were removed, and
+  RFC 8785 left the profile entirely. The review's argument was that the mode
+  was optional for a sender but obligatory for every receiver — a receiver that
+  met it without an implementation of the scheme could neither recompute the
+  digest nor say so, the profile having no reason code for it.
 
 ## Supersedes
 

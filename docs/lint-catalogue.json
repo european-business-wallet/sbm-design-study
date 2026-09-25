@@ -1117,6 +1117,15 @@
       "owner_fn": "lint_gcm"
     },
     {
+      "id": "LINT-HASH-01",
+      "input": "the whole evidence or discovery document (recursively)",
+      "precondition": "always — every object carrying a `hash_mode` member, wherever it sits: `payload_hash`, the envelope `content_digest`, `acceptance_policy_ref.doc_digest`, a manifest part descriptor",
+      "predicate": "Every `hash_mode` MUST be one the profile defines: raw-sha256, raw-sha512, manifest-sha256, manifest-sha512. A digest is always over octets — `raw-*` over the transmitted bytes (Mode A), `manifest-*` over the deterministic-CBOR manifest whose part digests are over each part's own octets (Mode C). The JSON-canonicalisation modes jcs-sha256 and jcs-sha512 were REMOVED on 2026-09-25 and are refused by name: a verifier meeting one cannot recompute the digest, so accepting the artefact would assert a check that was never made.",
+      "error": "hash_mode {mode!r} at {path} is not part of the profile — removed 2026-09-25; JSON canonicalisation left the profile; the profile defines raw-sha256, raw-sha512, manifest-sha256, manifest-sha512",
+      "profile": "core",
+      "owner_fn": "find_foreign_hash_modes"
+    },
+    {
       "id": "LINT-MAN-01",
       "input": "SE manifest array (and nested manifests)",
       "precondition": "SE has a `manifest` list",
