@@ -5,7 +5,7 @@ label: "MSP and RDP separated"
 decision_status: accepted
 implementation_status: [specified, in-reference, planned]
 implementation: >-
-  relay: in force. MSP identity, `observed_by`, `receipt_digest`, composition axis: planned (Batch B), not implemented
+  relay: in force. MSP identity, `observed_by`, `receipt_digest`, composition axis: planned, not implemented ([A6](../REVIEW_AGENDA.md))
 choice: >-
   the MSP is each side's local delivery service and a participant in its own right; the relay stays RDP-to-RDP;
   a DE should bind the observation it rests on; provider composition is a deployment axis, not a rung · §7.2, [§13.1](../../Secure-Business-Messaging-Profile.md#131-institutional-roles)
@@ -149,8 +149,10 @@ schema carries an MSP identifier and the register admits RDPs only.
 
 - **Decision:** accepted.
 - **Implementation:** the RDP-to-RDP relay is in force; the MSP identity,
-  `observed_by`, `receipt_digest` and the composition axis are planned
-  (Batch B) and not implemented; the S2 observer model is undecided.
+  `observed_by`, `receipt_digest` and the composition axis are planned and not
+  implemented — no Schema carries `MspId` or `observed_by`, and the register
+  admits only `rdp` ([A6](../REVIEW_AGENDA.md)); the S2 observer model is
+  undecided.
 
 ## Supersedes
 

@@ -5,7 +5,7 @@ label: "A governed federation, four instruments"
 decision_status: accepted
 implementation_status: [specified, in-reference, planned]
 implementation: >-
-  specified; register for RDPs in the reference (Batch A); MSP admission planned (Batch B); an operated register not established
+  specified; the register admits RDPs and is in the reference; admission for messaging providers is planned, not implemented ([A6](../REVIEW_AGENDA.md)); an operated register not established
 choice: >-
   admitted, supervised providers; Trusted Lists (qualification), membership register (admission),
   EDD (identity), design authority (change control) kept apart · [§13.1](../../Secure-Business-Messaging-Profile.md#131-institutional-roles)
@@ -83,8 +83,10 @@ authority, and it admits RDPs only.
 ## Status
 
 - **Decision:** accepted.
-- **Implementation:** specified; the register for RDPs is in the reference
-  (Batch A); MSP admission is planned (Batch B); an operated register is not
+- **Implementation:** specified; the register admits RDPs and is in the
+  reference — its `role` enum is closed to `rdp`, and provider descriptors are
+  sealed by the participant. Admission for messaging providers is planned and
+  not implemented ([A6](../REVIEW_AGENDA.md)); an operated register is not
   established.
 
 ## Supersedes

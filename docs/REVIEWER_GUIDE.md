@@ -13,7 +13,7 @@ A design study of registered delivery between legal entities: end-to-end encrypt
 |---|---|
 | **Specified** | the umbrella profile, the Internet-Draft, the TS-shaped binding, the companion contracts and the schemas — the [document map](../Secure-Business-Messaging-Profile.md#document-map) says which governs what |
 | **Demonstrated** | the reference tooling and samples here are consistent and the shipped artefacts valid against demo keys — claims 1 and 2 of the README's [claim matrix](../README.md#what-a-green-bar-means--and-what-it-does-not); a proof of concept by the same author ran deployment profile 1, against an earlier edition and not re-pinned since. **No independent implementation has exercised the published contracts** — that is claim 4, and it is not established |
-| **Planned** | the Messaging Service Provider as a federation participant on the wire (Batch B) — decided, not implemented |
+| **Planned** | the Messaging Service Provider as a federation participant on the wire ([A6](REVIEW_AGENDA.md)) — decided, not implemented |
 | **Open** | everything on the [review agenda](REVIEW_AGENDA.md): architecture questions A1–A10, the implementer guide G1–G4, production trust P1, legal questions L1–L8 |
 
 **The minimum viable profile** is deployment profile 1 (Annex P): one operator running the delivery and evidence roles, the default scope, two wallets, the four delivery states S1–S4. Everything else is layered on it and can wait.
