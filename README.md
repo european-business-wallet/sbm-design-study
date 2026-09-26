@@ -155,8 +155,8 @@ the compact cross-actor model, including who sees what, is
 
 ## 5. The choices that shape it, and what they cost
 
-Thirteen architectural choices determine more of this design than all the rest
-together. Each is an **architecture decision record** under
+A handful of architectural choices determine more of this design than all the
+rest together. Each is an **architecture decision record** under
 [`docs/adr/`](docs/adr/) — the requirement it answers, the alternatives
 actually considered, the trade-off, and the status of the decision kept apart
 from the status of its implementation — and the
@@ -422,7 +422,7 @@ specification does **not** yet answer — protocol, production trust and legal �
 with the assumption each one rests on, and what is not yet written, the
 implementer guide, carried as G1 to G4.
 
-- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r8`,
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r9`,
   the git tag of that name; earlier tags of this snapshot stay where they are
   and each names the edition it was cut from. Cite the tag, or the commit you
   hold, so an answer can be matched to the text it answers. The reviewer

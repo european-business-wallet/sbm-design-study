@@ -18,10 +18,20 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-26
+## Current — 2026-09-26, edition r9
+
+The artefact versions are unchanged and nothing moves on the wire. This
+edition adds one record: **SBM-ADR-0014, the content digest as a salted
+commitment — proposed, not accepted, not implemented.** It sets out the
+construction that would answer agenda question A12 so the question can be put
+to its reviewers with a proposal in hand; the digest is unsalted until the
+question is decided, and the agenda row and SBM-ADR-0009 point at the record.
+The decisions index is generated from fourteen records.
+
+## Edition r8 — 2026-09-26
 
 The artefact versions are those of the previous snapshot, unchanged; nothing
-moves on the wire. This edition carries four source-side corrections:
+moves on the wire. That edition carried four source-side corrections:
 
 - **The patent commitment's exclusion list** in `IPR.md` §3 no longer names
   the JSON Canonicalization Scheme, which the Specification stopped

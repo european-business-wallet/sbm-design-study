@@ -15,7 +15,7 @@ benefit: >-
   claims checkable without disclosing content or class before a dispute
 cost: >-
   a reveal discloses the class to the dispute's parties; a failing reveal proves nothing alone
-open_questions: [L5, L7]
+open_questions: [L5, L7, A12]
 author_questions: []
 supersedes: []
 ---
@@ -66,6 +66,10 @@ attribution rather than extraction.
 A failing reveal is an attributable assertion that starts a dispute; it
 proves nothing alone. What legal effect a proven mismatch has, and the
 rebuttable clause it bears on, are questions for counsel and stay flagged.
+The one binding this record leaves bare is the content digest itself, which
+is not salted; whether it should be is [A12](../REVIEW_AGENDA.md), and
+[SBM-ADR-0014](SBM-ADR-0014.md) records the construction that would answer
+it, as a proposal.
 
 ## Status
 
@@ -84,3 +88,4 @@ clause 6, for the dispute's evidence.
 ## Open questions
 
 - [L5](../REVIEW_AGENDA.md), [L7](../REVIEW_AGENDA.md): the legal effect of a proven grade mismatch.
+- [A12](../REVIEW_AGENDA.md): whether the content digest, the one unsalted binding here, should be a salted commitment — proposed in SBM-ADR-0014, not decided.
