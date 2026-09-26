@@ -39,6 +39,17 @@ def figures(tmp_path):
     return tmp_path, _doc_lint(tmp_path)
 
 
+def _add_png_text(path, keyword, text):
+    """Insert a tEXt chunk before IEND — the shape a render tool would write."""
+    import struct, zlib
+    data = path.read_bytes()
+    i = data.rindex(b"IEND") - 4
+    body = keyword + b"\x00" + text
+    chunk = struct.pack(">I", len(body)) + b"tEXt" + body + \
+        struct.pack(">I", zlib.crc32(b"tEXt" + body) & 0xffffffff)
+    path.write_bytes(data[:i] + chunk + data[i:])
+
+
 def _edit(path, old, new):
     text = path.read_text(encoding="utf-8")
     assert old in text, old
@@ -131,6 +142,70 @@ def test_the_rdp_is_never_described_as_seeing_hashes_only():
     dl = _doc_lint(ROOT)
     assert any(p.search("| Metadata and content hashes only |") for p in dl.FORBIDDEN)
     assert dl.scan() == []
+
+
+# --- the raster figures: covered through a source, or not covered ----------
+
+def test_a_raster_export_must_be_rendered_from_something_this_gate_can_read(figures):
+    """Probe 1 — a PNG with no scannable source. Nothing required one before:
+    an entry could name a source of any format, and the text scan runs only
+    when the export itself is an SVG, so a raster figure's words reached a
+    reader through a file the rules never applied to."""
+    root, dl = figures
+    manifest = json.loads((root / "docs/diagrams/exports.json").read_text())
+    entry = next(e for e in manifest["exports"] if e["export"].endswith(".png"))
+    exports = {e["export"]: e for e in manifest["exports"]}
+    assert dl.raster_source_problems(exports) == [], "the tree must start clean"
+
+    orphan = dict(entry, source="docs/diagrams/four-corner-architecture-technology-neutral.png")
+    problems = dl.raster_source_problems({entry["export"]: orphan})
+    assert any("cannot read" in p for _, p in problems), problems
+
+    renamed = dict(entry, source="docs/diagrams/protocol-stack.svg")
+    problems = dl.raster_source_problems({entry["export"]: renamed})
+    assert any("different stem" in p for _, p in problems), problems
+
+
+def test_a_raster_export_carrying_figure_text_is_read_not_assumed(figures):
+    """Probe 2 — a PNG whose own text chunks teach a removed mechanism. The
+    gate used to be unable to say anything about a PNG's words; now it reads
+    them, so "a PNG carries no scannable text" is established each run."""
+    root, dl = figures
+    png = root / "docs/diagrams/four-corner-architecture-technology-neutral.png"
+    assert dl.png_text_chunks(png) == [], "the shipped rasters carry no text chunks"
+    _add_png_text(png, b"Description", "content digest (JCS / SHA-256)".encode())
+    assert "JCS" in " ".join(dl.png_text_chunks(png))
+    manifest = json.loads((root / "docs/diagrams/exports.json").read_text())
+    exports = {e["export"]: e for e in manifest["exports"]}
+    problems = dl.raster_source_problems(exports)
+    assert any("in figure text" in p for _, p in problems), problems
+
+
+def test_the_source_digest_is_the_reproducible_staleness_check(figures):
+    """A PNG older than its source is the defect; mtime cannot express it,
+    because git records no mtimes and a fresh clone stamps every file at
+    checkout. `source_sha256` states the same relation in bytes: edit the
+    source without re-rendering and the gate fails, in any clone, at any age."""
+    root, dl = figures
+    svg = root / "docs/diagrams/four-corner-architecture-technology-neutral.svg"
+    svg.write_text(svg.read_text(encoding="utf-8").replace("</svg>", "<!-- edited --></svg>"),
+                   encoding="utf-8")
+    problems = [p for _, p in dl.scan_figures()]
+    assert any("changed since it was" in p for p in problems), problems
+
+
+def test_the_coverage_report_counts_sources_not_files(figures):
+    root, dl = figures
+    sources, rasters = dl.figure_coverage()
+    diagrams = root / "docs/diagrams"
+    listed = {e["export"] for e in json.loads((diagrams / "exports.json").read_text())["exports"]}
+    scannable = [p for p in diagrams.iterdir() if p.suffix in dl.SCANNABLE]
+    # A generated SVG is covered by its own source's scan and its digests, so it
+    # is not counted twice; a raster is not counted as a source at all.
+    assert sources == len([p for p in scannable
+                           if p.relative_to(root).as_posix() not in listed])
+    assert rasters == len(list(diagrams.glob("*.png"))) > 0
+    assert sources < len(scannable), "the generated exports must not inflate the count"
 
 
 # --- DOC-02: the version sweep covers every active companion ---------------

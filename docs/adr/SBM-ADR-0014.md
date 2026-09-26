@@ -111,6 +111,18 @@ Proposed, pending A12:
   was, with `raw-sha256` surviving for `doc_digest` alone. The set is closed
   again at the bump and every member is mandatory to implement, which is
   the condition on which A11 was closed.
+- **What stays bare, by construction and not by oversight.** Three other
+  digests are outside this proposal for a reason that is not a preference:
+  `envelope_hash`, `mls_state` and the seal's own imprint are commitments
+  over **transmitted octets that a party without the plaintext must be able
+  to recompute independently** — the sending RDP at acceptance, every
+  relaying RDP, the receiving RDP, and a verifier reading a retained
+  package. A salt confined to the encrypted envelope would put each of those
+  recomputations out of reach and would remove the only integrity check the
+  relay path has. `doc_digest` is bare for the different reason already
+  given: the document it commits to is published. A reader who takes this
+  record as the pattern for salting digests should take these four as the
+  boundary of it.
 - **Re-verification and mismatch.** Unchanged in shape: the recipient
   recomputes with the salt it decrypted; a missing or malformed salt is a
   mismatch by construction; the `mismatch` confirmation carries the
@@ -170,6 +182,20 @@ conformity assessor, as the integrity binding that EN 319 522's M02 and
 Article 44(1)(d) expect is a question for counsel and stays flagged; it is
 not answered here. The two proof-of-concept codebases are pinned to earlier
 editions and do not break; their re-pin grows by this.
+
+**No reinterpretation of already-issued evidence.** If this is accepted, an
+artefact sealed at evidence 2.9 keeps the meaning it had when it was sealed:
+its `payload_hash` is a bare digest, it is verified by the 2.9 rules, and
+acceptance neither invalidates it nor makes it verifiable under the new
+construction. A later edition does not reach backwards. Nothing is re-sealed
+except this repository's own samples, which are illustrations and not
+evidence anyone holds. This is the rule the umbrella §13.4 already writes for
+registry actions — they *"MUST NOT change the meaning of already-issued
+evidence or already-sealed discovery documents"*, and what would is a
+versioned change instead — applied to the versioned change itself: the route
+§13.4 points at is prospective, or the distinction it draws would be empty.
+A record that proposes changing what a digest *is* is where that has to be
+said.
 
 ## Status
 

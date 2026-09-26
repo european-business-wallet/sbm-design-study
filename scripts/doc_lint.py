@@ -284,6 +284,81 @@ def figure_text(path, fm):
     return words + [fm[k] for k in ("question", "alt") if fm and fm.get(k)]
 
 
+SCANNABLE = (".svg", ".mermaid", ".mmd")
+
+
+def png_text_chunks(path):
+    """The text a PNG carries in its tEXt/iTXt/zTXt chunks, one entry each.
+
+    `figure_text` reads an SVG's elements and a Mermaid source's lines. For a
+    PNG it can read nothing, because the labels are pixels — which is why a
+    raster export is checked through its source. But a PNG is not textless: the
+    format carries keyword/value text chunks, and a figure's words can sit there
+    where neither the source scan nor a reader's eye meets them. They are read
+    here so that "a PNG carries no scannable text" is something this gate
+    establishes rather than assumes.
+    """
+    import struct, zlib
+    data = path.read_bytes()
+    out, i = [], 8                      # past the signature
+    while i + 8 <= len(data):
+        (length,) = struct.unpack(">I", data[i:i + 4])
+        kind = data[i + 4:i + 8]
+        body = data[i + 8:i + 8 + length]
+        if kind in (b"tEXt", b"iTXt", b"zTXt"):
+            try:
+                if kind == b"zTXt":
+                    keyword, rest = body.split(b"\x00", 1)
+                    text = zlib.decompress(rest[1:])
+                elif kind == b"iTXt":
+                    parts = body.split(b"\x00", 5)
+                    keyword, text = parts[0], parts[-1]
+                    if len(parts) > 2 and parts[2] == b"\x01":
+                        text = zlib.decompress(text)
+                else:
+                    keyword, text = body.split(b"\x00", 1)
+                label = f"{keyword.decode('latin-1')}: {text.decode('utf-8', 'replace')}"
+                if label.strip():
+                    out.append(" ".join(label.split()))
+            except Exception:
+                out.append(f"{kind.decode()} chunk this gate could not decode")
+        i += 12 + length                # length + type + data + CRC
+        if kind == b"IEND":
+            break
+    return out
+
+
+def raster_source_problems(exports):
+    """[(export, problem)] — a raster export must be rendered FROM something
+    this gate can read.
+
+    Nothing required it before: an entry could name a source of any format, and
+    the text scan below runs only when the export itself is an SVG, so a raster
+    figure's words reached a reader through a file the rules never applied to.
+    The digests already bind the pair — `source_sha256` fails the moment a
+    source changes without a re-render — but they bind bytes, not legibility.
+    Same stem as well as scannable format, so the correspondence is visible in
+    the directory listing and not only in the manifest.
+    """
+    problems = []
+    for rel, e in exports.items():
+        export, source = ROOT / rel, ROOT / e["source"]
+        if export.suffix == ".svg":
+            continue
+        if source.suffix not in SCANNABLE:
+            problems.append((rel, f"is rendered from {e['source']}, which this gate "
+                                  f"cannot read — a raster export's source must be one of "
+                                  f"{', '.join(SCANNABLE)}"))
+        elif source.stem != export.stem:
+            problems.append((rel, f"is rendered from {e['source']}, a different stem — "
+                                  "a raster export and its source share a stem so the pair "
+                                  "is legible in the directory, not only in the manifest"))
+        if export.suffix == ".png" and export.exists():
+            problems += [(rel, f"'{m}' in figure text: {label[:100]}")
+                         for label, m in _figure_hits(png_text_chunks(export))]
+    return problems
+
+
 def sha256(path):
     import hashlib
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -337,6 +412,7 @@ def scan_figures():
         if export.suffix == ".svg":
             problems += [(rel, f"'{m}' in figure text: {label[:100]}")
                          for label, m in _figure_hits(figure_text(export, None))]
+    problems += raster_source_problems(exports)
     # A public brief, where one exists (the design-study export carries one),
     # embeds its own figures; a superseded mechanism must not survive there
     # while the canonical figures are clean.
@@ -348,6 +424,23 @@ def scan_figures():
         if canonical.exists() and canonical.read_bytes() != svg.read_bytes():
             problems.append((rel, f"differs from the canonical docs/diagrams/{svg.name} — copy it, do not edit it"))
     return problems
+
+
+def figure_coverage():
+    """(sources_scanned, rasters_checked) — what the gate actually read.
+
+    The gate's line used to say "every figure has front matter and a fresh
+    export", which is true and says nothing about how much of the set carries
+    text this gate can read. A raster export is not scanned and cannot be: it is
+    covered through its source and its digests. Counting sources rather than
+    files keeps the report from implying a coverage the format does not allow.
+    """
+    exports = {e["export"] for e in load_exports()}
+    sources = [p for p in DIAGRAMS.iterdir()
+               if p.suffix in SCANNABLE and p.relative_to(ROOT).as_posix() not in exports]
+    rasters = [p for p in DIAGRAMS.iterdir()
+               if p.suffix not in SCANNABLE and p.relative_to(ROOT).as_posix() in exports]
+    return len(sources), len(rasters)
 
 
 def _figure_hits(labels):
@@ -506,7 +599,10 @@ def main():
             print(f"{len(f)} figure or link problem(s): a figure is a current claim, "
                   "and a reading path is only as good as its links.")
         sys.exit(2)
-    print("doc-lint: no pre-inversion mechanism tokens in prose or figures; "
+    scanned, rasters = figure_coverage()
+    print("doc-lint: no pre-inversion mechanism tokens in prose or figures "
+          f"({scanned} figure source(s) read; {rasters} raster export(s) covered "
+          "through a scannable same-stem source, its digests and its text chunks); "
           "every figure has front matter and a fresh export; every local link "
           "resolves; every file the licence lists exists ✓")
 

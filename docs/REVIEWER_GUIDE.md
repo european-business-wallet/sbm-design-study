@@ -7,7 +7,7 @@
 
 ## What you are reviewing
 
-A design study of registered delivery between legal entities: end-to-end encrypted messaging (a profile of MLS) with qualified evidence of sending and delivery, issued by providers that cannot read the message content; the evidence itself is readable and verifiable by anyone who holds it. The edition you are asked to review is the git tag named in the README's [*Feedback*](../README.md#feedback) section; versions are in the README's [version table](../README.md#current-versions) and the repository's counts in [`project-counts.json`](project-counts.json) — generated, so they are not repeated here.
+A design study of registered delivery between legal entities: end-to-end encrypted messaging (a profile of MLS) with qualified evidence of sending and delivery, issued by providers that cannot read the message content; the evidence itself is readable and verifiable by anyone who holds it. The edition you are asked to review is the git tag named in the README's [*Feedback*](../README.md#feedback) section; versions are in the README's [version table](../README.md#current-versions) and the repository's counts in [`project-counts.json`](project-counts.json) — generated, so they are not repeated here. Two of those numbers are countings of different things, and reading them as one is a mistake two readers have now made: `rounds` counts the completed **adversarial design reviews** of the whole specification, while an ordinal in the CHANGELOG — “the n-th review” — names a **drafting revision** of a document. Neither series is derived from the other, and the second is history: it appears in the CHANGELOG and in the review records, not in the specification a reader meets.
 
 | State | What it covers |
 |---|---|
