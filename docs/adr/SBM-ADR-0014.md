@@ -111,23 +111,63 @@ Proposed, pending A12:
   was, with `raw-sha256` surviving for `doc_digest` alone. The set is closed
   again at the bump and every member is mandatory to implement, which is
   the condition on which A11 was closed.
-- **What stays bare, by construction and not by oversight.** Three other
-  digests are outside this proposal for a reason that is not a preference:
+- **What stays bare, by construction and not by oversight.** Four other
+  digests are outside this proposal for a reason that is not a preference.
   `envelope_hash`, `mls_state` and the seal's own imprint are commitments
   over **transmitted octets that a party without the plaintext must be able
   to recompute independently** — the sending RDP at acceptance, every
   relaying RDP, the receiving RDP, and a verifier reading a retained
   package. A salt confined to the encrypted envelope would put each of those
   recomputations out of reach and would remove the only integrity check the
-  relay path has. `doc_digest` is bare for the different reason already
-  given: the document it commits to is published. A reader who takes this
-  record as the pattern for salting digests should take these four as the
-  boundary of it.
-- **Re-verification and mismatch.** Unchanged in shape: the recipient
-  recomputes with the salt it decrypted; a missing or malformed salt is a
-  mismatch by construction; the `mismatch` confirmation carries the
-  recipient's recomputation. The sender declares, the provider echoes, as
-  today.
+  relay path has.
+
+  **`submission_hash` is the fourth, and its case is the sharpest.** The
+  Internet-Draft requires SHA-256 over the **exact submitted octets as
+  received at the intake boundary, before any parsing or decoding** — for a
+  request the provider may never have parsed and certainly never decrypted.
+  A salt that lives inside an encrypted envelope is unreachable there by
+  definition, so a salted construction would leave an intake rejection unable
+  to carry a digest at all. An earlier draft of this record omitted it, which
+  is how a boundary drawn from memory rather than from the field list fails.
+
+  `doc_digest` is bare for the different reason already given: the document
+  it commits to is published. A reader who takes this record as the pattern
+  for salting digests should take these five as the boundary of it — and
+  should notice that the boundary is drawn **per semantic field**, not by
+  retiring a mode globally. That is the same inventory the generic `Hash`
+  type needs, and the two should be done together.
+- **Re-verification.** Unchanged in shape *where a salt is present*: the
+  recipient recomputes with the salt it decrypted, the `mismatch`
+  confirmation carries that recomputation, the sender declares and the
+  provider echoes, as today.
+- **A missing salt is not a mismatch, and this record must not say it is.**
+  An earlier draft said a missing or malformed salt was "a mismatch by
+  construction". It cannot be. The construction above needs a sixteen-byte
+  salt; without one the recipient computes nothing, and a `mismatch`
+  confirmation asserts a comparison that **was made** — the Internet-Draft
+  says so in terms, and adds that the profile defines no reason for one that
+  was not. A wallet asked to report a mismatch it could not perform would
+  have to invent a digest or default a salt, and either is a false statement
+  under the recipient's own key.
+
+  **This is the defect A11 was closed to remove.** A11 closed because no
+  receiver can meet a mode it has not implemented: the set is closed and
+  every member is mandatory. Salting the content digest opens a *new* way for
+  a receiver to be unable to compute — a salt absent, of the wrong type or of
+  the wrong length, in an envelope it decrypted successfully — and calling
+  that a mismatch reintroduces the false speech A11 forbade, one field along.
+
+  So before this is accepted, four cases must be deterministic and
+  **distinguishable**: salt absent; salt present but not a sixteen-byte
+  value; salt well-formed and the digest different; and the ordinary match.
+  The first two are post-decryption failures of the envelope's own contents,
+  attributable to the recipient, and the profile has no outcome for them
+  today. **`malformed-envelope` must not be reused**: the registry binds it
+  to `A.2-SubmissionRejection` and `B.3-RelayFailure` — an intake stage and a
+  relay stage, where nothing has been decrypted and no recipient has spoken.
+  What the outcome is — which reason code, which event, which object carries
+  the recipient's proof — is part of what the group decides with A12, and is
+  not decided here.
 - **Reveal.** No new evidence object. A dispute about content is settled as
   now, by producing the content — and its salt. The retained-bundle
   verifier gains an optional content-reveal input beside the grade and

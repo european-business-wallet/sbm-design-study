@@ -134,7 +134,9 @@ manifest-part = {
   role: "body" / "attachment" / "evidence-bundle" / "signature" / "metadata",
   media_type: tstr,
   length: decimal-str,          ; decoded-octet length (M1: decimal string)
-  digest: hash,
+  digest: hash,                 ; over the part's decoded octets - one rule, no
+                                ; alternative construction: a part chunked in
+                                ; transport is reassembled before hashing (A13)
   ? filename: tstr,
 }
 

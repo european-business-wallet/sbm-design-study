@@ -496,8 +496,21 @@ data, separated by a null byte (0x00). MLS encryption protects both headers and
 payload.
 
 Multipart messages are bound via the manifest ({{canonicalisation-and-payload-hashing}}); evidence
-binds to the manifest digest. A very large single part MAY be chunked, in which
-case that part's manifest `digest` is the Merkle root over its chunks.
+binds to the manifest digest. A very large part MAY be chunked **in transport**,
+and the chunks are reassembled before hashing: the part's manifest `digest` is
+over that part's decoded octets, like every other part's.
+
+**No Merkle construction is profiled.** An earlier revision of this document let
+a chunked part's `digest` be "the Merkle root over its chunks" and defined
+nothing else about it — not chunk size or boundaries, not leaf encoding, not
+node hashing, not domain separation, not odd-node handling, and no discriminator
+telling a verifier which of the two constructions a given digest is. Two
+implementations receiving identical bytes could therefore choose different chunk
+sizes, derive different roots, and violate no published rule; and the manifest
+definition, which requires the digest to be over the part's decoded octets,
+never admitted such a value in the first place. The sentence is withdrawn rather
+than repaired: profiling it is a decision with parameters and test vectors
+attached, recorded as A13 on the review agenda.
 
 # Canonicalisation and Payload Hashing
 
