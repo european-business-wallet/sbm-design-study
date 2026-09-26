@@ -39,19 +39,21 @@ def _doc_lint():
 
 @pytest.fixture
 def repo(tmp_path):
-    """A miniature repository: the licence, the README and the manifest."""
+    """A miniature repository: the licence, the README, the manifest, and a
+    placeholder for every path the licence's scope sections name. The
+    placeholders are DERIVED from the licence rather than listed here, so the
+    fixture follows the file it tests — a copy of the licence that lists a
+    different set of files (an export's) still gets a fixture that matches it."""
     (tmp_path / "docs").mkdir()
     shutil.copy(ROOT / "LICENSE", tmp_path / "LICENSE")
     shutil.copy(ROOT / "README.md", tmp_path / "README.md")
-    for rel in ("Secure-Business-Messaging-Profile.md", "IPR.md", "CONTRIBUTING.md",
-                "THIRD_PARTY_NOTICES.md", "Makefile", "edd-resolver-openapi.yaml"):
-        (tmp_path / rel).write_text("placeholder\n")
-    for rel in ("ietf/draft-sbm-mls-erd-00.md", "etsi/TS-SBM-QERDS-Binding-v0.1.md",
-                "docs/vision-and-context.md", "LICENSES/MIT.txt", "scripts/requirements.txt"):
-        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
-        (tmp_path / rel).write_text("placeholder\n")
-    for rel in ("scripts", "tests", "schemas", "samples", ".github/workflows"):
-        (tmp_path / rel).mkdir(parents=True, exist_ok=True)
+    for _, token in _doc_lint().licence_scope_paths(tmp_path / "LICENSE"):
+        target = tmp_path / token.rstrip("/")
+        if token.endswith("/") or (ROOT / token).is_dir():
+            target.mkdir(parents=True, exist_ok=True)
+        elif not target.exists():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("placeholder\n")
     manifest = json.loads((ROOT / "versions.json").read_text())
     return tmp_path, manifest
 
@@ -60,6 +62,18 @@ def repo(tmp_path):
 
 def test_the_licence_lists_only_files_this_repository_has():
     assert _doc_lint().scan_licence_files() == []
+
+
+def test_a_listed_file_the_repository_does_not_have_is_caught(repo):
+    root, _ = repo
+    assert _doc_lint().scan_licence_files(root) == []
+    # the victim is taken from the licence itself, not named here: whichever
+    # listed plain file comes first, in this repository or in an export's copy
+    listed = [t for _, t in _doc_lint().licence_scope_paths(root / "LICENSE")
+              if (root / t).is_file()]
+    (root / listed[0]).unlink()          # what an export does to a file that does not travel
+    missing = _doc_lint().scan_licence_files(root)
+    assert [t for t, _ in missing] == [listed[0]]
 
 
 def test_the_list_covers_directories_and_bare_names(repo):
@@ -121,6 +135,24 @@ def test_the_repository_blocks_own_prose_is_swept(repo):
     assert "foreign-repository-url" in kinds
     labels = [w for w, _ in [(l, t) for l, t in vm.repository_prose_sources(root, manifest)]]
     assert "versions.json repository.note" in labels
+
+
+def test_every_related_repository_is_accepted_and_a_foreign_one_refused(repo):
+    """`related` names the spellings of this repository that are not foreign —
+    here, `sbm-spec`, this repository under a rename. Every URL it names is
+    accepted; a URL it does not name still fails. The list is read from the
+    manifest, not restated here, so a manifest that declares no related
+    repository (an export's) is tested on the same rule with an empty list."""
+    root, manifest = repo
+    related = list(manifest["repository"].get("related") or [])
+    manifest = json.loads(json.dumps(manifest))
+    for url in related:
+        manifest["dimensions"]["evidence"]["note"] += f" See {url} for the register."
+    kinds = {k for _, k, _ in vm.sweep_repository_prose(root, manifest)}
+    assert "foreign-repository-url" not in kinds
+    manifest["dimensions"]["evidence"]["note"] += " And https://github.com/someone-else/a-fork."
+    kinds = {k for _, k, _ in vm.sweep_repository_prose(root, manifest)}
+    assert "foreign-repository-url" in kinds, "a genuinely foreign URL must still fail"
 
 
 def test_the_rules_own_names_and_agenda_identifiers_are_not_swept(repo):

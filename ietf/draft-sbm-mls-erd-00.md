@@ -1259,7 +1259,7 @@ LINT-DE-12/13/19/20, LINT-RE-01).
 consistent across SE/DE/NDE/RE for the same message. `mls_group_id`/`mls_epoch`
 on SE bind the evidence to the MLS session.
 
-**MLS commitments (normative, evidence 2.2; R-02/D3).** Two dedicated
+**MLS commitments (normative, evidence 2.2).** Two dedicated
 fixed-format commitments bind the evidence to the exact wire bytes and state —
 SHA-256 is fixed by the type (there is no algorithm or mode selector, so
 alternative hash constructions are unrepresentable), and the input is a

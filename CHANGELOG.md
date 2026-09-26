@@ -18,7 +18,29 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-25
+## Current — 2026-09-26
+
+The artefact versions are those of the previous snapshot, unchanged; nothing
+moves on the wire. This edition carries four source-side corrections:
+
+- **The patent commitment's exclusion list** in `IPR.md` §3 no longer names
+  the JSON Canonicalization Scheme, which the Specification stopped
+  referencing at the previous edition. The exclusion is defined by reference
+  and its list is illustrative, so the perimeter is unchanged; the review
+  agenda's L9 row records the call.
+- **Two links into the study's historical trust analysis**, in the
+  architecture note and the reviewer guide, are plain text: the analysis is
+  not part of this snapshot and was never a selected design.
+- **Five identifier tokens** left in reader-facing prose by the earlier
+  cleanup are gone from the umbrella, the TS, the Internet-Draft, the agenda
+  and the agent explainer.
+- **Three tests travel again** — the licence-list, repository-prose and
+  historical-record tests read what they check from the tree they run in, so
+  this snapshot runs them as the source does.
+
+---
+
+## Previous snapshot — 2026-09-25
 
 | Artefact | Version |
 |---|---|

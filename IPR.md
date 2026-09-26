@@ -27,7 +27,7 @@ This commitment is commonly referred to as **RAND-Z** (Reasonable And Non-Discri
 The commitment in this document is limited to the Specification and its companion artefacts as published in this repository. It does **not** extend to:
 
 - portions of implementations that go beyond what the Specification mandates or describes;
-- external protocols and standards referenced by the Specification (including but not limited to IETF RFC 9420 on Messaging Layer Security, trust services qualified under Regulation (EU) No 910/2014, OpenID4VP, the JSON Canonicalization Scheme RFC 8785, and COSE RFC 9052, and any cipher suites used therein), which are governed by their own IPR policies;
+- external protocols and standards referenced by the Specification (including but not limited to IETF RFC 9420 on Messaging Layer Security, trust services qualified under Regulation (EU) No 910/2014, OpenID4VP, and COSE RFC 9052, and any cipher suites used therein), which are governed by their own IPR policies;
 - patents owned or controlled by third parties who are not Contributors to the Specification;
 - trademarks, service marks, trade names or goodwill associated with the Specification or any Contributor.
 

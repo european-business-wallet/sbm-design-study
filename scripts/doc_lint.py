@@ -89,13 +89,12 @@ def _declared_records():
 
 
 # Whole-file exemptions: the documents outside docs/ that legitimately discuss
-# the removal of JCS or retain a reference to RFC 8785 which is not a live
-# instruction (IPR.md's exclusion list is a legal commitment, not prose about
-# the mechanism), plus every record `versions.json` declares.
+# the removal of JCS (IPR.md left the set on 26 September 2026, when its
+# exclusion list stopped naming RFC 8785), plus every record `versions.json`
+# declares.
 EXEMPT = {
     "CHANGELOG.md",
     "THIRD_PARTY_NOTICES.md",
-    "IPR.md",
 } | _declared_records()
 
 # Files scanned: the Markdown documents plus the machine-layer spec artefacts

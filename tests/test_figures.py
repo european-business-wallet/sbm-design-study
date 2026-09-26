@@ -142,3 +142,21 @@ def test_the_sweep_reads_every_active_companion_and_no_historical_record():
         set(manifest["prose_sweep_historical"]["paths"])
     assert active <= set(files) and "README.md" in files
     assert not set(manifest["prose_sweep_historical"]["paths"]) & set(files)
+
+
+def test_the_sweep_catches_evidence_v2_0_in_a_companion(tmp_path):
+    manifest = json.loads((ROOT / "versions.json").read_text())
+    (tmp_path / "docs").mkdir()
+    current = manifest["dimensions"]["evidence"]["value"]   # derived: a pinned
+    # number here would make this fixture stale at the next bump, which is the
+    # very defect DOC-02 found in the companions.
+    (tmp_path / "README.md").write_text(f"current: evidence {current}\n")
+    (tmp_path / "docs" / "example.md").write_text("Applies to: evidence v2.0\n")
+    # the record that must be skipped is whichever the manifest declares first
+    # under docs/, not a name pinned here: an export's manifest declares only
+    # the records that travel, and this test must hold there too
+    record = next(p for p in manifest["prose_sweep_historical"]["paths"]
+                  if p.startswith("docs/") and "/" not in p[len("docs/"):])
+    (tmp_path / record).write_text("at the time, evidence v2.0\n")
+    found = vm.sweep_active_prose(tmp_path, manifest)
+    assert [(rel, tok) for rel, _, tok in found] == [("docs/example.md", "evidence v2.0")]

@@ -115,7 +115,7 @@ This maps onto the European approach to governing consequential automated behavi
 
 ## Corrections, for readers of earlier editions
 
-- §3.2 called the mandate commitment "optional"; it is required for an opposable act and forbidden for `opposable: false` (Annex R.2). §5's worked example concluded that "non-repudiation binds the buyer"; it now keeps Annex R.5's three layers (DOC-02).
+- §3.2 called the mandate commitment "optional"; it is required for an opposable act and forbidden for `opposable: false` (Annex R.2). §5's worked example concluded that "non-repudiation binds the buyer"; it now keeps Annex R.5's three layers.
 
 ---
 
