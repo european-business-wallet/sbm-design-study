@@ -81,7 +81,34 @@ an independent observer. Separately, the post-quantum hybrid suite, pinned to a
 draft under a private-use code point, has no cross-implementation test vector.
 Agenda: A4.
 
-## 5. Authenticity of retained group material
+## 5. What a content digest conceals
+
+**Established.** Evidence carries no content. It carries a digest of it, and
+the profile salts its commitments: the grade commitment and the mandate
+commitment each take sixteen fresh bytes carried in the encrypted envelope, and
+a dispute object carries its salt.
+
+**Not established.** That evidence discloses nothing about content where the
+content has little entropy. `payload_hash` and the envelope `content_digest`
+are **bare** digests over the plaintext, as are the per-part digests of a
+multipart manifest, so a party that holds the evidence can test a guess against
+them — and business correspondence on a known template, with an amount in a
+narrow range, is guessable.
+
+**Who is exposed bears stating**, because the exposure is narrower than a plain
+reading suggests and not narrow enough to dismiss: it is whoever holds an
+evidence object or an Evidence Package — both providers, the parties, an
+archive, a verifier, a court — and it is **not** an observer of the network,
+which sees no digest at all.
+
+Raised by an external review on 25 September 2026. `SBM-ADR-0014` sets out a
+construction that would answer it — a per-message salt carried in the encrypted
+envelope and revealed with the content — and that record is a **proposal**
+which decides nothing: it stays `proposed` and `not-implemented`, and nothing on
+the wire, in a schema or in a sample changes until the question is settled.
+Agenda: A12.
+
+## 6. Authenticity of retained group material
 
 The cipher-suite decision is verified against the roster, the key-package
 availability and the suite registry **as they stood at group formation**, from
@@ -90,7 +117,7 @@ the evidence and checked — but its authenticity rests on the bundle carrying
 it, not on a signature over it, and who publishes and updates a group's
 retained state is declared as a residual. Agenda: A5.
 
-## 6. Interoperability: a second implementation
+## 7. Interoperability: a second implementation
 
 The confirmation-signature vectors — covering all three permitted algorithms —
 have been verified by one COSE implementation; a **second COSE implementation**
@@ -103,7 +130,7 @@ review judged the specification not yet a frozen baseline for independent
 implementations. This has no agenda entry because it is not a design question;
 it is the single most useful thing an external reader can contribute.
 
-## 7. Delivery evidence across two providers
+## 8. Delivery evidence across two providers
 
 **Carried open on purpose.** When sender and recipient use different
 providers, the evidence that a message was delivered rests on a receipt the
@@ -118,7 +145,7 @@ Agenda: A1, and beneath it A9 — who observes the handover, and what a
 messaging service provider acting alone could make a registered delivery
 provider attest — with three models analysed and **none chosen**.
 
-## 8. Legal effect
+## 9. Legal effect
 
 Marked `TODO(legal)` in the normative text wherever it applies; questions for
 counsel, not for engineering, and no legal wording has been drafted for any of
@@ -130,13 +157,13 @@ rebuttable by a proven content-class mismatch is acceptable under Article
 pilot-provisional; the legal and governance treatment of the qualified
 attestation that carries the entity identifier; and the legal weight of each
 combination of authentication method and assurance level behind a
-wallet-signed act. Above all of them, the argument that registered-delivery
+wallet-signed act; and whether removing a standard from the exclusion list of the patent commitment in `IPR.md` §3 — RFC 8785, which the specification no longer references — would narrow a commitment already published, which is flagged on the agenda rather than in that document, because a patent commitment is not annotated by a maintenance pass. Above all of them, the argument that registered-delivery
 evidence can rest on content digests rather than on content is carefully
 constructed and **untested**; whether the statutory presumptions attach over
 end-to-end encrypted traffic is exactly the question it leaves to counsel.
-Agenda: L1 to L8.
+Agenda: L1 to L9.
 
-## 9. Standards-owner review
+## 10. Standards-owner review
 
 The mapping of a relay-stage rejection onto the ETSI EN 319 522 event model is
 the study's own reading and is pending review by the standards owner.
