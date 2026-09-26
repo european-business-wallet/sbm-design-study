@@ -67,7 +67,7 @@ By opening a pull request you represent that you have the right to contribute th
 ## Review invariants (earned, not theoretical)
 
 Every deep design review of this study has found the same classes of defect
-wearing different hats. The eleven rules below are what those reviews earned;
+wearing different hats. The thirteen rules below are what those reviews earned;
 each names the question to ask and, where one exists, the gate that asks it
 mechanically. They apply to a change before it is submitted, and a reviewer
 will apply them to it afterwards.
@@ -150,7 +150,19 @@ will apply them to it afterwards.
     advertise it and define the refusal; adding a hash mode reopens agenda
     question A11 for exactly this reason.
 
-Two rules run through all twelve: a fixture with one of everything cannot find
+13. **A probe builds its world; it does not copy ours.** A test that copies
+    this repository into a temporary directory and drives a rule against it
+    asserts two things at once — that the rule works, and that the tree still
+    says what it said the day the test was written. Only the first is the
+    test's subject, and the second is what breaks: a fixture that wrote the
+    current evidence version into its own README went stale at the next bump,
+    and two probes that copied the live README could not run in this snapshot
+    at all, where four tests failed on a correct tree. Build the smallest world
+    the rule is about; where a test must read the real tree, assert a property
+    and not a wording, and derive a generated value rather than spelling it.
+    This is rule 11 turned toward the fixtures.
+
+Two rules run through all thirteen: a fixture with one of everything cannot find
 a defect that needs two, and a test that asserts a sentence exists is not a
 test of the behaviour the sentence describes — where normative text requires a
 value to be pinned, recorded or published, the test must find that value in the

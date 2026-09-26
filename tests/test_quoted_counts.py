@@ -81,6 +81,93 @@ def quoted_count_problems(root, counts):
     return problems
 
 
+NUMBERED = (re.compile(r"^\*\*(\d+)\.", re.M),      # the source's long form
+            re.compile(r"^(\d+)\. \*\*", re.M))       # the export's condensed form
+
+
+def invariant_count_problems(root):
+    """[(where, problem)] — a section that says how many rules it lists must
+    list that many.
+
+    `CONTRIBUTING.md` is the last document either repository still maintains by
+    hand, and the export rewrites it in its own voice rather than carrying the
+    source's. Its invariants section opened with "The eleven rules below" while
+    listing twelve and closing with "all twelve" — self-contradictory for five
+    editions, in the first sentence a contributor reads, because the edition
+    that added a rule updated one sentence and not the other.
+
+    This count has no entry in `project-counts.json` and needs none: the list is
+    its own source of truth, so the check counts what is there and compares.
+    Where a section states no number — the source's does not — there is nothing
+    to check and nothing to keep in step.
+    """
+    path = root / "CONTRIBUTING.md"
+    if not path.exists():
+        return []
+    text = path.read_text(encoding="utf-8")
+    heading = re.search(r"^## Review invariants.*$", text, re.M)
+    if not heading:
+        return []
+    end = text.find("\n## ", heading.end())
+    section = text[heading.start():end if end > 0 else len(text)]
+    listed = max((len({m for m in rx.findall(section)}) for rx in NUMBERED), default=0)
+    if not listed:
+        return []
+    problems = []
+    # Only a statement ABOUT THE LIST counts. "four rules kept deciding
+    # attribution from today's roster", inside a rule's own narrative, is a
+    # sentence about lint rules and not a claim about how many rules there are.
+    n = r"(\d+|" + "|".join(WORDS.values()) + r")"
+    stated = re.finditer(rf"\b{n}\s+(?:rules|invariants)\s+(?:below|here|above)\b"
+                         rf"|run through all\s+{n}\b", section, re.IGNORECASE)
+    for m in stated:
+        written = (m.group(1) or m.group(2)).lower()
+        if written not in _spellings(listed):
+            line = section[:m.start()].count("\n") + text[:heading.start()].count("\n") + 1
+            problems.append((f"CONTRIBUTING.md:{line}",
+                             f"says {m.group(0)!r} where the section lists {listed}"))
+    return problems
+
+
+def test_the_invariants_section_counts_itself_correctly():
+    assert invariant_count_problems(ROOT) == []
+
+
+def test_a_section_that_states_the_wrong_number_is_caught(tmp_path):
+    """The export's before-state, reproduced: a rule added, one sentence
+    updated, the other left."""
+    (tmp_path / "CONTRIBUTING.md").write_text(
+        "## Review invariants (earned, not theoretical)\n\n"
+        "The eleven rules below are what those reviews earned.\n\n"
+        "1. **First.** Body.\n2. **Second.** Body.\n\n"
+        "Two rules run through all twelve: a fixture with one of everything.\n\n"
+        "## Provenance\n", encoding="utf-8")
+    problems = invariant_count_problems(tmp_path)
+    assert len(problems) == 2, problems
+    assert all("section lists 2" in p for _, p in problems), problems
+
+
+def test_a_section_that_states_no_number_needs_no_check(tmp_path):
+    """The source's section states none, and must not be made to."""
+    (tmp_path / "CONTRIBUTING.md").write_text(
+        "## Review invariants (earned, not theoretical)\n\n"
+        "These rules live here, and not only in a batch plan that gets archived.\n\n"
+        "**1. A TEST THAT CALLS THE SAME HELPER.** Body.\n\n"
+        "**2. A HELPER ONLY ITS OWN TEST CALLS.** Body.\n\n## Provenance\n",
+        encoding="utf-8")
+    assert invariant_count_problems(tmp_path) == []
+
+
+def test_both_numbering_styles_are_counted(tmp_path):
+    """The source writes `**1. TITLE**`, the export writes `1. **title**`."""
+    for style in ("**{n}. RULE.** Body.\n\n", "{n}. **Rule.** Body.\n"):
+        body = "".join(style.format(n=n) for n in (1, 2, 3))
+        (tmp_path / "CONTRIBUTING.md").write_text(
+            "## Review invariants\n\nThe three rules below.\n\n" + body + "\n## Provenance\n",
+            encoding="utf-8")
+        assert invariant_count_problems(tmp_path) == [], style
+
+
 def test_the_repository_quotes_its_own_counts_correctly():
     assert quoted_count_problems(ROOT, json.loads(COUNTS.read_text())) == []
 
