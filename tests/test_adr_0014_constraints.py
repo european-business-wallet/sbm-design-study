@@ -54,10 +54,21 @@ def test_the_record_is_still_a_proposal():
 # --- R16-07 ----------------------------------------------------------------
 
 def test_a_missing_salt_is_not_called_a_mismatch():
-    text = adr()
-    assert "a mismatch by construction" not in text, \
-        "the claim R16-07 reports must be gone, not qualified in place"
-    assert "A missing salt is not a mismatch" in text
+    """The withdrawn claim may be QUOTED as withdrawn and must not be asserted.
+
+    Read flattened, because prose wraps: the first draft of this test searched
+    the raw text for "a mismatch by construction", and the record's own
+    quotation of the withdrawn phrase broke across a line, so the test passed
+    while the phrase was on the page. That is the same blind spot the register
+    checker had, and it is why the rule here is about the SENTENCE the phrase
+    sits in rather than the phrase alone.
+    """
+    flat = " ".join(adr().split())
+    assert "A missing salt is not a mismatch" in flat
+    for m in re.finditer(r"[^.]*a mismatch by construction[^.]*\.", flat):
+        sentence = m.group(0)
+        assert re.search(r"an earlier draft|withdrawn|cannot be|no longer", sentence, re.I), \
+            f"stated rather than quoted as withdrawn: {sentence.strip()[:160]}"
 
 
 def test_the_four_cases_are_named_and_required_to_be_distinguishable():

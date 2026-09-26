@@ -86,6 +86,7 @@ versions:
 	$(PY) scripts/version_manifest.py
 	$(PY) scripts/schema_shapes.py
 	$(PY) scripts/contract_shapes.py
+	$(PY) scripts/resolved_shapes.py
 	$(PY) scripts/rdp_identity_inventory.py
 	$(PY) scripts/response_conformance.py
 	$(PY) scripts/project_counts.py
