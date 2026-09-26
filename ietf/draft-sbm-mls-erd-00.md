@@ -556,11 +556,13 @@ binds each part's own octets through the manifest.
   An application that stores a JSON payload parsed and re-serialised, its
   original octets gone, cannot recompute the digest and MUST retain those
   octets: that is the same rule every other artefact in this profile follows.
-- **Mode C — multipart**: build a **manifest** (an ordered list of parts, each
-  `{part_id, role, media_type, length, digest}`, `digest` over the part's
-  decoded octets), encode it as a **deterministic-CBOR** fixed-position array
-  (RFC 8949 §4.2), then SHA-256/512; `hash_mode` = `manifest-sha256` (or
-  `manifest-sha512`):
+- **Mode C — multipart**: build a **manifest** — an ordered list of parts, each
+  a map `{part_id, role, media_type, length, digest}` carrying the full hash
+  descriptor, `digest` over the part's decoded octets — encode **that list of
+  maps** as deterministic CBOR (RFC 8949 §4.2), then SHA-256/512; `hash_mode` =
+  `manifest-sha256` (or `manifest-sha512`). The input is the manifest as the
+  CDDL below defines it and nothing else: not a fixed-position array, and not a
+  reduced `{alg, hex}` form of the part digests.
 
 ~~~ cddl
 manifest-def  = [ + manifest-part ]
@@ -574,12 +576,17 @@ manifest-part = {
 }
 ~~~
 
-  Unlike the seal and the commitments, this digest is **not statically checkable
-  by the reference linter**: the parts are end-to-end encrypted and absent from
-  evidence, so only a party holding the plaintext parts can recompute the
-  per-part digests and hence the manifest digest. The linter checks the manifest
-  *structure* (order, uniqueness, roles — LINT-MAN-01/02) but not the digest
-  value.
+  Two claims are made here and only one of them is unverifiable from evidence,
+  so they are stated apart. **That each part carries the digest of its own
+  octets** cannot be checked without the plaintext: the parts are
+  end-to-end-encrypted and absent, so only a party holding them can recompute a
+  part digest. **That `payload_hash` is the digest of the manifest present** can
+  be checked by anyone holding the evidence, because both the declared value and
+  its input are in the object — and it MUST be, by any verifier and by the
+  reference linter (LINT-MAN-04), alongside the manifest's structure
+  (LINT-MAN-01/02/03). A declared value that is not the digest of the manifest
+  it accompanies is refused, whatever else verifies: a valid seal over an
+  unfaithful body proves only that the issuer sealed it.
 
 Manifest rules: `part_id` MUST be unique and match `^[A-Za-z0-9._-]{1,64}$`; the
 manifest MUST be in byte-wise ascending `part_id` order; duplicate `part_id` is

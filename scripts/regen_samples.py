@@ -310,6 +310,77 @@ def fix_seal_digests(ep):
                                   "hex": lint_cli.compute_seal_digest(seal)}
 
 
+FIXTURES = ROOT / "samples" / "fixtures" / "multipart"
+
+
+def fix_mismatch_digest(obj):
+    """R16-01, swept: the recipient's recomputed digest in the mismatch
+    demonstration is the digest of a fixture, not sixty-four f characters.
+
+    `sample-NDE-mismatch.json` showed a recipient that decrypted and got a
+    different digest, and carried `ffff…` as that digest — a value no verifier
+    can reproduce, announcing that it had been typed. It is now SHA-256 over
+    `samples/fixtures/mismatch/received.txt`, the plaintext as received, so the
+    demonstration is reproducible and still differs from the declared value.
+    Found by the shape scan this pass added, in a sample the review did not name.
+    """
+    rc = obj.get("recipient_confirmation")
+    if not (isinstance(rc, dict) and rc.get("result") == "mismatch"):
+        return
+    ph = rc.get("payload_hash")
+    if not isinstance(ph, dict) or ph.get("hash_mode") != "raw-sha256":
+        return
+    octets = (ROOT / "samples" / "fixtures" / "mismatch" / "received.txt").read_bytes()
+    ph["hex"] = hashlib.sha256(octets).hexdigest()
+
+
+def fix_manifest_digests(obj):
+    """R16-01: every digest in a multipart sample is the digest of bytes that
+    exist in this repository.
+
+    The manifest's part digests and the outer `payload_hash` were hand-typed.
+    They passed the Schema, the CDDL, the linter and the seal — the seal covers
+    whatever body it is given — so an implementer reproducing the published
+    vector got a different number with every gate green, which is the one state
+    a conformance suite cannot report.
+
+    Each part is now hashed from `samples/fixtures/multipart/<filename>`, its
+    `length` is that fixture's decoded-octet count, and the outer digest is
+    SHA-256/512 over the deterministic-CBOR encoding of the manifest the sample
+    carries — a list of maps, as the CDDL defines it. Every copy of
+    `payload_hash` in the object is set from the same computation, because a
+    sender confirmation that echoed a stale one would be the same defect moved
+    one field along.
+    """
+    manifest = obj.get("manifest")
+    if not isinstance(manifest, list) or not manifest:
+        return
+    for part in manifest:
+        name = part.get("filename")
+        fixture = FIXTURES / name if name else None
+        if not (fixture and fixture.exists()):
+            raise SystemExit(
+                f"manifest part {part.get('part_id')!r} names no fixture under "
+                f"{FIXTURES.relative_to(ROOT)}: a published digest must be the digest "
+                "of bytes this repository holds")
+        octets = fixture.read_bytes()
+        part["length"] = str(len(octets))
+        alg = (part.get("digest") or {}).get("alg", "SHA-256")
+        part["digest"] = {"alg": alg, "hash_mode": "raw-sha256" if alg == "SHA-256" else "raw-sha512",
+                          "hex": (hashlib.sha256 if alg == "SHA-256" else hashlib.sha512)(octets).hexdigest()}
+    outer = obj.get("payload_hash") or {}
+    if not str(outer.get("hash_mode", "")).startswith("manifest-"):
+        return
+    body = lint_cli.dcbor(manifest)
+    alg = outer.get("alg", "SHA-256")
+    hexed = (hashlib.sha256 if alg == "SHA-256" else hashlib.sha512)(body).hexdigest()
+    for holder in (obj, obj.get("sender_confirmation") or {},
+                   obj.get("recipient_confirmation") or {}):
+        ph = holder.get("payload_hash") if isinstance(holder, dict) else None
+        if isinstance(ph, dict) and str(ph.get("hash_mode", "")).startswith("manifest-"):
+            ph["hex"] = hexed
+
+
 def fix_mandate_commitments(obj):
     """A1 (nineteenth review): recompute mandate_commitment for an opposable
     agent SE from the published demo mandate-reveal fixture and the referenced
@@ -389,11 +460,18 @@ def regen(path):
         fix_grade_commitments(d)
         fix_mandate_commitments(d)
         fix_seal_digests(d)
+        fix_manifest_digests(d)
+        for sub in [d.get("se")] + list(d.get("outcomes") or []) + list(d.get("changes") or []):
+            if isinstance(sub, dict):
+                fix_manifest_digests(sub)
+                fix_mismatch_digest(sub)
         art = _ep_artifact_from(d)
     elif t in EVIDENCE_TYPES:
         fix_policy_refs(d)
         fix_grade_commitments(d)
         fix_mandate_commitments(d)
+        fix_manifest_digests(d)
+        fix_mismatch_digest(d)
         art = mock.evidence_artifact(_migrate_body(d))
     elif t in DISCOVERY_VERSIONS:  # BW-MED-v1 / BW-ORG-v1 / BW-MEMBER-v1
         body = {k: v for k, v in d.items() if k != "doc_cose_b64"}

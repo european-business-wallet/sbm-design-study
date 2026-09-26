@@ -1,0 +1,16 @@
+SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors
+SPDX-License-Identifier: MIT
+
+The plaintext AS RECEIVED in the payload-hash-mismatch demonstration.
+
+sample-NDE-mismatch.json shows a recipient that decrypted a message, recomputed
+payload_hash over what it decrypted, and got a value differing from the one the
+sender declared in the SE. The recipient's digest is the SHA-256 of THIS file,
+so the demonstration is reproducible: a reader can hash these octets and obtain
+the value the confirmation carries, and see that it is not the declared one.
+
+In a real exchange nobody outside the two endpoints holds this text. It is
+shipped here because the sample is a fixture, and because the alternative was
+what stood in this field until 27 September 2026 - sixty-four f characters,
+which no verifier can reproduce and which announced that the value had been
+typed rather than computed.

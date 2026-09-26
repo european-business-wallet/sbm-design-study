@@ -344,7 +344,7 @@ Every requirement of the profile carries exactly one `REQ-SMB-NNN` identifier. T
 | 041 | COSE payload = deterministic-CBOR object | [I-D] | (X1) | L | LINT-PKG-06 |
 | 042 | `payload_hash` matches `hash_mode` digest | [I-D] | HASH-1 | A | |
 | 044 | Recipient recompute; mismatch → NDE | [I-D] | HASH-3 | A/L | LINT-NDE-06 |
-| 045 | Multipart via Mode C manifest | [I-D] | MANIFEST-1 | L/S | LINT-MAN-01..03 |
+| 045 | Multipart via Mode C manifest; `payload_hash` is the dCBOR digest of the manifest present and is checked — the per-part bindings are not checkable from evidence | [I-D] | MANIFEST-1 | L/S | LINT-MAN-01..04 |
 | 046 | Manifest unique, ordered part_ids | [I-D] | MANIFEST-2 | L/S | LINT-MAN-01/02 |
 | 047 | `event` from EN 319 522-1 set | [TS] | EVID-5 | S/A | clause 8 |
 | 048 | `evidence_id` + `policy_id` present | [TS] | EVID-6 | S | |
@@ -404,7 +404,7 @@ Every requirement of the profile carries exactly one `REQ-SMB-NNN` identifier. T
 | 150 | I-JSON safe-integer data model: no float and no integer outside +/-(2^53-1); genuinely large counters carried as decimal STRINGS — `mls_epoch` (MLS uint64) and manifest `length`; small counters bounded with an explicit `maximum` | [I-D] | CANON-1 | L/S | LINT-PKG-09 |
 | 151 | Duplicate object keys rejected at the parse boundary (a duplicate is a canonicalisation ambiguity / signature-wrapping vector) | [I-D] | CANON-2 | L | LINT-PKG-10 |
 | 152 | Evidence artefact = `[cose-sign1, qualified-timestamp]`: the COSE_Sign1 seals the dCBOR body (no in-body exclusion); the qualified timestamp is the SECOND artefact element, a SIBLING imprinting `SHA-256` of the first (the immutable inner COSE) — no signed-field exclusion, no imprint circularity | [I-D] | SEAL-3 | L | LINT-PKG-01/06/08; cddl-check |
-| 153 | Constructed inputs use typed deterministic CBOR (RFC 8949 §4.2), not JCS: the grade/mandate commitments hash `dCBOR([dst, salt(bstr), …])` over a fixed-position array (DST `:v2`); the multipart manifest digest is likewise dCBOR (normative, not statically checkable — parts are E2EE) | [I-D] | CANON-4 | L/A | LINT-BND-11/15 (commitments; manifest digest not lint-checked) |
+| 153 | Constructed inputs use typed deterministic CBOR (RFC 8949 §4.2), not JCS: the grade/mandate commitments hash `dCBOR([dst, salt(bstr), …])` over a fixed-position array (DST `:v2`); the multipart manifest digest is likewise dCBOR, over the manifest as the CDDL defines it (a list of maps, not a fixed-position array) and IS checked against the manifest present, while the per-part bindings are not checkable from evidence because the parts are E2EE | [I-D] | CANON-4 | L/A | LINT-BND-11/15 (commitments); LINT-MAN-04 (manifest digest) |
 | 154 | Octet-authoritative artefact: the COSE_Sign1 is authoritative and its payload is deterministic-CBOR (RFC 8949 §4.2) defined by CDDL; JSON is a non-authoritative projection = decode(payload). Evidence artefact = `[cose, qualified_timestamp]`, discovery = bare cose, EP embeds sub-artefacts (multi-party attribution). JCS removed | [I-D] | INVERT-1 | L/S | LINT-PKG-06 (binding); cddl compile/validate |
 | 111 | Credential validity evaluated at evidence time (compromise baseline: before = presumptively valid; after = invalid) | [TS] | CMP-1 | A | clause 6 |
 | 112 | Disputed window reviewed via the accountability log + governance dispute path | [TS]/[UMB] | CMP-2 | A | clause 6 |

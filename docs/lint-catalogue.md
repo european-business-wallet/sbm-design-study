@@ -7,7 +7,7 @@
 
 This catalogue is the **normative definition** of every `LINT-*` conformance rule referenced by the umbrella (§9.4) and the TS (Annex A ICS pro forma). It exists so an assessor can build an independent checker that reproduces every verdict from this document and the sample vectors **without reading the reference Python**. The scripts under `scripts/` (`evidence_lint.py`, `discovery_lint.py`, `bundle_lint.py`, `lint_cli.py`) are the **versioned reference implementation** of this catalogue, not its definition: a change to a rule's behaviour MUST be accompanied by a change to this catalogue and its tests (enforced by `tests/test_lint_catalogue.py`).
 
-**Rules:** 158 · **with a naming test:** 146/158 · **catalogue version:** 1.
+**Rules:** 159 · **with a naming test:** 147/159 · **catalogue version:** 1.
 
 **Profile applicability.** `core` rules apply to every deployment; `production` rules apply only under `--profile production`; `agent` rules apply only where a system member (Annex R) is enrolled; `four-corner` rules apply only to relay/federated (profile-2) evidence.
 
@@ -356,6 +356,15 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Reference implementation:** `lint_manifest`
 - **Tests:** _(no dedicated test names this id — coverage gap, tracked)_
 
+### LINT-MAN-04 · `core`
+
+- **Input:** any evidence object carrying a `manifest` (SE, or an EP sub-object)
+- **Precondition:** a `manifest` list is present and non-empty
+- **Predicate (PASS iff):** `payload_hash.hash_mode` MUST be a manifest-* mode, and `payload_hash.hex` MUST equal SHA-256 (or SHA-512, per `alg`) over the deterministic-CBOR encoding of the manifest the object carries — a list of maps, each with the full hash descriptor, as cddl/sm-mls-erd.cddl defines it. This is the half of the multipart binding that a party WITHOUT the plaintext can verify; that each part carries the digest of its own octets cannot be verified from evidence, the parts being end-to-end encrypted and absent, and the two claims must not be conflated.
+- **Error outcome:** payload_hash {declared} is not the digest of the manifest present ({computed}) — SHA-256/512 over the deterministic-CBOR encoding of the manifest, a list of maps per the CDDL
+- **Reference implementation:** `lint_manifest_digest`
+- **Tests:** `test_manifest_digest.py`
+
 ## Non-delivery evidence (NDE)
 
 ### LINT-NDE-01 · `core`
@@ -439,7 +448,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Predicate (PASS iff):** obj.seal MUST be an object; seal.cose_b64 MUST be valid Base64, decode to CBOR, and be a 4-element COSE_Sign1 array. (Structural CBOR checks require cbor2.)
 - **Error outcome:** seal container missing or not an object | {field} is not valid Base64 | {field} does not decode to CBOR | {field} is not a 4-element COSE_Sign1 array
 - **Reference implementation:** `_check_evidence_seal/_check_cose`
-- **Tests:** `test_evidence_lint_negative.py`
+- **Tests:** `test_evidence_lint_negative.py`, `test_manifest_digest.py`
 
 ### LINT-PKG-02 · `core`
 
@@ -475,7 +484,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Predicate (PASS iff):** The COSE_Sign1 payload MUST be embedded bytes (not detached) and MUST byte-for-byte equal the deterministic-CBOR (dCBOR) encoding of the reconstructed signed payload: for an EP, dcbor(ep_signed_body) with sub-objects embedded as artefact bytes; otherwise dcbor(obj minus the strip field(s) — 'seal', or 'wallet_signature_b64' for a confirmation).
 - **Error outcome:** {label} COSE payload is detached (not embedded) | {label} COSE payload does not match the object's canonical signed payload (stale or tampered evidence)
 - **Reference implementation:** `_check_payload_binding`
-- **Tests:** `test_discovery_lint.py`, `test_evidence_lint.py`, `test_evidence_lint_negative.py`
+- **Tests:** `test_discovery_lint.py`, `test_evidence_lint.py`, `test_evidence_lint_negative.py`, `test_manifest_digest.py`
 
 ### LINT-PKG-08 · `core`
 

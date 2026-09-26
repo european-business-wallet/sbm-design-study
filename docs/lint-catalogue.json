@@ -1153,6 +1153,15 @@
       "owner_fn": "lint_manifest"
     },
     {
+      "id": "LINT-MAN-04",
+      "input": "any evidence object carrying a `manifest` (SE, or an EP sub-object)",
+      "precondition": "a `manifest` list is present and non-empty",
+      "predicate": "`payload_hash.hash_mode` MUST be a manifest-* mode, and `payload_hash.hex` MUST equal SHA-256 (or SHA-512, per `alg`) over the deterministic-CBOR encoding of the manifest the object carries — a list of maps, each with the full hash descriptor, as cddl/sm-mls-erd.cddl defines it. This is the half of the multipart binding that a party WITHOUT the plaintext can verify; that each part carries the digest of its own octets cannot be verified from evidence, the parts being end-to-end encrypted and absent, and the two claims must not be conflated.",
+      "error": "payload_hash {declared} is not the digest of the manifest present ({computed}) — SHA-256/512 over the deterministic-CBOR encoding of the manifest, a list of maps per the CDDL",
+      "profile": "core",
+      "owner_fn": "lint_manifest_digest"
+    },
+    {
       "id": "LINT-NDE-01",
       "input": "NDE evidence object",
       "precondition": "type == NDE-v1 AND reason == 'payload-hash-mismatch'",

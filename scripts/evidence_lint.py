@@ -293,6 +293,47 @@ def lint_manifest(v, manifest, depth=0):
                 lint_manifest(v, nested, depth + 1)
 
 
+def lint_manifest_digest(v, obj):
+    """LINT-MAN-04 (R16-01): where a manifest is present, `payload_hash` MUST be
+    the digest of THAT manifest.
+
+    Two different claims were conflated, and only one of them is unverifiable.
+    That each part carries the digest of its own octets cannot be checked from
+    the evidence: the parts are end-to-end encrypted and absent, so only a party
+    holding the plaintext can recompute a part digest. That the declared
+    `payload_hash` is the digest of the manifest the evidence carries can be
+    checked by anyone holding the evidence — and nothing checked it, so a
+    published sample shipped a hand-typed value through the Schema, the CDDL,
+    the seal and this linter.
+
+    The input is the deterministic-CBOR encoding of the manifest as the CDDL
+    defines it: a list of maps, each carrying the full hash descriptor. It is not
+    a fixed-position array; that wording described the commitments and was stale
+    here.
+    """
+    ph = obj.get("payload_hash")
+    manifest = obj.get("manifest")
+    if not (isinstance(ph, dict) and isinstance(manifest, list) and manifest):
+        return
+    mode, alg, declared = ph.get("hash_mode"), ph.get("alg"), ph.get("hex")
+    if not str(mode).startswith("manifest-"):
+        v.add("LINT-MAN-04",
+              f"a manifest is present and payload_hash declares {mode!r}: a "
+              "multipart payload is committed by the manifest modes")
+        return
+    try:
+        body = dcbor(manifest)
+    except Exception as exc:                      # an unencodable manifest
+        v.add("LINT-MAN-04", f"the manifest does not encode as deterministic CBOR: {exc}")
+        return
+    digest = hashlib.sha512(body) if alg == "SHA-512" else hashlib.sha256(body)
+    if digest.hexdigest() != declared:
+        v.add("LINT-MAN-04",
+              f"payload_hash {declared} is not the digest of the manifest present "
+              f"({digest.hexdigest()}) — SHA-256/512 over the deterministic-CBOR "
+              "encoding of the manifest, a list of maps per the CDDL")
+
+
 def check_auth_assurance(v, auth_context, context, arm=None):
     """LINT-AUTH-03 (X-27): the (identity, method, LoA) tuple must be
     admissible — per the REGISTERED method's own LoA ceiling AND per the
@@ -415,6 +456,7 @@ def lint_se(v, se):
                   "carry a mandate_commitment (A1)")
     if isinstance(se.get("manifest"), list):
         lint_manifest(v, se["manifest"])
+        lint_manifest_digest(v, se)
 
 
 def lint_s3_binding(v, s3, de, se=None):

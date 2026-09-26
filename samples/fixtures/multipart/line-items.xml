@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2025-2026 Paolo De Rosa and contributors -->
+<!-- SPDX-License-Identifier: MIT -->
+<lineItems invoice="INV-2026-0001" currency="EUR">
+  <item sku="SBM-0001" description="Design study, first milestone" quantity="1" unitPrice="1200.00"/>
+  <item sku="SBM-0002" description="Conformance tooling, review cycle" quantity="2" unitPrice="450.00"/>
+  <total net="2100.00" vat="462.00" gross="2562.00"/>
+</lineItems>
