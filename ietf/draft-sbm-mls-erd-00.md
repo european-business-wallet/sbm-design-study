@@ -1612,8 +1612,10 @@ The following design decisions record the tension points of a registered-deliver
 service built on E2EE:
 
 - **Plaintext commitment (T1/T2).** `payload_hash` identifies the content
-  without disclosing it; the recipient MUST recompute it after decryption. A
-  mismatch yields NDE `payload-hash-mismatch`.
+  without carrying it; the recipient MUST recompute it after decryption. A
+  mismatch yields NDE `payload-hash-mismatch`. It is not salted, so it does not
+  hide content a holder of the evidence can guess: see (Security
+  Considerations), *Guessable content behind an unsalted digest*.
 - **Transmitted-octet commitment (finding 2, evidence 2.1).** Because
   `payload_hash` is computed over the plaintext, it does not bind the octets
   actually handed to transport. SE therefore also carries `envelope_hash` —
@@ -1700,6 +1702,26 @@ commitment; per-message fresh salt prevents correlating equal classes across
 messages; and the salt never leaves the encrypted envelope except by
 deliberate reveal, which discloses exactly one message's class to exactly the
 parties of that dispute.
+
+**Guessable content behind an unsalted digest.** The grade commitment is salted
+and `payload_hash` is not, and the difference is not symmetric. `payload_hash`
+and the envelope `content_digest` are bare digests over the plaintext, as are the
+per-part digests of a multipart manifest, so a party that holds the evidence can
+test a candidate document against them: the digest confirms a guess it does not
+disclose. Where the plaintext has little entropy — correspondence on a known
+template, an amount within a narrow range, a form with few filled fields — that
+is a practical disclosure rather than a theoretical one.
+
+Who can do it is the parties, both providers, an archive, a verifier or a court —
+whoever holds an evidence object or an Evidence Package. It is not an observer of
+the network, which sees no digest. Until the profile decides otherwise, an
+implementation that handles low-entropy content should assume the digest confirms
+it to anyone holding the evidence, and pad or otherwise raise the entropy of the
+plaintext it commits to if that matters to it; the profile provides no other
+mechanism today. Whether `payload_hash` should become a salted commitment, with
+the salt carried in the encrypted envelope and revealed with the content, is an
+open question on the review agenda (A12) with a construction set out in
+SBM-ADR-0014 and nothing decided.
 
 **Metadata privacy.** MLS protects content, not traffic metadata: UIDs, group
 ids, sizes, instants and the evidence fields remain visible to the providers

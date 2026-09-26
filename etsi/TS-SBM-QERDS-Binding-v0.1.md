@@ -213,7 +213,7 @@ NOTE: Mailbox-based registered systems anchor legal effect at deposit into a pro
 
 ## 7 Change indication (Article 44(1)(e))
 
-Under end-to-end encryption the RDP/MSP never sees plaintext, so content transformation is forbidden; the only permitted transformations are on the envelope/metadata (re-packaging, chunking, or MLS re-encryption on an epoch change while a message is queued). Whenever such a transformation occurs, the responsible RDP shall issue a Change-Indication Evidence (CE) recording the `transformation` type and `changed_at`, sealed and carrying a qualified timestamp. The CE shall be made available to both the sender and the addressee and should be referenced from the EP `changes[]`.
+Under end-to-end encryption the RDP/MSP never sees plaintext, so content transformation is forbidden; the only permitted transformations are on the envelope/metadata (**re-packaging** and **chunking**), and an intermediary cannot transform the end-to-end-encrypted envelope at all. An MLS **epoch change re-encrypts no queued application message**: a sender that resubmits after one makes a **new submission**, with a new SE and a new evidence chain, and not a transformation of the queued one — the epoch-change CE type was removed from the profile and `schemas/evidence-ce.schema.json` does not admit it. Whenever a permitted transformation occurs, the responsible RDP shall issue a Change-Indication Evidence (CE) recording the `transformation` type and `changed_at`, sealed and carrying a qualified timestamp. The CE shall be made available to both the sender and the addressee and should be referenced from the EP `changes[]`.
 
 ## 8 Event and evidence-semantics mapping
 

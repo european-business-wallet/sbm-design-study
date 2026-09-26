@@ -75,7 +75,7 @@ The umbrella's metadata-privacy inventory (§11.1) is the authority; this is its
 | Actor | Plaintext | Ciphertext | Identity and routing metadata | A dispute reveal |
 |---|---|---|---|---|
 | Wallet devices of the two entities | yes — their own | yes | yes | disclose it, or receive it |
-| Delivery Service (MSP) | never | yes | UIDs, group ids, device principals, sizes, times | no |
+| Delivery Service (MSP) | never | yes | UIDs, group ids, device principals, sizes, times — **and, on the forwarding path, the evidence fields of the origin's sealed SE**, including `payload_hash` and `scope_ref`, which it decodes and verifies to prove the origin namespace | no |
 | RDPs | never | yes — they relay it and hash it | the evidence fields they seal, including `scope_ref` | when presented in a dispute |
 | EDD | never | no | resolution queries | no |
 | Time-stamping service | never | no | timing, over seal hashes | no |

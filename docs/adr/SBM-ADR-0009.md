@@ -12,7 +12,7 @@ choice: >-
 alternative: >-
   a cryptographic ciphertext-to-reveal proof — future work; commitment inequality alone as a rebuttal — rejected
 benefit: >-
-  claims checkable without disclosing content or class before a dispute
+  claims checkable without the commitment disclosing content or class before a dispute — the echoed scope reference still narrows the class to its scope's set
 cost: >-
   a reveal discloses the class to the dispute's parties; a failing reveal proves nothing alone
 open_questions: [L5, L7, A12]
@@ -27,8 +27,11 @@ supersedes: []
 ## Context
 
 Evidence must let a third party check what was sent, to whom and under
-which grade, without the providers seeing content and without disclosing the
-content class or the agent's mandate before anyone disputes them.
+which grade, without the providers seeing content and without the evidence
+fields themselves disclosing the content class or the agent's mandate before
+anyone disputes them. What a commitment hides is the value it commits to; it
+says nothing about what another field resolves to, and the echoed `scope_ref`
+resolves against a published scope map to the set of classes that scope covers.
 
 ## Requirement and constraint
 

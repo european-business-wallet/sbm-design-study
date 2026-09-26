@@ -18,7 +18,7 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-26, edition r9
+## Current — 2026-09-26, edition r17
 
 The artefact versions are unchanged and nothing moves on the wire. This
 edition adds one record: **SBM-ADR-0014, the content digest as a salted

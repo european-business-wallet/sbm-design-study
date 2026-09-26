@@ -66,7 +66,7 @@ recorded as A12; a test forbids any document from asserting an answer.
 
 ## Requirement and constraint
 
-Evidence must bind to the content without disclosing it — the load-bearing
+Evidence must bind to the content without carrying it — the load-bearing
 claim of the study — for the content the profile is actually used to carry,
 not only for content with enough entropy to defend itself. The binding must
 stay checkable by anyone who holds the content: the recipient before
