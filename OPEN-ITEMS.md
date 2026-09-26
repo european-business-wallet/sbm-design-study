@@ -157,11 +157,11 @@ rebuttable by a proven content-class mismatch is acceptable under Article
 pilot-provisional; the legal and governance treatment of the qualified
 attestation that carries the entity identifier; and the legal weight of each
 combination of authentication method and assurance level behind a
-wallet-signed act; and whether removing a standard from the exclusion list of the patent commitment in `IPR.md` §3 — RFC 8785, which the specification no longer references — would narrow a commitment already published, which is flagged on the agenda rather than in that document, because a patent commitment is not annotated by a maintenance pass. Above all of them, the argument that registered-delivery
+wallet-signed act. Above all of them, the argument that registered-delivery
 evidence can rest on content digests rather than on content is carefully
 constructed and **untested**; whether the statutory presumptions attach over
 end-to-end encrypted traffic is exactly the question it leaves to counsel.
-Agenda: L1 to L9.
+Agenda: L1 to L8.
 
 ## 10. Standards-owner review
 
