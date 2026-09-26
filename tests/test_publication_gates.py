@@ -86,6 +86,86 @@ def test_the_list_covers_directories_and_bare_names(repo):
     assert {"schemas/", "Makefile"} <= missing
 
 
+# --- a record is not a companion ------------------------------------------
+
+def test_no_declared_record_is_listed_as_a_current_companion():
+    assert _doc_lint().scan_record_classification() == []
+
+
+def _mini_repo(root, readme, declared, generated=()):
+    """A miniature repository: a README, a manifest, and the declared files.
+
+    Built rather than copied. A fixture that copies the real README passes or
+    fails on what that README happens to say today, and in the export — whose
+    README has no records paragraph at all, because no record travels there —
+    the copied version failed for a reason the rule never intended. That is the
+    same mistake DOC-02 found in the version sweep, one layer in.
+    """
+    import json as _json
+    (root / "README.md").write_text(readme, encoding="utf-8")
+    (root / "versions.json").write_text(_json.dumps(
+        {"prose_sweep_historical": {"paths": list(declared)}}), encoding="utf-8")
+    for rel in declared:
+        p = root / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        head = "<!-- GENERATED FILE — do not edit by hand. -->\n" if rel in generated else ""
+        p.write_text(head + "body\n", encoding="utf-8")
+    return root
+
+
+RECORDS_PARAGRAPH = ("**Records, not current claims** — kept as written, and not part of the\n"
+                     "reading path: the migration record [`m`](docs/M.md).\n\n")
+
+
+def test_a_record_in_the_companion_table_is_caught(tmp_path):
+    """The before-state, exactly: `OCTET_AUTHORITATIVE_DESIGN.md` was declared
+    historical in `versions.json`, exempted wholly by the prose guard, excluded
+    from the export — and listed in the README's companion table under "Going
+    deeper" as a current explainer. Three mechanisms said "record" and the
+    reading path said "read this"; the work order that removed the JSON
+    canonicalisation modes had said of it, in terms, "is not edited"."""
+    root = _mini_repo(tmp_path,
+                      "## Going deeper\n\n| [`m`](docs/M.md) | Why the bytes are authoritative. |\n\n"
+                      + RECORDS_PARAGRAPH, ["docs/M.md"])
+    problems = _doc_lint().scan_record_classification(root)
+    assert [r for r, _ in problems] == ["docs/M.md"], problems
+    assert "cannot be both" in problems[0][1]
+
+
+def test_linking_a_record_from_the_records_paragraph_is_fine(tmp_path):
+    """Nothing forbids reaching a record — only presenting it as current."""
+    root = _mini_repo(tmp_path, "## Going deeper\n\nnothing here.\n\n" + RECORDS_PARAGRAPH,
+                      ["docs/M.md"])
+    assert _doc_lint().scan_record_classification(root) == []
+
+
+def test_a_generated_document_is_not_a_record_kept_as_written(tmp_path):
+    """The export declares two historical paths and both are GENERATED files —
+    the lint catalogue and the ownership inventory, rewritten by their
+    generators. The README is right to cite the catalogue as the current
+    normative rule list, and this check must not read that as a record claimed
+    twice. It did, until the export ran it."""
+    root = _mini_repo(tmp_path,
+                      "The rules are published in [`cat`](docs/lint-catalogue.md).\n",
+                      ["docs/lint-catalogue.md"], generated=["docs/lint-catalogue.md"])
+    assert _doc_lint().scan_record_classification(root) == []
+
+
+def test_a_repository_that_links_no_record_needs_no_paragraph(tmp_path):
+    """The export links none of the design records — none of them travel. It
+    must not be required to carry a paragraph naming documents it does not
+    have."""
+    root = _mini_repo(tmp_path, "A README that mentions no record at all.\n", ["docs/M.md"])
+    assert _doc_lint().scan_record_classification(root) == []
+
+
+def test_a_record_linked_with_no_paragraph_to_explain_it_is_caught(tmp_path):
+    root = _mini_repo(tmp_path, "See [`m`](docs/M.md) for why the bytes are authoritative.\n",
+                      ["docs/M.md"])
+    problems = _doc_lint().scan_record_classification(root)
+    assert problems and "must say" in problems[0][1], problems
+
+
 # --- the repository-describing prose --------------------------------------
 
 def test_the_repository_prose_is_clean_here():

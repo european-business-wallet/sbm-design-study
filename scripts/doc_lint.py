@@ -61,7 +61,11 @@ The remaining legitimate references are allow-listed:
   - whole-file exemptions for the CHANGELOG, the licence notices and the design
     record, which discuss the removal / retain the reference for the mode.
 
-See docs/OCTET_AUTHORITATIVE_DESIGN.md for the octet-authoritative model.
+See docs/adr/SBM-ADR-0008.md for the octet-authoritative model. (This pointed at
+docs/OCTET_AUTHORITATIVE_DESIGN.md, the record of how the inversion was decided,
+until 26 September 2026: that record describes a world in which the
+canonicalisation modes still survived, it does not travel into the export, and
+SBM-ADR-0008 has carried the reasons and the alternatives since PR #64.)
 """
 import pathlib
 import re
@@ -371,6 +375,69 @@ def load_exports():
     return json.loads(EXPORTS.read_text(encoding="utf-8"))["exports"]
 
 
+def _is_generated(path):
+    """A generated document is not a record kept as written.
+
+    `versions.json` declares `docs/lint-catalogue.md` and `docs/rule-ownership.md`
+    historical so the prose sweep skips them, and they are nothing like the
+    design records: they are rewritten by their generator whenever their JSON
+    source changes, and the README is right to cite the catalogue as the current
+    normative rule list. They say so themselves, in a header this reads rather
+    than a second list to keep in step.
+    """
+    if not path.exists():
+        return False
+    return "GENERATED FILE" in path.read_text(encoding="utf-8")[:1200].upper()
+
+
+def scan_record_classification(root=None):
+    """[(record, problem)] — a document cannot be a record and a companion.
+
+    `versions.json` declares which documents are historical records. Three
+    things follow from that declaration and had drifted apart: the prose sweep
+    skips them, this guard exempts them wholly, and the README says they are
+    "kept as written, and not part of the reading path". A record the README
+    also lists among the current companions is claimed twice, and the two
+    claims cannot both be acted on — one says leave it alone, the other invites
+    a reader to rely on it. `OCTET_AUTHORITATIVE_DESIGN.md` was in exactly that
+    position: declared historical, exempted, excluded from the export, and
+    listed in the companion table as a current explainer.
+
+    So: every declared record the README links must be linked inside the
+    paragraph that says they are records. Nothing forbids linking one — a
+    record is worth reaching — only presenting it as current.
+    """
+    root = root or ROOT
+    import json
+    manifest = json.loads((root / "versions.json").read_text(encoding="utf-8"))
+    declared = [rel for rel in manifest.get("prose_sweep_historical", {}).get("paths", [])
+                if not _is_generated(root / rel)]
+    readme = (root / "README.md")
+    if not readme.exists():
+        return []
+    text = readme.read_text(encoding="utf-8")
+    linked = [rel for rel in declared if f"]({rel})" in text]
+    if not linked:
+        return []                 # nothing claimed twice; no paragraph needed
+    marker = "**Records, not current claims**"
+    if marker not in text:
+        return [("README.md", f"no {marker!r} paragraph: the README must say "
+                              "which documents are records before a record can be listed")]
+    start = text.index(marker)
+    end = text.find("\n\n", text.index("**Generated:**", start)) if "**Generated:**" in text[start:] \
+        else text.find("\n\n\n", start)
+    paragraph = text[start:end if end > start else len(text)]
+    problems = []
+    outside = text.replace(paragraph, "")     # every mention BUT the records one:
+    for rel in linked:                        # a record may be linked there too
+        link = f"]({rel})"
+        if link in outside:
+            problems.append((rel, "is declared a historical record in versions.json but the "
+                                  "README links it outside the records paragraph — a document "
+                                  "cannot be both a record kept as written and a current companion"))
+    return problems
+
+
 def scan_figures():
     """[(file, problem)] for every figure under docs/diagrams/ (DOC-01)."""
     exports = {e["export"]: e for e in load_exports()}
@@ -590,11 +657,14 @@ def main():
     for token, section in licence:
         print(f"[LICENCE] {LICENCE_FILE} {section} lists `{token}`, which this "
               "repository does not contain")
-    f = f + links + licence
+    records = scan_record_classification()
+    for rel, problem in records:
+        print(f"[RECORD] {rel}: {problem}")
+    f = f + links + licence + records
     if v or f:
         if v:
             print(f"\n{len(v)} pre-inversion mechanism token(s) found in prose. "
-                  f"See docs/OCTET_AUTHORITATIVE_DESIGN.md for the octet-authoritative model.")
+                  f"See docs/adr/SBM-ADR-0008.md for the octet-authoritative model.")
         if f:
             print(f"{len(f)} figure or link problem(s): a figure is a current claim, "
                   "and a reading path is only as good as its links.")
@@ -604,7 +674,8 @@ def main():
           f"({scanned} figure source(s) read; {rasters} raster export(s) covered "
           "through a scannable same-stem source, its digests and its text chunks); "
           "every figure has front matter and a fresh export; every local link "
-          "resolves; every file the licence lists exists ✓")
+          "resolves; every file the licence lists exists; every declared record is "
+          "presented as one ✓")
 
 
 if __name__ == "__main__":
