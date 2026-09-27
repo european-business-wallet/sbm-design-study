@@ -101,10 +101,14 @@ Proposed, pending A12:
   this record asked the group whether a chunked part's Merkle root should be
   salted with the chunk index in the domain; that construction was withdrawn
   on 27 September 2026 and none is profiled ([A13](../REVIEW_AGENDA.md)). A
-  part chunked in transport is reassembled before hashing, so its digest is
-  the construction above like any other. If A13 ever profiles a chunk layer,
-  whether it is salted is decided **there**, with the rest of its parameters —
-  not carried here as a question about something the profile does not have.
+  part's octets are reassembled before hashing whatever framing carried them,
+  so its digest is the construction above like any other. **A13 closed on
+  27 September 2026** on the ground that the profile has no chunked part: the
+  framing operation it defines acts on the envelope, and nothing splits a
+  manifest part. If a later revision ever introduces one, whether its chunks are
+  salted is decided **there**, after the descriptor and the evidence that would
+  make a chunk an object at all — not carried here as a question about something
+  the profile does not have.
 - **The manifest's cleartext** — attachment names, sizes and types in the
   sealed SE — is decided with A12 and not after it: either it stays and the
   metadata threat model says the providers see it, or the manifest moves
@@ -306,4 +310,7 @@ retention clause and the ICS rows.
 
 - [A12](../REVIEW_AGENDA.md): whether the content digest should be salted at
   all — this record is the proposal, not the answer — and, within it, the
-  chunk layer, the manifest's cleartext, and the form of the construction.
+  manifest's cleartext, the form of the construction, and the outcome for a salt
+  that cannot be used. The chunk layer was a fourth item here until
+  [A13](../REVIEW_AGENDA.md) closed on 27 September 2026; there is no chunked
+  part, so there is nothing of it to salt.

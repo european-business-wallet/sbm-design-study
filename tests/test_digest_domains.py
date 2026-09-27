@@ -65,10 +65,21 @@ def test_the_three_domains_are_named_types():
     assert defs["RawSha256Hash"]["properties"]["alg"]["const"] == "SHA-256"
 
 
-def test_the_cddl_carries_the_same_three():
+def test_the_cddl_carries_the_same_three_and_no_generic():
+    """The Schema's side of this is asserted above — `Hash` must be gone, "not
+    aliased". The CDDL was doing exactly the aliasing: it kept the permissive
+    shape as `hash` and wrote `content-hash = hash`, so the old name stayed
+    reachable by any rule that cared to name it, and a new field could acquire
+    every mode by writing four characters. The three domains are spelled out.
+    """
     cddl = (ROOT / "cddl" / "sm-mls-erd.cddl").read_text()
-    for rule in ("content-hash", "raw-hash =", "raw-sha256-hash ="):
+    for rule in ("content-hash = {", "raw-hash = {", "raw-sha256-hash = {"):
         assert rule in cddl, rule
+    assert not re.search(r"^hash\s*=", cddl, re.M), \
+        "the permissive generic must be gone from the CDDL too, not aliased"
+    # Anchored at a line start: the comment above the rules quotes the alias to
+    # say it is gone, and a bare substring search would match the explanation.
+    assert not re.search(r"^content-hash\s*=\s*hash\s*$", cddl, re.M)
     assert re.search(r"doc_digest: raw-sha256-hash", cddl)
     assert re.search(r"submission_hash: raw-sha256-hash", cddl)
     assert re.search(r"digest: raw-hash", cddl)

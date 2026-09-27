@@ -278,19 +278,29 @@ def _production_pass(v, obj):
             _production_pass(v, c)
 
 
-def lint_manifest(v, manifest, depth=0):
+def lint_manifest(v, manifest):
+    """A manifest is FLAT (the I-D, Canonicalisation and Payload Hashing).
+
+    This recursed, and raised LINT-MAN-03 on a nesting depth above one. Nothing
+    could reach it: a part descriptor admits no `manifest` member in the Schema
+    (`additionalProperties: false`) or in the CDDL, so a nested manifest is not
+    expressible, and the digest domains exclude it a second way — a part's
+    `digest` is in the observed-octets domain, and a digest committing to a
+    nested structure would need a manifest mode there. The catalogue filed the
+    rule under `coverage_gap` for as long as it existed, which recorded the
+    symptom.
+
+    Three authorities said three things: the prose permitted one level, the two
+    machine-readable definitions permitted none, and this function guarded a
+    depth neither could produce. The prose was the outlier and was corrected;
+    the rule is retired (`docs/lint-catalogue.json`, `retired`), and the
+    identifier is not reused.
+    """
     ids = [p.get("part_id") for p in manifest]
     if len(ids) != len(set(ids)):
         v.add("LINT-MAN-01", "duplicate part_id in manifest")
     if ids != sorted(ids):
         v.add("LINT-MAN-02", "manifest is not in byte-wise ascending part_id order")
-    for p in manifest:
-        nested = p.get("manifest")
-        if isinstance(nested, list):
-            if depth >= 1:
-                v.add("LINT-MAN-03", "nested manifest depth exceeds 1")
-            else:
-                lint_manifest(v, nested, depth + 1)
 
 
 def lint_manifest_digest(v, obj):

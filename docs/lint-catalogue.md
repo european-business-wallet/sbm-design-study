@@ -7,7 +7,7 @@
 
 This catalogue is the **normative definition** of every `LINT-*` conformance rule referenced by the umbrella (§9.4) and the TS (Annex A ICS pro forma). It exists so an assessor can build an independent checker that reproduces every verdict from this document and the sample vectors **without reading the reference Python**. The scripts under `scripts/` (`evidence_lint.py`, `discovery_lint.py`, `bundle_lint.py`, `lint_cli.py`) are the **versioned reference implementation** of this catalogue, not its definition: a change to a rule's behaviour MUST be accompanied by a change to this catalogue and its tests (enforced by `tests/test_lint_catalogue.py`).
 
-**Rules:** 159 · **with a naming test:** 147/159 · **catalogue version:** 1.
+**Rules:** 158 · **with a naming test:** 147/158 · **catalogue version:** 1.
 
 **Profile applicability.** `core` rules apply to every deployment; `production` rules apply only under `--profile production`; `agent` rules apply only where a system member (Annex R) is enrolled; `four-corner` rules apply only to relay/federated (profile-2) evidence.
 
@@ -346,15 +346,6 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Error outcome:** manifest is not in byte-wise ascending part_id order
 - **Reference implementation:** `lint_manifest`
 - **Tests:** `test_evidence_lint_negative.py`
-
-### LINT-MAN-03 · `agent`
-
-- **Input:** SE manifest array (nested manifests)
-- **Precondition:** a manifest part carries a nested `manifest` AND depth >= 1
-- **Predicate (PASS iff):** Manifest nesting depth MUST NOT exceed 1.
-- **Error outcome:** nested manifest depth exceeds 1
-- **Reference implementation:** `lint_manifest`
-- **Tests:** _(no dedicated test names this id — coverage gap, tracked)_
 
 ### LINT-MAN-04 · `core`
 

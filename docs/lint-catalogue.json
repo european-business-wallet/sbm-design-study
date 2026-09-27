@@ -2,15 +2,16 @@
   "$comment": "X-20 NORMATIVE LINT CATALOGUE (single source of truth). Each rule is a faithful transcription of the reference conformance tool that implements it; scripts/*.py are the versioned REFERENCE IMPLEMENTATION of this catalogue. docs/lint-catalogue.md is generated from this file by scripts/lint_catalogue.py; tests/test_lint_catalogue.py enforces completeness (every emitted rule is catalogued), no phantom entries, and test traceability. `non_rule_tokens` lists LINT-shaped strings in the sources that are prefixes/placeholders, NOT rules.",
   "catalogue_version": "1",
   "non_rule_tokens": {
+    "LINT-BND-I": "R5-02: the PREFIX that classifies a verdict, not a rule id. `is_incomplete()` tests `rule.startswith('LINT-BND-I')` to separate INCOMPLETE from violation and from advisory warning, exactly as `is_warning()` tests the W prefix. The rules themselves are catalogued individually (LINT-BND-I1).",
     "LINT-BND-W": "prefix used by bundle_lint startswith() to split warnings from violations; the rule is LINT-BND-W1",
     "LINT-DISC-NN": "docstring placeholder ('stable LINT-DISC-NN rule ids'), not a rule",
+    "LINT-DISC-P": "prefix of the LINT-DISC-P-* family used in prose",
+    "LINT-MAN-03": "retired 2026-09-27 and named in the docstring of `lint_manifest`, which explains why it no longer exists; never emitted. Recorded in `retired` with the reason — the identifier is not reused",
     "LINT-PKG-04": "historical cross-reference in a comment (sign-then-timestamp verification); never emitted — a numbering gap",
     "LINT-PKG-07": "numbering gap; never emitted",
     "LINT-PROD": "prefix of the LINT-PROD-* family used in prose",
-    "LINT-TRUST": "prefix of the LINT-TRUST-* family used in prose",
     "LINT-RLY": "prefix of the LINT-RLY-* family used in prose",
-    "LINT-DISC-P": "prefix of the LINT-DISC-P-* family used in prose",
-    "LINT-BND-I": "R5-02: the PREFIX that classifies a verdict, not a rule id. `is_incomplete()` tests `rule.startswith('LINT-BND-I')` to separate INCOMPLETE from violation and from advisory warning, exactly as `is_warning()` tests the W prefix. The rules themselves are catalogued individually (LINT-BND-I1)."
+    "LINT-TRUST": "prefix of the LINT-TRUST-* family used in prose"
   },
   "coverage_gap": [
     "LINT-000",
@@ -20,12 +21,27 @@
     "LINT-DISC-02",
     "LINT-EP-02",
     "LINT-EP-03",
-    "LINT-MAN-03",
     "LINT-NDE-01",
     "LINT-NDE-02",
     "LINT-PKG-02",
     "LINT-PROD-02"
   ],
+  "retired": {
+    "$comment": "Rules withdrawn from the profile. An identifier is assigned ONCE and is never reused, so a rule that leaves the catalogue is recorded here with the reason rather than deleted: a reader of an artefact sealed under an earlier edition, or of a checker built from an earlier catalogue, can still find out what the identifier meant and why it is gone.",
+    "LINT-MAN-03": {
+      "was": {
+        "id": "LINT-MAN-03",
+        "input": "SE manifest array (nested manifests)",
+        "precondition": "a manifest part carries a nested `manifest` AND depth >= 1",
+        "predicate": "Manifest nesting depth MUST NOT exceed 1.",
+        "error": "nested manifest depth exceeds 1",
+        "profile": "agent",
+        "owner_fn": "lint_manifest"
+      },
+      "retired": "2026-09-27",
+      "reason": "Unreachable by construction, and the rule it guarded was never the profile's rule. A part descriptor admits no `manifest` member in the Schema (additionalProperties: false) or in the CDDL, so a nested manifest is not expressible; and a part's `digest` is in the observed-octets domain, which admits no manifest mode, so a digest committing to a nested structure has no representation either. The prose permitted 'nesting at most one level', which described neither authority; it was corrected to state that a manifest is flat, and this rule went with it. It was filed under coverage_gap for its whole life, which recorded the symptom without asking why."
+    }
+  },
   "rules": [
     {
       "id": "LINT-000",
@@ -1140,15 +1156,6 @@
       "precondition": "SE has a `manifest` list",
       "predicate": "The sequence of part_id values MUST already be in byte-wise ascending (sorted) order.",
       "error": "manifest is not in byte-wise ascending part_id order",
-      "profile": "agent",
-      "owner_fn": "lint_manifest"
-    },
-    {
-      "id": "LINT-MAN-03",
-      "input": "SE manifest array (nested manifests)",
-      "precondition": "a manifest part carries a nested `manifest` AND depth >= 1",
-      "predicate": "Manifest nesting depth MUST NOT exceed 1.",
-      "error": "nested manifest depth exceeds 1",
       "profile": "agent",
       "owner_fn": "lint_manifest"
     },

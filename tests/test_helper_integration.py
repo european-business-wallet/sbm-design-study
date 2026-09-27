@@ -55,6 +55,17 @@ HELPERS = REGISTRY["helpers"]
 ENTRY_POINTS = REGISTRY["entry_points"]
 BY_NAME = {h["name"]: h for h in HELPERS}
 
+# A reason must cite the finding it answers. The pattern was `R\d-\d\d|DR-\d\d`,
+# which cannot match a two-digit round at all: against `R16-03` the `-` has to
+# match `6` and the search finds no second `R`. Nor could it match an agenda
+# entry — `A12`, `A14`, `L9` — so no reason could cite the question it answers.
+# Every reason in the registry predates round 10, so nothing was wrongly
+# accepted; the gate refused a correct citation, which is the safe direction and
+# still a defect. Bounded at two digits and anchored, so a stray leading digit
+# does not count.
+CITATION = re.compile(r"(?<![0-9A-Za-z])(?:R[0-9]{1,2}|DR|[AL][0-9]{1,2})-[0-9]{2}"
+                      r"|(?<![0-9A-Za-z])[AL][0-9]{1,2}(?![0-9])")
+
 MODULES = hi.production_modules()
 GRAPH = hi.call_graph(MODULES)
 
@@ -178,7 +189,7 @@ def test_every_helper_is_integrated_or_names_its_exemption(helper):
         f"{helper['name']} has no reachable production caller "
         f"({len(sites)} call site(s), none reached from a public entry point). "
         "Wire it in, or record why not.")
-    assert re.search(r"R\d-\d\d|DR-\d\d", reason), \
+    assert re.search(CITATION, reason), \
         f"{helper['name']}: the reason cites no finding"
 
 
@@ -208,8 +219,23 @@ def test_an_exemption_names_a_real_call_site_and_states_why(helper):
         assert key in live, (
             f"{helper['name']}: exemption {key!r} matches no call site — "
             "delete it, or fix the key")
-        assert len(reason) > 80 and re.search(r"R\d-\d\d|DR-\d\d", reason), \
+        assert len(reason) > 80 and re.search(CITATION, reason), \
             f"{helper['name']}: exemption {key!r} states no reviewable reason"
+
+
+def test_the_citation_pattern_matches_a_two_digit_round():
+    """`R\\d-\\d\\d|DR-\\d\\d` could not match a round-16 finding at all — against
+    `R16-03` the hyphen has to match `6`, and there is no second `R` to restart
+    from — nor any agenda entry, so a reason could not cite the question it
+    answers. It refused a correct citation rather than accepting a wrong one,
+    which is the safe direction and still wrong: the registry's reasons all
+    predate round 10, so the narrowness had never been exercised until a
+    round-16 helper needed registering and the gate rejected its citation.
+    """
+    for good in ("R16-03", "R5-07", "DR-11", "A14", "L9", "A12"):
+        assert CITATION.search(good), good
+    for bad in ("R160-3", "round sixteen", "RX-01", "12-34"):
+        assert not CITATION.search(bad), bad
 
 
 def test_the_registry_covers_the_helpers_that_need_covering():

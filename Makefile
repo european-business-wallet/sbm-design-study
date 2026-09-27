@@ -76,7 +76,8 @@ openapi-validate:
 	@$(PY) scripts/openapi_validate.py
 
 cddl-check-lite:
-	@$(PY) scripts/cddl_check.py; s=$$?; if [ $$s -eq 3 ]; then echo "[skip] cddl absent — conformance-lite tolerates it; the full bar (make conformance) does not"; exit 0; else exit $$s; fi
+	@$(PY) scripts/cddl_check.py; s=$$?; if [ $$s -eq 3 ]; then echo "[skip] cddl absent — conformance-lite tolerates it; the full bar (make conformance) does not"; elif [ $$s -ne 0 ]; then exit $$s; fi
+	$(PY) scripts/cddl_embedded.py
 
 # R-01 version matrix: one machine-readable manifest (versions.json) is the single
 # source of truth; this fails if any schema const/title, CDDL body, sample, README
@@ -124,6 +125,7 @@ adr-index:
 # `make conformance-lite`, which tolerates the skip.
 cddl-check:
 	$(PY) scripts/cddl_check.py
+	$(PY) scripts/cddl_embedded.py
 
 # Prose regression guard (wired into conformance — this comment said it was not,
 # while the `conformance` target above included it; D10-05): fails if a document

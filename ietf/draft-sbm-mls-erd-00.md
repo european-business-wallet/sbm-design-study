@@ -496,9 +496,24 @@ data, separated by a null byte (0x00). MLS encryption protects both headers and
 payload.
 
 Multipart messages are bound via the manifest ({{canonicalisation-and-payload-hashing}}); evidence
-binds to the manifest digest. A very large part MAY be chunked **in transport**,
-and the chunks are reassembled before hashing: the part's manifest `digest` is
-over that part's decoded octets, like every other part's.
+binds to the manifest digest. **Transport framing does not change what a part's
+`digest` covers.** A part's manifest `digest` is over that part's decoded octets,
+whatever framing carried them: the octets are reassembled before hashing, so a
+message delivered in one envelope and the same message delivered in several
+produce the same manifest and the same `payload_hash`.
+
+The framing operation this profile defines acts on the **envelope**, never on a
+part. A responsible RDP MAY re-frame the transmitted envelope — re-packaging it,
+or splitting it into several output envelopes — and MUST record the operation in
+a Change-Indication Evidence, which commits to the input octets
+(`envelope_hash_before`) and to each output (`envelope_hash_after` for
+re-packaging, or `part_envelope_hashes` with one commitment **per emitted
+envelope** for chunking). The word *part* in that field names an emitted envelope
+and not a manifest part: a manifest part is content, which no intermediary may
+transform under end-to-end encryption, and the TS states the same confinement —
+the only permitted transformations are on the envelope and its metadata.
+**Nothing in this profile splits a manifest part**, so a verifier never meets a
+part digest computed over anything but that part's whole decoded octets.
 
 **No Merkle construction is profiled.** An earlier revision of this document let
 a chunked part's `digest` be "the Merkle root over its chunks" and defined
@@ -508,9 +523,20 @@ telling a verifier which of the two constructions a given digest is. Two
 implementations receiving identical bytes could therefore choose different chunk
 sizes, derive different roots, and violate no published rule; and the manifest
 definition, which requires the digest to be over the part's decoded octets,
-never admitted such a value in the first place. The sentence is withdrawn rather
-than repaired: profiling it is a decision with parameters and test vectors
-attached, recorded as A13 on the review agenda.
+never admitted such a value in the first place. The sentence was withdrawn rather
+than repaired.
+
+**The permission that made it readable is withdrawn with it**, and that closes
+the question. An earlier revision also said a very large part "MAY be chunked in
+transport". It named no descriptor, no evidence of a split and no size at which a
+part becomes large; the profile bounds neither a message nor a part; and it read
+*part* as content where the only framing operation defined here acts on the
+envelope. **There is no chunked part to compute a digest for**, so no
+construction is needed and none is profiled. If a later revision wants part-level
+chunking, the mechanism comes first — a descriptor, evidence of the split, and a
+reassembly rule with a defined endpoint — and only then the construction
+question, with the parameters and test vectors A13 records on the review agenda
+so that neither is lost.
 
 # Canonicalisation and Payload Hashing
 
@@ -583,8 +609,8 @@ manifest-part = {
     part_id: tstr,        ; ^[A-Za-z0-9._-]{1,64}$
     role: "body" / "attachment" / "evidence-bundle" / "signature" / "metadata",
     media_type: tstr,
-    length: decimal-str,  ; the part's decoded-octet length, as a decimal string
-    digest: hash,         ; { alg, hex } over the part's decoded octets
+    length: decimal-str,  ; the part's octet count, as a decimal string
+    digest: raw-hash,     ; the full hash descriptor over the part's octets
     ? filename: tstr,
 }
 ~~~
@@ -597,15 +623,69 @@ manifest-part = {
   be checked by anyone holding the evidence, because both the declared value and
   its input are in the object — and it MUST be, by any verifier and by the
   reference linter (LINT-MAN-04), alongside the manifest's structure
-  (LINT-MAN-01/02/03). A declared value that is not the digest of the manifest
+  (LINT-MAN-01/02). A declared value that is not the digest of the manifest
   it accompanies is refused, whatever else verifies: a valid seal over an
   unfaithful body proves only that the issuer sealed it.
 
 Manifest rules: `part_id` MUST be unique and match `^[A-Za-z0-9._-]{1,64}$`; the
 manifest MUST be in byte-wise ascending `part_id` order; duplicate `part_id` is
 forbidden; `role` is from {`body`, `attachment`, `evidence-bundle`, `signature`,
-`metadata`}; digests are over decoded octets (permitted content encodings
-`identity`, `gzip`); nesting is at most one level.
+`metadata`}.
+
+**A manifest is flat.** A part carries no manifest of its own: the descriptor
+admits no such member, in the Schema or in the CDDL, so a nested manifest is not
+expressible. It is also excluded by the digest domains — a part's `digest` is in
+the observed-octets domain, which admits `raw-sha256` and `raw-sha512` only, and
+a digest committing to a nested structure would need a manifest mode there. A
+part that is itself a container — an archive, a message, a bundle of documents —
+is **one part**, committed by the digest of its own octets, and its interior is a
+matter for the parties that hold the plaintext. An earlier revision said
+"nesting is at most one level", which described neither authority and which
+nothing could produce.
+
+**How the parts are laid out in the application data.** For a Mode C message the
+application payload — the octets after the `0x00` separator — is the
+deterministic-CBOR (RFC 8949 §4.2) encoding of an array of part records:
+
+~~~ cddl
+payload-multipart = [ + payload-part ]
+payload-part = {
+    part_id: tstr,        ; the manifest entry this record carries
+    octets: bstr,         ; the part's octets; `length` counts them and
+}                         ; `digest` is over them
+~~~
+
+The array is in **byte-wise ascending `part_id`** order, the same canonical order
+the manifest is in, and the set of `part_id` values MUST be exactly the manifest's
+— no part in the payload that the manifest does not describe, and none described
+that the payload does not carry. Each record is a map keyed by `part_id` rather
+than a bare byte string in an agreed position, for the reason the manifest itself
+is a list of maps: a fixed-position encoding is one silent reordering away from
+attributing a part's octets to another part's descriptor.
+
+**The payload is therefore self-describing.** A recipient that has decrypted the
+envelope can split it without holding any evidence: the manifest travels in the
+provider-sealed SE, and content parsing does not depend on it. Mode A is
+unaffected — its payload is the octets, and no framing applies.
+
+An earlier revision specified none of this. The manifest described the parts and
+bound them, and nothing said how a recipient located part N's octets, so two
+independent implementations could satisfy every rule here and fail to exchange one
+multipart message — each verifying its manifest against its own framing and
+nothing else. The reason that could go unnoticed is stated under re-verification
+below.
+
+**A part's octets are the part's octets.** `length` is their count and `digest`
+is over them, with no encoding layer between the two: the parts travel inside the
+MLS application data, which has no transport content-encoding, so nothing is
+stripped before hashing and nothing needs to declare what was applied. An earlier
+revision permitted "content encodings `identity`, `gzip`" and gave no field in
+which to declare one, so a recipient could not have known whether to decode and a
+verifier could not have known what the digest covered. A sender that compresses
+does so **as content**: the compressed bytes are the part's octets, `media_type`
+names them, and the digest is over what was sent. The phrase *decoded octets*,
+used throughout this document for this value, therefore means exactly the part's
+octets as transmitted and as `length` counts them.
 
 **The digest domains.** A `hash_mode` is admissible only in the domain of the
 field that carries it, and the three domains are distinct:
@@ -659,7 +739,22 @@ specification failed to state.
 **Recipient re-verification.** The SE `payload_hash` is computed by the sender
 over the plaintext and cannot be verified by the RDP. The recipient wallet MUST
 recompute `payload_hash` over the decrypted plaintext before acknowledging; DE
-MUST carry the same `payload_hash`. On mismatch the recipient MUST NOT confirm
+MUST carry the same `payload_hash`.
+
+**Under Mode C that is two recomputations, and only the first touches the
+content.** `payload_hash` is the digest of the manifest, not of the plaintext, so
+a recipient that recomputed it from the manifest it holds would be comparing the
+manifest with itself and would have checked nothing about what it received. The
+recipient MUST therefore, in order: parse the payload into its parts, **recompute
+each part's `digest` from the octets it received** and compare it with that part's
+manifest entry — including `length` — and then recompute the manifest digest and
+compare it with `payload_hash`. A part whose digest differs, a `part_id` in one
+and not the other, or a payload that is not the framing above, is a failure of the
+first step and is reported exactly as a Mode A mismatch is: the recipient MUST NOT
+confirm a match, and delivers a `mismatch` confirmation carrying its
+recomputation. This is the same obligation as Mode A's, written so that it can be
+performed; an earlier revision said only "recompute `payload_hash`", which a Mode
+C recipient could satisfy without reading the content at all. On mismatch the recipient MUST NOT confirm
 a match; it delivers a `mismatch` confirmation — its proof — and the RDP MUST
 issue NDE `payload-hash-mismatch` embedding that proof instead of DE. Silence is
 never a mismatch: without a confirmation the outcome at expiry is NDE `expired`. In
@@ -709,7 +804,10 @@ with a CBOR encoder (already required for COSE) and no key-ordering, number or
 parser ambiguity:
 
 ~~~ cddl
-grade-commitment-input = [
+grade-commitment-input = [   ; ILLUSTRATIVE — the normative rule is in
+                             ; cddl/sm-mls-erd.cddl; here each element is named
+                             ; so a reader can see which value goes in which
+                             ; position, with its real type in the comment
     "sm-mls:grade-commitment:v2",   ; tstr, domain-separation tag, element 0
     salt,                           ; bstr .size 16  (grade_commitment_salt, hex-decoded)
     content_class,                  ; tstr           (the envelope content_class)
@@ -757,7 +855,9 @@ The input uses the same deterministic-CBOR fixed-position array as the grade
 commitment ({{grade-commitment}}):
 
 ~~~ cddl
-mandate-commitment-input = [
+mandate-commitment-input = [ ; ILLUSTRATIVE — as above: the normative rule is in
+                             ; cddl/sm-mls-erd.cddl, and the elements are named
+                             ; here for position rather than typed
     "sm-mls:mandate-commitment:v2", ; tstr, domain-separation tag
     salt,                           ; bstr .size 16  (mandate_commitment_salt, hex-decoded)
     mandate_id,                     ; tstr           (SE.mandate_ref.id)
@@ -1140,7 +1240,7 @@ JSON is a **non-authoritative projection** (`decode(payload)`); see
 qualified timestamp:
 
 ~~~ cddl
-sm-evidence-artifact = [ cose-sign1, qualified-timestamp ]
+sm-evidence-artifact = [ cose-sign1-bytes, qualified-timestamp ]
 ~~~
 
 The **signed payload** is `dCBOR(evidence-body)`; JCS is no longer used. An RDP

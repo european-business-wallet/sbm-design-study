@@ -75,7 +75,7 @@ mls-group-id  = tstr            ; base64url
 mls-epoch     = tstr   ; MLS uint64 as a decimal string (M1)
 ; R-02/D3 (2.2): dedicated fixed commitment types — SHA-256 fixed by the type,
 ; over the TLS-serialized RFC 9420 wire structs (scripts/mls_wire.py); the
-; generic `hash` (with its alg/mode selectors) is NOT used here.
+; no alg/mode selector is used here.
 envelope-hash = { format: "mls10-message", hex: hex-digest }        ; SHA-256(TLS-serialize(MLSMessage))
 mls-state     = { format: "mls10-group-context", hex: hex-digest }  ; SHA-256(TLS-serialize(GroupContext))
 decimal-str   = tstr   ; safe-range counter as a decimal string
@@ -89,14 +89,7 @@ commitment    = tstr
 cose-b64      = tstr            ; base64 COSE (nested wallet signatures in a projection)
 b64           = tstr            ; base64 token
 
-hash = {
-  alg: "SHA-256" / "SHA-512",
-  hex: hex-digest,
-  hash_mode: "raw-sha256" / "raw-sha512"
-           / "manifest-sha256" / "manifest-sha512",
-}
-
-; The digest domains (R16-03). One shape served every field, so a policy
+; The digest domains (R16-03). One shape, `hash`, served every field, so a policy
 ; reference could declare a manifest mode and a rejected-submission digest a
 ; SHA-512 one, and both validated while the normative text assigned each field a
 ; narrower domain. The boundary is drawn per semantic field.
@@ -110,7 +103,19 @@ hash = {
 ;                 text pins to one algorithm: submission_hash over the exact
 ;                 submitted octets before any parsing, and doc_digest over a
 ;                 published document's signed payload.
-content-hash = hash
+;
+; There is no generic rule left to reach for. `content-hash` was written as
+; `content-hash = hash`, which kept the permissive shape under its old name and
+; available to any rule that named it - the schema's own probe for this pass says
+; the shape that served every field must be GONE, not aliased, and the CDDL was
+; doing the aliasing. The three domains are now spelled out and `hash` does not
+; exist.
+content-hash = {
+  alg: "SHA-256" / "SHA-512",
+  hex: hex-digest,
+  hash_mode: "raw-sha256" / "raw-sha512"
+           / "manifest-sha256" / "manifest-sha512",
+}
 
 raw-hash = {
   alg: "SHA-256" / "SHA-512",
@@ -156,6 +161,22 @@ mandate-ref = {
   ? mandate_commitment: commitment,
 }
 
+; A14 (2026-09-27): how a multipart payload is laid out inside the envelope.
+; The manifest describes and binds the parts; nothing said how a recipient
+; locates part N's octets, so two conformant implementations could fail to
+; exchange one multipart message. The payload (the octets after the 0x00
+; separator in the MLS application data) is the dCBOR encoding of this array, in
+; byte-wise ascending part_id order - the manifest's own order - and its part_id
+; set MUST equal the manifest's exactly. Keyed by part_id rather than positional
+; for the reason the manifest is a list of maps: a fixed-position encoding is one
+; silent reordering away from attributing a part's octets to another descriptor.
+; Mode A has no framing: its payload is the octets.
+payload-multipart = [+ payload-part]
+payload-part  = {
+  part_id: tstr,                ; the manifest entry this record carries
+  octets: bstr,                 ; the part's octets: `length` counts them and
+}                               ; `digest` is over them
+
 manifest-def  = [+ manifest-part]
 manifest-part = {
   part_id: tstr,
@@ -163,8 +184,14 @@ manifest-part = {
   media_type: tstr,
   length: decimal-str,          ; decoded-octet length (M1: decimal string)
   digest: raw-hash,             ; over the part's decoded octets - one rule, no
-                                ; alternative construction: a part chunked in
-                                ; transport is reassembled before hashing (A13)
+                                ; alternative construction. Nothing splits a
+                                ; part: the framing operation this profile
+                                ; defines acts on the envelope (CE chunking,
+                                ; whose part_envelope_hashes commits per emitted
+                                ; ENVELOPE), and the octets are reassembled
+                                ; before hashing whatever framing carried them.
+                                ; A13 closed 2026-09-27: no chunked part, so no
+                                ; construction question
   ? filename: tstr,
 }
 

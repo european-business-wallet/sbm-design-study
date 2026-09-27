@@ -18,7 +18,78 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-27, edition r22
+## Current — 2026-09-27, edition r23
+
+**No artefact version moves and nothing changes on the wire.** Two open
+questions close and one defect in a recipient obligation is corrected — the
+last of which an implementer reading the previous edition would have got wrong.
+
+**How a multipart payload is laid out is now specified.** The manifest described
+the parts of a multipart message and bound them, and no document said how a
+recipient finds a given part's octets: no delimiter, no length-prefix framing, no
+reference to an existing multipart format. Two independent implementations could
+satisfy every rule in the profile and fail to exchange one multipart message. The
+payload is now the deterministic-CBOR encoding of an array of
+`{part_id, octets}` records, in the manifest's own canonical order, carrying
+exactly the parts the manifest describes. Keyed by part identifier rather than by
+position, because a fixed-position encoding is one silent reordering away from
+attributing one part's octets to another part's descriptor. The payload is
+therefore self-describing: a recipient that has decrypted the envelope splits it
+without holding any evidence. Single-part messages are unaffected.
+
+**And a recipient obligation that could be satisfied without reading the
+content.** For a multipart message the payload digest is the digest of the
+*manifest*, not of the plaintext — while the re-verification rule said only that
+the recipient recomputes the payload digest over the decrypted plaintext. A
+recipient could therefore hash the manifest it already held, compare it with
+itself, and **confirm a match for a message whose every part had been replaced**.
+The rule now states two recomputations in order: each part's digest from the
+octets received, compared with the manifest including its declared length, and
+only then the manifest's digest against the declared payload digest. A failure is
+reported exactly as any digest mismatch is, through the recipient's mismatch
+confirmation; no new outcome is introduced.
+
+**The published multipart example now proves the framing.** Its manifest is
+reproduced from the two part files this snapshot carries, through the specified
+layout, so an implementer who builds a payload as specified arrives at the digests
+published here.
+
+**A chunked part's digest: the question does not arise.** Whether such a digest
+should ever be a Merkle root was open. This profile has no chunked part: the
+framing operation it defines acts on the **envelope** — a provider may re-package
+it or split it into several output envelopes, recording the operation in
+change-indication evidence that commits to the input and to each output — and the
+TS confines permitted transformations to the envelope and its metadata, because
+content cannot be transformed under end-to-end encryption. A sentence permitting a
+"very large part" to be chunked in transport named no descriptor, no evidence of a
+split and no size at which a part becomes large; it is withdrawn, and the
+invariant it existed to state is kept: **a part's digest is over that part's
+octets whatever framing carried them**, so one envelope or several produce the
+same manifest and the same payload digest. If a later revision wants part-level
+chunking, the mechanism comes first and the construction after; the record says so
+in that order.
+
+**The manifest's own rules, made to agree.** Nesting was described three ways —
+the specification permitted one level, both machine-readable definitions made it
+inexpressible, and a conformance rule guarded a depth nothing could produce. A
+manifest is flat, and a part that is itself a container is one part committed by
+the digest of its own octets. The rule is retired and recorded with the reason,
+because an identifier is assigned once and never reused. A content encoding was
+permitted with no field in which to declare one, so a recipient could not have
+known whether to decode and a verifier could not have known what the digest
+covered; there is no encoding layer inside the encrypted envelope, compression is
+content, and the term the rules use is now defined once.
+
+**Two quoted definitions did not match the normative one.** The specification
+embeds CDDL so a reader meets the wire format where the rule is explained. One
+block named a type the previous edition removed and described a reduced form its
+own prose forbids two lines above; another rule was embedded twice with two
+different bodies, one naming a type the normative file does not define. A new
+check holds every embedded block to the file, and a deliberately illustrative
+block has to say so and give its reason — and is still held to the
+domain-separation tags it carries.
+
+## Edition r22 — 2026-09-27
 
 **No artefact version moves and nothing changes on the wire.** This edition
 makes one open question decidable: **A12**, whether the content digest should
