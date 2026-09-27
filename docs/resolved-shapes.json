@@ -3,13 +3,13 @@
   "shapes": {
     "delivery-service-openapi.yaml": {
       "dimension": "companion_contracts",
-      "version": "9.0.0",
+      "version": "10.0.0",
       "sha256": "f019a06c2e6b2d3b7b78c299ba7177420bbfbbbdb7dd9072333de5ff51629715"
     },
     "edd-resolver-openapi.yaml": {
       "dimension": "edd_openapi",
-      "version": "1.12.0",
-      "sha256": "f1420d3c931be8ae2851e081b719db3461159418c952b7961a91768a2121d6da"
+      "version": "1.13.0",
+      "sha256": "01c33059ef20604008875e1b3116183730d0a6750044b63b5c5e7f9c40b89b37"
     },
     "federation-register-openapi.yaml": {
       "dimension": "federation_register_openapi",
@@ -18,7 +18,7 @@
     },
     "rdp-relay-openapi.yaml": {
       "dimension": "companion_contracts",
-      "version": "9.0.0",
+      "version": "10.0.0",
       "sha256": "5ae73b5555ff262103e985dcce5a369d664ff5b5ac23b56018cf3c1d157b1f96"
     },
     "schemas/bw-med.schema.json": {
@@ -33,8 +33,8 @@
     },
     "schemas/bw-org.schema.json": {
       "dimension": "discovery_bw_org",
-      "version": "2.6",
-      "sha256": "1edce24dd0603d60254f884dd85e84f8711ce54991517fcda4e310295fb04a65"
+      "version": "2.7",
+      "sha256": "4763ad1cbe4929d7e6ac8ee77c9eda46d00b5eeadae1f308742b208007b67816"
     },
     "schemas/bw-provider.schema.json": {
       "dimension": "discovery_bw_provider",
@@ -43,53 +43,53 @@
     },
     "schemas/envelope.schema.json": {
       "dimension": "application_envelope",
-      "version": "1.2",
+      "version": "1.3",
       "sha256": "95fe4ef9c325d38249d44e7f8a5286e75f35036af36ed236ec9286412d0693a0"
     },
     "schemas/evidence-ce.schema.json": {
       "dimension": "evidence",
-      "version": "2.9",
-      "sha256": "561d2faa1f23c9ab95dcb61f65e48e693f3d6c9d76764d84207c6c6c2e020140"
+      "version": "2.10",
+      "sha256": "eebe9364fdf2c50d9701952023027fe339f1270c7726c4327b220b9dedb3bdc7"
     },
     "schemas/evidence-common.schema.json": {
       "dimension": "evidence",
-      "version": "2.9",
-      "sha256": "ccae3b56a205c8cbf95d718d7283fc2415eced728112a691c196abf927b96083"
+      "version": "2.10",
+      "sha256": "d73c2b2249ef8ef5d5b67575e88d45d9fc9a13f5e7035411e66bd57d19f9de63"
     },
     "schemas/evidence-de.schema.json": {
       "dimension": "evidence",
-      "version": "2.9",
-      "sha256": "c5002d1d425f39fb04ba8fc14e225c3a426a98a2f8e3ebc04fddbb0b41387c07"
+      "version": "2.10",
+      "sha256": "ea8f0af16f5ceeb9a2f03fb840c18967dce235ecc3cdb1cce495faa1b107bf9a"
     },
     "schemas/evidence-ep.schema.json": {
       "dimension": "evidence",
-      "version": "2.9",
-      "sha256": "bc8f9f729d734c5c8c3efd920f48fe74193c0c5fa2872f613b7b941d604bac8a"
+      "version": "2.10",
+      "sha256": "cff45c8f33694bc8eb7ab160ec2cd096248e149e21d059c401177db00c116260"
     },
     "schemas/evidence-gcm.schema.json": {
       "dimension": "evidence",
-      "version": "2.9",
-      "sha256": "060cfa692a3dd1699eda79a5010454aca881710bbba93331f95a75dbb6662c72"
+      "version": "2.10",
+      "sha256": "acd65c2f7452dfd5c8c2fbab234d3d079d681c6e0264a3409df0daa875c98424"
     },
     "schemas/evidence-nde.schema.json": {
       "dimension": "evidence",
-      "version": "2.9",
-      "sha256": "e7b643bc2c4fc0f7cb346d3c6cd6cdc65324861679035a8e796b2af936190e89"
+      "version": "2.10",
+      "sha256": "c2f01820fe085faf49e5ca675b1fd1ba5b5fc4de42013edc89d4c62721d70c75"
     },
     "schemas/evidence-re.schema.json": {
       "dimension": "evidence",
-      "version": "2.9",
-      "sha256": "3ddf559f452966519c370de0ccd0537845bdd6a92e91a90ce551a3835fdd015b"
+      "version": "2.10",
+      "sha256": "711e47154252bf620381a106606f7ed007832c1c320c47a5a82792395a21abf4"
     },
     "schemas/evidence-relay.schema.json": {
       "dimension": "evidence",
-      "version": "2.9",
-      "sha256": "8e7a50a27f825f8b2e37a3b8d5abfa2f1bfda2ef86a3b86f9ffec856bd73c436"
+      "version": "2.10",
+      "sha256": "420f7c042976a2ed69b071e1d449f9f773d5f8ef64fec2e4693fd31e6e03fc89"
     },
     "schemas/evidence-se.schema.json": {
       "dimension": "evidence",
-      "version": "2.9",
-      "sha256": "47d7b839f01af4f7c6fbb0788fc51cc119eb678fc31ed54df96504aa0075d367"
+      "version": "2.10",
+      "sha256": "cd29504ab43221cb324184a761459ba48178e3f4894794bfcb2e5ff1ebc2c2ee"
     },
     "schemas/roster-snapshot.schema.json": {
       "dimension": "roster_snapshot",
@@ -103,8 +103,8 @@
     },
     "wallet-rdp-openapi.yaml": {
       "dimension": "companion_contracts",
-      "version": "9.0.0",
-      "sha256": "77e90945a19ed6d928034a88b935ba02991752d8859b81ade286ee1a014ecbdf"
+      "version": "10.0.0",
+      "sha256": "6a34188ed7d6168b5045d947b8aa7ee36f35760591b3fa14770a8a73a4da46d9"
     }
   }
 }

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://bw.example.eu/schemas/envelope.schema.json",
-  "title": "envelope (SM-MLS application envelope headers v1.2)",
+  "title": "envelope (SM-MLS application envelope headers v1.3)",
   "description": "Header object of the SM-MLS application envelope (the I-D (Application Envelope)): the JSON object prepended to the payload within the MLS application_data, separated by a null byte (0x00). content_digest is the SAME hash object as the evidence payload_hash (evidence-common Hash) and the two MUST be equal for the same message — that equality is what the recipient's re-verification re-checks. The envelope versions with the I-D, not with the evidence objects (spec §9.3). v1.1 adds the optional grade_commitment_salt header (the I-D (Grade Commitment)): 16 bytes of fresh per-message salt, present exactly when the content class is availability-declared; it never leaves the encrypted envelope except by deliberate reveal (the TS clause 6). v1.2 adds the optional mandate_commitment_salt header (the I-D (Mandate Commitment), A1): present exactly on an opposable agent (system-member) message, same confinement.",
   "type": "object",
   "required": [
@@ -42,7 +42,7 @@
       "description": "OPTIONAL class from the two-tier content-class registry (the I-D (IANA Considerations)): federation-governed standard classes, or x- prefixed entity-defined private classes. Selects a confidentiality scope (spec §8.3a); not echoed in evidence (the resolved scope_ref is)."
     },
     "content_digest": {
-      "$ref": "evidence-common.schema.json#/$defs/Hash"
+      "$ref": "evidence-common.schema.json#/$defs/ContentHash"
     },
     "sender_addr": {
       "$ref": "evidence-common.schema.json#/$defs/BwAddress"

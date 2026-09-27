@@ -80,6 +80,15 @@ def test_the_current_claims_are_clean():
     assert vm.sweep_active_claims(ROOT, MANIFEST) == []
 
 
+ORG_NOW = MANIFEST["dimensions"]["discovery_bw_org"]["value"]
+ORG_CLAIM = f"**Field definitions (v{ORG_NOW}).**"
+# Derived, never spelled. These probes pinned `v2.6` until the digest-domain
+# pass moved BW-ORG to 2.7, at which point the replacement they depend on
+# matched nothing: the fixture went silently vacuous, and only the assertion
+# guarding against exactly that said so. Invariant 13, in the suite that exists
+# to catch stale version claims.
+
+
 @pytest.mark.parametrize("shape,dimension", [
     ('`version` = `"{v}"`', "discovery_bw_org"),
     ('`version` = "{v}"', "discovery_bw_med"),
@@ -107,13 +116,13 @@ def test_a_historical_value_is_still_allowed(tmp_path):
     stale = "**Field definitions (v2.4).**"
     # How a historical note actually reads: the marker sits BETWEEN the label
     # and the version, where the prefix-anchored rule cannot see it.
-    marked = text.replace("**Field definitions (v2.6).**",
+    marked = text.replace(ORG_CLAIM,
                           "**Field definitions as of v2.4** described the shape "
                           "before the chain field.", 1)
     # The probe must be one the gate WOULD otherwise report — a sentence it
     # never matches proves nothing about the exemption.
     (tmp_path / UMBRELLA).write_text(text.replace(
-        "**Field definitions (v2.6).**", stale, 1))
+        ORG_CLAIM, stale, 1))
     assert vm.sweep_section_claims(
         tmp_path, dict(MANIFEST, active_claim_sweep=[UMBRELLA])), \
         "the probe is not one the gate reports, so the exemption below is vacuous"
@@ -129,13 +138,13 @@ def test_a_table_row_is_not_swept(tmp_path):
     # The SAME sentence the gate reports in prose, inside a table row.
     row = "| **Field definitions (v2.4).** | the shape before the chain |"
     (tmp_path / UMBRELLA).write_text(text.replace(
-        "**Field definitions (v2.6).**", "**Field definitions (v2.4).**", 1))
+        ORG_CLAIM, "**Field definitions (v2.4).**", 1))
     assert vm.sweep_section_claims(
         tmp_path, dict(MANIFEST, active_claim_sweep=[UMBRELLA])), \
         "the probe is not one the gate reports, so the exemption below is vacuous"
     (tmp_path / UMBRELLA).write_text(text.replace(
-        "**Field definitions (v2.6).**",
-        f"{row}\n\n**Field definitions (v2.6).**", 1))
+        ORG_CLAIM,
+        f"{row}\n\n{ORG_CLAIM}", 1))
     assert vm.sweep_section_claims(
         tmp_path, dict(MANIFEST, active_claim_sweep=[UMBRELLA])) == []
 
@@ -176,7 +185,7 @@ def test_omitting_a_current_field_fails(tmp_path):
 
 def test_inventing_a_field_fails(tmp_path):
     text = (ROOT / UMBRELLA).read_text().replace(
-        "Full field list (v2.6): `type`,", "Full field list (v2.6): `valid_until`, `type`,", 1)
+        f"Full field list (v{ORG_NOW}): `type`,", f"Full field list (v{ORG_NOW}): `valid_until`, `type`,", 1)
     (tmp_path / UMBRELLA).write_text(text)
     old_root, ss.ROOT = ss.ROOT, tmp_path
     try:
@@ -428,8 +437,14 @@ def test_the_breaking_change_is_versioned_as_breaking():
     # gained a required field, and `collection_token` became mandatory at
     # runtime rather than optional in the reference.
     assert major >= 6
-    # the resolver only GAINED an alternative, so it is a minor bump
-    assert manifest["dimensions"]["edd_openapi"]["value"] == "1.12.0"
+    # The resolver has never had a breaking change: every bump it has taken was
+    # additive (an alternative gained) or transitive (a type it references
+    # narrowed, which the digest-domain pass made visible). So the PROPERTY is
+    # that its major stands at 1, not that its minor holds a particular value —
+    # which is what this assertion pinned until that pass moved it, and the same
+    # drift family the test exists to catch.
+    edd = manifest["dimensions"]["edd_openapi"]["value"]
+    assert edd.split(".")[0] == "1", f"the resolver took a breaking change: {edd}"
 
 
 # ---------------------------------------------------------------------------

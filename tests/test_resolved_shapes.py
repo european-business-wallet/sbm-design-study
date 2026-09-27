@@ -53,7 +53,7 @@ def _narrow_the_shared_type(root, add=("jcs-sha256", "jcs-sha512")):
     """R16-04's own edit: one `$defs`, in one file, no version touched."""
     p = root / "schemas" / "evidence-common.schema.json"
     d = json.loads(p.read_text(encoding="utf-8"))
-    node = d["$defs"]["Hash"]["properties"]["hash_mode"]
+    node = d["$defs"]["ContentHash"]["properties"]["hash_mode"]
     node["enum"] = list(node["enum"]) + list(add)
     p.write_text(json.dumps(d, indent=2), encoding="utf-8")
 
@@ -90,18 +90,48 @@ def test_each_contract_has_its_own_fingerprint():
 
 # --- the defect it was built for -------------------------------------------
 
+def _dims(repo, problems):
+    now = rs.current(repo)
+    return {now[rel]["dimension"] for rel in problems}
+
+
 def test_one_edited_file_is_reported_across_every_dimension_it_reaches(repo):
-    """R16-04, reproduced. Editing `$defs/Hash` alone must be reported against
-    the evidence schemas AND the envelope AND the contracts that `$ref` it."""
+    """R16-04, reproduced. Editing one shared type must be reported against
+    every dimension that reaches it through a `$ref`."""
     _record(repo)
     _narrow_the_shared_type(repo)
     problems = dict(rs.drift(repo))
-    dims = {rs.current(repo)[rel]["dimension"] for rel in problems}
-    assert {"evidence", "application_envelope", "discovery_bw_org",
-            "companion_contracts", "edd_openapi"} <= dims, dims
+    assert {"evidence", "application_envelope", "companion_contracts"} <= _dims(repo, problems)
     assert "wallet-rdp-openapi.yaml" in problems, \
         "the contract is where R16-04 was reported, and it must be named"
     assert "schemas/envelope.schema.json" in problems
+
+
+def test_the_domains_confine_what_a_change_reaches(repo):
+    """What the digest-domain pass bought, measured here.
+
+    Before it, one `Hash` served every field, so editing it moved BW-ORG and
+    the EDD resolver too — the resolver two `$ref` hops away, through BW-ORG's
+    `supersedes.doc_digest`. Now the content type reaches neither, because a
+    policy digest has a domain of its own; and editing THAT domain reaches
+    them and leaves the payload fields alone. A blast radius that follows the
+    meaning of a field rather than the accident of a shared shape.
+    """
+    _record(repo)
+    _narrow_the_shared_type(repo)                       # the CONTENT domain
+    content_dims = _dims(repo, dict(rs.drift(repo)))
+    assert "discovery_bw_org" not in content_dims, content_dims
+    assert "edd_openapi" not in content_dims, content_dims
+
+    shutil.rmtree(repo / "schemas"); shutil.copytree(ROOT / "schemas", repo / "schemas")
+    _record(repo)
+    p = repo / "schemas" / "evidence-common.schema.json"       # the PINNED domain
+    d = json.loads(p.read_text(encoding="utf-8"))
+    node = d["$defs"]["RawSha256Hash"]["properties"]["hash_mode"]
+    node.pop("const"); node["enum"] = ["raw-sha256", "raw-sha512"]
+    p.write_text(json.dumps(d, indent=2), encoding="utf-8")
+    pinned_dims = _dims(repo, dict(rs.drift(repo)))
+    assert {"discovery_bw_org", "edd_openapi"} <= pinned_dims, pinned_dims
 
 
 def test_the_message_says_what_a_reader_needs(repo):
@@ -109,7 +139,9 @@ def test_the_message_says_what_a_reader_needs(repo):
     _narrow_the_shared_type(repo)
     problems = dict(rs.drift(repo))
     msg = problems["wallet-rdp-openapi.yaml"]
-    assert "companion_contracts" in msg and "9.0.0" in msg
+    version = json.loads((repo / "versions.json").read_text(
+        encoding="utf-8"))["dimensions"]["companion_contracts"]["value"]
+    assert "companion_contracts" in msg and version in msg, msg
     assert "may be invalid" in msg, "it must say what changed for an input"
     assert "through a `$ref`" in msg, \
         "its own file is untouched; the message must say where the change came from"
@@ -149,7 +181,7 @@ def test_a_real_narrowing_fires_even_when_the_file_looks_untouched(repo):
     _record(repo)
     p = repo / "schemas" / "evidence-common.schema.json"
     d = json.loads(p.read_text(encoding="utf-8"))
-    node = d["$defs"]["Hash"]["properties"]["hash_mode"]
+    node = d["$defs"]["ContentHash"]["properties"]["hash_mode"]
     node["enum"] = [m for m in node["enum"] if not m.startswith("manifest-")]
     p.write_text(json.dumps(d, indent=2), encoding="utf-8")
     problems = dict(rs.drift(repo))

@@ -51,7 +51,7 @@ def _mock():
 
 def test_the_schema_and_the_cddl_agree_on_the_four_modes():
     schema = json.loads((ROOT / "schemas" / "evidence-common.schema.json").read_text())
-    enum = schema["$defs"]["Hash"]["properties"]["hash_mode"]["enum"]
+    enum = schema["$defs"]["ContentHash"]["properties"]["hash_mode"]["enum"]
     assert enum == list(PROFILE), enum
     cddl = (ROOT / "cddl" / "sm-mls-erd.cddl").read_text()
     rule = re.search(r"hash_mode:(.*?),\n", cddl, re.S).group(1)

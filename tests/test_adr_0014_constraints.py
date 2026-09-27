@@ -144,5 +144,5 @@ def test_nothing_else_about_the_construction_moved():
     text = adr()
     assert "sm-mls:content-digest:v1" in text
     assert "`content_digest_salt`" in text
-    assert "evidence 2.9 → 2.10" in text or "2.9 → 2.10" in text
+    assert "2.10 → 2.11" in text, "the proposal states its cost against the editions in force"
     assert re.search(r"no reinterpretation of already-issued evidence", text, re.I)

@@ -224,7 +224,8 @@ not answered here. The two proof-of-concept codebases are pinned to earlier
 editions and do not break; their re-pin grows by this.
 
 **No reinterpretation of already-issued evidence.** If this is accepted, an
-artefact sealed at evidence 2.9 keeps the meaning it had when it was sealed:
+artefact sealed under an earlier edition keeps the meaning it had when it was
+sealed:
 its `payload_hash` is a bare digest, it is verified by the 2.9 rules, and
 acceptance neither invalidates it nor makes it verifiable under the new
 construction. A later edition does not reach backwards. Nothing is re-sealed
@@ -243,8 +244,9 @@ said.
   applied cryptography and to QERDS operators. Accepting it is the
   maintainer's act after the group's answer; nothing in this record is in
   force.
-- **Implementation:** not implemented. If accepted: evidence 2.9 → 2.10,
-  application envelope 1.2 → 1.3, companion contracts 9.0.0 → 10.0.0, every
+- **Implementation:** not implemented. If accepted, from the editions in
+  force at the time of writing: evidence 2.10 → 2.11, application envelope
+  1.3 → 1.4, companion contracts 10.0.0 → 11.0.0, every
   sample carrying a `payload_hash` re-sealed, the TS revised, in one change.
 
 ## Supersedes

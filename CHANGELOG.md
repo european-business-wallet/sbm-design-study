@@ -18,15 +18,64 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-27, edition r20
+## Current — 2026-09-27, edition r21
 
-The artefact versions are unchanged and nothing moves on the wire. This
-edition adds one record: **SBM-ADR-0014, the content digest as a salted
-commitment — proposed, not accepted, not implemented.** It sets out the
-construction that would answer agenda question A12 so the question can be put
-to its reviewers with a proposal in hand; the digest is unsalted until the
-question is decided, and the agenda row and SBM-ADR-0009 point at the record.
-The decisions index is generated from fourteen records.
+**Wire-breaking. A hash mode is now admissible only in the domain of the field
+that carries it**, and five artefact versions move with the restriction.
+
+| Artefact | This edition | Previous |
+|---|---|---|
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.10** | 2.9 |
+| Application envelope | **1.3** | 1.2 |
+| BW-ORG discovery document | **2.7** | 2.6 |
+| EDD resolver contract (OpenAPI) | **1.13.0** | 1.12.0 |
+| Profile-2 companion contracts (wallet–RDP, delivery service, relay) | **10.0.0** | 9.0.0 |
+
+One shared hash type was referenced by fourteen sites, so **every digest field
+accepted every mode the profile defines** while the normative text gave each
+field a narrower one. The effects were not theoretical: an acceptance-policy
+reference could declare a manifest mode — a digest of a structure — where a
+verifier recomputes SHA-256 over a published document's signed payload, so the
+issuer accepted an artefact its own bundle verifier refused; an intake-stage
+rejection's submission digest could declare SHA-512 or a manifest mode where the
+Internet-Draft requires SHA-256 over the exact submitted octets, for a request
+that may never have been parsed; and a multipart part's digest could declare a
+manifest mode where the value is over that part's decoded octets.
+
+There are now three named types, and the Internet-Draft states the three domains
+before the schemas enforce them:
+
+- **content** — the payload digest and the envelope's content digest: either the
+  transmitted octets or the deterministic-CBOR manifest of a multipart payload.
+  The only domain in which a manifest mode means anything;
+- **observed octets** — a multipart part's digest: SHA-256 or SHA-512 over that
+  part's decoded octets;
+- **SHA-256 over octets, pinned to one algorithm** — the rejected-submission
+  digest and a referenced document's digest, which a verifier recomputes from
+  bytes it holds, so another algorithm makes the value unrecomputable.
+
+**An artefact that declares a mode outside its field's domain is refused**,
+whatever else validates. The published wallet-provider contract inherited the
+restriction through its own reference to the shared type, so a submission with a
+manifest-mode policy digest is now refused by the contract, naming the field and
+the value the domain admits, **before the delivery service is contacted** — no
+transport acceptance and no evidence are produced.
+
+Two generic envelope-digest fields that appeared in one schema and the CBOR
+definitions, and in no normative text, are removed; the defined envelope
+commitments are unaffected.
+
+**What this costs an implementer.** An implementation that put a manifest mode
+on a policy reference, or SHA-512 on a rejected-submission digest, no longer
+interoperates — it was producing artefacts the profile's own verifier refused.
+Nothing that followed the normative text has to change.
+
+*The edition note above is written for this edition. Editions r18, r19 and r20
+carried this section forward from r9 unchanged, so it described a record added
+three editions earlier and said "the artefact versions are unchanged" while two
+of those editions changed normative text; the dated headline is written by the
+rebuild and was correct, the body under it was not. What each of those editions
+did is in this repository's commit for it.*
 
 ## Edition r8 — 2026-09-26
 

@@ -96,6 +96,34 @@ hash = {
            / "manifest-sha256" / "manifest-sha512",
 }
 
+; The digest domains (R16-03). One shape served every field, so a policy
+; reference could declare a manifest mode and a rejected-submission digest a
+; SHA-512 one, and both validated while the normative text assigned each field a
+; narrower domain. The boundary is drawn per semantic field.
+;
+; content-hash  - a digest of CONTENT: the transmitted payload octets, or the
+;                 dCBOR manifest of a multipart payload. The only domain in
+;                 which a manifest mode is meaningful.
+; raw-hash      - a digest of octets a party observes directly, never a
+;                 manifest: a multipart part's digest is of this domain.
+; raw-sha256-hash - SHA-256 over octets and nothing else, for the fields the
+;                 text pins to one algorithm: submission_hash over the exact
+;                 submitted octets before any parsing, and doc_digest over a
+;                 published document's signed payload.
+content-hash = hash
+
+raw-hash = {
+  alg: "SHA-256" / "SHA-512",
+  hex: hex-digest,
+  hash_mode: "raw-sha256" / "raw-sha512",
+}
+
+raw-sha256-hash = {
+  alg: "SHA-256",
+  hex: hex-digest,
+  hash_mode: "raw-sha256",
+}
+
 auth-method = "mls-x509" / "mls-uid-qeaa" / "mls-x509+oidc4vp" / "mls-uid-qeaa+oidc4vp"
             / "two-factor" / "wallet-eid-high" / "wallet-eid-substantial"
             / "mtls-ncp" / "ncp-signature" / "cab-confirmed"
@@ -103,7 +131,7 @@ auth-method = "mls-x509" / "mls-uid-qeaa" / "mls-x509+oidc4vp" / "mls-uid-qeaa+o
 recipient-auth-method = "mfa" / "wallet-eid-high" / "wallet-eid-substantial"
                       / "qes-qseal-cert" / "cab-confirmed"
 
-acceptance-policy-ref = { policy_version: tstr, doc_digest: hash,
+acceptance-policy-ref = { policy_version: tstr, doc_digest: raw-sha256-hash,
                           policy_key: tstr }  ; F-08 (2.4): the selected key
 scope-ref             = { scope_id: tstr, version: tstr }
 
@@ -134,7 +162,7 @@ manifest-part = {
   role: "body" / "attachment" / "evidence-bundle" / "signature" / "metadata",
   media_type: tstr,
   length: decimal-str,          ; decoded-octet length (M1: decimal string)
-  digest: hash,                 ; over the part's decoded octets - one rule, no
+  digest: raw-hash,             ; over the part's decoded octets - one rule, no
                                 ; alternative construction: a part chunked in
                                 ; transport is reassembled before hashing (A13)
   ? filename: tstr,
@@ -153,7 +181,7 @@ s3-common = (
   mls_state: mls-state,
   envelope_hash: envelope-hash,
   acceptance_policy_ref: acceptance-policy-ref,
-  payload_hash: hash,
+  payload_hash: content-hash,
   result: "match",
 )
 s3-signed  = { s3-common, device_id: tstr, wallet_signature_b64: cose-b64 }
@@ -165,7 +193,7 @@ session-binding = { kind: "token-digest" / "tls-exporter" /
 recipient-confirmation = rc-signed / rc-session
 rc-common = (
   mid: member-id,
-  payload_hash: hash,
+  payload_hash: content-hash,
   result: "mismatch",
   verified_at: iso-timestamp,
   message_id: tstr,
@@ -182,7 +210,7 @@ rc-session = { rc-common, ? device_id: tstr, session_authenticated: true }
 ; ============================================================================
 
 se-body = {
-  type: "SE-v1", version: "2.9", profile: profile,
+  type: "SE-v1", version: "2.10", profile: profile,
   message_id: tstr, event: "A.1-SubmissionAcceptance",
   evidence_id: evidence-id, policy_id: policy-id,
   acceptance_policy_ref: acceptance-policy-ref, scope_ref: scope-ref,
@@ -191,7 +219,7 @@ se-body = {
   transport: "SM-MLS-1.0",
   mls_group_id: mls-group-id, mls_epoch: mls-epoch,
   auth_method: auth-method, auth_context: auth-context,
-  payload_hash: hash, envelope_hash: envelope-hash, mls_state: mls-state,
+  payload_hash: content-hash, envelope_hash: envelope-hash, mls_state: mls-state,
   ? manifest: manifest-def,
   sent_at: iso-timestamp, expires_at: iso-timestamp,
   rdp_id: rdp-id,
@@ -210,7 +238,7 @@ se-body = {
 sender-confirmation = { mid: member-id, device_id: tstr, message_id: tstr,
                         sender_uid: uid, sender_addr: bw-address,
                         recipient_uid: uid, recipient_addr: bw-address,
-                        payload_hash: hash, envelope_hash: envelope-hash,
+                        payload_hash: content-hash, envelope_hash: envelope-hash,
                         mls_state: mls-state,
                         acceptance_policy_ref: acceptance-policy-ref,
                         scope_ref: scope-ref,
@@ -222,12 +250,12 @@ sender-confirmation = { mid: member-id, device_id: tstr, message_id: tstr,
 ; confirmation-bearing grades (s3_attestation present, recipient-verified-digest).
 de-body = de-availability / de-confirmed
 de-common = (
-  type: "DE-v1", version: "2.9", profile: profile,
+  type: "DE-v1", version: "2.10", profile: profile,
   message_id: tstr,
   evidence_id: evidence-id, policy_id: policy-id,
   acceptance_policy_ref: acceptance-policy-ref, scope_ref: scope-ref,
   recipient_uid: uid, delivered_at: iso-timestamp, rdp_id: rdp-id,
-  payload_hash: hash,
+  payload_hash: content-hash,
   recipient_auth_method: recipient-auth-method, auth_context: auth-context,
 )
 de-availability = {
@@ -258,14 +286,14 @@ quorum-ack = { mid: member-id, ack_at: iso-timestamp,
 ; is required for payload-hash-mismatch, redirect_uid for uid-merged.
 nde-body = nde-mismatch / nde-merged / nde-plain
 nde-common = (
-  type: "NDE-v1", version: "2.9", profile: profile,
+  type: "NDE-v1", version: "2.10", profile: profile,
   message_id: tstr,
   event: "A.2-SubmissionRejection" / "B.3-RelayFailure" / "C.5-AcceptanceRejectionExpiry"
        / "D.2-ContentConsignmentFailure" / "E.2-ContentHandoverFailure",
   evidence_id: evidence-id, policy_id: policy-id,
   recipient_uid: uid, observed_at: iso-timestamp, rdp_id: rdp-id,
-  ? payload_hash: hash,        ; F-14 (2.6): content domain — post-acceptance
-  ? submission_hash: hash,     ; F-14 (2.6): intake domain — A.2 only
+  ? payload_hash: content-hash,        ; F-14 (2.6): content domain — post-acceptance
+  ? submission_hash: raw-sha256-hash,  ; F-14 (2.6): intake domain — A.2 only
 )
 ; X-25: the reason value space is REGISTRY-GOVERNED (registries/reason-codes.json,
 ; umbrella 13.4) — structurally OPEN here (outer bound); the lexical form is
@@ -277,13 +305,13 @@ nde-merged   = { nde-common, reason: "uid-merged", redirect_uid: uid }
 
 ; X-29 (2.3): the refusal carries WHO refused and the recipient-produced proof.
 refusal-confirmation = { mid: member-id, result: "refused", message_id: tstr,
-                         payload_hash: hash, refused_at: iso-timestamp,
+                         payload_hash: content-hash, refused_at: iso-timestamp,
                          ? scope_ref: scope-ref, ? device_id: tstr,
                          ? wallet_signature_b64: cose-b64,
                          ? session_authenticated: true,
                          ? session_binding: session-binding }
 re-body = {
-  type: "RE-v1", version: "2.9", profile: profile,
+  type: "RE-v1", version: "2.10", profile: profile,
   message_id: tstr, event: "C.4-ConsignmentRejection",
   evidence_id: evidence-id, policy_id: policy-id,
   recipient_uid: uid,
@@ -293,25 +321,24 @@ re-body = {
   ? refusal_confirmation: refusal-confirmation,
   ? acceptance_policy_ref: acceptance-policy-ref,
   reason: tstr,  ; registry-governed (X-25): registries/reason-codes.json
-  refused_at: iso-timestamp, rdp_id: rdp-id, payload_hash: hash,
+  refused_at: iso-timestamp, rdp_id: rdp-id, payload_hash: content-hash,
 }
 
 ce-body = {
-  type: "CE-v1", version: "2.9", profile: profile,
+  type: "CE-v1", version: "2.10", profile: profile,
   message_id: tstr, event: "change-of-data",
   evidence_id: evidence-id, policy_id: policy-id,
   transformation: "re-packaging" / "chunking",  ; X-24 (2.5): observable only
   envelope_hash_before: envelope-hash,
   ? envelope_hash_after: envelope-hash,
   ? part_envelope_hashes: [2* envelope-hash],
-  ? envelope_digest_before: hash, ? envelope_digest_after: hash,
   rdp_id: rdp-id, changed_at: iso-timestamp,
 }
 
 ; RelayEvidence — B.1 acceptance (no reason) vs B.2 rejection (typed reason).
 relay-body = relay-accept / relay-reject
 relay-common = (
-  type: "RelayEvidence-v1", version: "2.9",
+  type: "RelayEvidence-v1", version: "2.10",
   ? profile: tstr, ? evidence_id: tstr,
   message_id: tstr,
   sending_rdp_id: tstr, receiving_rdp_id: tstr, hop_at: iso-timestamp,
@@ -320,7 +347,7 @@ relay-common = (
 ; X-04/D5 (2.2): grade-commitment-mismatch dispute evidence — rebuts (never
 ; retracts) an availability DE; carried in the EP's OPTIONAL disputes[].
 gcm-body = {
-  type: "GCM-v1", version: "2.9", profile: profile,
+  type: "GCM-v1", version: "2.10", profile: profile,
   message_id: tstr, event: "D.6-ContentAccessTracking",
   evidence_id: evidence-id, policy_id: policy-id,
   recipient_uid: uid, mid: member-id, auth_context: auth-context,
@@ -344,7 +371,7 @@ relay-reject = { relay-common, event: "B.2-RelayRejection",
 ; sub-artefact yields an evidence-body validated in turn. (The JSON PROJECTION
 ; nests the decoded sub-bodies — see the evidence-ep JSON Schema.)
 ep-body = {
-  type: "EP-v1", version: "2.9",
+  type: "EP-v1", version: "2.10",
   message_id: tstr,
   se: bstr,                 ; embedded SE artefact bytes
   outcomes: [+ bstr],       ; embedded DE/NDE/RE artefact bytes
@@ -372,7 +399,7 @@ seal-digest = { alg: "SHA-256" / "SHA-512", hex: hex-digest }
 
 bw-med-body = { type: "BW-MED-v1", version: "2.1", * tstr => any }
 
-bw-org-body = { type: "BW-ORG-v1", version: "2.6", * tstr => any }
+bw-org-body = { type: "BW-ORG-v1", version: "2.7", * tstr => any }
 
 bw-member-body = { type: "BW-MEMBER-v1", version: "2.2", * tstr => any }
 
@@ -394,7 +421,7 @@ app-envelope = {
   message_id: tstr, ? correlation_id: tstr,
   ttl: uint, content_type: tstr,
   ? content_class: tstr,
-  content_digest: hash, sender_addr: bw-address, recipient_addr: bw-address,
+  content_digest: content-hash, sender_addr: bw-address, recipient_addr: bw-address,
   ? grade_commitment_salt: tstr,
   ? mandate_commitment_salt: tstr,
 }

@@ -1,7 +1,7 @@
 {
   "$id": "https://bw.example.eu/schemas/evidence-re.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "evidence-re (v2.9)",
+  "title": "evidence-re (v2.10)",
   "description": "Refusal Evidence. Issued by RDP(in) when the recipient explicitly declines the message.",
   "type": "object",
   "required": [
@@ -27,7 +27,7 @@
     },
     "version": {
       "type": "string",
-      "const": "2.9"
+      "const": "2.10"
     },
     "profile": {
       "$ref": "evidence-common.schema.json#/$defs/Profile"
@@ -61,7 +61,7 @@
       "$ref": "evidence-common.schema.json#/$defs/RdpId"
     },
     "payload_hash": {
-      "$ref": "evidence-common.schema.json#/$defs/Hash"
+      "$ref": "evidence-common.schema.json#/$defs/ContentHash"
     },
     "refusal_kind": {
       "type": "string",

@@ -35,7 +35,7 @@
       ]
     },
     "evidence": {
-      "value": "2.9",
+      "value": "2.10",
       "note": "Evidence objects SE/DE/NDE/RE/CE/EP/Relay. Schema const + CDDL body + sample projection are the authoritative sources; README row and schema titles must agree.",
       "bindings": [
         {
@@ -266,7 +266,7 @@
       ]
     },
     "discovery_bw_org": {
-      "value": "2.6",
+      "value": "2.7",
       "bindings": [
         {
           "kind": "json",
@@ -365,7 +365,7 @@
       ]
     },
     "application_envelope": {
-      "value": "1.2",
+      "value": "1.3",
       "note": "Plaintext application-envelope headers. Version is carried only in the schema title and the README row (no sealed artefact, no version const).",
       "bindings": [
         {
@@ -387,7 +387,7 @@
       ]
     },
     "edd_openapi": {
-      "value": "1.12.0",
+      "value": "1.13.0",
       "note": "EDD resolver OpenAPI contract; versions independently of the evidence family (umbrella §9.3).",
       "bindings": [
         {
@@ -524,7 +524,7 @@
       ]
     },
     "companion_contracts": {
-      "value": "9.0.0",
+      "value": "10.0.0",
       "note": "The profile-2 companion contracts — wallet-RDP, Delivery Service, RDP relay — versioned together as one stream; versions independently of the evidence family (umbrella §9.3).",
       "bindings": [
         {

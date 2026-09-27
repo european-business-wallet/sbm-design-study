@@ -2,12 +2,12 @@
 openapi: "3.1.0"
 info:
   title: EDD Resolver
-  version: "1.12.0"
+  version: "1.13.0"
   description: |
     European Directory of Entities (EDD) resolver API.
 
     This API contract is versioned INDEPENDENTLY (semantic versioning) of the
-    evidence `version` and of the specification edition; contract v1.12.0 (X-36: authenticated, bounded member enumeration).
+    evidence `version` and of the specification edition; contract v1.13.0 (X-36: authenticated, bounded member enumeration).
     (v1.7.0: the core `DirectoryRecord` carries `authorized_seal_keys` — the
     entity's discovery-seal key-set pinned per UID, so a discovery document is
     authentic only when its seal key is pinned for its own UID (finding X-01).

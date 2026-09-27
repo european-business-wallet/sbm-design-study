@@ -1,7 +1,7 @@
 {
   "$id": "https://bw.example.eu/schemas/evidence-nde.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "evidence-nde (v2.9)",
+  "title": "evidence-nde (v2.10)",
   "description": "Non-Delivery Evidence. Issued by RDP(out) or RDP(in) when a message cannot be delivered or accepted within policy windows.",
   "type": "object",
   "required": [
@@ -24,7 +24,7 @@
     },
     "version": {
       "type": "string",
-      "const": "2.9"
+      "const": "2.10"
     },
     "profile": {
       "$ref": "evidence-common.schema.json#/$defs/Profile"
@@ -64,7 +64,7 @@
       "$ref": "evidence-common.schema.json#/$defs/RdpId"
     },
     "payload_hash": {
-      "$ref": "evidence-common.schema.json#/$defs/Hash",
+      "$ref": "evidence-common.schema.json#/$defs/ContentHash",
       "description": "The APPLICATION-CONTENT commitment (F-14 hash-domain rule): the sender-declared digest of the plaintext content of an ACCEPTED message. REQUIRED on every post-acceptance NDE (B.3/C.5/D.2/E.2 events); FORBIDDEN on an intake-stage A.2 NDE, which carries submission_hash instead — the two domains are distinct fields and are NEVER compared."
     },
     "recipient_confirmation": {
@@ -76,7 +76,7 @@
       "description": "Present when reason is 'uid-merged'. Points to the surviving entity's UID."
     },
     "submission_hash": {
-      "$ref": "evidence-common.schema.json#/$defs/Hash",
+      "$ref": "evidence-common.schema.json#/$defs/RawSha256Hash",
       "description": "F-14 (evidence 2.6): the REJECTED-SUBMISSION commitment — SHA-256 over the EXACT submitted octets as received at the intake boundary, BEFORE any parsing or decoding (the posted request body bytes). REQUIRED on an intake-stage A.2-SubmissionRejection NDE (the envelope was never accepted, possibly never parsed); FORBIDDEN elsewhere. A submission_hash and a payload_hash live in different semantic domains and are NEVER compared."
     }
   },

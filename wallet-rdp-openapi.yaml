@@ -3,7 +3,7 @@
 openapi: "3.1.0"
 info:
   title: SM-MLS Wallet-RDP companion contract (profile 2)
-  version: "9.0.0"
+  version: "10.0.0"
   description: |
     F-15: the normative wallet-RDP surface — the submission-metadata
     contract, recipient confirmation delivery, and party evidence retrieval.
@@ -292,7 +292,7 @@ components:
         scope_ref:
           $ref: 'schemas/evidence-common.schema.json#/$defs/ScopeRef'
         payload_hash:
-          $ref: 'schemas/evidence-common.schema.json#/$defs/Hash'
+          $ref: 'schemas/evidence-common.schema.json#/$defs/ContentHash'
         envelope_hash:
           $ref: 'schemas/evidence-common.schema.json#/$defs/EnvelopeHash'
           description: >-

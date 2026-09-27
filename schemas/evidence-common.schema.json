@@ -1,7 +1,7 @@
 {
   "$id": "https://bw.example.eu/schemas/evidence-common.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Common Evidence Definitions (v2.9)",
+  "title": "Common Evidence Definitions (v2.10)",
   "description": "Shared definitions for Business Wallet evidence objects. hash_mode selects raw-byte hashing (raw-sha256/raw-sha512) or the multipart-manifest modes (manifest-sha256/manifest-sha512); the alg/hash_mode/hex triple is constrained to be internally coherent (SHA-256 => 64 hex, SHA-512 => 128 hex); the Uid pattern uses the canonical hyphen separator.",
   "$defs": {
     "Uid": {
@@ -19,9 +19,9 @@
       "pattern": "^[a-z0-9._-]{1,32}$",
       "description": "A role token (X-16): the SAME grammar used in a bw: address .../r/<role> and in every BW-ORG role declaration, so every declared role is addressable. Case-sensitive, lowercase [a-z0-9._-], 1-32 chars (umbrella Annex A)."
     },
-    "Hash": {
+    "ContentHash": {
       "type": "object",
-      "description": "Payload hash descriptor. hash_mode selects raw-byte hashing (raw-sha256/raw-sha512) or the multipart-manifest modes (manifest-sha256/manifest-sha512).",
+      "description": "A digest of CONTENT: the transmitted payload octets (raw-*, the I-D (Canonicalisation and Payload Hashing) Mode A) or the deterministic-CBOR manifest of a multipart payload, whose part digests are each over that part's own octets (manifest-*, Mode C). This is the only domain in which a manifest mode is meaningful, because it is the only one whose value may commit to a structure rather than to a run of bytes. The JSON-canonicalisation modes were removed on 2026-09-25 and an artefact declaring one is refused.",
       "required": [
         "alg",
         "hex",
@@ -47,8 +47,7 @@
             "raw-sha512",
             "manifest-sha256",
             "manifest-sha512"
-          ],
-          "description": "raw-* modes hash the payload's transmitted bytes (the I-D (Canonicalisation and Payload Hashing) Mode A); manifest-* modes hash the deterministic-CBOR message manifest of a multipart payload, whose part digests are over each part's own octets (Mode C). A digest is always over octets: the JSON-canonicalisation modes jcs-sha256 and jcs-sha512 were removed on 2026-09-25 and an artefact declaring one is refused."
+          ]
         }
       },
       "additionalProperties": false,
@@ -86,6 +85,94 @@
           }
         }
       ]
+    },
+    "RawHash": {
+      "type": "object",
+      "description": "A digest of OCTETS a party observes directly, never a manifest: a manifest mode here would claim the value commits to a structure the field does not carry. A multipart part's `digest` is of this domain — it is over that part's decoded octets.",
+      "required": [
+        "alg",
+        "hex",
+        "hash_mode"
+      ],
+      "properties": {
+        "alg": {
+          "type": "string",
+          "enum": [
+            "SHA-256",
+            "SHA-512"
+          ]
+        },
+        "hex": {
+          "type": "string",
+          "pattern": "^([a-f0-9]{64}|[a-f0-9]{128})$",
+          "description": "Lowercase hex digest."
+        },
+        "hash_mode": {
+          "type": "string",
+          "enum": [
+            "raw-sha256",
+            "raw-sha512"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "alg": {
+              "const": "SHA-256"
+            },
+            "hash_mode": {
+              "enum": [
+                "raw-sha256"
+              ]
+            },
+            "hex": {
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        {
+          "properties": {
+            "alg": {
+              "const": "SHA-512"
+            },
+            "hash_mode": {
+              "enum": [
+                "raw-sha512"
+              ]
+            },
+            "hex": {
+              "pattern": "^[a-f0-9]{128}$"
+            }
+          }
+        }
+      ]
+    },
+    "RawSha256Hash": {
+      "type": "object",
+      "description": "SHA-256 over octets, and nothing else. The normative text pins these fields to one algorithm rather than to the raw family: `submission_hash` over the exact submitted octets before any parsing, and `doc_digest` over a published document's signed payload. A verifier of either recomputes it from bytes it holds, so another algorithm or a manifest mode makes the value unrecomputable rather than merely unusual.",
+      "required": [
+        "alg",
+        "hex",
+        "hash_mode"
+      ],
+      "properties": {
+        "alg": {
+          "type": "string",
+          "const": "SHA-256"
+        },
+        "hex": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Lowercase hex digest."
+        },
+        "hash_mode": {
+          "type": "string",
+          "const": "raw-sha256"
+        }
+      },
+      "additionalProperties": false
     },
     "RdpId": {
       "type": "string",
@@ -242,7 +329,7 @@
           "$ref": "evidence-common.schema.json#/$defs/AcceptancePolicyRef"
         },
         "payload_hash": {
-          "$ref": "evidence-common.schema.json#/$defs/Hash"
+          "$ref": "evidence-common.schema.json#/$defs/ContentHash"
         },
         "result": {
           "const": "match"
@@ -313,7 +400,7 @@
           "type": "string"
         },
         "payload_hash": {
-          "$ref": "evidence-common.schema.json#/$defs/Hash"
+          "$ref": "evidence-common.schema.json#/$defs/ContentHash"
         },
         "result": {
           "const": "mismatch"
@@ -514,7 +601,7 @@
           "minLength": 1
         },
         "doc_digest": {
-          "$ref": "evidence-common.schema.json#/$defs/Hash"
+          "$ref": "evidence-common.schema.json#/$defs/RawSha256Hash"
         },
         "policy_key": {
           "$ref": "#/$defs/RoleName",
@@ -587,7 +674,7 @@
             "description": "Optional normalised (Unicode NFC) filename."
           },
           "digest": {
-            "$ref": "evidence-common.schema.json#/$defs/Hash"
+            "$ref": "evidence-common.schema.json#/$defs/RawHash"
           }
         },
         "additionalProperties": false
@@ -680,7 +767,7 @@
           "minLength": 1
         },
         "payload_hash": {
-          "$ref": "#/$defs/Hash"
+          "$ref": "#/$defs/ContentHash"
         },
         "scope_ref": {
           "$ref": "#/$defs/ScopeRef"
@@ -766,7 +853,7 @@
           "$ref": "#/$defs/Uid"
         },
         "payload_hash": {
-          "$ref": "#/$defs/Hash"
+          "$ref": "#/$defs/ContentHash"
         },
         "envelope_hash": {
           "$ref": "#/$defs/EnvelopeHash"

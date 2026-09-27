@@ -84,5 +84,5 @@ def test_the_documented_body_is_one_the_endpoint_accepts():
     _, _, body = readme_quickstart()
     mode = (body.get("payload_hash") or {}).get("hash_mode")
     modes = json.loads((ROOT / "schemas" / "evidence-common.schema.json").read_text()
-                       )["$defs"]["Hash"]["properties"]["hash_mode"]["enum"]
+                       )["$defs"]["ContentHash"]["properties"]["hash_mode"]["enum"]
     assert mode in modes, f"the README prints hash_mode {mode!r}, which the schema does not define"

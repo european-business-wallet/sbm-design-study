@@ -1,7 +1,7 @@
 {
   "$id": "https://bw.example.eu/schemas/evidence-ep.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Evidence Package (EP-v1) (v2.9)",
+  "title": "Evidence Package (EP-v1) (v2.10)",
   "description": "Evidence Package composed by the SENDER-SIDE RDP, always (D2/F-13; TS clause 4.1 — the former third-party EP-authority delegation is removed; the EP signer is bound to se.rdp_id in the trust store, LINT-TRUST-02/CF-6). Bundles SE with the final outcomes and records the RDP relay chain. On the wire the EP is a sealed evidence artefact `[cose-sign1, qualified-timestamp]` (this schema validates the PROJECTION, which carries no seal field); the artefact's qualified timestamp imprints SHA-256 of its first element (the EP COSE_Sign1) per the I-D (Evidence Objects and COSE Packaging) sequencing, attesting the time of bundle composition — which is the COMPOSER's act instant: the sender-side RDP (`se.rdp_id`) MUST be admitted to the federation at that instant, separately from the recorded acts inside the package, each checked at its own (R10-X5; umbrella §13.1); per-event legal times remain on the enclosed SE/DE/NDE/RE objects (the I-D (Evidence Objects and COSE Packaging), EPTS-1).",
   "type": "object",
   "required": [
@@ -19,7 +19,7 @@
     },
     "version": {
       "type": "string",
-      "const": "2.9"
+      "const": "2.10"
     },
     "message_id": {
       "type": "string"

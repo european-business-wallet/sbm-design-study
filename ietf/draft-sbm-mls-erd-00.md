@@ -607,8 +607,39 @@ forbidden; `role` is from {`body`, `attachment`, `evidence-bundle`, `signature`,
 `metadata`}; digests are over decoded octets (permitted content encodings
 `identity`, `gzip`); nesting is at most one level.
 
-`hash_mode` is REQUIRED in every evidence object and MUST be consistent across
-all evidence for the same message. Every hash object MUST be internally
+**The digest domains.** A `hash_mode` is admissible only in the domain of the
+field that carries it, and the three domains are distinct:
+
+- **Content** — `payload_hash` and the envelope `content_digest`. Either the
+  transmitted payload octets (`raw-sha256`/`raw-sha512`, Mode A) or the
+  deterministic-CBOR manifest of a multipart payload (`manifest-sha256`/
+  `manifest-sha512`, Mode C). **This is the only domain in which a manifest mode
+  is meaningful**, because it is the only one whose value may commit to a
+  structure rather than to a run of bytes.
+- **Observed octets** — a multipart part's `digest`. `raw-sha256` or
+  `raw-sha512`, over that part's decoded octets. A manifest mode here would
+  claim the value commits to a structure the field does not carry.
+- **SHA-256 over octets, pinned to one algorithm** — `submission_hash` and
+  `doc_digest`. Both MUST be `alg` SHA-256 with `hash_mode` `raw-sha256`.
+  `submission_hash` is over the exact submitted octets before any parsing, and
+  `doc_digest` over a published document's signed payload; a verifier of either
+  recomputes it from bytes it holds, so another algorithm or a manifest mode
+  makes the value unrecomputable rather than merely unusual.
+
+An artefact whose `hash_mode` is outside its field's domain MUST be refused,
+whatever else validates: the Schema and the CDDL carry the three as separate
+types, and a verifier that accepted a cross-domain value would be comparing
+digests that were never computed the same way.
+
+`hash_mode` is REQUIRED in every evidence object. **The CONTENT commitment's
+mode MUST be consistent across all evidence for the same message**: every
+`payload_hash` for one message declares the same mode, because each commits to
+the same octets or the same manifest (stated field by field for SE/DE/NDE/RE in
+(Evidence Objects)). This is a rule about the content domain and **not** about
+every hash object an artefact carries: a pinned field's mode is fixed by its own
+domain above and does not follow the payload's, so a multipart message whose
+`payload_hash` is `manifest-sha256` still carries `raw-sha256` on its
+`doc_digest` and on each part's `digest`. Every hash object MUST be internally
 coherent: SHA-256 iff a `*-sha256` mode iff 64 lowercase hex chars; SHA-512 iff
 a `*-sha512` mode iff 128.
 

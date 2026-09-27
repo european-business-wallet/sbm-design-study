@@ -1,7 +1,7 @@
 {
   "$id": "https://bw.example.eu/schemas/evidence-ce.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "evidence-ce (v2.9)",
+  "title": "evidence-ce (v2.10)",
   "description": "Change-Indication Evidence. Issued when an RDP performs an envelope/metadata transformation needed for sending or receiving the data (Regulation (EU) No 910/2014, Article 44(1)(e)). End-to-end encryption forbids content transformation; only envelope/metadata transformations are permitted, and each such change MUST be evidenced and indicated to both the sender and the addressee.",
   "type": "object",
   "required": [
@@ -24,7 +24,7 @@
     },
     "version": {
       "type": "string",
-      "const": "2.9"
+      "const": "2.10"
     },
     "profile": {
       "$ref": "evidence-common.schema.json#/$defs/Profile"
@@ -50,12 +50,6 @@
         "chunking"
       ],
       "description": "X-24 (evidence 2.5): the OBSERVABLE envelope/metadata transformation performed. Content (plaintext) transformation is forbidden under E2EE. The former epoch-change value is REMOVED: MLS epoch changes do not re-encrypt queued application messages and intermediaries cannot transform the E2EE envelope — the operation was unobservable by its stated issuer; a sender resubmission after an epoch change is a NEW submission chain (new SE), never a CE."
-    },
-    "envelope_digest_before": {
-      "$ref": "evidence-common.schema.json#/$defs/Hash"
-    },
-    "envelope_digest_after": {
-      "$ref": "evidence-common.schema.json#/$defs/Hash"
     },
     "rdp_id": {
       "$ref": "evidence-common.schema.json#/$defs/RdpId"

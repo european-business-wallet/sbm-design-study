@@ -1,7 +1,7 @@
 {
   "$id": "https://bw.example.eu/schemas/bw-org.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "BW-ORG-v1 (v2.6)",
+  "title": "BW-ORG-v1 (v2.7)",
   "description": "Organisation Profile: display metadata, roles, acceptance policies (evaluated over MLS group acknowledgements), an optional designated EP authority, and (v2.0) an optional confidentiality-scope map (spec §8.3a). v1.2 makes the acceptance policy deterministic: sealed as a COSE_Sign1 artefact, versioned (policy_version, valid_from), and referenced from SE/DE via acceptance_policy_ref (spec §8.3). v1.4 adds the optional delivery_grades map (spec §8.3b): the per-content-class delivery grade; availability is never a default. v1.5 adds the optional per-scope human_acceptance flag (Annex R, A3): system members are excluded from a human-gated scope's acceptance eligible set. v1.6 adds the per-scope records_role field (F16): which org role is a records scope's records leaf.",
   "type": "object",
   "required": [
@@ -19,7 +19,7 @@
     },
     "version": {
       "type": "string",
-      "const": "2.6"
+      "const": "2.7"
     },
     "uid": {
       "$ref": "evidence-common.schema.json#/$defs/Uid"
@@ -138,7 +138,7 @@
           "minLength": 1
         },
         "doc_digest": {
-          "$ref": "evidence-common.schema.json#/$defs/Hash",
+          "$ref": "evidence-common.schema.json#/$defs/RawSha256Hash",
           "description": "SHA-256 of the predecessor's deterministic-CBOR body — the same digest acceptance_policy_ref pins."
         }
       }
