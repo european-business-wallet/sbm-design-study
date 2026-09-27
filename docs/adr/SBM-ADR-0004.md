@@ -19,10 +19,10 @@ open_questions: [A6, A9]
 author_questions: []
 supersedes: []
 analysed_not_decided: >-
-  **Who observes S2** ([A9](../REVIEW_AGENDA.md)). Three models are analysed in the study's historical RDP/MSP trust analysis
-  (`docs/rdp-msp-trust-analysis/`, not a selected design): an accountable MSP observer, a handover proof
-  authenticated independently of the MSP, and the handover inside the RDP's boundary. The analysis recommends
-  the second *if* resistance to an MSP acting alone is to be claimed. **No model is selected**, and nothing in
+  **Who observes S2** ([A9](../REVIEW_AGENDA.md)). Three models are analysed in this record's own
+  *Alternatives considered*: an accountable MSP observer, a handover proof
+  authenticated independently of the MSP, and the handover inside the RDP's boundary. The second is the one
+  to take *if* resistance to an MSP acting alone is to be claimed. **No model is selected**, and nothing in
   the specification claims that resistance.
 ---
 

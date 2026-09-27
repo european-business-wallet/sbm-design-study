@@ -18,7 +18,61 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-27, edition r24
+## Current — 2026-09-27, edition r25
+
+**No artefact version moves and nothing changes on the wire.** This edition is
+about how the study is approached rather than what it specifies: the external
+review of edition r23 asked for changes to the reading path, and they are here.
+
+**The route now begins with the problem.** It began with the architecture, so a
+reviewer was judging a solution whose problem statement they had not seen. A
+**step 0** states what registered delivery between legal entities has to achieve,
+which requirements come from outside, which are this study's own choices, and
+what is deliberately out of scope — with the requirements list this snapshot
+carries named beside it.
+
+**Why MLS at all** was recorded as an unanswered question, and it is the one an
+architectural reviewer asks first. The group-topology decision record now answers
+it from the requirements the choice was made against: delivery to a party who may
+be offline for days, every enrolled device of an entity able to receive, a group
+whose membership is itself the subject of proof, and a provider that never holds
+content keys. It states what those requirements exclude in kind, what the choice
+costs — persistent group state, roster synchronisation between organisations that
+hire and dismiss independently, epoch handling, key-material supply, coordination
+with a delivery service neither party controls — and, deliberately, **what MLS
+does not give this profile**: it does not make delivery evidential, does not
+identify a legal entity, does not timestamp anything a court would accept, and
+does not decide who may accept a message. Those are this specification's own
+work. What remains unanswered is narrower and says so: no named competing
+protocol is assessed.
+
+It sits in a new kind of section in the decision records — *why this choice* —
+kept apart from *alternatives considered*, which weighs options inside a shape
+already chosen. A reader asks the first question before the second.
+
+**The decisions index is a map again.** It had nine columns and had become a
+document to study rather than an index to choose from. It now gives the choice,
+its principal trade-off — what it buys and who pays — and the two statuses, with
+the alternative, its rejection and the full cost in the record itself, one click
+away.
+
+**Pointers that led nowhere for a reader of this snapshot.** Several documents
+referred to a historical trust analysis by bare path, in a directory this
+snapshot does not carry. The three models it analyses are in the decision record
+on separating the messaging and delivery providers, which does travel, and every
+document points there now.
+
+**And four smaller corrections.** The reviewer guide opened by explaining two
+review counters and the mistakes earlier readers had made with them; the
+distinction is kept and the anecdote is not. A lifecycle heading counted four
+state machines above a table of five. The evidence explainer's corrections
+appendix kept four entries, two of which were bookkeeping; those are dropped,
+and the document says they were. And the first claim in the claim matrix — that
+the repository agrees with itself — is now bounded by what the checks actually
+verify: external reviews have found real inconsistencies with every check green,
+and each time the answer was a new check.
+
+## Edition r24 — 2026-09-27
 
 **Wire-breaking.** An external review of the previous edition found seven points;
 all seven are addressed here, and two of them changed the protocol.

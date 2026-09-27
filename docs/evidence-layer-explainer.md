@@ -164,12 +164,12 @@ The evidence layer's coherence comes from a few decisions held consistently: bin
 
 ## Corrections, for readers of earlier editions
 
-Earlier editions of this document said four things it no longer says. They are kept here, out of the reading path, so a reader who remembers them can see what changed and why.
+Two claims in earlier editions of this document were wrong in a way a reader could have acted on. They are kept here, out of the reading path, because someone who read an earlier edition may still be working from them.
 
-- §3 said sending evidence derives "not from a content signature by the sender"; since evidence 2.3 the sender's signature is the default.
-- §3 stated the common `version` as `"2.1"` for six evidence versions; the value is now bound to `versions.json`.
-- §7 said availability was the moment content was "made available to (or retrieved by)" a recipient endpoint, which is broader than the event the protocol records.
-- §7.1 said a recipient "proves misuse" by a failing reveal; a failing reveal is an attributable assertion that starts a dispute.
+- §7 said availability was the moment content was "made available to (or retrieved by)" a recipient endpoint. That is broader than the event the protocol records, and a reader who took it literally would expect the grade to attach to an act this profile does not attest.
+- §7.1 said a recipient "proves misuse" by a failing reveal. It does not: a failing reveal is an attributable assertion that *starts* a dispute, and reading it as proof would put weight on it that the cryptography does not carry.
+
+*(Two further corrections — a superseded sentence about the sender's signature, and a `version` literal since bound to `versions.json` — are dropped from this list: both were bookkeeping, neither changed what a reader could conclude, and a corrections list that keeps everything stops being read.)*
 
 ---
 

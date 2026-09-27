@@ -27,7 +27,7 @@ make are written down with what they cost.
 questions. Reviewing the specification rather than meeting it? The
 [reviewer guide](docs/REVIEWER_GUIDE.md) is the shorter route, one short path
 and a branch per specialism. The [executive brief](brief/executive-brief.md)
-gives the idea in twenty minutes for policy readers; the
+gives the idea in about ten minutes for policy readers; the
 [requirements list](brief/requirements.md) is the baseline the study started
 from, each requirement with its source; what the design does **not** prove on
 its own is collected in [`OPEN-ITEMS.md`](OPEN-ITEMS.md).
@@ -314,7 +314,7 @@ this repository establishes only the first two in full:
 
 | # | Claim | What establishes it | Needs | In this repository |
 |---|---|---|---|---|
-| 1 | **The repository agrees with itself** — reference tooling, samples, schemas, contracts, catalogue, records and versions are mutually consistent | `make conformance` | nothing external | **Established** — the bar is green |
+| 1 | **The repository agrees with itself, as far as its gates can see** — reference tooling, samples, schemas, contracts, catalogue, records and versions are mutually consistent *in every respect a gate checks*. It is not a claim that no semantic inconsistency remains: external reviews have found real ones with the bar green, and each time the answer was a new gate | `make conformance` | nothing external | **Established for what the gates check** — the bar is green |
 | 2 | **An artefact is valid** — one sealed object is schema-valid, lint-clean, and its seal verifies | `evidence_lint` / `discovery_lint`, with `--verify-demo` or `--trust-store` | the object, and trust material | **Established for the shipped samples**, against DEMO keys |
 | 3 | **A retained bundle verifies completely** — every property a complete verification requires is established from retained material | `bundle_lint` | the retained material, an authenticated federation register, trust anchors | **Not established.** The shipped bundles are INCOMPLETE by design — see above |
 | 4 | **Independent implementations interoperate** | two implementations exchanging messages and evidence | a second, independent implementation | **Not demonstrated.** The contracts are published; nobody else has exercised them |
@@ -424,7 +424,7 @@ specification does **not** yet answer — protocol, production trust and legal �
 with the assumption each one rests on, and what is not yet written, the
 implementer guide, carried as G1 to G4.
 
-- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r24`,
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r25`,
   the git tag of that name; earlier tags of this snapshot stay where they are
   and each names the edition it was cut from. Cite the tag, or the commit you
   hold, so an answer can be matched to the text it answers. The reviewer

@@ -42,7 +42,14 @@ REQUIRED_SECTIONS = ["Context", "Requirement and constraint", "Decision",
                      "Alternatives considered", "Trade-off",
                      "Consequences and residual limit", "Status", "Supersedes",
                      "Normative owner"]
-OPTIONAL_SECTIONS = ["Open questions", "Unanswered"]
+# `Why this choice` is where a record answers the SELECTION question — why this
+# mechanism rather than another shape — as distinct from `Alternatives
+# considered`, which weighs the options inside a shape already chosen. The
+# distinction is the r23 review's: a reader of the architecture asks the first
+# question before the second, and `SBM-ADR-0003` had the second and not the
+# first. Optional, because most records inherit their mechanism from one that
+# already made the choice.
+OPTIONAL_SECTIONS = ["Why this choice", "Open questions", "Unanswered"]
 AGENDA_ID_RE = re.compile(r"^(?:A\d+|G\d+|P\d+|L\d+)$")
 
 
@@ -169,9 +176,13 @@ def render_md(records=None):
     L.append("")
     L.append("One row per architecture decision record, one record per choice that shapes the design. "
              "A record's identifier is assigned once and never renumbered, so a decision can be cited durably. "
-             "Each row gives the **choice** and the document that makes it normative, the **alternative that was "
-             "actually considered** — the record says why it was rejected — the **benefit**, the **cost and who "
-             "pays it**, and two statuses kept apart:")
+             "Each row gives the **choice**, its **status**, and the **principal trade-off** — what the choice "
+             "buys and who pays for it. The alternative that was actually considered, why it was rejected, the "
+             "normative owner and the full cost are in the record itself, one click away: nine columns of them "
+             "in a table made the index a document to study rather than a map to choose from, which is the "
+             "opposite of what an index is for.")
+    L.append("")
+    L.append("Two statuses are kept apart:")
     L.append("")
     L.append("- **Decision:** *proposed*, *accepted* or *superseded* — whether the choice stands;")
     L.append("- **Implementation:** *specified* (the normative text says it), *in the reference* (the reference "
@@ -186,16 +197,13 @@ def render_md(records=None):
     L.append("")
     L.append("## The choices")
     L.append("")
-    L.append("| ADR | Choice | Current choice · normative owner | Alternative considered | Benefit | Cost — who pays | Decision | Implementation | Open |")
-    L.append("|---|---|---|---|---|---|---|---|---|")
+    L.append("| ADR | Choice | Principal trade-off | Decision | Implementation | Open |")
+    L.append("|---|---|---|---|---|---|")
     for _, fm, _ in records:
         L.append("| " + " | ".join([
             _link(fm),
             f"**{_cell(fm['label'])}**",
-            _rel(_cell(fm["choice"])),
-            _rel(_cell(fm["alternative"])),
-            _rel(_cell(fm["benefit"])),
-            _rel(_cell(fm["cost"])),
+            f"{_rel(_cell(fm['benefit']))} — at the cost of {_rel(_cell(fm['cost']))}",
             _cell(fm["decision_status"]),
             _rel(_cell(fm["implementation"])),
             _open_cell(fm),

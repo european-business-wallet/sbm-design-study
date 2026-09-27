@@ -86,5 +86,5 @@ The content class never appears in evidence; a reveal discloses one message's cl
 ## 7. What is planned, and what is undecided
 
 - **Planned ([A6](REVIEW_AGENDA.md)):** the MSP's own identity on the wire, its admission, and the DE's binding to the observation it rests on. Decided, not implemented.
-- **Undecided ([A9](REVIEW_AGENDA.md)):** the S2 observer model. Three models are analysed in the study's historical RDP/MSP trust analysis (`docs/rdp-msp-trust-analysis/`, not a selected design); none is selected, and nothing here claims resistance to a malicious MSP.
+- **Undecided ([A9](REVIEW_AGENDA.md)):** the S2 observer model. Three models are analysed in [SBM-ADR-0004](adr/SBM-ADR-0004.md), *Alternatives considered*; none is selected, and nothing here claims resistance to a malicious MSP.
 - **Open ([A1](REVIEW_AGENDA.md), [A10](REVIEW_AGENDA.md)):** how the DE issuer obtains the S2 receipt; which Delivery Service routes a group after formation.

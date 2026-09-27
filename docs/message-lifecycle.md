@@ -17,7 +17,7 @@ It answers one question — **how do the public operations and their state machi
 
 One operator runs the RDP and the Delivery Service (Annex P profile 1); one recipient device; the verification grade. Every arrow is a published operation. Step 3 need not wait: the recipient's open invitation already routes its device when the message is accepted (§5, case 1).
 
-## 2. Four machines, four owners
+## 2. Five machines, and who owns each
 
 ![State atlas](diagrams/state-atlas.svg)
 

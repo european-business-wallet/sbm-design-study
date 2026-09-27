@@ -7,7 +7,7 @@
 
 ## What you are reviewing
 
-A design study of registered delivery between legal entities: end-to-end encrypted messaging (a profile of MLS) with qualified evidence of sending and delivery, issued by providers that cannot read the message content; the evidence itself is readable and verifiable by anyone who holds it. The edition you are asked to review is the git tag named in the README's [*Feedback*](../README.md#feedback) section; versions are in the README's [version table](../README.md#current-versions) and the repository's counts in [`project-counts.json`](project-counts.json) — generated, so they are not repeated here. Two of those numbers are countings of different things, and reading them as one is a mistake two readers have now made: `rounds` counts the completed **adversarial design reviews** of the whole specification, while an ordinal in the CHANGELOG — “the n-th review” — names a **drafting revision** of a document. Neither series is derived from the other, and the second is history: it appears in the CHANGELOG and in the review records, not in the specification a reader meets.
+A design study of registered delivery between legal entities: end-to-end encrypted messaging (a profile of MLS) with qualified evidence of sending and delivery, issued by providers that cannot read the message content; the evidence itself is readable and verifiable by anyone who holds it. The edition you are asked to review is the git tag named in the README's [*Feedback*](../README.md#feedback) section; versions are in the README's [version table](../README.md#current-versions) and the repository's counts in [`project-counts.json`](project-counts.json) — generated, so they are not repeated here. Two of those numbers count different things: `rounds` counts the completed **adversarial design reviews** of the whole specification, while an ordinal in the CHANGELOG — “the n-th review” — names a **drafting revision** of a document. Neither is derived from the other.
 
 | State | What it covers |
 |---|---|
@@ -20,6 +20,14 @@ A design study of registered delivery between legal entities: end-to-end encrypt
 
 ## The short path — one route for everyone
 
+0. [**The problem and its constraints**](../README.md#1-the-problem-and-what-the-exercise-leaves-out) — README §§1–3 — what registered
+   delivery between legal entities has to achieve, which requirements come from
+   outside and which are this study's own choices, and what is deliberately out of
+   scope. The published snapshot also carries a requirements list,
+   `brief/requirements.md`, which states each requirement's source; this route
+   works without it. **Read this before the architecture**: every later document
+   answers a question posed here, and a reviewer who starts at the architecture
+   is judging a solution whose problem statement they have not seen.
 1. [**Architecture, identity and trust**](architecture-identity-trust.md) — who does what, who talks to whom, and why any key or claim is trusted.
 2. [**Message lifecycle**](message-lifecycle.md) — how the public operations compose, the three different acknowledgements, the five clocks, and where a trace stops at an open question.
 3. [**The evidence layer, in brief**](evidence-layer-explainer.md#in-brief--what-each-grade-and-proof-establishes) — what each grade and each proof establishes, and what it does not.
@@ -33,7 +41,7 @@ Terms are in the umbrella's [glossary (§2)](../Secure-Business-Messaging-Profil
 | If you work on… | Read next |
 |---|---|
 | **Protocol and MLS** | the index's rows on groups, encoding and suites → the [four-corner walkthrough](federated-flow-explainer.md) → the Internet-Draft and the companion contracts |
-| **Security and privacy** | trust and visibility (architecture note §3–§6) → the claim limits (evidence explainer, in brief) → agenda A3, A5, A9, A10 and **A12** — the unsalted content digest, whose proposed construction is the **Salted content digest** record, reached through the [decisions index](decisions-index.md), and which decides nothing — and, for the three S2 observer models, the agenda's A9 entry (the historical RDP/MSP trust analysis, `docs/rdp-msp-trust-analysis/`, is not a selected design) |
+| **Security and privacy** | trust and visibility (architecture note §3–§6) → the claim limits (evidence explainer, in brief) → agenda A3, A5, A9, A10 and **A12** — the unsalted content digest, whose proposed construction is the **Salted content digest** record, reached through the [decisions index](decisions-index.md), and which decides nothing — and, for the three S2 observer models, the **MSP and RDP separated** record's *Alternatives considered*, reached through the [decisions index](decisions-index.md) — none of the three is selected |
 | **PKI, QERDS and law** | the evidence explainer → the [production verifier](production-verifier-architecture.md), with what must accompany a package years later → the TS → agenda P1 and L1–L8. A successful demonstration answers none of the legal questions |
 | **Wallet and provider operations** | the lifecycle primer → [lifecycle and custody](lifecycle-and-custody.md) → the [minimum wallet assurance profile](wallet-assurance-profile.md) → the companion contracts |
 | **Organisations and agents** | the [scope examples](scope-resolution-examples.md) → the [agent profile](agent-profile-explainer.md) → the [wallet–agent interface outline](wallet-agent-interface.md) |
