@@ -204,7 +204,7 @@ what it describes, and the umbrella's *Document map* says which governs what.
 | [`docs/message-lifecycle.md`](docs/message-lifecycle.md) | How the published operations compose: a minimal trace, the four state machines and their owners, three different acknowledgements, five clocks, six worked cases, and where a trace stops at an open question. |
 | [`docs/evidence-layer-explainer.md`](docs/evidence-layer-explainer.md) | The evidence layer — in brief first, then the objects, the seal and timestamp, the digests, the grade commitment and the ETSI event model. |
 | [`docs/federated-flow-explainer.md`](docs/federated-flow-explainer.md) | One message between two providers, phase by phase through the published operations, with the open boundaries where they sit. |
-| [`docs/decisions-index.md`](docs/decisions-index.md) | Today's choices — generated from the decision records: the alternative weighed, the benefit, the cost and who pays, the status of the decision and of its implementation. |
+| [`docs/decisions-index.md`](docs/decisions-index.md) | Today's choices — generated from the decision records: each with its principal trade-off and its two statuses; the alternative weighed and the full cost are in the record it links to. |
 | [`docs/REVIEW_AGENDA.md`](docs/REVIEW_AGENDA.md) | The open questions, each with its assumption, the claim that depends on it and the expertise that would settle it. |
 | [`docs/lifecycle-and-custody.md`](docs/lifecycle-and-custody.md) | What changes at enrolment, device replacement, role change, compromise, policy rotation and provider exit; who keeps plaintext, evidence and verification material — and what is not decided. |
 | [`docs/production-verifier-architecture.md`](docs/production-verifier-architecture.md) | What a verifier must hold besides the package, input by input, with the verdict when one is missing — and what a production verifier must check beyond this repository's linters. |
@@ -424,7 +424,7 @@ specification does **not** yet answer — protocol, production trust and legal �
 with the assumption each one rests on, and what is not yet written, the
 implementer guide, carried as G1 to G4.
 
-- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r25`,
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r26`,
   the git tag of that name; earlier tags of this snapshot stay where they are
   and each names the edition it was cut from. Cite the tag, or the commit you
   hold, so an answer can be matched to the text it answers. The reviewer

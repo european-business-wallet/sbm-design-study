@@ -18,7 +18,40 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-27, edition r25
+## Current — 2026-09-27, edition r26
+
+**No artefact version moves and nothing changes on the wire.** One correction,
+and the check that found it.
+
+**The document map described the decisions index by columns it no longer has.**
+It said the index gives "the alternative weighed, the benefit, the cost and who
+pays, the status" — the nine-column shape the previous edition replaced, the same
+day, with the choice, its principal trade-off and the two statuses. The
+description in this snapshot and the one in the study's source repository agreed
+with each other and were both wrong, which is why nothing caught it: a claim
+about a generated document's shape is bound to no gate in either repository.
+Both now describe the index as it is, and say that the alternative and the full
+cost are in the record each row links to.
+
+**What found it is new, and it works across the two repositories.** Five files
+here are this snapshot's own and are carried forward when it is rebuilt rather
+than taken from the source: this README, the open items, the changelog, the
+contributing guide and the brief. Two of them have a counterpart of the same name
+in the source, saying many of the same things in their own words — and nothing
+compared them. In one working session three corrections had to be applied twice
+because of it, the sharpest being a claim about what the repository's checks
+establish, which was bounded on one side and left unqualified on the other.
+
+The rebuild now compares the **structured claims** the two sides both make —
+every table present in both documents, row by row — and refuses to publish an
+edition where a shared row differs without a recorded reason. Prose is
+deliberately not compared: the two documents are written for different readers,
+and rewording one is the point of having two. Differences that are deliberate are
+declared with their reason and pinned to the exact wording they excuse, so a
+later change on either side has to be looked at again rather than inheriting an
+old exception.
+
+## Edition r25 — 2026-09-27
 
 **No artefact version moves and nothing changes on the wire.** This edition is
 about how the study is approached rather than what it specifies: the external
