@@ -23,6 +23,7 @@ import itertools
 import pathlib
 import sys
 
+import prejoin
 import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -40,7 +41,7 @@ EXPIRES = tc._record()["expires_at"]                     # 2026-04-05T09:00:00Z
 
 
 def _refuse(m, wid, cred):
-    return m.refuse_welcome(wid, credential=cred, reason="group-info-mismatch",
+    return prejoin.refuse(m, wid, credential=cred, reason="group-info-mismatch",
                             offered_suite=tc.SUITE)
 
 

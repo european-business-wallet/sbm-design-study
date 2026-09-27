@@ -312,6 +312,52 @@ downgrade lands. The rule is now two-layer:
    refusing device's **KeyPackage credential**, bound to the Welcome it
    declines and naming the offered suite and the floor the device requires.
 
+   **The proof, exactly (normative).** An earlier revision said the refusal was
+   "authenticated by the KeyPackage credential" and stopped there, which left
+   every implementation to invent the rest — and the reference had settled for
+   possession of `keypackage_ref`, a hash of the package's **public** bytes that
+   the inviting creator and the Delivery Service both hold. That is not a proof:
+   the two parties with a motive to forge a refusal attributed to a device are
+   exactly the two that can produce it.
+
+   - **The key.** The KeyPackage's **leaf signature key** — the
+     `signature_key` of the `LeafNode` the package carries. Its private half is
+     held only by the invited device, and the Delivery Service can verify
+     against the public half **from the KeyPackage it already holds**: a device
+     that has joined nothing has no group, no discovery document and no wallet
+     key to be checked against, which is what makes this a *pre-join* proof.
+   - **The signature.** `SignWithLabel` of {{RFC9420}} §5.1.2 with the label
+     `SBMWelcomeRefusal`, under the signature scheme of the offered cipher
+     suite. The signed input is therefore the TLS-serialized `SignContent`
+     whose `label` is `MLS 1.0 SBMWelcomeRefusal` — the RFC's own construction
+     for signing with a leaf key, rather than a second scheme layered over it.
+   - **The content.** The deterministic-CBOR (RFC 8949 §4.2) encoding of the
+     typed, domain-separated array
+
+     ~~~
+     [ "sm-mls:welcome-refusal:v1", welcome_id, keypackage_ref,
+       offered_suite, required_floor, reason, nonce ]
+     ~~~
+
+     with `required_floor` **null** where the device declares none, so the
+     array has a fixed arity and a verifier never has to infer which element it
+     is reading. Every value a refusal asserts is inside the signature: a
+     reason, a suite or a floor cannot be altered after signing.
+   - **Freshness and replay.** The Delivery Service issues a **single-use
+     nonce** with each Welcome and the refusal signs it. The Service accepts a
+     given nonce **once**, and spends it only when a refusal is **accepted** —
+     a refusal it rejects for any other reason leaves the device able to try
+     again, since burning the nonce on a recoverable error would give a device
+     one attempt and no way to correct it. An exact retry of an accepted
+     refusal converges on the stored outcome **before** the proof is examined,
+     so replay protection and idempotency do not conflict. The invitation's own
+     `[created_at, expires_at)` window still bounds when a refusal may be made;
+     the nonce is what makes a captured one unusable rather than merely late.
+   - **What the Service answers.** A refusal whose identity does not match the
+     invitation is answered exactly as an unknown one is — the endpoint must
+     not become an existence oracle over another device's state — and the
+     identity checks therefore run **before** the proof is examined.
+
    *An earlier round said this refusal travelled as an authenticated MLS message to the
    group creator, on the reasoning that "the refusing device is already an
    invited member of the group being formed". **That was wrong, and it is the

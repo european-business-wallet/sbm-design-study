@@ -3,8 +3,8 @@
   "shapes": {
     "delivery-service-openapi.yaml": {
       "dimension": "companion_contracts",
-      "version": "12.0.0",
-      "sha256": "f019a06c2e6b2d3b7b78c299ba7177420bbfbbbdb7dd9072333de5ff51629715"
+      "version": "13.0.0",
+      "sha256": "0d12132a173e4a7ed061599b66d48e0145b7a97c01e74a4ed569eaf784bcad1b"
     },
     "edd-resolver-openapi.yaml": {
       "dimension": "edd_openapi",
@@ -18,7 +18,7 @@
     },
     "rdp-relay-openapi.yaml": {
       "dimension": "companion_contracts",
-      "version": "12.0.0",
+      "version": "13.0.0",
       "sha256": "5ae73b5555ff262103e985dcce5a369d664ff5b5ac23b56018cf3c1d157b1f96"
     },
     "schemas/bw-med.schema.json": {
@@ -103,7 +103,7 @@
     },
     "wallet-rdp-openapi.yaml": {
       "dimension": "companion_contracts",
-      "version": "12.0.0",
+      "version": "13.0.0",
       "sha256": "8bcf82dc23d1c71a9a847d5dc0abc854ca8364fd52f1b69af25a472841b362b1"
     }
   }

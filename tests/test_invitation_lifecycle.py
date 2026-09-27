@@ -18,6 +18,7 @@ import json
 import pathlib
 import sys
 
+import prejoin
 import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -86,12 +87,19 @@ def test_a_substituted_group_info_is_detected_refused_and_reported():
     request = {"reason": "group-info-mismatch", "offered_suite": item["offered_suite"]}
     _, validator = request_schema("delivery-service-openapi.yaml",
                                   "WelcomeRefusalRequest")
-    assert list(validator.iter_errors(request)) == []       # a VALID request
-    assert list(validator.iter_errors(dict(request, required_floor=tc.SUITE))), \
+    # G1: the pre-join proof travels in the request, so a body without one is
+    # no longer a valid `WelcomeRefusalRequest`.
+    assert list(validator.iter_errors(request)), "the proof is required"
+    proof = m.welcome_refusal_proof(item["welcome_id"], credential=dev,
+                                    reason=request["reason"],
+                                    offered_suite=request["offered_suite"])
+    assert list(validator.iter_errors(dict(request, refusal_proof=proof))) == []
+    assert list(validator.iter_errors(dict(request, refusal_proof=proof,
+                                           required_floor=tc.SUITE))), \
         "a GroupInfo mismatch may not carry a floor"
 
     m.refuse_welcome(item["welcome_id"], credential=dev, refused_at=tc.IN_WINDOW,
-                     **request)
+                     refusal_proof=proof, **request)
     outcomes = m.collect_outcomes(credential=tc.MEMBER_CRED)
     assert [o["reason"] for o in outcomes] == ["group-info-mismatch"]
     assert "required_floor" not in outcomes[0]
@@ -104,7 +112,7 @@ def test_a_mismatch_refusal_cannot_claim_a_floor():
     dev = _invite(m)
     wid = m.collect_welcomes(credential=dev)["welcomes"][0]["welcome_id"]
     with pytest.raises(m.InvitationError) as exc:
-        m.refuse_welcome(wid, credential=dev, reason="group-info-mismatch",
+        prejoin.refuse(m, wid, credential=dev, reason="group-info-mismatch",
                          offered_suite=tc.SUITE, required_floor=tc.SUITE,
                          refused_at=tc.IN_WINDOW)
     # Refused by the EXECUTED published request, which owns the rule.
@@ -202,11 +210,11 @@ def test_one_creators_backlog_cannot_hide_anothers_outcome():
     for n in range(20):
         dev = _invite(m, device=f"DA-{n:02}", creator=a, n=n)
         wid = m.collect_welcomes(credential=dev)["welcomes"][0]["welcome_id"]
-        m.refuse_welcome(wid, credential=dev, reason="group-info-mismatch",
+        prejoin.refuse(m, wid, credential=dev, reason="group-info-mismatch",
                          offered_suite=tc.SUITE, refused_at=tc.IN_WINDOW)
     dev = _invite(m, device="DB-00", creator=b, n=0)
     wid = m.collect_welcomes(credential=dev)["welcomes"][0]["welcome_id"]
-    m.refuse_welcome(wid, credential=dev, reason="group-info-mismatch",
+    prejoin.refuse(m, wid, credential=dev, reason="group-info-mismatch",
                      offered_suite=tc.SUITE, refused_at=tc.IN_WINDOW)
     assert len(m.collect_outcomes(credential=a)) == 20
     got = m.collect_outcomes(credential=b)

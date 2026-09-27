@@ -33,6 +33,7 @@ import pathlib
 import re
 import sys
 
+import prejoin
 import pytest
 import yaml
 
@@ -614,17 +615,24 @@ WELCOME = b"an MLS Welcome"
 # inventing `kp-1` / `gi-000…`. A test that can make up a wire value is a test
 # that cannot notice the value has no producer.
 import mls_wire as _w  # noqa: E402
-DEMO_KP_REF = _w.keypackage_ref(
-    b"demo-keypackage:" + FR_UID.encode() + b"|F1N2C3D4P|DEV-1|" + SUITE.encode(),
-    cipher_suite=SUITE)
-OTHER_KP_REF = _w.keypackage_ref(
-    b"demo-keypackage:" + FR_UID.encode() + b"|F1N2C3D4P|DEV-2|" + SUITE.encode(),
-    cipher_suite=SUITE)
+# The reference DERIVES these from the reference's own package builder. They
+# used to rebuild the demo KeyPackage's byte format here — a second copy of a
+# format only one function owns — and G1's change to that format (the leaf
+# signature key now travels IN the package, so a verifier can check a pre-join
+# refusal from it) silently unmatched every fixture that carried one.
+DEMO_KP_REF = OTHER_KP_REF = None   # derived below, once `_mock` exists
 GI_COMMITMENT = _w.group_info_commitment(b"a demo GroupInfo", cipher_suite=SUITE)
 
 
 def _mock():
     return _load("mock_rdp", "mock_rdp.py")
+
+
+_KP = _mock()._demo_keypackage
+DEMO_KP_REF = _w.keypackage_ref(_KP(FR_UID, "F1N2C3D4P", "DEV-1", SUITE),
+                                cipher_suite=SUITE)
+OTHER_KP_REF = _w.keypackage_ref(_KP(FR_UID, "F1N2C3D4P", "DEV-2", SUITE),
+                                 cipher_suite=SUITE)
 
 
 def _record(**over):
@@ -694,7 +702,7 @@ def _refuse(m, welcome_id, *, credential=None, **over):
               required_floor=SUITE, refused_at=IN_WINDOW,
               members=FLOOR_MEMBERS)
     kw.update(over)
-    return m.refuse_welcome(welcome_id,
+    return prejoin.refuse(m, welcome_id,
                             credential=credential or TARGET_DEV_KP, **kw)
 
 
@@ -735,7 +743,12 @@ def test_a_sibling_device_cannot_refuse_another_devices_invitation():
     m = _mock()
     dep, _ = _deposited(m)
     with pytest.raises(m.InvitationError) as exc:
-        _refuse(m, dep["welcome_id"], credential=SIBLING_DEV_KP)
+        # G1: the sibling cannot build a proof, and that is not what is under
+        # test — the DS's answer must be the one an unknown id gets, so the
+        # identity checks run before the proof is examined.
+        m.refuse_welcome(dep["welcome_id"], credential=SIBLING_DEV_KP,
+                         reason="group-info-mismatch", offered_suite=SUITE,
+                         refusal_proof={"nonce": "rn-000000000000", "signature_b64": "AA=="})
     assert exc.value.reason == "invitation-unknown", \
         "a sibling must get the same answer as for an unknown id"
 
@@ -1066,7 +1079,7 @@ def test_the_whole_public_flow_uses_only_values_public_operations_returned():
     dep = m.deposit_welcome(_record(reservation_id=res["reservation_id"],
                                     keypackage_ref=pkg["keypackage_ref"]),
                             credential=MEMBER_CRED)
-    out = m.refuse_welcome(dep["welcome_id"],
+    out = prejoin.refuse(m, dep["welcome_id"],
                            credential=dict(TARGET_DEV,
                                            keypackage_ref=pkg["keypackage_ref"]),
                            reason="suite-below-published-floor",

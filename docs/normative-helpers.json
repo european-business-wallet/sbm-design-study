@@ -184,8 +184,23 @@
     {
       "name": "verify_against_manifest",
       "module": "multipart.py",
-      "rule": "A14: the recipient's Mode C re-verification — each part's digest recomputed from the octets RECEIVED and compared with the manifest, INCLUDING `length`, and only then the manifest digest compared with `payload_hash`.",
-      "unintegrated_reason": "A14, opened by the manifest cluster that R16-03's reported items led to. No caller here, and none is possible: a multipart payload is end-to-end encrypted and absent from every evidence object, so no provider tool and no bundle verifier in this repository can run it — only a party holding the plaintext can, and the recipient wallet is not implemented here. The same distinction as `check_reservation`: a real absence of a consumer, not a routed-around defect. It is the reference for the obligation the Internet-Draft states, and it is driven by tests/test_multipart_framing.py — including the case the ORDER of its two steps exists to catch, where every part's content is replaced while `payload_hash`, being the digest of the manifest and not of the plaintext, still matches. If a recipient-side implementation is ever added, this is what it calls."
+      "rule": "A14: the recipient's Mode C re-verification — each part's digest recomputed from the octets RECEIVED and compared with the manifest, INCLUDING `length`, and only then the manifest digest compared with `payload_hash`. Reachable from `scripts/trace_flow.py` since 27 September 2026, which drives it in the published trace (G2). That is a demonstration consumer, not a verifier: a multipart payload is end-to-end encrypted and absent from every evidence object, so no provider tool and no bundle verifier can run it, and the recipient wallet this belongs to is still not implemented here."
+    },
+    {
+      "name": "verify_welcome_refusal",
+      "module": "mls_wire.py",
+      "rule": "G1: the PRE-JOIN proof. A Welcome refusal verifies under the KeyPackage's leaf signature key — RFC 9420 §5.1.2 SignWithLabel, label `SBMWelcomeRefusal`, over the deterministic-CBOR typed content carrying the Delivery Service's single-use nonce. The verifier is the DS, which holds the KeyPackage: a device that has joined nothing has no discovery document and no wallet key to be checked against, which is what makes this a PRE-join proof. Possession of `keypackage_ref` is not a proof — it is a hash of the package's public bytes, held by the creator and the DS alike.",
+      "required_arguments": []
+    },
+    {
+      "name": "check_vectors",
+      "module": "cross_representation.py",
+      "rule": "XREP-01: every field name a published evidence Schema declares is exercised by a sealed vector. The vector is what binds the three descriptions — cddl_check validates each sealed sample against a specific CDDL rule, against its Schema, and against its own decoded body — so a name no vector carries is one the Schema, the CDDL and the reference can describe differently with every gate still green. The first vector written for `disputes` proved it: ep_artifact sealed the dispute artefacts into the body and left them out of the projection, and had shipped that way because nothing carried one."
+    },
+    {
+      "name": "check_contract",
+      "module": "cross_representation.py",
+      "rule": "XREP-02: the reference's request surface and the published contract describe one protocol, in both directions — no field the reference accepts is absent from the contract (G1: `refusal_proof` existed in the reference and in mls_wire and not in WelcomeRefusalRequest, so nobody holding only the contract could build the request), and no field the contract publishes is one the reference cannot accept. Path parameters are derived from the OpenAPI document; transport- and server-supplied values are recorded in NON_BODY, each with its reason."
     }
   ],
   "$entry_points": "R5-07/3: reachability is from a PUBLIC ENTRY POINT, not from any call site — a helper called by a function nobody reaches is not integrated. These are the names a user or a conformance gate can actually invoke. A MISSING entry here makes a helper look unreachable and the gate FAIL, which is the safe direction and the opposite of the stored status, whose staleness made the gate PASS. R8-04: the group-establishment and delivery-collection operations were MISSING from this list although each realises a published contract operation (POST /welcome, POST /welcome/{welcome_id}/refusal, GET+DELETE /group-establishment/outcomes, GET /messages, POST /keypackages/{uid}/reservations, POST /reservations/{id}/commit). Anything reachable only from them therefore looked unintegrated — the safe direction, but it meant the gate could not distinguish 'nobody calls this' from 'the caller is not on the list'. The rule for this list is now explicit: a published contract operation's reference realisation IS an entry point.",

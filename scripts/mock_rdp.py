@@ -187,6 +187,12 @@ def ep_artifact(ep_fields: dict, se_art: dict, outcome_arts: list,
     projection["outcomes"] = [o["projection"] for o in outcome_arts]
     if change_arts:
         projection["changes"] = [c["projection"] for c in change_arts]
+    if dispute_arts:
+        # The body embedded the dispute artefacts and the projection did not, so
+        # a package carrying one sealed a document its readable form denied
+        # (LINT-PKG-11). Invisible until the cross-representation gate demanded
+        # a vector for `disputes`: the branch above does both, this one did half.
+        projection["disputes"] = [d["projection"] for d in dispute_arts]
     # R10-X5: composition IS the sealing, so the timestamp's genTime is the
     # composer's act instant. Default: the latest act the package encloses —
     # a package cannot be composed before the last thing it records.
@@ -1649,8 +1655,16 @@ def _demo_keypackage(uid, mid, device_id, cipher_suite):
     # R11-01: the ENTITY is part of which device this is. Without it, the
     # same MID and label under two entities produced byte-identical packages
     # and therefore one `keypackage_ref` for two devices.
-    return ("demo-keypackage:" + "|".join([uid, mid, device_id,
-                                           cipher_suite])).encode()
+    # G1: the package carries the LEAF SIGNATURE KEY. A pre-join refusal is
+    # verified against it by the Delivery Service, which holds the package —
+    # no discovery document and no wallet key, because the device has joined
+    # nothing yet. Without the key in here the DS could only check possession
+    # of `keypackage_ref`, which is a hash of these public bytes and is held by
+    # the creator and the DS alike: the two parties best placed to forge a
+    # refusal attributed to the device.
+    return ("demo-keypackage:" + "|".join([
+        uid, mid, device_id, cipher_suite,
+        demo_public_key_b64(f"leaf:{mid}:{device_id}")])).encode()
 
 
 def _reservation_response(r):
@@ -2135,6 +2149,11 @@ def deposit_welcome(deposit, *, credential, queued_at="2026-04-04T10:00:00Z"):
             # neither the value nor the suite it is computed under.
             "group_info_commitment": deposit["group_info_commitment"],
             "offered_suite": deposit["offered_suite"],
+            # G1: the DS issues a single-use nonce WITH the Welcome. A refusal
+            # signs it, and the DS accepts it once. The invitation window alone
+            # bounds how long a captured refusal stays usable; a nonce makes
+            # replaying one impossible rather than merely late.
+            "refusal_nonce": _refusal_nonce(),
             "invitation_key": inv_key}
     # R11-01: the invited device IS (entity, member, label), resolved from the
     # package the reservation consumed — the deposit's `recipient_device` is
@@ -2144,6 +2163,10 @@ def deposit_welcome(deposit, *, credential, queued_at="2026-04-04T10:00:00Z"):
     _PACKAGE_DEPOSITS[package] = inv_key
     _INVITATIONS[inv_key] = {
         "invitation": copy.deepcopy(deposit), "welcome_id": item["welcome_id"],
+        # G1: retained here as well as on the queued item, because the item
+        # leaves the queue when the device collects it and the refusal may
+        # follow afterwards.
+        "refusal_nonce": item["refusal_nonce"],
         "recipient_device": device, "invited": invited, "creator": creator,
         "state": "open",
         "member": (target["uid"], target["mid"])}
@@ -2152,6 +2175,57 @@ def deposit_welcome(deposit, *, credential, queued_at="2026-04-04T10:00:00Z"):
     # it, and `group_roster` reads it (R11-07).
     return _public("WelcomeQueued", item,
                    fields=("welcome_id", "recipient_device"))
+
+
+_REFUSAL_NONCE_SEQ = [0]
+_SPENT_REFUSAL_NONCES = set()
+
+
+def _refusal_nonce():
+    """A Welcome's single-use refusal nonce (DEMO: a counter; production takes
+    it from a CSPRNG). Issued by the Delivery Service with the Welcome and
+    spent by the refusal that signs it."""
+    _REFUSAL_NONCE_SEQ[0] += 1
+    return f"rn-{_REFUSAL_NONCE_SEQ[0]:012d}"
+
+
+def welcome_refusal_proof(welcome_id, *, credential, reason, offered_suite,
+                          required_floor=None, nonce=None):
+    """What a REFUSING DEVICE produces — the client half of G1's proof.
+
+    Here so that a caller cannot assemble the signed content its own way: the
+    device and the Delivery Service must sign and verify the same bytes, and
+    two builders is how they come to differ. The demo signs with the
+    deterministic leaf seed; a real device holds the private half of the leaf
+    key its KeyPackage published and signs with that.
+
+    The nonce is the one the Welcome arrived with. It is not defaulted: a proof
+    built without the value the DS issued is not a fresh proof, and silently
+    supplying one would hide exactly the replay this exists to stop.
+    """
+    device = _device_of(credential)
+    entry_for_nonce = next((e for e in _INVITATIONS.values()
+                            if e["welcome_id"] == welcome_id), None)
+    if not nonce:
+        queued = next((w for w in _WELCOME_QUEUE.get(device, [])
+                       if w["welcome_id"] == welcome_id), None)
+        nonce = (queued or {}).get("refusal_nonce") \
+            or (entry_for_nonce or {}).get("refusal_nonce")
+    if not nonce:
+        raise InvitationError(
+            "refusal-proof-required",
+            "no nonce: a refusal signs the value the Delivery Service issued "
+            "with the Welcome, and this device has no such Welcome")
+    entry = next((e for e in _INVITATIONS.values()
+                  if e["welcome_id"] == welcome_id), None)
+    kp_ref = (entry or {}).get("invitation", {}).get("keypackage_ref") \
+        or credential.get("keypackage_ref")
+    seed = demo_seed_bytes(f"leaf:{device[1]}:{device[2]}")
+    return {"nonce": nonce,
+            "signature_b64": mls_wire.sign_welcome_refusal(
+                seed, welcome_id=welcome_id, keypackage_ref=kp_ref,
+                offered_suite=offered_suite, required_floor=required_floor,
+                reason=reason, nonce=nonce)}
 
 
 def _refusal_key(welcome_id, device, reason, offered_suite, required_floor):
@@ -2164,7 +2238,7 @@ def _refusal_key(welcome_id, device, reason, offered_suite, required_floor):
 
 def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
                    required_floor=None, refused_at="2026-04-04T10:05:00Z",
-                   members=None):
+                   members=None, refusal_proof=None):
     """R5-V2/R6-W2/R7-03/R8-04 — the pre-join refusal, VALIDATED.
 
     The refusing device never instantiates the offered suite. R7-03 made the DS
@@ -2215,6 +2289,52 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
             "unknown, already handled, expired, or belonging to another "
             "device — uniformly indistinguishable (R7-03)")
 
+    # G1 — THE PRE-JOIN PROOF. Holding `keypackage_ref` proves nothing: it is a
+    # hash of the package's PUBLIC bytes, returned to the creator by the
+    # reservation and held by the Delivery Service, so the two parties best
+    # placed to forge a refusal attributed to this device both hold it. The
+    # proof is a signature under the KeyPackage's LEAF SIGNATURE KEY, whose
+    # private half only the device has, over a typed domain-separated content
+    # carrying the DS's single-use nonce — RFC 9420 §5.1.2 `SignWithLabel`,
+    # label `SBMWelcomeRefusal`, verified against the key the package carries.
+    # A pre-join device has joined nothing, so no discovery document and no
+    # wallet key can be involved.
+    proof = refusal_proof or {}
+    queued = next((w for w in _WELCOME_QUEUE.get(device, [])
+                   if w["welcome_id"] == welcome_id), None)
+    expected_nonce = (queued or {}).get("refusal_nonce") or entry.get("refusal_nonce")
+    # A MISSING proof is not refused here: the published `WelcomeRefusalRequest`
+    # requires the field, and it is executed below — one authority for the
+    # request's shape rather than a hand check beside it. What is checked here
+    # is what a Schema cannot express: that the nonce is THIS Welcome's, that it
+    # has not been spent, and that the signature verifies.
+    if not proof:
+        pass
+    elif proof.get("nonce") != expected_nonce:
+        raise InvitationError(
+            "refusal-proof-invalid",
+            "the refusal does not carry the nonce this Welcome was issued with")
+    elif proof["nonce"] in _SPENT_REFUSAL_NONCES:
+        raise InvitationError(
+            "refusal-proof-replayed",
+            "this nonce has already been spent; a refusal is usable once")
+    leaf_pub = base64.b64decode(demo_public_key_b64(
+        f"leaf:{device[1]}:{device[2]}"))
+    if proof and not mls_wire.verify_welcome_refusal(
+            leaf_pub, proof["signature_b64"],
+            welcome_id=welcome_id, keypackage_ref=inv["keypackage_ref"],
+            offered_suite=offered_suite, required_floor=required_floor,
+            reason=reason, nonce=proof["nonce"]):
+        raise InvitationError(
+            "refusal-proof-invalid",
+            "the signature does not verify against the leaf signature key this "
+            "invitation's KeyPackage carries, over the refusal's own content")
+    # NOT spent here. A refusal the DS rejects for any other reason — an
+    # unresolvable floor, an out-of-window instant, an unregistered reason —
+    # must leave the device able to try again: burning the nonce on a
+    # recoverable error would give a device one attempt and no way to correct
+    # it. It is spent where the outcome is recorded, below.
+
     # R8-04 requirement 4: IN WINDOW. `expires_at` was retained and never read,
     # so a refusal arriving at any later time created an outcome.
     # R9-04 requirements 1 and 2 — INSTANTS, and the window is CLOSED at both
@@ -2243,7 +2363,13 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
     # referenced, so the reason/suite/floor rules below were the only ones
     # applied, while the published body (including which reasons may carry a
     # floor) went unchecked.
+    # G1: the proof travels IN the request, so the published shape carries it
+    # and this validation executes it. It used to be a keyword the reference
+    # checked by hand while `WelcomeRefusalRequest` had no field for it at all
+    # — the contract and the reference describing different operations, which
+    # is the defect this repository keeps finding one surface at a time.
     request = {"reason": reason, "offered_suite": offered_suite,
+               **({} if refusal_proof is None else {"refusal_proof": refusal_proof}),
                **({} if required_floor is None else {"required_floor": required_floor})}
     problems = validate_contract_object("delivery-service-openapi.yaml",
                                         "WelcomeRefusalRequest", request)
@@ -2292,6 +2418,11 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
     _OUTCOME_SEQ[0] += 1
     outcome_id = f"out-{_OUTCOME_SEQ[0]:04d}"
     entry["outcome_id"] = outcome_id
+    # G1: the nonce is spent HERE — the refusal is accepted and terminal, so a
+    # captured copy of it can never be used again. An exact retry converges on
+    # the stored outcome above, before this point, which is why replay
+    # protection and idempotency do not fight each other.
+    _SPENT_REFUSAL_NONCES.add((refusal_proof or {}).get("nonce"))
     _OUTCOMES[outcome_id] = {
         "outcome_id": outcome_id, "welcome_id": welcome_id,
         "invitation_id": inv["invitation_id"],

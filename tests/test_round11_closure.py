@@ -28,6 +28,7 @@ import json
 import pathlib
 import sys
 
+import prejoin
 import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -100,7 +101,7 @@ def world():
             older = p == B_FR and item["welcome_id"] != \
                 m.collect_welcomes(credential=_dev(p))["welcomes"][-1]["welcome_id"]
             if older:
-                m.refuse_welcome(item["welcome_id"],
+                prejoin.refuse(m, item["welcome_id"],
                                  credential=_dev(p, keypackage_ref=first[p]),
                                  reason="group-info-mismatch", offered_suite=tc.SUITE)
             else:

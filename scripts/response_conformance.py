@@ -147,12 +147,19 @@ def drive():
     # collected after it the queue is EMPTY and the item Schema goes unexercised.
     welcomes = mock.collect_welcomes(credential=DEVICE, at="2026-04-04T09:30:00Z")
     assert len(welcomes["welcomes"]) == 2, "the sweep must exercise a non-empty queue"
+    # G1: the refusal carries the pre-join proof — a signature under the
+    # KeyPackage's leaf key over the DS-issued nonce — built the way a device
+    # builds it, through the reference's own helper.
+    _refusing = dict(DEVICE, keypackage_ref=pkg["keypackage_ref"])
     refusal = mock.refuse_welcome(
-        queued["welcome_id"],
-        credential=dict(DEVICE, keypackage_ref=pkg["keypackage_ref"]),
+        queued["welcome_id"], credential=_refusing,
         reason="suite-below-published-floor", offered_suite=SUITE,
         required_floor=SUITE, refused_at="2026-04-04T09:30:00Z",
-        members=FLOOR)
+        members=FLOOR,
+        refusal_proof=mock.welcome_refusal_proof(
+            queued["welcome_id"], credential=_refusing,
+            reason="suite-below-published-floor", offered_suite=SUITE,
+            required_floor=SUITE))
     outcomes = {"outcomes": mock.collect_outcomes(credential=MEMBER)}
 
     return {

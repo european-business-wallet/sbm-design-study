@@ -35,6 +35,7 @@ import json
 import pathlib
 import sys
 
+import prejoin
 import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -1317,7 +1318,7 @@ def test_a_device_that_refused_receives_nothing():
          "created_at": "2026-04-04T09:00:00Z",
          "expires_at": "2026-04-05T09:00:00Z"}, credential=member)
     assert len(mock.group_roster(group)) == 1
-    mock.refuse_welcome(
+    prejoin.refuse(mock, 
         dep["welcome_id"],
         credential={"kind": "device", "uid": P1[0], "mid": P1[1], "device_id": "DEV-1",
                     "keypackage_ref": pkg["keypackage_ref"]},

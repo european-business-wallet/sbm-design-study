@@ -331,7 +331,13 @@ def test_the_refusal_operation_exists_and_is_device_bound():
     ref = op["requestBody"]["content"]["application/json"]["schema"]["$ref"]
     # R10-05: a NAMED component, so the reference can execute it.
     body = doc["components"]["schemas"][ref.rsplit("/", 1)[1]]
-    assert body["required"] == ["reason", "offered_suite"]
+    # G1: the pre-join proof travels in the request. This asserted the two
+    # fields the operation had when the proof was a sentence in a security
+    # description — "a signature over the request binding" — with no binding
+    # defined and no field to carry it.
+    assert body["required"] == ["reason", "offered_suite", "refusal_proof"]
+    proof = body["properties"]["refusal_proof"]["$ref"]
+    assert proof.endswith("/WelcomeRefusalProof"), proof
     # R10-05: `required_floor` is required for the floor reason and forbidden
     # for a GroupInfo mismatch.
     assert body["then"] == {"required": ["required_floor"]}

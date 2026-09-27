@@ -1,7 +1,7 @@
 
 PY ?= python3
 
-.PHONY: help preflight test schema schema-smoke lint lint-demo cddl-check cddl-check-lite doc-lint versions lint-catalogue rule-ownership adr-index conformance conformance-lite regen-samples id reuse licenses-report dev-tools
+.PHONY: help trace preflight test schema schema-smoke lint lint-demo cddl-check cddl-check-lite doc-lint versions lint-catalogue rule-ownership adr-index conformance conformance-lite regen-samples id reuse licenses-report dev-tools
 
 help:
 	@echo "Targets:"
@@ -59,14 +59,14 @@ lint-demo:
 # cddl-check / doc-lint with a PINNED `cddl` tool, fail-closed under CI; the reuse
 # job: reuse lint). 'make lint' alone is the structural subset — see README
 # # Conformance.
-conformance: versions lint-catalogue rule-ownership adr-index test schema-smoke lint lint-demo cddl-check openapi-validate doc-lint reuse
-	@echo "CONFORMANCE: all gates green (versions, lint-catalogue, rule-ownership, adr-index, preflight+test, schema-smoke, lint, lint-demo, cddl-check, openapi-validate, doc-lint, reuse)"
+conformance: versions lint-catalogue rule-ownership adr-index test schema-smoke lint lint-demo cddl-check cross-representation openapi-validate doc-lint reuse
+	@echo "CONFORMANCE: all gates green (versions, lint-catalogue, rule-ownership, adr-index, preflight+test, schema-smoke, lint, lint-demo, cddl-check, cross-representation, openapi-validate, doc-lint, reuse)"
 
 # N-04: the FULL bar requires the `cddl` tool (cddl-check above is fail-closed).
 # conformance-lite is the escape hatch for contributors without a Rust toolchain:
 # identical gates, but cddl-check-lite TOLERATES a missing `cddl` (prints [skip]).
 # It is NOT the conformance bar — CI and releases use `make conformance`.
-conformance-lite: versions lint-catalogue rule-ownership adr-index test schema-smoke lint lint-demo cddl-check-lite openapi-validate doc-lint reuse
+conformance-lite: versions lint-catalogue rule-ownership adr-index test schema-smoke lint lint-demo cddl-check-lite cross-representation openapi-validate doc-lint reuse
 	@echo "CONFORMANCE-LITE: gates green — but cddl-check may have SKIPPED (install cddl and run 'make conformance' for the full fail-closed bar)"
 
 # DR-09: meta-validate every published OpenAPI contract with a PINNED
@@ -123,6 +123,16 @@ adr-index:
 # under CI) and that non-zero propagates, so `conformance` FAILS rather than
 # silently reporting green. Contributors without a Rust toolchain use
 # `make conformance-lite`, which tolerates the skip.
+trace:
+	$(PY) scripts/trace_flow.py
+
+# Does every surface carrying a concept carry it? XREP-01 holds each evidence
+# Schema to the sealed vectors that bind it to the CDDL and the projection;
+# XREP-02 holds the reference's request surface to the published contract.
+# Both directions were previously answered only by a human reading two files.
+cross-representation:
+	$(PY) scripts/cross_representation.py
+
 cddl-check:
 	$(PY) scripts/cddl_check.py
 	$(PY) scripts/cddl_embedded.py

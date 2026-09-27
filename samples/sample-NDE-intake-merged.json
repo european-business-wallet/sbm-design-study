@@ -1,0 +1,22 @@
+{
+  "sm_artifact_b64": "glkCMIRIogEnBENyZHCgWQHgrWR0eXBlZk5ERS12MWVldmVudHdBLjItU3VibWlzc2lvblJlamVjdGlvbmZyZHBfaWR2dXJuOnNibTpyZHA6bW9ja2V1LTAwMWZyZWFzb25qdWlkLW1lcmdlZGdwcm9maWxlZXBpbG90Z3ZlcnNpb25kMi4xMmlwb2xpY3lfaWR4JWh0dHBzOi8vcmRwLmV4YW1wbGUuZXUvcG9saWN5L3FlcmRzLzFqbWVzc2FnZV9pZHgZMDFIWjNNRVJHRUQwMDAwMDAwMDAwMDAwMWtldmlkZW5jZV9pZHgaMDFKOFpOREUwMDAwMDAwMDAwMDAwMDAwMTJrb2JzZXJ2ZWRfYXR0MjAyNi0wNC0wNFQwOTowMjoxMFpscmVkaXJlY3RfdWlkeBlFVS1ERS1FT0lELTdLM0Q5VzBRMk01RlcwbXJlY2lwaWVudF91aWR4GkVVLUZSLVBTQklELVpZV1ZUU1JRUE5NOE00b3N1Ym1pc3Npb25faGFzaKNjYWxnZ1NIQS0yNTZjaGV4eEAzZjJhMTdjOTViNmU0ZDA4YTFjNzNmNWU5MmQ4NGIwNmNmMWE1ZTczYjI4ZDk0MGY2YWMzMWU1OGQ3MjA0ZjliaWhhc2hfbW9kZWpyYXctc2hhMjU2WECs7KehuyQ71e95gmegmSdxYUw2aOe7ZADJtkNsHOV0Xz7HAh8qyg21tz6sdx5bhUBW6SI5ZfuWHh36RQW430MDo2Zmb3JtYXRncmZjMzE2MWZ0c2FfaWRxUVRTQTpNb2NrRVU6VFMtMDFpdG9rZW5fYjY0eEhNRE1FSUYwNCtRTnZYdmFrMzlhdXZpdjFIbzJZdU12NERxOW5EMTRSUjhIcTZaVHBHQTh5TURJMk1EUXdOREE1TURJeE1Gbz0=",
+  "projection": {
+    "type": "NDE-v1",
+    "version": "2.12",
+    "profile": "pilot",
+    "message_id": "01HZ3MERGED00000000000001",
+    "event": "A.2-SubmissionRejection",
+    "evidence_id": "01J8ZNDE000000000000000012",
+    "policy_id": "https://rdp.example.eu/policy/qerds/1",
+    "recipient_uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+    "redirect_uid": "EU-DE-EOID-7K3D9W0Q2M5FW0",
+    "reason": "uid-merged",
+    "observed_at": "2026-04-04T09:02:10Z",
+    "rdp_id": "urn:sbm:rdp:mockeu-001",
+    "submission_hash": {
+      "alg": "SHA-256",
+      "hex": "3f2a17c95b6e4d08a1c73f5e92d84b06cf1a5e73b28d940f6ac31e58d7204f9b",
+      "hash_mode": "raw-sha256"
+    }
+  }
+}

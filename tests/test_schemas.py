@@ -3,19 +3,19 @@
 import json, pathlib, pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-SCHEMAS = [
-    "evidence-common.schema.json",
-    "evidence-se.schema.json",
-    "evidence-de.schema.json",
-    "evidence-nde.schema.json",
-    "evidence-re.schema.json",
-    "evidence-ce.schema.json",
-    "evidence-ep.schema.json",
-    "bw-med.schema.json",
-    "bw-org.schema.json",
-    "bw-member.schema.json",
-    "bw-provider.schema.json",
-]
+def _schemas():
+    """Every schema on disk, so the offline resolver cannot be short of one.
+
+    This was a hand-written list of eleven names, and it omitted
+    `evidence-gcm.schema.json` among others. Nothing noticed, because no sealed
+    vector carried an EP `disputes[]` — the only `$ref` that reaches the GCM
+    schema. The first vector that did sent `jsonschema` to
+    https://bw.example.eu/ for it: the store had no entry, so resolution fell
+    through to the network, and a suite that is supposed to validate offline
+    would have depended on a host that does not exist. Derived from the
+    directory, which cannot fall behind it.
+    """
+    return sorted(p.name for p in (ROOT / "schemas").glob("*.schema.json"))
 
 
 def _load_map():
@@ -36,7 +36,7 @@ def setup_module():
     jsonschema = _js
     # Build a local resolver
     store = {}
-    for name in SCHEMAS:
+    for name in _schemas():
         p = ROOT / "schemas" / name
         with open(p, "r", encoding="utf-8") as f:
             sch = json.load(f)

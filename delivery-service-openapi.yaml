@@ -3,7 +3,7 @@
 openapi: "3.1.0"
 info:
   title: SM-MLS Delivery Service companion contract (profile 2)
-  version: "12.0.0"
+  version: "13.0.0"
   description: |
     F-15: the normative MLS Delivery Service surface at
     `BW-MED.mls.ds_url` — the COMPLETE KeyPackage reservation lifecycle
@@ -1247,7 +1247,7 @@ components:
         validate its request against.
       type: object
       additionalProperties: false
-      required: [reason, offered_suite]
+      required: [reason, offered_suite, refusal_proof]
       # R10-05: `required_floor` belongs to the floor reason ONLY. A
       # GroupInfo mismatch is not a cipher-suite refusal and must not
       # be dressed as one, so it claims no floor at all.
@@ -1281,6 +1281,47 @@ components:
             `min_cipher_suite`). The creator can verify the claim
             against published discovery, so the refusal is checkable
             rather than merely asserted.
+        refusal_proof:
+          $ref: '#/components/schemas/WelcomeRefusalProof'
+    WelcomeRefusalProof:
+      description: >-
+        G1 — THE PRE-JOIN PROOF, with its bytes named. This security scheme's
+        description said the credential must demonstrate possession of the
+        KeyPackage's private key, "a signature over the request binding", and
+        defined no binding; the reference settled for possession of
+        `keypackage_ref`, which is a hash of the package's PUBLIC bytes that the
+        inviting creator and this service both hold. The two parties with a
+        motive to forge a refusal attributed to a device could both produce one.
+
+        The signature is `SignWithLabel` (RFC 9420 §5.1.2) under the label
+        `SBMWelcomeRefusal`, made with the leaf signature key of the KeyPackage
+        this invitation consumed, over the deterministic-CBOR encoding of
+
+          [ "sm-mls:welcome-refusal:v1", welcome_id, keypackage_ref,
+            offered_suite, required_floor, reason, nonce ]
+
+        with `required_floor` null where the device declares none. Every value
+        the refusal asserts is inside the signature, so none can be altered
+        after signing. The service verifies against the key the KeyPackage
+        carries — the device has joined nothing, so no discovery document and no
+        wallet key is involved.
+      type: object
+      additionalProperties: false
+      required: [nonce, signature_b64]
+      properties:
+        nonce:
+          type: string
+          minLength: 8
+          description: >-
+            The single-use value this service issued with the Welcome. It is
+            inside the signature, so a captured refusal cannot be replayed. The
+            service spends it only when a refusal is ACCEPTED: burning it on a
+            recoverable rejection would give a device one attempt and no way to
+            correct an unresolvable floor or an out-of-window instant.
+        signature_b64:
+          type: string
+          minLength: 1
+          description: base64 of the SignWithLabel signature described above.
     ReceiptAckRequest:
       type: object
       unevaluatedProperties: false

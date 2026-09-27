@@ -530,7 +530,7 @@
       ]
     },
     "companion_contracts": {
-      "value": "12.0.0",
+      "value": "13.0.0",
       "note": "The profile-2 companion contracts — wallet-RDP, Delivery Service, RDP relay — versioned together as one stream; versions independently of the evidence family (umbrella §9.3).",
       "bindings": [
         {

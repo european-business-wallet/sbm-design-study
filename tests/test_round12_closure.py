@@ -40,6 +40,7 @@ import json
 import pathlib
 import sys
 
+import prejoin
 import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -460,10 +461,10 @@ def test_the_refusing_devices_own_floor_is_checked_at_consumption(world):
               if i["offered_suite"] == BASE]
     cred = _dev(A_DEV, keypackage_ref=refs[A_DEV])
     with pytest.raises(ds_b.InvitationError):
-        ds_b.refuse_welcome(item["welcome_id"], credential=cred,
+        prejoin.refuse(ds_b, item["welcome_id"], credential=cred,
                             reason="suite-below-published-floor", offered_suite=BASE,
                             required_floor=P384, members=[DE_C, FR_A, FR_B])
-    ds_b.refuse_welcome(item["welcome_id"], credential=cred,
+    prejoin.refuse(ds_b, item["welcome_id"], credential=cred,
                         reason="suite-below-published-floor", offered_suite=BASE,
                         required_floor=P256, members=[DE_C, FR_A, FR_B])
     outcomes = ds_b.collect_outcomes(credential=CREATOR)

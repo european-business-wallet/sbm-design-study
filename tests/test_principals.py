@@ -25,6 +25,7 @@ import base64
 import pathlib
 import sys
 
+import prejoin
 import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -148,8 +149,14 @@ def test_neither_can_collect_acknowledge_or_refuse_the_others_welcome():
     with pytest.raises(m.WelcomeAccessDenied):
         m.ack_welcome(de_wid, credential=_dev(FR_DEV))
     with pytest.raises(m.InvitationError) as exc:
+        # G1: a foreign device cannot BUILD a proof — it holds no Welcome and
+        # no nonce. What is under test is the DS's uniform answer, so it sends
+        # one anyway: the identity checks run BEFORE the proof is examined, or
+        # the refusal endpoint would become an existence oracle over another
+        # device's state.
         m.refuse_welcome(de_wid, credential=_dev(FR_DEV, keypackage_ref=refs[DE_DEV]),
-                         reason="group-info-mismatch", offered_suite=tc.SUITE)
+                         reason="group-info-mismatch", offered_suite=tc.SUITE,
+                         refusal_proof={"nonce": "rn-000000000000", "signature_b64": "AA=="})
     assert exc.value.reason == "invitation-unknown"
     assert m.ack_welcome(de_wid, credential=_dev(DE_DEV)) is None   # the owner can
     assert m.ack_welcome(de_wid, credential=_dev(DE_DEV)) is None   # and converges
@@ -229,7 +236,7 @@ def test_outcomes_belong_to_the_creator_principal_and_name_the_refusing_member()
                       credential=fr_creator)
     target = (FR, "F2X3Y4Z55", "dev-01")
     wid = m.collect_welcomes(credential=_dev(target))["welcomes"][0]["welcome_id"]
-    m.refuse_welcome(wid, credential=_dev(target, keypackage_ref=pkg["keypackage_ref"]),
+    prejoin.refuse(m, wid, credential=_dev(target, keypackage_ref=pkg["keypackage_ref"]),
                      reason="group-info-mismatch", offered_suite=tc.SUITE)
     assert m.collect_outcomes(credential=de_twin) == [], \
         "a member of another entity sharing the MID saw the creator's outcome"

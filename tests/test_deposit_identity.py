@@ -16,6 +16,7 @@ its outcome queue kept recorded outcomes until acknowledged.
 import pathlib
 import sys
 
+import prejoin
 import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -111,7 +112,7 @@ def test_a_recorded_outcome_outlives_the_invitation_and_a_late_refusal_does_not(
     dev = {"kind": "device", "uid": pr.FR, "mid": "F1N2C3D4P", "device_id": "DEV-1",
            "keypackage_ref": ref}
     wid = m.collect_welcomes(credential=dev)["welcomes"][0]["welcome_id"]
-    m.refuse_welcome(wid, credential=dev, reason="group-info-mismatch",
+    prejoin.refuse(m, wid, credential=dev, reason="group-info-mismatch",
                      offered_suite=tc.SUITE, refused_at="2026-04-04T10:05:00Z")
     # the invitation expires (2026-04-05T09:00Z); the creator returns later
     assert len(m.collect_outcomes(credential=pr.CREATOR)) == 1
@@ -121,7 +122,7 @@ def test_a_recorded_outcome_outlives_the_invitation_and_a_late_refusal_does_not(
     wid2 = next(x["welcome_id"] for x in m.collect_welcomes(credential=dict(dev, keypackage_ref=ref2))["welcomes"]
                 if x["welcome_id"] != wid)
     with pytest.raises(m.InvitationError):
-        m.refuse_welcome(wid2, credential=dict(dev, keypackage_ref=ref2),
+        prejoin.refuse(m, wid2, credential=dict(dev, keypackage_ref=ref2),
                          reason="group-info-mismatch", offered_suite=tc.SUITE,
                          refused_at="2026-04-06T00:00:00Z")
     assert len(m.collect_outcomes(credential=pr.CREATOR)) == 1

@@ -762,3 +762,69 @@ def wire_map(registry):
         return {int(v["value"], 16): name for name, v in cps.items()
                 if not name.startswith("$")}
     return dict(IANA_CODE_POINTS)
+
+
+# ---------------------------------------------------------------------------
+# G1 — the pre-join proof: SignWithLabel under a KeyPackage's leaf key
+# ---------------------------------------------------------------------------
+
+WELCOME_REFUSAL_LABEL = "SBMWelcomeRefusal"
+WELCOME_REFUSAL_DOMAIN = "sm-mls:welcome-refusal:v1"
+
+
+def sign_content(label: str, content: bytes) -> bytes:
+    """RFC 9420 §5.1.2 `SignContent`, TLS-serialized.
+
+        struct { opaque label<V>; opaque content<V>; } SignContent;
+
+    with the label prefixed by `MLS 1.0 ` exactly as the RFC requires. This is
+    the byte string a signature is over — stated here so that two
+    implementations sign the same bytes rather than each its own framing.
+    """
+    return opaque_v(("MLS 1.0 " + label).encode("utf-8")) + opaque_v(bytes(content))
+
+
+def welcome_refusal_content(*, welcome_id: str, keypackage_ref: str,
+                            offered_suite: str, required_floor, reason: str,
+                            nonce: str) -> bytes:
+    """The refusal's signed content: deterministic CBOR of a typed array.
+
+    Domain-separated and positional, the shape every other commitment in this
+    profile uses. `required_floor` is `null` where the device declares none, so
+    the array has a fixed arity and a verifier never has to guess which element
+    it is reading.
+
+    The DS-issued `nonce` is INSIDE the signature: that is what makes a captured
+    refusal unusable a second time rather than merely detectable within the
+    invitation's window.
+    """
+    import lint_cli
+    return lint_cli.dcbor([WELCOME_REFUSAL_DOMAIN, welcome_id, keypackage_ref,
+                           offered_suite, required_floor, reason, nonce])
+
+
+def sign_welcome_refusal(signing_key, **fields) -> str:
+    """The proof a refusing device produces, base64. DEMO signer."""
+    from nacl.signing import SigningKey
+    content = welcome_refusal_content(**fields)
+    sig = SigningKey(signing_key).sign(sign_content(WELCOME_REFUSAL_LABEL, content)).signature
+    return base64.b64encode(sig).decode("ascii")
+
+
+def verify_welcome_refusal(leaf_public_key: bytes, signature_b64: str, **fields) -> bool:
+    """Verify a refusal against the leaf key the KeyPackage carries.
+
+    The verifier is the Delivery Service, and it holds the KeyPackage: it needs
+    no discovery document and no wallet key to check this, which is the point of
+    a PRE-JOIN proof — the device has not joined anything yet.
+    """
+    from nacl.signing import VerifyKey
+    from nacl.exceptions import BadSignatureError
+    content = welcome_refusal_content(**fields)
+    try:
+        VerifyKey(bytes(leaf_public_key)).verify(
+            sign_content(WELCOME_REFUSAL_LABEL, content),
+            base64.b64decode(signature_b64))
+        return True
+    except (BadSignatureError, ValueError, TypeError):
+        return False
