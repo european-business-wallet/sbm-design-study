@@ -490,7 +490,7 @@ message's content class is availability-declared (umbrella §8.3b): 16 bytes of
 cryptographically random, fresh per-message salt, lowercase hex, input to the
 grade commitment ({{grade-commitment}}); it MUST NOT leave the encrypted
 envelope except by deliberate reveal. A JSON Schema for the envelope headers is
-provided as `schemas/envelope.schema.json` (v1.1). The header fields are
+provided as `schemas/envelope.schema.json` (v1.4). The header fields are
 serialised as a JSON object prepended to the payload within the MLS application
 data, separated by a null byte (0x00). MLS encryption protects both headers and
 payload.
@@ -502,18 +502,40 @@ whatever framing carried them: the octets are reassembled before hashing, so a
 message delivered in one envelope and the same message delivered in several
 produce the same manifest and the same `payload_hash`.
 
-The framing operation this profile defines acts on the **envelope**, never on a
-part. A responsible RDP MAY re-frame the transmitted envelope — re-packaging it,
-or splitting it into several output envelopes — and MUST record the operation in
-a Change-Indication Evidence, which commits to the input octets
-(`envelope_hash_before`) and to each output (`envelope_hash_after` for
-re-packaging, or `part_envelope_hashes` with one commitment **per emitted
-envelope** for chunking). The word *part* in that field names an emitted envelope
-and not a manifest part: a manifest part is content, which no intermediary may
-transform under end-to-end encryption, and the TS states the same confinement —
-the only permitted transformations are on the envelope and its metadata.
-**Nothing in this profile splits a manifest part**, so a verifier never meets a
-part digest computed over anything but that part's whole decoded octets.
+**Nothing in this profile splits a manifest part.** A manifest part is content,
+which no intermediary may transform under end-to-end encryption; the TS states
+the same confinement, that the only permitted transformations are on the envelope
+and its metadata. So a verifier never meets a part digest computed over anything
+but that part's whole decoded octets, and the reassembly above is about transport
+framing at the envelope, below the part.
+
+**The two envelope transformations are NOT profiled, and are deferred.** A
+Change-Indication Evidence enumerates `re-packaging` and `chunking`, and commits
+to the input octets (`envelope_hash_before`) and to each output
+(`envelope_hash_after`, or `part_envelope_hashes`). An earlier revision of this
+section described that as the framing operation this profile defines. It is not
+one: `EnvelopeHash` is fixed to `mls10-message` — SHA-256 over a **complete**
+TLS-serialized MLSMessage — and a fragment of an MLSMessage is not an MLSMessage,
+so the output commitment of a chunking operation is typed to a domain its values
+cannot be in; re-packaging an unchanged MLSMessage in an outer wrapper leaves the
+inner octets untouched, so its output commitment equals its input; and no
+published contract defines a fragment descriptor, a chunk order, a reassembly
+operation, or the boundary at which the original message is reconstructed and
+checked. Two providers given the same message could not perform the same
+transformation, and no verifier could reproduce either from the evidence.
+
+Until that is defined, an RDP **MUST NOT** issue a CE with either
+transformation, and a verifier that meets one **MUST** treat the transformation
+as unproven rather than as an attested re-framing — the input commitment and the
+seal still say who attested what, and the relation of the outputs to the input
+says nothing. What a definition would have to pin — a transport-frame commitment
+of its own rather than `mls10-message`, the exact hashed octets, fragment
+metadata and order, the reassembly boundary, the relation to the invariant
+SE/relay/DE commitment to the complete message, and how repeated transformations
+chain, since the present rule binds every CE input to the original SE and not to
+a previous CE output — is recorded as **A15** on the review agenda. The word
+*part* in `part_envelope_hashes` names an emitted envelope and never a manifest
+part, and that distinction survives the deferral.
 
 **No Merkle construction is profiled.** An earlier revision of this document let
 a chunked part's `digest` be "the Merkle root over its chunks" and defined
@@ -675,6 +697,22 @@ multipart message — each verifying its manifest against its own framing and
 nothing else. The reason that could go unnoticed is stated under re-verification
 below.
 
+**This is the first mandatory carrier for Mode C, and it is a compatibility
+boundary.** It adds no field and re-seals no artefact, so no evidence changes
+shape; but a layout that was previously unconstrained is now the only conformant
+one, and an implementation that chose a different one — concatenation, a
+length-prefixed form, a MIME-like framing — no longer interoperates. Saying
+"nothing changes on the wire" of such a change would be wrong twice over: the
+octets of a multipart payload are fixed where they were free, and an implementer
+has no way to say which of the two worlds it implements. The **application
+envelope** version is that way, and it covers the headers **and** the layout of
+the application data they precede: an envelope declaring **1.4 or later** carries
+a multipart payload in the framing above, and nothing may be assumed about the
+carrier of an implementation built to an earlier one. Implementations that
+exchange multipart messages MUST agree on that version before they rely on Mode
+C, and a verifier reading retained evidence interprets the payload under the
+edition it was sealed with — a later edition does not reach backwards.
+
 **A part's octets are the part's octets.** `length` is their count and `digest`
 is over them, with no encoding layer between the two: the parts travel inside the
 MLS application data, which has no transport content-encoding, so nothing is
@@ -748,13 +786,40 @@ manifest with itself and would have checked nothing about what it received. The
 recipient MUST therefore, in order: parse the payload into its parts, **recompute
 each part's `digest` from the octets it received** and compare it with that part's
 manifest entry — including `length` — and then recompute the manifest digest and
-compare it with `payload_hash`. A part whose digest differs, a `part_id` in one
-and not the other, or a payload that is not the framing above, is a failure of the
-first step and is reported exactly as a Mode A mismatch is: the recipient MUST NOT
-confirm a match, and delivers a `mismatch` confirmation carrying its
-recomputation. This is the same obligation as Mode A's, written so that it can be
-performed; an earlier revision said only "recompute `payload_hash`", which a Mode
-C recipient could satisfy without reading the content at all. On mismatch the recipient MUST NOT confirm
+compare it with `payload_hash`. This is the same obligation as Mode A's, written so that it can
+be performed; an earlier revision said only "recompute `payload_hash`", which a
+Mode C recipient could satisfy without reading the content at all.
+
+**A failure of the first step is not a mismatch, and MUST NOT be reported as
+one.** A `mismatch` confirmation asserts a comparison that **was made** and
+carries the differing digest. Under Mode C the declared `payload_hash` is the
+digest of the manifest, so a recipient whose received parts are wrong recomputes
+**the same value the sender declared** — there is no differing digest to carry,
+and a payload that is not the framing above yields no parts to describe at all.
+An earlier revision directed these into an ordinary `mismatch` confirmation,
+which made a detectable failure unreportable: the recipient would have had to
+invent a digest, assert a comparison it did not perform, or fall silent and let
+the message expire. That is the defect the salted-digest record names for an
+unusable salt, in the live path.
+
+The recipient therefore delivers a **validation failure** — its own attributable
+assertion, bound to the message, to the octets it decrypted (`envelope_hash`),
+and to the commitment it was checking (`declared_payload_hash`, copied from the
+SE), carrying a typed cause and the per-part detail where parts exist. It carries
+**no recomputed `payload_hash`**, because there is none. The RDP issues NDE
+`payload-validation-failed` embedding it, as it issues `payload-hash-mismatch`
+embedding a mismatch confirmation; the two are mutually exclusive on one NDE. The
+causes are registered — a part's digest, its length, a part absent, a part the
+manifest does not describe, a duplicate `part_id`, and a payload that is not the
+framing — and `malformed-envelope` **MUST NOT** be reused for any of them: that
+code is bound to an intake stage and a relay stage, where nothing has been
+decrypted and no recipient has spoken. Only a `part-digest-mismatch` carries an
+observed digest beside the declared one, because it is the only cause for which a
+comparison was made.
+
+A Mode A recipient is unaffected: `payload_hash` is over the payload it received,
+so a difference is a genuine comparison and `payload-hash-mismatch` remains its
+outcome. On mismatch the recipient MUST NOT confirm
 a match; it delivers a `mismatch` confirmation — its proof — and the RDP MUST
 issue NDE `payload-hash-mismatch` embedding that proof instead of DE. Silence is
 never a mismatch: without a confirmation the outcome at expiry is NDE `expired`. In

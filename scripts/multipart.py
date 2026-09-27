@@ -115,6 +115,66 @@ def _digest(alg, data):
         raise MultipartError(f"unsupported alg {alg!r}") from None
 
 
+# The typed causes, as the registry names them. A helper that returned prose
+# would leave the caller to classify, and a recipient that classified its own
+# failure into an outcome the profile does not define is the defect this exists
+# to remove.
+FRAMING_INVALID = "payload-framing-invalid"
+
+
+def failure_report(octets, manifest, payload_hash):
+    """The recipient's obligation as a TYPED result, ready to be asserted.
+
+    Returns `None` when the payload validates, or a dict carrying the overall
+    `failure` and the per-part detail — the shape
+    `RecipientValidationFailure` takes, minus the identity and proof fields the
+    wallet adds. `observed` appears on a part exactly where a comparison was
+    made, which is only `part-digest-mismatch`: a digest on a part that was
+    never received would assert a computation over octets nobody holds.
+
+    R23-01: `verify_against_manifest` below returns strings, and an external
+    review reproduced what that left the caller to do — a recipient detected the
+    failure, had no typed outcome to put it in, and the only permitted one
+    (`mismatch`) demands a differing `payload_hash` that under Mode C cannot
+    honestly exist, because the declared value is the digest of the manifest and
+    the manifest did not change.
+    """
+    try:
+        parts = dict(parse(octets))
+    except MultipartError as exc:
+        return {"failure": FRAMING_INVALID, "detail": str(exc)}
+    described = {p["part_id"]: p for p in manifest}
+    found = []
+    for pid in sorted(set(described) - set(parts)):
+        found.append({"part_id": pid, "failure": "part-absent",
+                      "declared": described[pid]["digest"],
+                      "declared_length": described[pid]["length"]})
+    for pid in sorted(set(parts) - set(described)):
+        found.append({"part_id": pid, "failure": "part-undescribed",
+                      "observed_length": str(len(parts[pid]))})
+    for pid in sorted(set(parts) & set(described)):
+        part, data = described[pid], parts[pid]
+        if part["length"] != str(len(data)):
+            found.append({"part_id": pid, "failure": "part-length-mismatch",
+                          "declared_length": part["length"],
+                          "observed_length": str(len(data))})
+            continue                       # one cause per part, the precise one
+        got = _digest(part["digest"]["alg"], data)
+        if got != part["digest"]["hex"]:
+            found.append({"part_id": pid, "failure": "part-digest-mismatch",
+                          "declared": part["digest"],
+                          "observed": dict(part["digest"], hex=got)})
+    if not found:
+        # The parts are right; only then is the manifest digest the question,
+        # and a manifest that does not hash to its declared value is an
+        # internally inconsistent SE (LINT-MAN-04), not a content failure.
+        return None
+    order = [f["failure"] for f in found]
+    overall = ("part-digest-mismatch" if "part-digest-mismatch" in order
+               else order[0])
+    return {"failure": overall, "parts": found}
+
+
 def verify_against_manifest(octets, manifest, payload_hash):
     """The recipient's obligation, in the order the I-D states it.
 

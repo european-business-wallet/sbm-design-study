@@ -1,7 +1,7 @@
 {
   "$id": "https://bw.example.eu/schemas/evidence-ce.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "evidence-ce (v2.10)",
+  "title": "evidence-ce (v2.11)",
   "description": "Change-Indication Evidence. Issued when an RDP performs an envelope/metadata transformation needed for sending or receiving the data (Regulation (EU) No 910/2014, Article 44(1)(e)). End-to-end encryption forbids content transformation; only envelope/metadata transformations are permitted, and each such change MUST be evidenced and indicated to both the sender and the addressee.",
   "type": "object",
   "required": [
@@ -24,7 +24,7 @@
     },
     "version": {
       "type": "string",
-      "const": "2.10"
+      "const": "2.11"
     },
     "profile": {
       "$ref": "evidence-common.schema.json#/$defs/Profile"

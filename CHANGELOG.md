@@ -18,7 +18,82 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-27, edition r23
+## Current — 2026-09-27, edition r24
+
+**Wire-breaking.** An external review of the previous edition found seven points;
+all seven are addressed here, and two of them changed the protocol.
+
+| Artefact | This edition | Previous |
+|---|---|---|
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.11** | 2.10 |
+| Application envelope | **1.4** | 1.3 |
+| Profile-2 companion contracts (wallet–RDP, delivery service, relay) | **11.0.0** | 10.0.0 |
+
+**A recipient can now report a multipart failure it detects.** The previous
+edition required a recipient to check each received part before the manifest
+digest, and then directed every failure into the ordinary digest-mismatch
+outcome — which requires the recipient's recomputed value to differ from the
+sender's. For a multipart message it cannot differ: the payload digest is the
+digest of the **manifest**, so a recipient whose received parts are wrong
+recomputes the same value the sender declared, and a payload that is not the
+specified layout yields no parts to describe at all. A recipient could therefore
+**detect the failure and have no way to report it** — it would have had to invent
+a digest, assert a comparison it never performed, or stay silent and let the
+message expire.
+
+There is now a distinct outcome for it: an attributable assertion by the
+recipient, bound to the message, to the octets it decrypted and to the commitment
+it was checking, carrying a typed cause — a part's digest, its length, a part
+absent, a part the manifest does not describe, a duplicate identifier, or a
+payload that is not the layout — and the per-part detail where parts exist. It
+carries **no recomputed payload digest**, because there is none, and an observed
+digest appears only for the one cause where a comparison was actually made. The
+intake-stage refusal code is **not** reused for it: that code belongs where
+nothing has been decrypted and no recipient has spoken. Single-part messages are
+unaffected, and their digest-mismatch outcome is unchanged.
+
+**And two provider transformations are withdrawn from use.** A
+Change-Indication Evidence may record that a provider re-packaged the transmitted
+envelope or split it into several, committing to the input and to each output.
+Neither operation is defined. The output commitment is typed as a hash of a
+**complete** wire message, which a fragment is not; re-packaging an unchanged
+message in an outer wrapper leaves the inner bytes untouched, so the output
+commitment equals the input; and no published contract defines a fragment
+descriptor, a chunk order, a reassembly operation or the boundary at which the
+original message is reconstructed. Two providers given the same message could not
+perform the same transformation, and no verifier could reproduce either.
+
+So a provider **must not** issue either transformation until this is defined, and
+a verifier that meets one **must** treat the transformation as unproven rather
+than as an attested re-framing: the seal still establishes who attested what, and
+the relation of the outputs to the input is what nothing establishes. The
+retained-bundle verifier reports it as an unproven property, alongside the
+policy-history completeness it already reports, and the open question records what
+a definition would have to pin.
+
+**The previous edition's closure of the chunked-part question stands, on
+corrected ground.** Nothing in this profile splits a content part — that is true
+whatever happens to envelope framing — and citing the envelope transformations as
+a defined operation in its support was wrong.
+
+**Three introductory corrections, where a reader meets them first.** The executive
+brief said nobody learns from the evidence what kind of content was exchanged; the
+commitment discloses nothing, and the routing scope reference resolved against the
+recipient's published map gives the set of classes that scope covers — a scope
+covering one class gives that class. The first architecture figure placed protocol
+change control inside the federation authority's box, merging two authorities the
+profile keeps apart; it now draws both. And the README said there was no
+transport-security underlay, where the profile specifies ordinary HTTPS beneath
+MLS and says only that the security claims do not rest on it.
+
+**A compatibility boundary that the previous edition did not name.** Defining the
+multipart layout added no field and re-sealed nothing, so it was reported as
+moving no version — but a layout previously unconstrained became the only
+conformant one, and an implementer had no number to name in order to say which it
+implements. The application-envelope version covers the layout of the application
+data as well as the headers, and it moves with this change.
+
+## Edition r23 — 2026-09-27
 
 **No artefact version moves and nothing changes on the wire.** Two open
 questions close and one defect in a recipient obligation is corrected — the

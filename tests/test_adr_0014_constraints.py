@@ -152,13 +152,71 @@ def test_the_boundary_is_drawn_per_field_not_by_retiring_a_mode():
         assert domain_type in text, domain_type
 
 
+# --- R23-05: the migration must reach every domain the construction touches --
+
+def test_the_migration_covers_the_part_domain_and_not_only_the_content_one():
+    """The record salts each part's digest in one bullet and, two bullets on,
+    said the remaining change was confined to `ContentHash`. Both cannot hold:
+    `Manifest.items.digest` references `RawHash`, which admits `raw-sha256` and
+    `raw-sha512` over the part's bare octets and nothing else.
+
+    An implementer following the earlier text would have left the per-part
+    digests bare — preserving the oracle this record exists to close, for the
+    payloads whose metadata is most exposed — or put a salted construction under
+    a `raw-*` label and changed what that label means."""
+    text = adr()
+    flat = " ".join(text.split())
+    assert "What remains is NOT confined to `ContentHash`" in flat.replace("**", "")
+    assert "Two domains move, not one" in flat.replace("**", "")
+    # The migration table names every domain, and says which do NOT move.
+    table = text[text.index("What a migration touches"):]
+    table = table[:table.index("and, beyond the types")]
+    for domain in ("`payload_hash`", "`Manifest.items.digest`", "`doc_digest`",
+                   "`submission_hash`", "`envelope_hash`", "`mls_state`"):
+        assert domain in table, domain
+    assert table.count("unchanged") >= 2, "the domains that stay bare must say so"
+    assert "part commitment type of its own" in table
+
+    # And the schema fact the correction rests on.
+    common = json.loads((ROOT / "schemas" / "evidence-common.schema.json").read_text(
+        encoding="utf-8"))
+    part = common["$defs"]["Manifest"]["items"]["properties"]["digest"]
+    assert part["$ref"].endswith("RawHash"), part
+    assert set(common["$defs"]["RawHash"]["properties"]["hash_mode"]["enum"]) == \
+        {"raw-sha256", "raw-sha512"}
+
+
+def test_the_shared_salt_opening_consequence_is_stated_as_a_decision():
+    """One salt per message means one opening per message: a reveal proving one
+    attachment hands over the value that tests candidates against every other
+    part digest in that message. Domain separation by `part_id` stops a guessed
+    part being confirmed across messages and cannot help once the salt is known.
+
+    The record proposes whole-message opening, so this is a trade-off the group
+    decides — not a defect — and A12 must carry it or it will be decided by
+    default."""
+    flat = " ".join(adr().split())
+    assert "One salt per message means one opening per message" in flat.replace("**", "")
+    assert "every other part digest in that message" in flat
+    assert "Domain separation by `part_id` does not prevent it" in flat
+    assert "an opening secret per part" in flat.replace("**", "")
+    assert "whether opening is per message or per part" in flat, \
+        "the open-questions list must carry it, or the decision is made by silence"
+
+
 # --- the record still says what it said ------------------------------------
 
 def test_nothing_else_about_the_construction_moved():
     text = adr()
     assert "sm-mls:content-digest:v1" in text
     assert "`content_digest_salt`" in text
-    assert "2.10 → 2.11" in text, "the proposal states its cost against the editions in force"
+    # NOT a literal. This assertion used to pin "2.10 → 2.11", and the record's
+    # cost paragraph went stale three times in two days — once per pass that
+    # moved an edition — because it restated four numbers nothing derived.
+    assert "one evidence minor, one application-envelope minor and one companion-contracts " \
+           "major" in " ".join(text.split()).replace("**", ""), \
+        "the proposal states its cost as a relation, so it cannot go stale"
+    assert "2.10 → 2.11" not in text, "an edition literal the record does not derive"
     assert re.search(r"no reinterpretation of already-issued evidence", text, re.I)
 
 

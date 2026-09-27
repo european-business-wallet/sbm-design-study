@@ -379,7 +379,15 @@ def incomplete_of(issues):
 # added to one and forgotten in the other.
 RETAINED_MATERIAL_INPUTS = (
     "policy_history", "receipts", "group_contexts", "counterparty_members",
-    "formation_inputs", "suite_registry", "federation_register")
+    "formation_inputs", "suite_registry", "federation_register",
+    # R23-01/A15: the input that WOULD establish that a CE's output
+    # commitments are the transformation of its input. No bundle carries one,
+    # because no operation is defined to produce it — the output commitment is
+    # typed `mls10-message`, a COMPLETE MLSMessage, which a fragment is not.
+    # Named here rather than left unnameable, so the gap is reported through
+    # the same machinery as every other unestablished property, and so a
+    # definition has somewhere to arrive.
+    "transformation_traces")
 
 
 # Batch A / A5 — the ACT's own instant, per evidence type. Admission is asked
@@ -456,7 +464,8 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                  policy_history=None, receipts=None,
                  group_contexts=None, counterparty_members=None,
                  formation_inputs=None, suite_registry=None,
-                 federation_register=None, fa_anchors=None):
+                 federation_register=None, fa_anchors=None,
+                 transformation_traces=None):
     """Return a list of (rule, message) violations for a loaded bundle.
 
     `member_history` (DR-11, optional): {mid: [BW-MEMBER versions]}, each
@@ -1581,6 +1590,30 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 raise RequiredPropertyConfigError(
                     f"{prop['id']!r}: `evidence_has_field` names no field")
             return any(e.get(field) for e in evidence)
+        if kind == "evidence_or_nested_has_field":
+            # An Evidence Package carries its CEs in `changes[]` and its
+            # outcomes in `outcomes[]`, so a property whose trigger is a field
+            # of a SUB-artefact is invisible to the check above. Reporting a
+            # gap for a loose CE and not for the same CE inside a package would
+            # be reporting by the accident of packaging. A separate kind rather
+            # than a widening of `evidence_has_field`, because that one is the
+            # trigger for three other properties and quietly changing what they
+            # fire on is not this row's business.
+            field = when.get("field")
+            if not field:
+                raise RequiredPropertyConfigError(
+                    f"{prop['id']!r}: `evidence_or_nested_has_field` names no field")
+
+            def _reaches(obj):
+                if isinstance(obj, dict):
+                    if obj.get(field):
+                        return True
+                    return any(_reaches(v) for k, v in obj.items()
+                               if k in ("changes", "outcomes", "se", "evidence"))
+                if isinstance(obj, list):
+                    return any(_reaches(v) for v in obj)
+                return False
+            return any(_reaches(e) for e in evidence)
         if kind == "any_input":
             names = when.get("inputs") or []
             unknown = [n for n in names if n not in _SUPPLIED]

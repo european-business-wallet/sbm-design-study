@@ -189,6 +189,36 @@ def test_mode_c_re_verification_names_both_steps_in_order():
         "a failure is reported as a mismatch is, not through a new outcome"
 
 
+def test_the_carrier_is_a_stated_compatibility_boundary():
+    """It adds no field and re-seals nothing, so it was reported as moving no
+    version and nothing on the wire. That was wrong in the way that matters: a
+    layout previously unconstrained is now the only conformant one, and an
+    implementer had no number to name to say which of the two worlds it
+    implements. The application-envelope version is that number, and it covers
+    the layout of the application data as well as the headers."""
+    id_text = " ".join((ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text().split())
+    assert "first mandatory carrier for Mode C, and it is a compatibility boundary" \
+        in id_text.replace("**", "")
+    assert "declaring **1.4 or later**" in id_text
+    assert "nothing may be assumed about the carrier of an implementation built to an " \
+           "earlier one" in id_text
+    assert "a later edition does not reach backwards" in id_text
+
+    import json
+    manifest = json.loads((ROOT / "versions.json").read_text(encoding="utf-8"))
+    dim = manifest["dimensions"]["application_envelope"]
+    assert dim["value"] == "1.4"
+    assert "the layout of the application data" in dim["note"], \
+        "the dimension's own note scoped it to the headers, which is how the change " \
+        "came to move no version"
+    # The I-D's reference to the schema is BOUND now: it said v1.1 while the
+    # schema title said v1.3, a number restated where nothing derived it.
+    bound = [b["file"] for b in dim["bindings"]]
+    assert "ietf/draft-sbm-mls-erd-00.md" in bound, bound
+    assert "`schemas/envelope.schema.json` (v1.4)" in \
+        (ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text(encoding="utf-8")
+
+
 def test_the_agenda_records_the_decision():
     row = next(l for l in (ROOT / "docs" / "REVIEW_AGENDA.md").read_text().splitlines()
                if l.startswith("| A14 |"))

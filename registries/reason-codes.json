@@ -136,6 +136,16 @@
       },
       "en_319_522": "no-equivalent (SM-MLS integrity re-verification; exported as ContentConsignmentFailure)"
     },
+    "payload-validation-failed": {
+      "status": "active",
+      "stages": {
+        "consignment": "D.2-ContentConsignmentFailure"
+      },
+      "allowed_events": [
+        "D.2-ContentConsignmentFailure"
+      ],
+      "en_319_522": "no-equivalent (SM-MLS post-decryption payload validation; exported as ContentConsignmentFailure): the recipient decrypted the envelope and the payload did not validate against the manifest the SE carries, or was not the specified framing at all. Distinct from payload-hash-mismatch, which asserts a comparison of two digests that both exist: under Mode C the declared payload_hash is the digest of the manifest, so wrong parts recompute to the SAME value and no differing digest can honestly be produced"
+    },
     "policy-block": {
       "allowed_events": [
         "A.2-SubmissionRejection",
@@ -263,6 +273,39 @@
         "intake": "A.2-SubmissionRejection"
       },
       "en_319_522": "SubmissionRejection — technical non-acceptance (A.2)"
+    }
+  },
+  "$comment_validation": "The typed causes a recipient may assert in a RecipientValidationFailure, carried on an NDE with reason payload-validation-failed. They are causes, not stages: every one of them is post-decryption and recipient-attributed. They are NOT intake reasons and malformed-envelope is not among them — that code is bound to an intake stage and a relay stage, where nothing has been decrypted and no recipient has spoken.",
+  "recipient_validation_failures": {
+    "part-digest-mismatch": {
+      "status": "active",
+      "applies_to": "one part",
+      "note": "the digest over the octets received for this part differs from the manifest's. The one cause where a comparison WAS made and both sides exist, so the assertion carries `declared` and `observed`"
+    },
+    "part-length-mismatch": {
+      "status": "active",
+      "applies_to": "one part",
+      "note": "the octets received for this part are not the count the manifest declares. Reported separately from the digest because a length is checkable before hashing and names the failure more precisely"
+    },
+    "part-absent": {
+      "status": "active",
+      "applies_to": "one part",
+      "note": "the manifest describes this part and the payload does not carry it"
+    },
+    "part-undescribed": {
+      "status": "active",
+      "applies_to": "one part",
+      "note": "the payload carries this part and the manifest does not describe it"
+    },
+    "part-id-duplicate": {
+      "status": "active",
+      "applies_to": "one part",
+      "note": "the payload carries this part_id more than once; the framing forbids it"
+    },
+    "payload-framing-invalid": {
+      "status": "active",
+      "applies_to": "the whole payload",
+      "note": "the payload is not the deterministic-CBOR array of {part_id, octets} records the profile specifies — not CBOR, not an array, not deterministic, or out of canonical order. No parts can be named, which is why this is the one cause carrying no per-part detail"
     }
   },
   "re_reasons": {

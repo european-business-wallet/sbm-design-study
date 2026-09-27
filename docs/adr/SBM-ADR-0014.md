@@ -109,6 +109,19 @@ Proposed, pending A12:
   salted is decided **there**, after the descriptor and the evidence that would
   make a chunk an object at all — not carried here as a question about something
   the profile does not have.
+- **One salt per message means one opening per message.** Every part commitment
+  takes the message's `content_digest_salt`, so a reveal that proves one
+  attachment hands over the value that lets its holder test candidates against
+  **every other part digest in that message**. Domain separation by `part_id`
+  does not prevent it: it stops a guessed part being confirmed across messages
+  and in other positions, which is what it is for, and it cannot help once the
+  salt itself is known. A dispute about one invoice therefore opens the
+  multipart message it travelled in. This record does not promise selective
+  opening, so this is a trade-off to decide with A12 and not a defect in the
+  construction: **whole-message opening**, which is what is proposed and is
+  simpler to implement and to reason about, or **an opening secret per part** —
+  sixteen bytes each, carried in the envelope beside the manifest, at the cost of
+  a larger envelope and a reveal procedure that has to say which parts it opens.
 - **The manifest's cleartext** — attachment names, sizes and types in the
   sealed SE — is decided with A12 and not after it: either it stays and the
   metadata threat model says the providers see it, or the manifest moves
@@ -129,9 +142,21 @@ Proposed, pending A12:
   `RawHash`, and `doc_digest` and `submission_hash` `RawSha256Hash`. So
   **keeping `doc_digest` bare needs no global retirement of a mode**: its
   domain already admits nothing else, and no rename is required to stop a
-  content mode reaching it. What remains for A12 is confined to the content
-  domain — add salted modes to `ContentHash`, and decide whether the bare
-  ones leave it. Naming them for the content (`content-sha256`,
+  content mode reaching it.
+
+  **What remains is NOT confined to `ContentHash`, and an earlier draft of this
+  bullet said it was.** That draft named `RawHash` as a part's type in one
+  sentence and proposed adding the salted modes to `ContentHash` alone in the
+  next. The two cannot both hold: the Mode C bullet above salts **each part's
+  digest**, `Manifest.items.digest` references `RawHash` directly, and `RawHash`
+  admits `raw-sha256` and `raw-sha512` over the part's bare octets and nothing
+  else. An implementer following the earlier text would have left the per-part
+  digests bare — preserving exactly the oracle this record exists to close, one
+  level down, for the payloads whose metadata is most exposed — or put a salted
+  construction under a `raw-*` label and changed what that label means. **Two
+  domains move, not one**: the content fields, and the part digest, each with
+  modes of its own; `doc_digest` and `submission_hash` stay bare for the reasons
+  set out below. Naming the content modes for the content (`content-sha256`,
   `content-sha512`, `content-manifest-sha256`, `content-manifest-sha512`)
   remains the proposal, because a mode's name is what an artefact carries and
   a reader should not have to know the field's type to know whether a salt is
@@ -141,6 +166,21 @@ Proposed, pending A12:
   version dimension that narrowing reaches. Either way the set is closed
   again at the bump and every member is mandatory to implement, which is the
   condition on which A11 was closed.
+
+  **What a migration touches**, so that acceptance is priced against the whole
+  of it and not against one type:
+
+  | Domain | Field(s) | Today | Under this proposal |
+  |---|---|---|---|
+  | Content | `payload_hash`, envelope `content_digest` | `ContentHash` | salted modes added; whether the bare ones leave is the decision |
+  | Observed octets | `Manifest.items.digest` | `RawHash` | **a part commitment type of its own**, with a part-salted mode; `RawHash` keeps its meaning |
+  | SHA-256 pinned | `doc_digest`, `submission_hash` | `RawSha256Hash` | **unchanged, deliberately** — a published document and pre-parse octets |
+  | Transmitted octets | `envelope_hash`, `mls_state`, the seal imprint | fixed types, no selector | **unchanged** — recomputed by parties without the plaintext |
+
+  and, beyond the types: the `Manifest` definition and the CDDL beside it, the
+  recipient's Mode C re-verification, the sample generator, the published
+  vectors, and every version dimension the resolved-shapes gate names for the
+  two types that move.
 - **What stays bare, by construction and not by oversight.** Four other
   digests are outside this proposal for a reason that is not a preference.
   `envelope_hash`, `mls_state` and the seal's own imprint are commitments
@@ -289,10 +329,14 @@ said.
   applied cryptography and to QERDS operators. Accepting it is the
   maintainer's act after the group's answer; nothing in this record is in
   force.
-- **Implementation:** not implemented. If accepted, from the editions in
-  force at the time of writing: evidence 2.10 → 2.11, application envelope
-  1.3 → 1.4, companion contracts 10.0.0 → 11.0.0, every
-  sample carrying a `payload_hash` re-sealed, the TS revised, in one change.
+- **Implementation:** not implemented. If accepted, the cost is **one evidence
+  minor, one application-envelope minor and one companion-contracts major**,
+  from whatever editions are in force on the day it is accepted — with every
+  sample carrying a `payload_hash` re-sealed and the TS revised, in one change.
+  Stated as a relation and not as four numbers: this paragraph named the
+  editions of the day it was written and went stale three times in two days, on
+  every pass that moved one of them. `versions.json` is where the editions in
+  force are read.
 
 ## Supersedes
 
@@ -310,7 +354,7 @@ retention clause and the ICS rows.
 
 - [A12](../REVIEW_AGENDA.md): whether the content digest should be salted at
   all — this record is the proposal, not the answer — and, within it, the
-  manifest's cleartext, the form of the construction, and the outcome for a salt
-  that cannot be used. The chunk layer was a fourth item here until
+  manifest's cleartext, the form of the construction, the outcome for a salt that
+  cannot be used, and whether opening is per message or per part. The chunk layer was a fourth item here until
   [A13](../REVIEW_AGENDA.md) closed on 27 September 2026; there is no chunked
   part, so there is nothing of it to salt.

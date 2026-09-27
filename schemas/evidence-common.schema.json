@@ -1,7 +1,7 @@
 {
   "$id": "https://bw.example.eu/schemas/evidence-common.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Common Evidence Definitions (v2.10)",
+  "title": "Common Evidence Definitions (v2.11)",
   "description": "Shared definitions for Business Wallet evidence objects. hash_mode selects raw-byte hashing (raw-sha256/raw-sha512) or the multipart-manifest modes (manifest-sha256/manifest-sha512); the alg/hash_mode/hex triple is constrained to be internally coherent (SHA-256 => 64 hex, SHA-512 => 128 hex); the Uid pattern uses the canonical hyphen separator.",
   "$defs": {
     "Uid": {
@@ -434,6 +434,162 @@
         }
       },
       "additionalProperties": false
+    },
+    "RecipientValidationFailure": {
+      "type": "object",
+      "description": "The recipient's attributable assertion that the decrypted payload FAILED VALIDATION — a state distinct from a digest mismatch, and one the profile had no way to report. Carried on NDE-v1 with reason 'payload-validation-failed'. A `mismatch` confirmation asserts a comparison that WAS MADE and carries the differing digest; under Mode C the declared `payload_hash` is the digest of the MANIFEST, so a recipient whose received parts are wrong recomputes the same value the sender declared and can produce no differing digest at all — and a payload that is not the framing yields no parts to describe. This object carries what the recipient can honestly attest: the octets it decrypted (`envelope_hash`), the commitment it was checking (`declared_payload_hash`, copied from the SE), a typed `failure`, and the per-part detail where parts exist. It carries NO recomputed payload_hash, because there is none to compute; inventing one is the false speech this type exists to prevent.",
+      "additionalProperties": false,
+      "required": [
+        "mid",
+        "failure",
+        "envelope_hash",
+        "declared_payload_hash",
+        "verified_at",
+        "message_id",
+        "mls_group_id",
+        "mls_epoch",
+        "mls_state",
+        "acceptance_policy_ref"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "wallet_signature_b64"
+          ]
+        },
+        {
+          "required": [
+            "session_authenticated"
+          ]
+        }
+      ],
+      "properties": {
+        "mid": {
+          "type": "string",
+          "pattern": "^[0-9A-HJ-NP-TV-Z]{9}$"
+        },
+        "device_id": {
+          "type": "string"
+        },
+        "verified_at": {
+          "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+        },
+        "message_id": {
+          "type": "string"
+        },
+        "mls_group_id": {
+          "$ref": "evidence-common.schema.json#/$defs/MlsGroupId"
+        },
+        "mls_epoch": {
+          "$ref": "evidence-common.schema.json#/$defs/MlsEpoch"
+        },
+        "mls_state": {
+          "$ref": "#/$defs/MlsStateHash"
+        },
+        "acceptance_policy_ref": {
+          "$ref": "evidence-common.schema.json#/$defs/AcceptancePolicyRef"
+        },
+        "wallet_signature_b64": {
+          "type": "string",
+          "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$",
+          "minLength": 64,
+          "description": "Recipient wallet advanced electronic signature: a COSE_Sign1 whose payload is the deterministic-CBOR encoding of the confirmation object with wallet_signature_b64 removed (the same signed-payload construction as the RDP seal, the I-D (Evidence Objects and COSE Packaging)/the I-D (Canonicalisation and Payload Hashing)) — not over a chosen field subset. Base64 of the COSE_Sign1; the protected-header alg MUST be EdDSA(-8)/ES256(-7)/ES384(-35) (LINT-PKG-05). Present as an alternative to session_authenticated."
+        },
+        "session_authenticated": {
+          "const": true
+        },
+        "envelope_hash": {
+          "$ref": "evidence-common.schema.json#/$defs/EnvelopeHash",
+          "description": "The octets the recipient decrypted, so the assertion is bound to what it actually received and not to what the sender said it sent. Equals the SE's envelope_hash when the transport delivered the message unaltered."
+        },
+        "declared_payload_hash": {
+          "$ref": "evidence-common.schema.json#/$defs/ContentHash",
+          "description": "The commitment the recipient was checking, copied from the SE. NOT a recomputation: naming what was checked is what makes the failure legible, and this object has no recomputed counterpart by design."
+        },
+        "failure": {
+          "type": "string",
+          "enum": [
+            "part-digest-mismatch",
+            "part-length-mismatch",
+            "part-absent",
+            "part-undescribed",
+            "part-id-duplicate",
+            "payload-framing-invalid"
+          ],
+          "description": "Typed cause, from `registries/reason-codes.json` `recipient_validation_failures`. Closed set; a verifier that meets a value it does not know MUST NOT infer one."
+        },
+        "parts": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Per-part detail, REQUIRED for every failure except payload-framing-invalid, where the payload yielded no parts. Names the part and what was wrong with it; carries no part content.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "part_id",
+              "failure"
+            ],
+            "properties": {
+              "part_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9._-]{1,64}$"
+              },
+              "failure": {
+                "type": "string",
+                "enum": [
+                  "part-digest-mismatch",
+                  "part-length-mismatch",
+                  "part-absent",
+                  "part-undescribed",
+                  "part-id-duplicate"
+                ]
+              },
+              "declared": {
+                "$ref": "evidence-common.schema.json#/$defs/RawHash",
+                "description": "The manifest's digest for this part."
+              },
+              "observed": {
+                "$ref": "evidence-common.schema.json#/$defs/RawHash",
+                "description": "The digest over the octets received for this part. Present for part-digest-mismatch, where a comparison WAS made and both sides exist; absent otherwise."
+              },
+              "declared_length": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)$"
+              },
+              "observed_length": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)$"
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "failure": {
+                "const": "payload-framing-invalid"
+              }
+            },
+            "required": [
+              "failure"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "parts"
+              ]
+            }
+          },
+          "else": {
+            "required": [
+              "parts"
+            ]
+          }
+        }
+      ]
     },
     "AuthContext": {
       "type": "object",

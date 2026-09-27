@@ -14,8 +14,8 @@
       "source": "docs/diagrams/four-corner-architecture-technology-neutral.svg",
       "command": "rsvg-convert -w 1400 -b white docs/diagrams/four-corner-architecture-technology-neutral.svg -o docs/diagrams/four-corner-architecture-technology-neutral.png",
       "tool": "rsvg-convert 2.63.0",
-      "source_sha256": "bbf6b1a9471d7d8ad713fab4a25faa9da2474d1681f255684eb806b312db8f1c",
-      "export_sha256": "def40afa2a5ce95ea3d97972f33a52a8702727aa0e9cf6c35e6a0e57e3f2d7c2"
+      "source_sha256": "340f2b50a8d1976b369241bb51107cbf463d38db269976bc8ad7dc5ee4e3b499",
+      "export_sha256": "8c74af7afb7088056f2c6341cea50416751f39b444c1fd804c5679408eee3659"
     },
     {
       "export": "docs/diagrams/functional-stack-technology-neutral.png",

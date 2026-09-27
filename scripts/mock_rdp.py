@@ -2569,7 +2569,7 @@ def delivery_decision(se, grade, *, s2_at=None, state=None):
 
     Timeliness is `lint_cli.in_time`, the rule LINT-BND-22 applies: a tie is
     delivered. Returns {"outcome": "delivered" | "expired" | "mismatch" |
-    "refused" | "pending", "delivered_at": instant or None}. `expired` means the event
+    "validation-failed" | "refused" | "pending", "delivered_at": instant or None}. `expired` means the event
     happened, late; `pending` that it has not happened (yet)."""
     from lint_cli import in_time
     if grade == "availability":
@@ -3067,6 +3067,24 @@ def deliver_confirmation(request, *, credential, se, rdp_id, observed_at,
         v = _ev.Violations()
         _ev.lint_nde_semantics(v, candidate, se=se)   # every NDE rule but the seal
         found = [r for r, _m in validate_body(candidate)] + [r for r, _m in v.items]
+    elif kind == "validation-failure":
+        # R23-01: the outcome a detected Mode C content failure had nowhere to
+        # go. It carries NO payload_hash of the recipient's: under Mode C the
+        # declared value is the digest of the manifest, so an honest
+        # recomputation equals the sender's and LINT-NDE-06 refuses the NDE a
+        # mismatch would have to be.
+        candidate = {"type": "NDE-v1", "version": EVIDENCE_VERSION,
+                     "profile": "pilot", "event": "D.2-ContentConsignmentFailure",
+                     "reason": "payload-validation-failed",
+                     "evidence_id": _evidence_id(),
+                     "message_id": se["message_id"],
+                     "recipient_uid": se["recipient_uid"], "rdp_id": rdp_id,
+                     "policy_id": se["policy_id"],
+                     "payload_hash": se["payload_hash"], "observed_at": observed_at,
+                     "recipient_validation_failure": _copy.deepcopy(conf)}
+        v = _ev.Violations()
+        _ev.lint_nde_semantics(v, candidate, se=se)   # every NDE rule but the seal
+        found = [r for r, _m in validate_body(candidate)] + [r for r, _m in v.items]
     elif kind == "refusal":
         candidate = {"type": "RE-v1", "version": EVIDENCE_VERSION,
                      "profile": "pilot", "event": "C.4-ConsignmentRejection",
@@ -3103,15 +3121,16 @@ def deliver_confirmation(request, *, credential, se, rdp_id, observed_at,
             f"on fails {sorted(set(found))} — nothing is stored or sealed "
             "(R12-01/R12-02)")
 
-    # 8. THE AGGREGATE — R11-X1 and R12-X1. `s3` counts; a verified `mismatch`
-    # or `refusal` is terminal and issues its evidence; a `reveal` changes
-    # nothing. Acts after a terminal outcome are retained and change nothing.
+    # 8. THE AGGREGATE — R11-X1 and R12-X1. `s3` counts; a verified `mismatch`,
+    # `validation-failure` or `refusal` is terminal and issues its evidence; a
+    # `reveal` changes nothing. Acts after a terminal outcome are retained and
+    # change nothing.
     pol, eligible = _selected_policy(se, org, members)
     state = _CONFIRMATION_STATE.get(handle) or {
         "state": "open", "at": None, "counted": [], "policy": pol}
     issued = None
     if state["state"] == "open":
-        if kind in ("mismatch", "refusal"):
+        if kind in ("mismatch", "refusal", "validation-failure"):
             issued = evidence_artifact(candidate, kid="rdp")
             state = dict(state, state=rules["terminal"], at=observed_at)
         elif kind == "s3" and who[1] in eligible:
@@ -3133,6 +3152,11 @@ def deliver_confirmation(request, *, credential, se, rdp_id, observed_at,
 CONFIRMATION_KINDS = {
     "s3":       {"time": "verified_at", "ack": True,  "policy_ref": True,  "terminal": None},
     "mismatch": {"time": "verified_at", "ack": True,  "policy_ref": True,  "terminal": "mismatch"},
+    # R23-01. Terminal like a mismatch and for the same reason — the failure is
+    # message-wide — but a DIFFERENT claim: a mismatch asserts a comparison that
+    # was made, this asserts that none could be.
+    "validation-failure": {"time": "verified_at", "ack": True, "policy_ref": True,
+                           "terminal": "validation-failed"},
     "refusal":  {"time": "refused_at",  "ack": False, "policy_ref": False, "terminal": "refused"},
     "reveal":   {"time": "read_at",     "ack": False, "policy_ref": False, "terminal": None},
 }

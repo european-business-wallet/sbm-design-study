@@ -83,16 +83,30 @@
       },
       "strategy": "report_gap",
       "$gap_rule": "The work order wrote `gap_rule: LINT-TRUST-06`. It cannot be: `is_incomplete` classifies the THIRD verdict by the `LINT-BND-I` prefix, so a row emitting LINT-TRUST-06 on absence reports a VIOLATION and exit 1 where the work order asks for [GAP] and exit 3 — and making the classifier recognise LINT-TRUST-06 would make a genuine `suspended` finding report INCOMPLETE too, since one rule id would then carry two verdicts. That is behaviour selected by a rule identifier, which is exactly the defect R8-06 closed. So absence emits LINT-BND-I6 (the register was not supplied; nothing is wrong with the evidence) and LINT-TRUST-06 stays what it is: a provider that acted while not admitted."
+    },
+    {
+      "id": "envelope-transformation",
+      "input": "transformation_traces",
+      "gap_rule": "LINT-BND-I7",
+      "establishes": "that the outputs a Change-Indication Evidence commits to are the transformation of the input it commits to",
+      "precondition": "an evidence object carries a CE transformation",
+      "when": {
+        "kind": "evidence_or_nested_has_field",
+        "field": "transformation"
+      },
+      "strategy": "report_gap",
+      "note": "Deferred 27 September 2026. Neither `re-packaging` nor `chunking` is a defined operation: the output commitment is typed `mls10-message`, SHA-256 over a COMPLETE TLS-serialized MLSMessage, which a fragment is not, and no contract defines a fragment descriptor, a chunk order, a reassembly operation or the boundary at which the original message is reconstructed. The seal still says who attested what; the RELATION of the outputs to the input is what nothing establishes, and this gap is how a bundle says so rather than reading the CE as an attested re-framing."
     }
   ],
-  "$when": "Closed vocabulary, exhaustively mapped in bundle_lint._precondition_holds: `always` | `evidence_has_field` (with `field`) | `any_input` (with `inputs`). A kind not in this list raises rather than defaulting to 'does not apply'.",
+  "$when": "Closed vocabulary, exhaustively mapped in bundle_lint._precondition_holds: `always` | `evidence_has_field` (with `field`) | `evidence_or_nested_has_field` (with `field`, reaching an EP's `changes[]` / `outcomes[]`) | `any_input` (with `inputs`). A kind not in this list raises rather than defaulting to 'does not apply'.",
   "mandatory": [
     "policy-chain",
     "counterparty-roster",
     "group-state",
     "formation-inputs",
     "suite-registry",
-    "federation-admission"
+    "federation-admission",
+    "envelope-transformation"
   ],
   "$strategy": "Closed vocabulary, exhaustively mapped in bundle_lint._gaps: `report_gap` emits this row's `gap_rule` when the precondition holds and the input is absent; `delegated` records that the rules in `delegated_to` own the property, and bundle_lint._verify_delegations emits this row's own `gap_rule` at the end of the run if none of them actually reported anything. A strategy not in this list raises. Behaviour is NEVER selected by `gap_rule` or by `id`.",
   "$mandatory": "R8-06 requirement 3: the EXACT set of property ids this verifier must carry. `check_bundle` compares the rows against it, so deleting a row, duplicating one or renaming one is a fatal configuration error rather than a quiet reduction in what a green verdict means. Adding a property means declaring it here too."

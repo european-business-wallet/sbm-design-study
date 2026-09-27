@@ -35,7 +35,7 @@
       ]
     },
     "evidence": {
-      "value": "2.10",
+      "value": "2.11",
       "note": "Evidence objects SE/DE/NDE/RE/CE/EP/Relay. Schema const + CDDL body + sample projection are the authoritative sources; README row and schema titles must agree.",
       "bindings": [
         {
@@ -365,8 +365,8 @@
       ]
     },
     "application_envelope": {
-      "value": "1.3",
-      "note": "Plaintext application-envelope headers. Version is carried only in the schema title and the README row (no sealed artefact, no version const).",
+      "value": "1.4",
+      "note": "Plaintext application envelope: the headers AND the layout of the application data they precede. This note said 'headers' alone, so when the multipart payload carrier was defined — the first mandatory codec for an existing mode — the change was reported as moving no version and nothing on the wire. It moves this one. Version is carried in the schema title, the README row, the umbrella row and the Internet-Draft's reference to the schema (no sealed artefact, no version const).",
       "bindings": [
         {
           "kind": "json",
@@ -383,6 +383,12 @@
           "kind": "text",
           "file": "Secure-Business-Messaging-Profile.md",
           "pattern": "application envelope \\*\\*(\\d+\\.\\d+)\\*\\*"
+        },
+        {
+          "kind": "text",
+          "file": "ietf/draft-sbm-mls-erd-00.md",
+          "pattern": "`schemas/envelope\\.schema\\.json` \\(v(\\d+\\.\\d+)\\)",
+          "note": "The Internet-Draft said v1.1 while the schema title said v1.3 — a number restated where nothing derived it. Bound, so it cannot drift again."
         }
       ]
     },
@@ -524,7 +530,7 @@
       ]
     },
     "companion_contracts": {
-      "value": "10.0.0",
+      "value": "11.0.0",
       "note": "The profile-2 companion contracts — wallet-RDP, Delivery Service, RDP relay — versioned together as one stream; versions independently of the evidence family (umbrella §9.3).",
       "bindings": [
         {

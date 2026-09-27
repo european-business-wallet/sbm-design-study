@@ -69,9 +69,18 @@ def test_the_framing_that_exists_is_the_envelope_and_it_is_named_as_such():
     assert "MAY be chunked in transport" not in id_text.replace(
         '"MAY be chunked in transport"', ""), \
         "the withdrawn permission may be quoted as withdrawn, never stated as available"
-    # The envelope operation, named as an envelope operation.
-    assert "one commitment **per emitted envelope**" in id_text
     assert "Nothing in this profile splits a manifest part" in id_text
+    # And the ground the closure ACTUALLY rests on. An earlier revision cited
+    # the CE envelope transformations in its support, as "the framing operation
+    # this profile defines". They are not defined — the output commitment of a
+    # chunking operation is typed `mls10-message`, a complete MLSMessage, which
+    # a fragment is not — so they are deferred and A13 stands on the part rule
+    # alone, which is true independently of any envelope framing.
+    assert "The two envelope transformations are NOT profiled, and are deferred" \
+        in id_text.replace("**", "")
+    assert "the framing operation this profile defines" not in id_text.replace(
+        "described that as the framing operation this profile defines", ""), \
+        "the withdrawn ground may be quoted as withdrawn, never relied on"
     ce = (ROOT / "schemas" / "evidence-ce.schema.json").read_text(encoding="utf-8")
     assert '"chunking"' in ce, "the envelope-framing transformation is untouched"
     assert '"part_envelope_hashes"' in ce
@@ -85,8 +94,9 @@ def test_the_word_part_is_disambiguated_where_both_meanings_meet():
     coherent: it joined a content part to transport fragments in one sentence.
     """
     id_text = " ".join(ID.read_text(encoding="utf-8").split())
-    assert "The word *part* in that field names an emitted envelope and not a manifest part" \
-        in id_text
+    assert "The word *part* in `part_envelope_hashes` names an emitted envelope and never a " \
+           "manifest part" in id_text
+    assert "that distinction survives the deferral" in id_text
     ts = " ".join((ROOT / "etsi" / "TS-SBM-QERDS-Binding-v0.1.md").read_text(
         encoding="utf-8").split())
     assert "the only permitted transformations are on the envelope/metadata" in ts, \

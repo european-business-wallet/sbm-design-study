@@ -512,6 +512,15 @@
       "owner_fn": "check_bundle"
     },
     {
+      "id": "LINT-BND-I7",
+      "input": "assembled bundle whose evidence carries a CE transformation",
+      "precondition": "an evidence object carries a CE `transformation`",
+      "predicate": "That the outputs a Change-Indication Evidence commits to are the transformation of the input it commits to CANNOT BE ESTABLISHED, and the profile does not claim it. Neither `re-packaging` nor `chunking` is a defined operation: the output commitment is typed `mls10-message`, SHA-256 over a COMPLETE TLS-serialized MLSMessage, which a fragment is not; re-packaging an unchanged message leaves its inner octets untouched, so the output commitment equals the input; and no published contract defines a fragment descriptor, a chunk order, a reassembly operation, or the boundary at which the original message is reconstructed. The seal still establishes WHO attested WHAT; the relation of outputs to input is the gap. Deferred as A15 on the review agenda, with what a definition must pin.",
+      "error": "the CE transformation is not established — the outputs are attested, their relation to the input is not",
+      "profile": "core",
+      "owner_fn": "check_bundle"
+    },
+    {
       "id": "LINT-CE-01",
       "input": "CE evidence object (with enclosing SE context when nested in an EP)",
       "precondition": "type == CE-v1",
@@ -1230,6 +1239,15 @@
       "error": "reason {reason!r} requires event in {allowed}, got {ev!r}",
       "profile": "core",
       "owner_fn": "lint_nde"
+    },
+    {
+      "id": "LINT-NDE-08",
+      "input": "NDE evidence object (+ its SE where available)",
+      "precondition": "type == NDE-v1 AND reason == 'payload-validation-failed'",
+      "predicate": "The NDE carries a recipient_validation_failure and NOT a recipient_confirmation; its `failure`, and each entry in `parts[]`, is a registered cause; a part claiming part-digest-mismatch carries BOTH `declared` and `observed` and they differ, and no other part cause carries an `observed` digest; the assertion's message_id equals the NDE's; and, where the SE is available, its declared_payload_hash equals se.payload_hash and its mls_group_id / mls_epoch / mls_state / acceptance_policy_ref equal the SE's.",
+      "error": "the recipient validation failure does not bind to the message it is about, or asserts a comparison it did not make",
+      "profile": "core",
+      "owner_fn": "lint_nde_semantics"
     },
     {
       "id": "LINT-NDE-W1",

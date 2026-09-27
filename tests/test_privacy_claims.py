@@ -32,9 +32,28 @@ import re
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 # A sentence that says a party learns nothing / that nothing is disclosed.
+#
+# R23-04: the coverage was never the gap — `scanned_files` reaches the brief and
+# every `docs/*.md`. The PATTERN was. It matched "learns nothing" and not
+# "**nobody** learns … what kind of content was exchanged", and not "the class
+# **stays private**" — two ordinary ways of writing the same absolute claim, and
+# the two the executive brief and the production-verifier table happened to use.
+# A guard built from the phrasings of the sentences that were wrong LAST time
+# catches those sentences and no others.
+#
+# `cannot tell|know|determine|learn` was tried in the same pass and removed: it
+# fired on two sentences that are not privacy claims at all — a relying party
+# that "cannot tell that a version does not yet bind", and a creator that
+# "cannot tell a capability refusal from a delivery failure". Both describe a
+# DEFECT rather than assert a guarantee, and both would have had to be exempted
+# one by one. A guard with exemptions nobody can justify is a guard that gets
+# switched off, so the addition is confined to phrasings that are absolute
+# claims about disclosure in any context they appear.
 ABSOLUTE = re.compile(
     r"[^.]*\b(?:learns? nothing|discloses? no\b|discloses? nothing|"
-    r"reveals? nothing|without disclosing|not disclosed|cannot infer)[^.]*\.",
+    r"reveals? nothing|without disclosing|not disclosed|cannot infer|"
+    r"no[\s-]?(?:body|one)\s+(?:can\s+)?(?:learns?|knows?|sees?)|"
+    r"stays? private|remains? private|kept private)[^.]*\.",
     re.IGNORECASE)
 
 # What makes such a sentence true: it is about a field or a mechanism, not about
@@ -42,7 +61,14 @@ ABSOLUTE = re.compile(
 QUALIFIER = re.compile(
     r"from the commitment|the \*\*commitment\*\*|grade commitment|mandate commitment|"
     r"without carrying it|scope map|scope_ref|set of (?:content )?classes|"
-    r"the set it lies in|this field|A12|unsalted|without the salt", re.IGNORECASE)
+    r"the set it lies in|th(?:is|at) field|A12|unsalted|without the salt", re.IGNORECASE)
+# "that field" as well as "this field": the qualifier's job is to say the
+# sentence is about ONE FIELD rather than about the bundle, and both spellings
+# do that. The brief's corrected sentence used the one the list did not know,
+# and the guard caught its own correction — in the EXPORT, because the brief
+# exists only there and the widening that caught it had been run against the
+# source alone.
+#
 # `salt` alone is NOT a qualifier, and that is the point. The sentence this pass
 # corrected read "The salt travels only in the end-to-end-encrypted envelope, so
 # providers and external verifiers learn nothing about the class": it named the
@@ -106,6 +132,31 @@ def test_no_unqualified_privacy_claim_on_the_reading_path():
     assert unqualified_claims(ROOT) == []
 
 
+def test_the_scan_reaches_every_document_of_its_path_that_exists_here():
+    """Part of this guard's reading path is not in every tree it runs in.
+
+    `brief/` and `OPEN-ITEMS.md` are the EXPORT's own documents. Running this
+    suite in the source exercises the pattern and not those files — which is how
+    a widened pattern was verified in the source, passed, and then rejected the
+    very sentence that pass had written into the brief when the export was cut.
+
+    The invariant is the same in both trees and is what this asserts: the scan
+    covers each of those documents exactly where it exists. A first version of
+    this test asserted instead that the brief is ABSENT — true in the source,
+    false in the export, and it failed there the moment it travelled. A probe
+    that states one tree's contents rather than the relation is the defect this
+    repository calls invariant 13, committed inside the fix for a guard's own
+    blind spot.
+    """
+    here = {p.relative_to(ROOT).as_posix() for p in scanned_files(ROOT)}
+    assert "Secure-Business-Messaging-Profile.md" in here, "the core path must always be read"
+    for rel in ("brief/executive-brief.md", "OPEN-ITEMS.md"):
+        exists = (ROOT / rel).exists()
+        assert (rel in here) == exists, (
+            f"{rel}: exists={exists} but scanned={rel in here} — the scan must cover "
+            "each document of its reading path exactly where that document exists")
+
+
 def test_the_qualified_claims_are_still_there():
     """The fix is a qualifier, not a deletion: the documents must still say what
     the commitments do hide, or the correction has removed a true claim."""
@@ -127,6 +178,40 @@ def test_the_internet_draft_sends_the_reader_to_the_consideration():
         assert needed in consideration, needed
     assert "MUST" not in consideration and "SHALL" not in consideration, \
         "this is advice in a security consideration, not a new normative rule"
+
+
+def test_the_guard_catches_the_phrasings_that_got_past_it():
+    """R23-04, as a regression rather than a description.
+
+    The executive brief said "nobody learns from the evidence what kind of
+    content was exchanged" and the production-verifier table said "the class
+    stays private, and unchecked". Both are absolute disclosure claims, both are
+    contradicted by the evidence explainer's own correction — a cleartext
+    `scope_ref` resolved against the recipient's published scope map gives the
+    set of classes that scope covers, and a singleton scope gives the class —
+    and neither matched this guard, which knew "learns nothing" and not "nobody
+    learns".
+
+    The files were never the gap: `scanned_files` reaches the brief and every
+    `docs/*.md`. A guard assembled from the phrasings of the last wrong
+    sentences catches the last wrong sentences.
+    """
+    for claim in ("nobody learns from the evidence what kind of content was exchanged.",
+                  "the class stays private, and unchecked.",
+                  "no one knows which class it was.",
+                  "the content class remains private."):
+        assert ABSOLUTE.search(claim), claim
+        assert not QUALIFIER.search(claim), f"unqualified, and must be reported: {claim}"
+    # And the qualified form of the same claim must still pass, or the guard
+    # forbids saying the true thing.
+    ok = ("Nobody learns the class from the commitment, which is about that field: "
+          "the resolved scope_ref gives the set of classes the scope covers.")
+    assert ABSOLUTE.search(ok) and QUALIFIER.search(ok)
+    # Both spellings of the qualifier, because the brief's corrected sentence
+    # used one of them and this guard rejected its own correction.
+    for spelling in ("this field", "that field"):
+        assert QUALIFIER.search(f"so {spelling} discloses nothing: a reader cannot "
+                                "test a guess against it."), spelling
 
 
 def test_the_consolidated_threat_model_carries_the_digest_residual():

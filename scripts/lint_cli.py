@@ -110,6 +110,9 @@ NDE_REASON_EVENT = {k: set(v["allowed_events"])
                     for k, v in _REASONS["nde_reasons"].items()
                     if v.get("allowed_events")}
 REGISTERED_NDE_REASONS = set(_REASONS["nde_reasons"])
+# The typed causes a recipient may assert when the decrypted payload did not
+# validate — a state that is NOT a digest mismatch and had no outcome.
+RECIPIENT_VALIDATION_FAILURES = set(_REASONS["recipient_validation_failures"])
 REGISTERED_RE_REASONS = set(_REASONS["re_reasons"])
 # X-29: the registry also kind-binds each RE reason — a "member" reason claims a
 # user act and demands member proof; an "organisation-policy" reason never does.

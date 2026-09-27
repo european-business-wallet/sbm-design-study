@@ -90,8 +90,10 @@ and its devices, which a counterparty reads before sending. That a qualified
 timestamp is available from outside the protocol, and that a wallet can hold a
 key the entity is willing to be bound by.
 
-**Not attempted.** No transport-security underlay: MLS is the end-to-end layer,
-not beneath one. No single deployment shape: the profiles in the umbrella's
+**Not attempted.** No new transport-security protocol: the contracts run over
+ordinary HTTPS with TLS 1.3, and MLS sits **above** it as the end-to-end layer,
+so the confidentiality and the legal claims rest on MLS and not on the
+hop-by-hop underlay. No single deployment shape: the profiles in the umbrella's
 Annex P range from one co-located provider with a static directory to a full
 four-corner federation, and a deployment that adopts neither confidentiality
 scopes nor the agent profile is a complete one.
@@ -229,12 +231,12 @@ what a green bar does and does not mean, and how to send feedback.
 | Artefact | Version |
 |---|---|
 | Umbrella profile | 2.1 (edition 2026-09-18) |
-| Evidence objects (SE/DE/NDE/RE/CE/EP) | **2.10** (octet-authoritative) |
-| Application envelope | 1.3 |
+| Evidence objects (SE/DE/NDE/RE/CE/EP) | **2.11** (octet-authoritative) |
+| Application envelope | 1.4 |
 | BW-MED / BW-ORG / BW-MEMBER | 2.1 / 2.7 / 2.2 |
 | EDD resolver contract (OpenAPI) | 1.13.0 |
 | Federation register contract (OpenAPI) | 3.0.0 |
-| Profile-2 companion contracts (wallet-RDP / DS / relay) | 10.0.0 |
+| Profile-2 companion contracts (wallet-RDP / DS / relay) | 11.0.0 |
 | TS (QERDS binding) | v0.35 |
 
 Generated-and-checked from [`versions.json`](versions.json), the single source
@@ -422,7 +424,7 @@ specification does **not** yet answer â€” protocol, production trust and legal â
 with the assumption each one rests on, and what is not yet written, the
 implementer guide, carried as G1 to G4.
 
-- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r23`,
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r24`,
   the git tag of that name; earlier tags of this snapshot stay where they are
   and each names the edition it was cut from. Cite the tag, or the commit you
   hold, so an answer can be matched to the text it answers. The reviewer

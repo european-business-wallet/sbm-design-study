@@ -7,7 +7,7 @@
 
 This catalogue is the **normative definition** of every `LINT-*` conformance rule referenced by the umbrella (§9.4) and the TS (Annex A ICS pro forma). It exists so an assessor can build an independent checker that reproduces every verdict from this document and the sample vectors **without reading the reference Python**. The scripts under `scripts/` (`evidence_lint.py`, `discovery_lint.py`, `bundle_lint.py`, `lint_cli.py`) are the **versioned reference implementation** of this catalogue, not its definition: a change to a rule's behaviour MUST be accompanied by a change to this catalogue and its tests (enforced by `tests/test_lint_catalogue.py`).
 
-**Rules:** 158 · **with a naming test:** 147/158 · **catalogue version:** 1.
+**Rules:** 160 · **with a naming test:** 149/160 · **catalogue version:** 1.
 
 **Profile applicability.** `core` rules apply to every deployment; `production` rules apply only under `--profile production`; `agent` rules apply only where a system member (Annex R) is enrolled; `four-corner` rules apply only to relay/federated (profile-2) evidence.
 
@@ -410,7 +410,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Predicate (PASS iff):** recipient_confirmation.payload_hash MUST DIFFER from nde.payload_hash (equality would contradict the mismatch claim).
 - **Error outcome:** recipient_confirmation.payload_hash must differ from the NDE (sender) payload_hash
 - **Reference implementation:** `lint_nde`
-- **Tests:** `test_evidence_lint_negative.py`
+- **Tests:** `test_evidence_lint_negative.py`, `test_validation_failure_outcome.py`
 
 ### LINT-NDE-07 · `core`
 
@@ -420,6 +420,15 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Error outcome:** reason {reason!r} requires event in {allowed}, got {ev!r}
 - **Reference implementation:** `lint_nde`
 - **Tests:** `test_channel_convergence.py`, `test_evidence_lint_negative.py`, `test_expiry_validation.py`, `test_merge_lifecycle.py`, `test_reason_event_table.py`, `test_registry_extension.py`, `test_relay_stage_event.py`, `test_schema_negative.py`, `test_suspension_hold.py`
+
+### LINT-NDE-08 · `core`
+
+- **Input:** NDE evidence object (+ its SE where available)
+- **Precondition:** type == NDE-v1 AND reason == 'payload-validation-failed'
+- **Predicate (PASS iff):** The NDE carries a recipient_validation_failure and NOT a recipient_confirmation; its `failure`, and each entry in `parts[]`, is a registered cause; a part claiming part-digest-mismatch carries BOTH `declared` and `observed` and they differ, and no other part cause carries an `observed` digest; the assertion's message_id equals the NDE's; and, where the SE is available, its declared_payload_hash equals se.payload_hash and its mls_group_id / mls_epoch / mls_state / acceptance_policy_ref equal the SE's.
+- **Error outcome:** the recipient validation failure does not bind to the message it is about, or asserts a comparison it did not make
+- **Reference implementation:** `lint_nde_semantics`
+- **Tests:** `test_validation_failure_outcome.py`
 
 ### LINT-NDE-W1 · `core`
 
@@ -1408,6 +1417,15 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Error outcome:** that every provider named in the bundle was admitted to the federation at the instant of its act — NOT ESTABLISHED: the bundle carries no `federation_register` (R6-05)
 - **Reference implementation:** `check_bundle`
 - **Tests:** `test_federation_gate.py`
+
+### LINT-BND-I7 · `core`
+
+- **Input:** assembled bundle whose evidence carries a CE transformation
+- **Precondition:** an evidence object carries a CE `transformation`
+- **Predicate (PASS iff):** That the outputs a Change-Indication Evidence commits to are the transformation of the input it commits to CANNOT BE ESTABLISHED, and the profile does not claim it. Neither `re-packaging` nor `chunking` is a defined operation: the output commitment is typed `mls10-message`, SHA-256 over a COMPLETE TLS-serialized MLSMessage, which a fragment is not; re-packaging an unchanged message leaves its inner octets untouched, so the output commitment equals the input; and no published contract defines a fragment descriptor, a chunk order, a reassembly operation, or the boundary at which the original message is reconstructed. The seal still establishes WHO attested WHAT; the relation of outputs to input is the gap. Deferred as A15 on the review agenda, with what a definition must pin.
+- **Error outcome:** the CE transformation is not established — the outputs are attested, their relation to the input is not
+- **Reference implementation:** `check_bundle`
+- **Tests:** `test_ce_transformation_deferred.py`
 
 ### LINT-BND-W1 · `production`
 

@@ -55,6 +55,7 @@ DE_AVAILABILITY_EVENT = "D.1-ContentConsignment"  # DE event only at the declare
 # NDE is the pre-submission case (A.2) — the recipient-refusal case is an RE (C.4).
 # X-25: loaded from registries/reason-codes.json via lint_cli — registering a
 # reason (or binding its events) is a registry action, not a lint-code change.
+from lint_cli import RECIPIENT_VALIDATION_FAILURES  # noqa: E402  — R23-01
 from lint_cli import (NDE_REASON_EVENT, REGISTERED_NDE_REASONS,  # noqa: E402
                       REGISTERED_RE_REASONS, REASON_LEXICAL, RE_REASON_KIND,
                       AUTH_ASSURANCE)
@@ -723,6 +724,65 @@ def lint_nde_semantics(v, nde, se=None):
         if rc.get("payload_hash") == nde.get("payload_hash"):
             v.add("LINT-NDE-06",
                   "recipient_confirmation.payload_hash must differ from the NDE (sender) payload_hash")
+    if reason == "payload-validation-failed":
+        # LINT-NDE-08 (R23-01): the outcome for a post-decryption validation
+        # failure, which is NOT a mismatch. A `mismatch` confirmation asserts a
+        # comparison that was MADE and carries the differing digest; under
+        # Mode C the declared payload_hash is the digest of the MANIFEST, so a
+        # recipient whose received parts are wrong recomputes the same value the
+        # sender declared, and LINT-NDE-06 refuses the NDE it would have to
+        # build. The failure was detectable and unreportable — the defect
+        # SBM-ADR-0014 names for an unusable salt, in the live path.
+        vfr = nde.get("recipient_validation_failure") or {}
+        _check_wallet_sig(v, vfr, "recipient_validation_failure")
+        if nde.get("recipient_confirmation") is not None:
+            v.add("LINT-NDE-08",
+                  "an NDE carries a recipient_confirmation OR a "
+                  "recipient_validation_failure, never both: one asserts a comparison "
+                  "that was made, the other that none could be")
+        if vfr.get("failure") not in RECIPIENT_VALIDATION_FAILURES:
+            v.add("LINT-NDE-08",
+                  f"recipient_validation_failure.failure {vfr.get('failure')!r} is not a "
+                  "registered cause (registries/reason-codes.json "
+                  "`recipient_validation_failures`)")
+        for part in vfr.get("parts") or []:
+            if part.get("failure") not in RECIPIENT_VALIDATION_FAILURES:
+                v.add("LINT-NDE-08",
+                      f"part {part.get('part_id')!r}: failure {part.get('failure')!r} is "
+                      "not a registered cause")
+            # `observed` is present exactly where a comparison WAS made. A
+            # digest on a part that was absent would assert a computation over
+            # octets nobody received.
+            if part.get("failure") == "part-digest-mismatch":
+                if not part.get("observed") or not part.get("declared"):
+                    v.add("LINT-NDE-08",
+                          f"part {part.get('part_id')!r}: a digest mismatch names both the "
+                          "declared and the observed digest, or it is not a comparison")
+                elif part["observed"] == part["declared"]:
+                    v.add("LINT-NDE-08",
+                          f"part {part.get('part_id')!r}: observed == declared, which "
+                          "contradicts the mismatch claimed for it")
+            elif part.get("observed") is not None:
+                v.add("LINT-NDE-08",
+                      f"part {part.get('part_id')!r}: an observed digest is carried for "
+                      f"{part.get('failure')!r}, where no comparison was made")
+        if vfr.get("message_id") != nde.get("message_id"):
+            v.add("LINT-NDE-08", "recipient_validation_failure.message_id != NDE message_id")
+        if se is not None:
+            if vfr.get("declared_payload_hash") != se.get("payload_hash"):
+                v.add("LINT-NDE-08",
+                      "recipient_validation_failure.declared_payload_hash != se.payload_hash "
+                      "— the assertion must name the commitment it was checking")
+            if (vfr.get("mls_group_id") != se.get("mls_group_id")
+                    or vfr.get("mls_epoch") != se.get("mls_epoch")):
+                v.add("LINT-NDE-08",
+                      "recipient_validation_failure MLS session != se.mls_group_id/mls_epoch")
+            if vfr.get("mls_state") != se.get("mls_state"):
+                v.add("LINT-NDE-08", "recipient_validation_failure.mls_state != se.mls_state")
+            if vfr.get("acceptance_policy_ref") != se.get("acceptance_policy_ref"):
+                v.add("LINT-NDE-08",
+                      "recipient_validation_failure.acceptance_policy_ref != "
+                      "se.acceptance_policy_ref")
     if reason == "uid-merged":
         ru = nde.get("redirect_uid")
         if not (isinstance(ru, str) and UID_RE.match(ru)):

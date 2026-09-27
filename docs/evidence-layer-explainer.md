@@ -72,7 +72,7 @@ There are six object types. Five are individual, per-message records; the sixth 
 
 **EP — Evidence Package.** The aggregate: the `se`, one or more `outcomes` (DE/NDE/RE), the `rdp_chain` (both RDPs in the four-corner case), optionally `changes[]` (CE records) and `states[]` (non-operative state records, §6). It is the wallet-storable, independently verifiable artefact a party produces in a dispute. It carries at least one outcome by construction — it is the *final* package, composed once an outcome exists.
 
-Every object carries, in common: `type`, `version` (`"2.10"` at this edition — bound to `versions.json` with every other statement of it), `profile` (`pilot` or `production`), `evidence_id` (unique per object, distinct from `message_id`) and `policy_id` (the RDP's issuance policy). On the wire the object travels as a sealed **evidence artefact** `[cose-sign1, qualified-timestamp]` — the COSE_Sign1 seal and its qualified timestamp are the artefact's two elements, not body fields.
+Every object carries, in common: `type`, `version` (`"2.11"` at this edition — bound to `versions.json` with every other statement of it), `profile` (`pilot` or `production`), `evidence_id` (unique per object, distinct from `message_id`) and `policy_id` (the RDP's issuance policy). On the wire the object travels as a sealed **evidence artefact** `[cose-sign1, qualified-timestamp]` — the COSE_Sign1 seal and its qualified timestamp are the artefact's two elements, not body fields.
 
 ## 4. How an object is sealed and time-stamped
 
