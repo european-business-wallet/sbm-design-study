@@ -129,6 +129,48 @@ def test_the_internet_draft_sends_the_reader_to_the_consideration():
         "this is advice in a security consideration, not a new normative rule"
 
 
+def test_the_consolidated_threat_model_carries_the_digest_residual():
+    """The Internet-Draft's consideration defers to the umbrella for the
+    consolidated threat model — "what the metadata reveals, to which observer,
+    the current mitigations and the residual risks" — and §11.1's list of what
+    the metadata can reveal did not include the one disclosure that
+    consideration is about. R16-06 put the wire-level statement in the I-D and
+    a guard on absolute claims in the umbrella; neither asked whether the
+    document the reader is SENT to lists the risk. A reader following the
+    pointer found five bullets and not this one.
+
+    The rule is the same as the consideration's: state who can do it, who
+    cannot, and that nothing is decided — no new normative language.
+    """
+    umbrella = (ROOT / "Secure-Business-Messaging-Profile.md").read_text(encoding="utf-8")
+    start = umbrella.index("### 11.1 Metadata privacy threat model")
+    model = umbrella[start:umbrella.index("### 11.2", start)]
+    assert "**What the metadata can reveal.**" in model
+    reveals = model[model.index("**What the metadata can reveal.**"):
+                    model.index("**Who observes what")]
+    flat = " ".join(reveals.split())
+    assert "unsalted digest" in flat, "the residual the I-D defers here is missing"
+    for needed in ("confirm a candidate document", "little entropy", "A12",
+                   "nothing decided", "not** an observer of the network"):
+        assert needed in flat, needed
+    assert "MUST" not in flat and "SHALL" not in flat, \
+        "an informative threat model states a residual; it does not legislate"
+
+
+def test_the_record_does_not_ask_for_work_that_is_done():
+    """`SBM-ADR-0014`'s first alternative — document the assumption rather than
+    change the wire — was executed on 27 September 2026, in the I-D and now in
+    the umbrella. A record that still proposes it as unwritten work would put a
+    question to its reviewers that has already moved: the choice is no longer
+    whether to document the exposure, but whether documenting it is enough."""
+    adr = (ROOT / "docs" / "adr" / "SBM-ADR-0014.md").read_text(encoding="utf-8")
+    flat = " ".join(adr.split())
+    assert "This alternative has been executed" in flat.replace("**", "")
+    assert "is the documented assumption enough?" in flat.replace("**", "")
+    front = adr.split("---")[1]
+    assert "decision_status: proposed" in front, "reporting the change must not accept it"
+
+
 def test_the_observer_matrix_states_the_forwarding_path():
     """The Delivery Service sees an SE's fields on the four-corner forwarding
     path, because it decodes and verifies the origin's sealed SE to prove the

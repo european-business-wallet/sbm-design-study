@@ -84,6 +84,33 @@ def test_nothing_implements_a_merkle_construction():
     assert hits == [], hits
 
 
+def test_no_reader_facing_document_offers_the_withdrawn_construction():
+    """The scan above covers code, samples and machine-readable authorities.
+    It never read `docs/`, and `SBM-ADR-0014` went on asking the group whether
+    "the Merkle chunk layer" should be salted for three days after the
+    construction was withdrawn — a question about something the profile does
+    not have, put to the reviewers A13 was opened for. An option removed
+    without a record is an option that returns, and so is one removed from the
+    specification and left standing in a proposal.
+
+    A mention is allowed; an OFFER is not. Every block that names the
+    construction must also say, in that block, that none is profiled.
+    """
+    WITHDRAWN = re.compile(r"not profiled|none is profiled|no merkle construction|"
+                           r"withdrawn|withdraw|never admitted", re.I)
+    problems = []
+    for path in sorted(list(ROOT.glob("*.md")) + list(ROOT.glob("docs/**/*.md"))
+                       + list(ROOT.glob("ietf/*.md")) + list(ROOT.glob("etsi/*.md"))):
+        rel = path.relative_to(ROOT).as_posix()
+        if rel.startswith("docs/reviews/") or rel == "CHANGELOG.md":
+            continue                      # a review and a history record what WAS said
+        for block in re.split(r"\n\s*\n", path.read_text(encoding="utf-8")):
+            flat = " ".join(block.split())
+            if re.search(r"merkle", flat, re.I) and not WITHDRAWN.search(flat):
+                problems.append(f"{rel}: {flat[:140]}")
+    assert problems == [], problems
+
+
 def test_the_manifest_rules_still_say_what_the_digest_covers():
     """The rule that survives is the one the reassembly depends on: digests are
     over decoded octets. If that sentence goes, chunk reassembly has no defined

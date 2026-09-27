@@ -95,22 +95,48 @@ Proposed, pending A12:
   identity in the domain — `[ "sm-mls:content-part-digest:v1", salt,
   part_id, part_octets ]` — so equal parts in different positions differ and
   a guessed part cannot be confirmed across messages; the manifest digest
-  needs no salt of its own once its inputs are salted. Whether the Merkle
-  chunk layer is salted likewise, with the chunk index in the domain, or
-  left bare and said so, is a choice for the group (A12).
+  needs no salt of its own once its inputs are salted, and it stays
+  recomputable by anyone holding the artefact, which is what `LINT-MAN-04`
+  checks. **There is no chunk layer to decide about.** An earlier draft of
+  this record asked the group whether a chunked part's Merkle root should be
+  salted with the chunk index in the domain; that construction was withdrawn
+  on 27 September 2026 and none is profiled ([A13](../REVIEW_AGENDA.md)). A
+  part chunked in transport is reassembled before hashing, so its digest is
+  the construction above like any other. If A13 ever profiles a chunk layer,
+  whether it is salted is decided **there**, with the rest of its parameters —
+  not carried here as a question about something the profile does not have.
 - **The manifest's cleartext** — attachment names, sizes and types in the
   sealed SE — is decided with A12 and not after it: either it stays and the
   metadata threat model says the providers see it, or the manifest moves
   into the envelope and the SE keeps only the manifest digest and the part
-  count, at the price of the provider-side structural checks on it.
-- **The mode set.** `doc_digest`, the acceptance-policy reference, is a bare
-  digest of a *published* document and stays so. The content gets modes of
-  its own, salted by definition and named for it — `content-sha256`,
-  `content-sha512`, `content-manifest-sha256`, `content-manifest-sha512` —
-  and `raw-*` / `manifest-*` are retired for content by name, as `jcs-*`
-  was, with `raw-sha256` surviving for `doc_digest` alone. The set is closed
-  again at the bump and every member is mandatory to implement, which is
-  the condition on which A11 was closed.
+  count, at the price of the provider-side structural checks on it. **Those
+  checks are three named rules, not a hypothetical**: `LINT-MAN-01` (part-id
+  uniqueness), `LINT-MAN-02` (canonical byte-wise ascending order) and
+  `LINT-MAN-04` (`payload_hash` is the digest of the manifest the artefact
+  carries). Moving the manifest into the envelope puts all three out of reach
+  of anyone but the two wallets, including the retained-bundle verifier, and
+  `LINT-MAN-04` is the one that caught a hand-typed digest shipping through
+  the Schema, the CDDL and the seal. The group should price that, not a
+  general notion of structural checking.
+- **The mode set — and what the digest domains already settled.** This
+  bullet was written before the per-field domains existed, and half of what
+  it proposed is now done. Since 27 September 2026 each digest field has a
+  named type: the content fields take `ContentHash`, a part's digest
+  `RawHash`, and `doc_digest` and `submission_hash` `RawSha256Hash`. So
+  **keeping `doc_digest` bare needs no global retirement of a mode**: its
+  domain already admits nothing else, and no rename is required to stop a
+  content mode reaching it. What remains for A12 is confined to the content
+  domain — add salted modes to `ContentHash`, and decide whether the bare
+  ones leave it. Naming them for the content (`content-sha256`,
+  `content-sha512`, `content-manifest-sha256`, `content-manifest-sha512`)
+  remains the proposal, because a mode's name is what an artefact carries and
+  a reader should not have to know the field's type to know whether a salt is
+  in the construction; **retiring `raw-*` and `manifest-*` "for content by
+  name", as `jcs-*` was, is not the mechanism any more** — narrowing
+  `ContentHash`'s enum is, and the resolved-shapes gate will name every
+  version dimension that narrowing reaches. Either way the set is closed
+  again at the bump and every member is mandatory to implement, which is the
+  condition on which A11 was closed.
 - **What stays bare, by construction and not by oversight.** Four other
   digests are outside this proposal for a reason that is not a preference.
   `envelope_hash`, `mls_state` and the seal's own imprint are commitments
@@ -134,8 +160,11 @@ Proposed, pending A12:
   it commits to is published. A reader who takes this record as the pattern
   for salting digests should take these five as the boundary of it — and
   should notice that the boundary is drawn **per semantic field**, not by
-  retiring a mode globally. That is the same inventory the generic `Hash`
-  type needs, and the two should be done together.
+  retiring a mode globally. That was the same inventory the generic `Hash`
+  type needed, and the two were done together: the domains were separated on
+  27 September 2026, so this list is no longer a list this record has to
+  keep — each field's type states its domain, and this boundary is readable
+  from the schemas rather than from a paragraph.
 - **Re-verification.** Unchanged in shape *where a salt is present*: the
   recipient recomputes with the salt it decrypted, the `mismatch`
   confirmation carries that recomputation, the sender declares and the
@@ -176,13 +205,24 @@ Proposed, pending A12:
 
 ## Alternatives considered
 
-- **Leave the digest unsalted and state the assumption.** One paragraph in
-  the Internet-Draft's security considerations and one line in the
-  umbrella's metadata threat model: a bare digest is an oracle for guessable
-  content, and a sender of such content should know it. No wire change,
-  nothing re-sealed. Weighed, not rejected: it is the honest minimum if the
-  group answers no, and it leaves the study's central claim with a
-  qualification on exactly the traffic that motivates it.
+- **Leave the digest unsalted and state the assumption.** **This alternative
+  has been executed**, which changes what A12 now asks. The Internet-Draft
+  carries the paragraph since 27 September 2026 — *Guessable content behind an
+  unsalted digest*: who can test a guess (the parties, both providers, an
+  archive, a verifier, a court — whoever holds an evidence object or a
+  package), who cannot (an observer of the network, which sees no digest), and
+  what an implementation handling low-entropy content should do about it. The
+  umbrella's consolidated threat model, which that paragraph defers to for the
+  residual risks, omitted it and now carries it. No wire change, nothing
+  re-sealed.
+
+  So the question is no longer "document it or change it" but **"is the
+  documented assumption enough?"** Answering no to A12 leaves the study's
+  central claim standing with a qualification on exactly the traffic that
+  motivates it, stated in both documents and on the agenda, and costs nothing
+  further. Answering yes buys evidence from which a guess cannot be confirmed
+  without the parties, at the price set out above. That is the choice, and it
+  is a narrower one than this record was first written for.
 - **Derive the salt from the MLS exporter secret.** No envelope field and
   no new retention duty, since any group member can re-derive it. Weighed,
   not rejected: it ties the content binding to retained MLS key material,
@@ -226,7 +266,8 @@ editions and do not break; their re-pin grows by this.
 **No reinterpretation of already-issued evidence.** If this is accepted, an
 artefact sealed under an earlier edition keeps the meaning it had when it was
 sealed:
-its `payload_hash` is a bare digest, it is verified by the 2.9 rules, and
+its `payload_hash` is a bare digest, it is verified by the rules of the
+edition it was sealed under, and
 acceptance neither invalidates it nor makes it verifiable under the new
 construction. A later edition does not reach backwards. Nothing is re-sealed
 except this repository's own samples, which are illustrations and not

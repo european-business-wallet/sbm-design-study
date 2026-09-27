@@ -18,7 +18,48 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-27, edition r21
+## Current — 2026-09-27, edition r22
+
+**No artefact version moves and nothing changes on the wire.** This edition
+makes one open question decidable: **A12**, whether the content digest should
+become a salted commitment, which stays open and is now put to the reviewers the
+agenda assigns it to — applied cryptography, and registered-delivery operators —
+with a record they can act on.
+
+**A residual risk was missing from the document that is meant to hold all of
+them.** The specification's security considerations describe what a bare digest
+over the plaintext exposes: a party holding an evidence object or a package can
+**confirm a candidate document** against the digest, which is a practical
+disclosure wherever the content has little entropy — correspondence on a known
+template, an amount within a narrow range, a form with few filled fields. That
+paragraph defers to the umbrella profile for the consolidated metadata threat
+model, and the umbrella's list of what the metadata can reveal did not include
+it. A reader following the pointer found five entries and not this one. It is
+there now, informatively and with no new obligation: who can confirm a guess
+(the parties, both providers, an archive, a verifier, a court — whoever holds the
+evidence), who cannot (an observer of the network, which sees no digest), that a
+multipart message widens it through the manifest's per-part digests, and that the
+question is open with nothing decided.
+
+**The decision record was corrected against the two editions published since it
+was written.** It asked the reviewers about salting a chunk construction the
+previous edition withdrew; it proposed retiring hash modes by name for content,
+which the per-field digest domains of the previous edition made unnecessary; it
+priced moving the multipart manifest into the encrypted envelope against
+"provider-side structural checks" that are three named conformance rules, one of
+them added in that same edition; and it named a superseded artefact version where
+the rule is about the version an artefact was sealed under.
+
+**And the agenda row itself said the profile was silent about the assumption.**
+It was, when the row was written. It is not now, and a reviewer reads the agenda
+before the specification — that is what the agenda is for. The row says what is
+actually open, which is no longer whether to state the exposure but **whether
+stating it is enough**.
+
+Nothing here accepts the proposal. It remains proposed and not implemented, the
+question remains open, and the digest is unsalted.
+
+## Edition r21 — 2026-09-27
 
 **Wire-breaking. A hash mode is now admissible only in the domain of the field
 that carries it**, and five artefact versions move with the restriction.

@@ -106,6 +106,24 @@ def test_the_salted_digest_question_is_on_the_agenda():
         assert reached in row, f"the entry must say what a change would reach: {reached}"
 
 
+def test_the_agenda_row_does_not_say_the_profile_is_silent():
+    """The row said "the profile does not say which it assumes". It did not, on
+    26 September; it does now, in the I-D's Security Considerations and in the
+    umbrella's consolidated threat model. A reviewer reads this row before the
+    specification — that is what the agenda is for — so a row describing the
+    documents as silent would have them price the question they were assigned
+    against a repository three days out of date.
+
+    A12 stays OPEN. What moved is what is open: not whether to state the
+    exposure, but whether stating it is enough."""
+    row = next(l for l in AGENDA.read_text(encoding="utf-8").splitlines()
+               if l.startswith("| A12 |"))
+    assert "the profile does not say which it assumes" not in row
+    assert "whether stating it is enough" in row
+    assert "Guessable content behind an unsalted digest" in row
+    assert "Decided" not in row, "A12 stays open"
+
+
 def test_the_agenda_numbering_is_not_reused():
     """A11 was published with the hash-mode pass and is cited from
     CONTRIBUTING.md; identifiers are assigned once. PT-02's work order named

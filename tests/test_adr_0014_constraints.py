@@ -132,10 +132,24 @@ def test_the_requirement_submission_hash_rests_on_is_in_the_internet_draft():
 
 def test_the_boundary_is_drawn_per_field_not_by_retiring_a_mode():
     """R16-08's second half, and the hinge to R16-03: retiring modes globally
-    is what produced a boundary that forgot a field."""
+    is what produced a boundary that forgot a field.
+
+    The hinge has since been walked. R16-08 said the do-not-salt list was "the
+    same inventory the generic `Hash` type needs, and the two should be done
+    together"; the domains were separated on 27 September 2026, so the record
+    now says the work was done rather than proposing it — and the mode-set
+    bullet, written when a global retirement was the only mechanism available,
+    says that narrowing the content type is the mechanism now. A proposal that
+    asks for finished work is a proposal its reviewers cannot price.
+    """
     text = " ".join(adr().split())
     assert "drawn **per semantic field**, not by retiring a mode globally" in text
-    assert "the same inventory the generic `Hash` type needs" in text
+    assert "the two were done together" in text
+    assert "retiring `raw-*` and `manifest-*` \"for content by name\", as `jcs-*` was, " \
+           "is not the mechanism any more" in text.replace("**", "")
+    assert "narrowing `ContentHash`'s enum is" in text
+    for domain_type in ("`ContentHash`", "`RawHash`", "`RawSha256Hash`"):
+        assert domain_type in text, domain_type
 
 
 # --- the record still says what it said ------------------------------------
@@ -146,3 +160,33 @@ def test_nothing_else_about_the_construction_moved():
     assert "`content_digest_salt`" in text
     assert "2.10 → 2.11" in text, "the proposal states its cost against the editions in force"
     assert re.search(r"no reinterpretation of already-issued evidence", text, re.I)
+
+
+def test_the_record_names_no_edition_it_does_not_derive():
+    """It said an artefact sealed earlier "is verified by the 2.9 rules". That
+    edition moved the day the digest domains landed, and a record naming a
+    number rather than the relation is a record that goes stale in silence —
+    invariant 13 applied to prose. The rule it states is about the artefact's
+    own edition, so that is what it names."""
+    text = " ".join(adr().split())
+    assert "verified by the rules of the edition it was sealed under" in text
+    assert "2.9" not in text, "an edition literal the record does not derive"
+
+
+def test_the_price_of_moving_the_manifest_is_named_by_rule():
+    """The manifest-cleartext sub-decision priced "the provider-side structural
+    checks". Three of them exist and one was added on 27 September because a
+    hand-typed digest had shipped through the Schema, the CDDL and the seal;
+    naming them is the difference between a reviewer pricing this and
+    imagining it."""
+    text = adr()
+    # The ids are BUILT rather than written out. `scripts/lint_catalogue.py`
+    # attributes a rule to every `tests/*.py` file that names it, and that list
+    # ships inside the normative catalogue an assessor reads to build an
+    # independent checker. A prose assertion about a proposal is not a vector
+    # for a manifest rule, and listing it beside one would send that reader to
+    # the wrong file. (Hence no literal id in this comment either.)
+    for n in ("01", "02", "04"):
+        rule = f"LINT-MAN-{n}"
+        assert rule in text, rule
+    assert "out of reach" in text and "retained-bundle verifier" in text
