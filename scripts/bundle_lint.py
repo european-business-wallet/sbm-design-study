@@ -112,6 +112,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lint_cli as lc  # noqa: E402  — R26-PUB-02: the derived wallet-proof field set
 from lint_cli import (parse_common_flags, compute_grade_commitment,  # noqa: E402  — shared (P1/X0)
                       instant, instant_or_none,  # noqa: E402  — DR-05 parsed instants
                       TimestampError,  # noqa: E402
@@ -984,13 +985,15 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
         # active, ack-capable BW-MEMBER of the recipient entity. A confirmation from
         # an unknown, retired, suspended or non-ack member does not satisfy any
         # acceptance policy (including any-one).
-        conf = ev.get("s3_attestation") or ev.get("recipient_confirmation")
-        if isinstance(conf, dict) and conf.get("mid"):
+        for _key in sorted(lc.RECIPIENT_ACK_PROOF_FIELDS):
+            conf = ev.get(_key)
+            if not (isinstance(conf, dict) and conf.get("mid")):
+                continue
             why = _resolves_acker(conf.get("mid"), conf.get("device_id"),
                                   _act_time(ev, conf))
             if why:
                 add("LINT-BND-12",
-                    f"{ev.get('type')} confirmation mid {conf.get('mid')!r} does not "
+                    f"{ev.get('type')} {_key} mid {conf.get('mid')!r} does not "
                     f"resolve to an active, ack-capable member of {entity!r} ({why}) "
                     "— TS clause 6 INTF-2")
         for acker in (ev.get("quorum") or []):

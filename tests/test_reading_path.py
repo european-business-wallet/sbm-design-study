@@ -78,6 +78,50 @@ def test_why_mls_is_answered_and_no_longer_listed_as_unanswered():
     assert "no comparison is written down" not in unanswered
 
 
+def test_the_rationale_argues_from_what_mls_supplies_not_from_impossibility():
+    """R26-PUB-06. The first version said a pairwise protocol "gives no group
+    object", that per-message key agreement "makes the device set a matter of
+    who was online", and that MLS is "the one shape" in which membership is
+    demonstrable state. The online-presence claim has direct counterexamples —
+    X3DH publishes prekeys so a sender can encrypt to an offline recipient, and
+    HPKE's single-shot encryption needs no live participation at all — and
+    multi-device session management in that family is Sesame's subject.
+
+    The defensible argument is narrower and is the one made now: MLS carries
+    the group, its epochs and its transcript as reviewed machinery, and a
+    pairwise base would need this profile to specify, implement and prove an
+    equivalent. Assurance and complexity, not impossibility.
+    """
+    body = " ".join(ADR3.read_text(encoding="utf-8").split())
+    section = body[body.index("## Why this choice"):body.index("## Alternatives considered")]
+    assert "the one shape in which" not in section, "the impossibility claim must not return"
+    assert "makes the device set a matter of who was online" not in section
+    assert "not about what other protocols make impossible" in section
+    for needed in ("X3DH", "HPKE", "Sesame",
+                   "specified, implemented and proven by this profile",
+                   "assurance and complexity"):
+        assert needed in section.replace("**", ""), needed
+    # And the one requirement that IS a boundary rather than a composition cost.
+    assert "breaks the requirement that the provider never holds content keys" in section
+
+
+def test_the_remaining_question_is_stated_once_and_the_index_agrees():
+    """R26-PUB-07. The section answered the question while the front matter
+    still said no comparison was written down, and the generated index
+    reproduced the obsolete sentence — a reader got a different answered/open
+    status depending on which file they opened."""
+    body = ADR3.read_text(encoding="utf-8")
+    front = body.split("---")[1]
+    assert "not why it was chosen over other end-to-end protocols" not in front
+    assert "against named alternatives" in front
+    index = (ROOT / "docs" / "decisions-index.md").read_text(encoding="utf-8")
+    assert "The record explains how MLS is profiled" not in index
+    assert "Why MLS, against named alternatives?" in index
+    unanswered = " ".join(body[body.index("## Unanswered"):].split())
+    assert "no such comparison is written down" in unanswered
+    assert "is not established either way" in unanswered
+
+
 def test_the_rationale_section_is_a_declared_kind_not_a_one_off():
     """The record vocabulary is closed, so a new heading is a decision about
     the shape of every record, not a local edit."""

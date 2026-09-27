@@ -110,6 +110,89 @@ NDE_REASON_EVENT = {k: set(v["allowed_events"])
                     for k, v in _REASONS["nde_reasons"].items()
                     if v.get("allowed_events")}
 REGISTERED_NDE_REASONS = set(_REASONS["nde_reasons"])
+
+
+def _wallet_proof_fields():
+    """Every evidence field carrying a WALLET-SIGNABLE proof, derived.
+
+    R26-PUB-02: three places enumerated these by hand — the demo signature
+    sweep, the production identity precheck and the bundle's member resolution
+    — and a new proof type had to be added to all three. It was added to none,
+    so a validation failure's signature was never verified, its member never
+    resolved, and a flipped signature byte produced no violation at all: the
+    outer provider seal was valid, and nothing else was asked.
+
+    Derived from the schemas instead: a proof type is a `$defs` entry carrying
+    `wallet_signature_b64`, and a proof field is a property that `$ref`s one.
+    A type added tomorrow is swept the day it is referenced, which is the rule
+    this repository applies to every other generated set.
+    """
+    root = pathlib.Path(__file__).resolve().parents[1] / "schemas"
+    defs = json.loads((root / "evidence-common.schema.json").read_text(
+        encoding="utf-8"))["$defs"]
+    types = {n for n, d in defs.items()
+             if "wallet_signature_b64" in (d.get("properties") or {})}
+    fields, containers = set(), ("properties", "items", "$defs", "allOf",
+                                 "anyOf", "oneOf", "then", "if")
+
+    def walk(node, key=None):
+        if isinstance(node, dict):
+            ref = node.get("$ref", "")
+            if key and any(ref.endswith("/" + t) for t in types):
+                fields.add(key)
+            for k, v in node.items():
+                walk(v, key if k in containers else k)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v, key)
+
+    for f in sorted(root.glob("evidence-*.schema.json")):
+        walk(json.loads(f.read_text(encoding="utf-8")))
+    return frozenset(fields)
+
+
+def _recipient_ack_fields():
+    """The recipient acts a verifier resolves to an ack-capable member.
+
+    A NARROWER set than every wallet-signed proof, and the distinction is
+    normative: INTF-1a says a RECIPIENT's act carries a wallet signature OR a
+    session authentication, which is the `anyOf` shape those types have and the
+    others do not. A `sender_confirmation` is a sender's member and a
+    `reveal_confirmation` is not an acknowledgement, so resolving either
+    against the recipient entity's roster asserts something false — which is
+    exactly what happened when this was first derived from the wider set, and
+    four positive bundles began reporting the sender's own member as unknown to
+    the recipient entity.
+    """
+    root = pathlib.Path(__file__).resolve().parents[1] / "schemas"
+    defs = json.loads((root / "evidence-common.schema.json").read_text(
+        encoding="utf-8"))["$defs"]
+    types = set()
+    for name, d in defs.items():
+        arms = [set(a.get("required", [])) for a in d.get("anyOf", [])]
+        if any("wallet_signature_b64" in a for a in arms) \
+                and any("session_authenticated" in a for a in arms):
+            types.add(name)
+    fields, containers = set(), ("properties", "items", "$defs", "allOf",
+                                 "anyOf", "oneOf", "then", "if")
+
+    def walk(node, key=None):
+        if isinstance(node, dict):
+            if key and any(node.get("$ref", "").endswith("/" + ty) for ty in types):
+                fields.add(key)
+            for k, val in node.items():
+                walk(val, key if k in containers else k)
+        elif isinstance(node, list):
+            for val in node:
+                walk(val, key)
+
+    for f in sorted(root.glob("evidence-*.schema.json")):
+        walk(json.loads(f.read_text(encoding="utf-8")))
+    return frozenset(fields)
+
+
+WALLET_PROOF_FIELDS = _wallet_proof_fields()
+RECIPIENT_ACK_PROOF_FIELDS = _recipient_ack_fields()
 # The typed causes a recipient may assert when the decrypted payload did not
 # validate — a state that is NOT a digest mismatch and had no outcome.
 RECIPIENT_VALIDATION_FAILURES = set(_REASONS["recipient_validation_failures"])

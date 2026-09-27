@@ -1,7 +1,7 @@
 {
   "$id": "https://bw.example.eu/schemas/evidence-se.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "evidence-se (v2.11)",
+  "title": "evidence-se (v2.12)",
   "description": "Sending Evidence. Issued by RDP(out) upon accepted submission. It binds the evidence to the MLS session state via mls_group_id and mls_epoch, and records the authentication method used at session setup.",
   "type": "object",
   "required": [
@@ -38,7 +38,7 @@
     },
     "version": {
       "type": "string",
-      "const": "2.11"
+      "const": "2.12"
     },
     "profile": {
       "$ref": "evidence-common.schema.json#/$defs/Profile"

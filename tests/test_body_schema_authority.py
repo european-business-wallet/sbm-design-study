@@ -38,9 +38,22 @@ mock = _load("mock_rdp", "mock_rdp.py")
 def test_negative_minimal_discovery_body_is_rejected_at_the_entry_point():
     """The acceptance criterion: CDDL-valid + projection≡payload, Schema-invalid
     → rejected by ONE entry point (the discovery linter), fail-closed."""
-    art = mock.discovery_artifact({"type": "BW-ORG-v1", "version": "2.1"})
+    # The version is DERIVED: the CDDL pins the current one, so a literal here
+    # makes the vector CDDL-invalid the next time the dimension moves — which
+    # is what it was, at "2.1", so the Schema was not the only authority
+    # refusing it and this criterion was never exercised.
+    _ver = json.loads((ROOT / "versions.json").read_text(encoding="utf-8"))[
+        "dimensions"]["discovery_bw_org"]["value"]
+    art = mock.discovery_artifact({"type": "BW-ORG-v1", "version": _ver})
     # sanity: the projection equals the decoded payload (N1 holds)
     assert lc.projection_equals_decode(art) == []
+    # ...and the premise this criterion rests on — that the body IS CDDL-valid,
+    # so the Schema is what refuses it — is checked rather than asserted in the
+    # docstring. Without this the test passes on a body the CDDL also refuses,
+    # which proves something narrower than it claims.
+    import cddl_check
+    assert cddl_check._check_body(art["projection"], "minimal BW-ORG"), \
+        "the vector must be CDDL-valid, or the Schema is not what rejects it"
     issues = dl.lint(art)
     rules = [r for r, _ in issues]
     assert "LINT-PKG-12" in rules, (

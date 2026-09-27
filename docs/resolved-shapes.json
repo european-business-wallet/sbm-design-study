@@ -3,7 +3,7 @@
   "shapes": {
     "delivery-service-openapi.yaml": {
       "dimension": "companion_contracts",
-      "version": "11.0.0",
+      "version": "12.0.0",
       "sha256": "f019a06c2e6b2d3b7b78c299ba7177420bbfbbbdb7dd9072333de5ff51629715"
     },
     "edd-resolver-openapi.yaml": {
@@ -18,7 +18,7 @@
     },
     "rdp-relay-openapi.yaml": {
       "dimension": "companion_contracts",
-      "version": "11.0.0",
+      "version": "12.0.0",
       "sha256": "5ae73b5555ff262103e985dcce5a369d664ff5b5ac23b56018cf3c1d157b1f96"
     },
     "schemas/bw-med.schema.json": {
@@ -48,48 +48,48 @@
     },
     "schemas/evidence-ce.schema.json": {
       "dimension": "evidence",
-      "version": "2.11",
-      "sha256": "6cae59e65e4da1877b4e0675c23b0a77d1321c0bcfaf291882c686b46b854099"
+      "version": "2.12",
+      "sha256": "3208b495abee50adef514f50ad73b234efe2c65e7caf0cac70b5df656779fcd8"
     },
     "schemas/evidence-common.schema.json": {
       "dimension": "evidence",
-      "version": "2.11",
-      "sha256": "847dda50bd3dafbd094fff3110ebeefa63a2938f1f94a5998fcb719f07baabbf"
+      "version": "2.12",
+      "sha256": "f363c4171c43fce87bef0123478506ebe0754a4fd55f12c011065f944fba377a"
     },
     "schemas/evidence-de.schema.json": {
       "dimension": "evidence",
-      "version": "2.11",
-      "sha256": "5f086837decd9b69be90aad95bf10224eb2fa0284b7560c41bd8ada9b0486da6"
+      "version": "2.12",
+      "sha256": "26d2e0a20c5f71fe29028f5a3faeb6b42edeec1ff42e8e22a4859d0213a10306"
     },
     "schemas/evidence-ep.schema.json": {
       "dimension": "evidence",
-      "version": "2.11",
-      "sha256": "7401f0747a081daed98b00943b6390ef22ce646bca26625b5ad75b400342c2e6"
+      "version": "2.12",
+      "sha256": "62f27d57207ee5672b6c7e5d308ba28f75e270f6342d3a995a9b46558bb5521b"
     },
     "schemas/evidence-gcm.schema.json": {
       "dimension": "evidence",
-      "version": "2.11",
-      "sha256": "e31f16e310ab94681af1b37ef934f6881978a3e77575b64d249466f261863883"
+      "version": "2.12",
+      "sha256": "3a75830e7e2cbdefbd7f76df4534178ff66081f9548aa1b86ebb60ce15c714de"
     },
     "schemas/evidence-nde.schema.json": {
       "dimension": "evidence",
-      "version": "2.11",
-      "sha256": "f2ac0c5cc01a7ef3cfc0fec000d9b5291e8415f41d0cce6e48f7aeadc75bc97b"
+      "version": "2.12",
+      "sha256": "c6d25ffe36239cb92f9b6ffb1e0d010fb6393477eb17c0062aa66f4de119b4b6"
     },
     "schemas/evidence-re.schema.json": {
       "dimension": "evidence",
-      "version": "2.11",
-      "sha256": "80d8e69a9c21798c3ff688f0f30ca01bbcde12e0170f667255513f44cec51f46"
+      "version": "2.12",
+      "sha256": "fc78db71b853d5ec9d33e639dc194300a4f186afe6a107f0144796994183450b"
     },
     "schemas/evidence-relay.schema.json": {
       "dimension": "evidence",
-      "version": "2.11",
-      "sha256": "8dbbcab846f0e55a9d1a4737edb9b5982729e3614ae71562ff1d4a04d8dd2589"
+      "version": "2.12",
+      "sha256": "5a54dd45b95c33c6e8392d5f308fbeb1fff0fccae8f450cea5a519132aff06db"
     },
     "schemas/evidence-se.schema.json": {
       "dimension": "evidence",
-      "version": "2.11",
-      "sha256": "d311bc908dc445298d6879906b9591411a1abd90c95a41f2192e46a0578c0fdf"
+      "version": "2.12",
+      "sha256": "2e60334ef6d973602dc0d37c1d33990722d74f17ec007187cb254704222a1b07"
     },
     "schemas/roster-snapshot.schema.json": {
       "dimension": "roster_snapshot",
@@ -103,8 +103,8 @@
     },
     "wallet-rdp-openapi.yaml": {
       "dimension": "companion_contracts",
-      "version": "11.0.0",
-      "sha256": "022d7d3c94576b183cab8b8dd8106c76a1dea14925be76ae86c8da25faf8977b"
+      "version": "12.0.0",
+      "sha256": "8bcf82dc23d1c71a9a847d5dc0abc854ca8364fd52f1b69af25a472841b362b1"
     }
   }
 }

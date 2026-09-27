@@ -54,7 +54,13 @@ def _body_rule(body):
         return "de-availability" if body.get("delivery_grade") == "availability" else "de-confirmed"
     if t == "NDE-v1":
         r = body.get("reason")
-        return {"payload-hash-mismatch": "nde-mismatch", "uid-merged": "nde-merged"}.get(r, "nde-plain")
+        # The dispatch is BY REASON, so a reason with its own arm must be named
+        # here as well as in the CDDL. R26-PUB-01: the arm was missing from both
+        # for a day, and this map is the half a reader of the CDDL cannot see —
+        # `nde-body` offers the choice, and this is what selects from it.
+        return {"payload-hash-mismatch": "nde-mismatch",
+                "payload-validation-failed": "nde-validation-failure",
+                "uid-merged": "nde-merged"}.get(r, "nde-plain")
     if t == "RelayEvidence-v1":
         return "relay-reject" if body.get("event") == "B.2-RelayRejection" else "relay-accept"
     return _TYPE_RULE[t]

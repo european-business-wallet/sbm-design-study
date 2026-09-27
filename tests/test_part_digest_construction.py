@@ -99,8 +99,13 @@ def test_the_word_part_is_disambiguated_where_both_meanings_meet():
     assert "that distinction survives the deferral" in id_text
     ts = " ".join((ROOT / "etsi" / "TS-SBM-QERDS-Binding-v0.1.md").read_text(
         encoding="utf-8").split())
-    assert "the only permitted transformations are on the envelope/metadata" in ts, \
-        "the confinement the I-D now cites must still be in the TS"
+    assert "content transformation is forbidden" in ts, \
+        "the confinement the closure rests on must still be in the TS"
+    # This assertion used to require the TS to say that re-packaging and
+    # chunking ARE the permitted transformations — the sentence the r26 review
+    # found contradicting the I-D's prohibition. A probe that pins a claim can
+    # hold a wrong claim in place, and this one did.
+    assert "neither of the two the profile enumerates" in ts.replace("**", "")
 
 
 def test_the_closure_records_what_would_have_to_come_first():
@@ -124,8 +129,12 @@ def test_the_closure_records_what_would_have_to_come_first():
     for kept in ("chunk boundaries", "domain separation", "discriminator",
                  "odd number of chunks", "None is profiled"):
         assert kept in row, kept
-    assert "per emitted envelope" in row, \
-        "the closure rests on the framing being an envelope operation; the row must say so"
+    # NOT "per emitted envelope". That assertion made the wrong ground
+    # MANDATORY: A13 was closed citing the CE envelope transformations as the
+    # framing operation the profile defines, and they are not defined at all.
+    # The closure stands on the part rule, which holds either way.
+    assert "nothing in the profile splits a manifest part" in row.lower().replace("**", "")
+    assert "deferred as" in row and "A15" in row, row[:200]
 
 
 def test_no_record_still_defers_to_an_open_a13():

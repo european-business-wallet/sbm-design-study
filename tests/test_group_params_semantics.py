@@ -290,6 +290,11 @@ def test_the_standalone_refusal_schema_is_withdrawn():
     assert not (ROOT / "schemas" / "group-establishment-refusal.schema.json").exists()
     from lint_cli import TYPE_SCHEMA
     assert "GroupEstablishmentRefusal-v1" not in TYPE_SCHEMA
+    # "no CDDL" was asserted in the docstring and nowhere else. A withdrawn
+    # type that reappeared in the CDDL alone would leave this passing.
+    cddl = (ROOT / "cddl" / "sm-mls-erd.cddl").read_text(encoding="utf-8")
+    assert "GroupEstablishmentRefusal" not in cddl
+    assert "group-establishment-refusal" not in cddl
 
 
 def test_the_id_specifies_the_PRE_JOIN_return_channel():

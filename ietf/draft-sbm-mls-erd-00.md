@@ -552,8 +552,8 @@ than repaired.
 the question. An earlier revision also said a very large part "MAY be chunked in
 transport". It named no descriptor, no evidence of a split and no size at which a
 part becomes large; the profile bounds neither a message nor a part; and it read
-*part* as content where the only framing operation defined here acts on the
-envelope. **There is no chunked part to compute a digest for**, so no
+*part* as content, where any framing operation acts on the envelope and below
+the part. **There is no chunked part to compute a digest for**, so no
 construction is needed and none is profiled. If a later revision wants part-level
 chunking, the mechanism comes first — a descriptor, evidence of the split, and a
 reassembly rule with a defined endpoint — and only then the construction
@@ -706,12 +706,20 @@ length-prefixed form, a MIME-like framing — no longer interoperates. Saying
 octets of a multipart payload are fixed where they were free, and an implementer
 has no way to say which of the two worlds it implements. The **application
 envelope** version is that way, and it covers the headers **and** the layout of
-the application data they precede: an envelope declaring **1.4 or later** carries
-a multipart payload in the framing above, and nothing may be assumed about the
-carrier of an implementation built to an earlier one. Implementations that
-exchange multipart messages MUST agree on that version before they rely on Mode
-C, and a verifier reading retained evidence interprets the payload under the
-edition it was sealed with — a later edition does not reach backwards.
+the application data they precede.
+
+**It is not carried per message.** The envelope headers declare no version —
+they are `message_id`, `correlation_id`, `ttl`, `content_type`, `content_class`,
+`content_digest`, the two addresses and the optional salts, and nothing else —
+so a receiver does not read the framing edition off the message. It is fixed by
+the edition an implementation is **built to**, agreed out of band with the
+profile version a deployment adopts. **Application envelope 1.4 or later** means
+the framing above; nothing may be assumed about the carrier of an implementation
+built to an earlier one. Implementations that exchange multipart messages MUST
+therefore agree that version before they rely on Mode C — the profile provides
+no in-band negotiation for it, and a deployment that needs one would have to
+raise it as a change. A verifier reading retained evidence interprets the payload
+under the edition it was sealed with; a later edition does not reach backwards.
 
 **A part's octets are the part's octets.** `length` is their count and `digest`
 is over them, with no encoding layer between the two: the parts travel inside the
@@ -1447,7 +1455,7 @@ LINT-DE-12/13/19/20, LINT-RE-01).
   `redirect_uid` when `reason`=`uid-merged`; `recipient_confirmation` when
   `reason`=`payload-hash-mismatch`.
 - **RE (Refusal Evidence)** — carries `reason`, `refused_at`, `payload_hash`.
-- **CE (Change-Indication Evidence)** — carries `transformation` (`re-packaging` | `chunking` — OBSERVABLE envelope/framing operations only), `changed_at`, and the byte commitments the issuer legitimately observes: `envelope_hash_before` (the SE's transmitted-octet commitment) plus `envelope_hash_after` (re-packaging) or `part_envelope_hashes[]` (chunking). An MLS epoch change re-encrypts NO queued application message and an intermediary cannot transform the E2EE envelope — the former epoch-change CE type is removed; a sender resubmission after an epoch change is a NEW submission chain (new SE). The QERDS obligation to issue CE is in
+- **CE (Change-Indication Evidence)** — carries `transformation` (`re-packaging` | `chunking` — OBSERVABLE envelope/framing operations only; **neither is profiled and an RDP MUST NOT issue either**, see (Application Envelope) and A15 — the shape below is what a defined transformation would carry), `changed_at`, and the byte commitments the issuer legitimately observes: `envelope_hash_before` (the SE's transmitted-octet commitment) plus `envelope_hash_after` (re-packaging) or `part_envelope_hashes[]` (chunking). An MLS epoch change re-encrypts NO queued application message and an intermediary cannot transform the E2EE envelope — the former epoch-change CE type is removed; a sender resubmission after an epoch change is a NEW submission chain (new SE). The QERDS obligation to issue CE is in
   {{TS-SBM-QERDS}}.
 - **EP (Evidence Package)** — bundles `se`, `outcomes[]`, `rdp_chain[]` as an octet-authoritative artefact whose
   body embeds each sub-object's artefact bytes. `states[]` are

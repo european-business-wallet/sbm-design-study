@@ -663,7 +663,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Predicate (PASS iff):** The COSE_Sign1 Ed25519 signature over ['Signature1', protected, b'', payload] MUST verify against the published demo public key ('demo' for object seals, 'wallet-demo' for wallet signatures).
 - **Error outcome:** {label}: COSE signature does not verify against the demo {seed!r} key
 - **Reference implementation:** `_verify_cose`
-- **Tests:** `test_evidence_lint.py`
+- **Tests:** `test_evidence_lint.py`, `test_validation_failure_outcome.py`
 
 ## Discovery documents (DISC)
 

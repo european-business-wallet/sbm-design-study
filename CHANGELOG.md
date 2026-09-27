@@ -18,7 +18,75 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-27, edition r26
+## Current — 2026-09-27, edition r27
+
+**Wire-breaking.** A second external review, of the previous edition, recorded
+seven points. All seven are addressed here; three changed the protocol or the
+tooling that verifies it.
+
+| Artefact | This edition | Previous |
+|---|---|---|
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.12** | 2.11 |
+| Profile-2 companion contracts (wallet–RDP, delivery service, relay) | **12.0.0** | 11.0.0 |
+
+**The recipient's validation-failure assertion is now defined in every
+representation.** The previous edition introduced it in the JSON Schema, the
+wallet contract and the reference runtime — and not in the CBOR definitions, so
+the reference sealed an outcome an implementation following those definitions
+refused. The definitions carry it now, with its signed and session-authenticated
+forms and its per-part detail, and the example outcome is checked against the
+JSON Schema, the CBOR definitions and the verifier together rather than one of
+them.
+
+**A signed assertion names the device whose key signed it.** The CBOR
+definitions have required that of a signed recipient confirmation since they
+were written; the JSON Schema did not, and the two disagreed about the same
+object. Both require it now — the narrowing that moves the evidence version.
+
+**And the verifier checks the assertion it is given.** Signature verification,
+the production identity precheck and the member resolution each worked from a
+hand-kept list of proof fields, and the new assertion was in none of them: a
+recipient proof with an invalid signature, wrapped in a valid provider seal,
+raised nothing. The lists are derived from the schemas now. A recipient's
+observation of its own received content still cannot be checked by anyone
+else — the parts are encrypted and absent, which is why the assertion is
+attributable rather than provable — but the **sender's** side of each comparison
+is in the sending evidence, and an assertion that contradicts it is refused
+before anything is sealed.
+
+**One status for the envelope transformations.** The previous edition deferred
+re-packaging and chunking in the specification and the open questions, while the
+TS still called them the only permitted transformations and required evidence
+for them, and the reading path still described them as available. An implementer
+could satisfy the prohibition or the duty, not both. All of it says one thing
+now: neither is profiled, a provider must not issue either, a verifier treats one
+it meets as unproven — and the duty to evidence a transformation survives, for
+whatever a later revision defines.
+
+**Claims bounded where a specialist reader meets them.** The agent branch said
+that before a dispute neither the mandate nor the class is disclosed. The
+commitment discloses neither; the published mandate scope and the resolved
+routing scope disclose what the privacy analysis says they disclose. And opening
+a mandate commitment proves the class the sender **committed to**, not that the
+committed class describes the encrypted document — the limit the grade
+commitment already carried, now stated for the mandate too.
+
+**The rationale for MLS argues from what it supplies.** The previous edition's
+answer excluded alternatives on grounds that do not hold — it said a
+key-agreement-per-message design leaves the device set to who is online, where
+published-prekey and single-shot constructions exist precisely to encrypt to an
+absent recipient. The record now sets out what MLS carries natively, what a
+pairwise base would oblige this study to specify and prove itself, and which
+single requirement is a boundary rather than a cost. Assurance and complexity,
+not impossibility.
+
+**And the framing edition is not a wire field.** The previous edition said an
+envelope "declaring 1.4 or later" carries the specified multipart layout. The
+envelope headers declare no version: the edition is the one an implementation is
+built to, agreed out of band, with no in-band negotiation. The rule is unchanged
+and the implication that a field exists is gone.
+
+## Edition r26 — 2026-09-27
 
 **No artefact version moves and nothing changes on the wire.** One correction,
 and the check that found it.

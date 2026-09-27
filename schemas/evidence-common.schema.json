@@ -1,7 +1,7 @@
 {
   "$id": "https://bw.example.eu/schemas/evidence-common.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Common Evidence Definitions (v2.11)",
+  "title": "Common Evidence Definitions (v2.12)",
   "description": "Shared definitions for Business Wallet evidence objects. hash_mode selects raw-byte hashing (raw-sha256/raw-sha512) or the multipart-manifest modes (manifest-sha256/manifest-sha512); the alg/hash_mode/hex triple is constrained to be internally coherent (SHA-256 => 64 hex, SHA-512 => 128 hex); the Uid pattern uses the canonical hyphen separator.",
   "$defs": {
     "Uid": {
@@ -367,8 +367,10 @@
       "anyOf": [
         {
           "required": [
-            "wallet_signature_b64"
-          ]
+            "wallet_signature_b64",
+            "device_id"
+          ],
+          "$comment": "A wallet signature is made by a DEVICE key, so an assertion carrying one names the device whose published key verifies it — otherwise a verifier resolving the key must search the member's published devices instead of looking one up. The CDDL has required this of a signed recipient confirmation since it was written (`rc-signed`); this Schema did not, and the two disagreed about the same object until R26-PUB-02."
         },
         {
           "required": [
@@ -454,8 +456,10 @@
       "anyOf": [
         {
           "required": [
-            "wallet_signature_b64"
-          ]
+            "wallet_signature_b64",
+            "device_id"
+          ],
+          "$comment": "A wallet signature is made by a DEVICE key, so an assertion carrying one names the device whose published key verifies it — otherwise a verifier resolving the key must search the member's published devices instead of looking one up. The CDDL has required this of a signed recipient confirmation since it was written (`rc-signed`); this Schema did not, and the two disagreed about the same object until R26-PUB-02."
         },
         {
           "required": [

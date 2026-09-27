@@ -27,6 +27,7 @@ so rather than reading a CE as an attested re-framing.
 """
 import json
 import pathlib
+import re
 import subprocess
 import sys
 
@@ -93,6 +94,54 @@ def test_the_deferral_is_an_agenda_entry_with_what_a_definition_must_pin():
     # And the sample's own values, named rather than left to be discovered again.
     assert "demo-part:<message_id>:1" in row
     assert "hashing real bytes does not put them in the declared domain" in row
+
+
+def test_no_document_still_presents_the_transformations_as_available():
+    """R26-PUB-04's closure test, and the check that would have prevented it.
+
+    The deferral went into the Internet-Draft and the agenda and stopped there.
+    The TS went on saying re-packaging and chunking were "the only permitted
+    transformations" and that an RDP "shall issue" a CE for one; the agenda's
+    own A13 row said a provider "may re-package it or split it"; and the
+    evidence explainer introduced CE as issued for permitted transformations.
+    An implementer could satisfy the prohibition or the duty, not both.
+
+    One status, swept across every document that states it. A mention is fine;
+    an OFFER is not — so a sentence naming either transformation must carry the
+    deferral in the same block.
+    """
+    DEFER = re.compile(r"not profiled|deferred|MUST NOT issue|shall not\s+issue|"
+                       r"neither is profiled|neither of the two|unproven|none is defined",
+                       re.I)
+    NAMES = re.compile(r"re-packaging|chunking", re.I)
+    # The word "chunking" also names the WITHDRAWN part-level chunking, which
+    # is A13's subject and not a CE transformation. A block is in scope only if
+    # it is about the evidence object — otherwise this sweep reports the
+    # paragraph that records the other withdrawal, which is correct as written.
+    CE_CONTEXT = re.compile(r"\bCE\b|Change-Indication|transformation", re.I)
+    problems = []
+    for pattern in ("*.md", "docs/*.md", "docs/adr/*.md", "ietf/*.md", "etsi/*.md"):
+        for path in sorted(ROOT.glob(pattern)):
+            rel = path.relative_to(ROOT).as_posix()
+            if rel.startswith("docs/reviews/") or rel == "CHANGELOG.md" \
+                    or rel.startswith("docs/DESIGN_") or rel.startswith("docs/FEDERATION_"):
+                continue                       # reviews and histories record what WAS said
+            for block in re.split(r"\n\s*\n", path.read_text(encoding="utf-8")):
+                flat = " ".join(block.split())
+                if NAMES.search(flat) and CE_CONTEXT.search(flat) and not DEFER.search(flat):
+                    problems.append(f"{rel}: {flat[:150]}")
+    assert problems == [], problems
+
+
+def test_the_duty_to_evidence_a_transformation_survives_the_deferral():
+    """Deferring the two operations must not delete the obligation: when a
+    transformation IS defined, the provider still owes evidence for it. The TS
+    keeps the duty and scopes it to what the profile has defined."""
+    ts = " ".join((ROOT / "etsi" / "TS-SBM-QERDS-Binding-v0.1.md").read_text(
+        encoding="utf-8").split())
+    assert "Whenever a transformation the profile has defined occurs — none is defined today " \
+           "— the responsible RDP shall issue a Change-Indication Evidence" in ts
+    assert "shall be made available to both the sender and the addressee" in ts
 
 
 # --- the gap a bundle reports -----------------------------------------------

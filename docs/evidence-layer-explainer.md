@@ -68,11 +68,11 @@ There are six object types. Five are individual, per-message records; the sixth 
 
 **RE — Refusal Evidence.** Issued when the recipient explicitly refuses (for example, an out-of-scope content class), event `C.4-ConsignmentRejection`.
 
-**CE — Change-Indication Evidence.** Issued when a transformation *needed for sending or receiving* occurs — permitted only on the envelope/metadata, never the content, since E2EE forbids content transformation. It satisfies Article 44(1)(e). Records the `transformation` and `changed_at`.
+**CE — Change-Indication Evidence.** For a transformation *needed for sending or receiving* — only ever on the envelope/metadata, never the content, since E2EE forbids content transformation. **No such transformation is profiled today**: the two the enumeration carries are deferred ([A15](REVIEW_AGENDA.md)), a provider must not issue either, and a verifier meeting one treats the transformation as unproven. What follows is what a CE would establish once an operation is defined. It satisfies Article 44(1)(e). Records the `transformation` and `changed_at`.
 
 **EP — Evidence Package.** The aggregate: the `se`, one or more `outcomes` (DE/NDE/RE), the `rdp_chain` (both RDPs in the four-corner case), optionally `changes[]` (CE records) and `states[]` (non-operative state records, §6). It is the wallet-storable, independently verifiable artefact a party produces in a dispute. It carries at least one outcome by construction — it is the *final* package, composed once an outcome exists.
 
-Every object carries, in common: `type`, `version` (`"2.11"` at this edition — bound to `versions.json` with every other statement of it), `profile` (`pilot` or `production`), `evidence_id` (unique per object, distinct from `message_id`) and `policy_id` (the RDP's issuance policy). On the wire the object travels as a sealed **evidence artefact** `[cose-sign1, qualified-timestamp]` — the COSE_Sign1 seal and its qualified timestamp are the artefact's two elements, not body fields.
+Every object carries, in common: `type`, `version` (`"2.12"` at this edition — bound to `versions.json` with every other statement of it), `profile` (`pilot` or `production`), `evidence_id` (unique per object, distinct from `message_id`) and `policy_id` (the RDP's issuance policy). On the wire the object travels as a sealed **evidence artefact** `[cose-sign1, qualified-timestamp]` — the COSE_Sign1 seal and its qualified timestamp are the artefact's two elements, not body fields.
 
 ## 4. How an object is sealed and time-stamped
 

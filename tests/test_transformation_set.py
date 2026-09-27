@@ -62,11 +62,18 @@ def ts_transformations(clause=None):
     returned the empty set and two tests passed for the wrong reason.
     """
     clause = ts_clause() if clause is None else clause
-    sentence = next(s for s in clause.split(". ") if "only permitted transformations" in s)
-    # Anchored on the phrase the list follows: the clause's own heading carries
-    # "(Article 44(1)(e))", and an unanchored parenthetical reader finds that.
-    inside = re.search(r"envelope/metadata\s*\((.*?)\)", sentence).group(1)
-    members = re.split(r",| and ", inside.replace("*", ""))
+    # The clause once said "the only permitted transformations are on the
+    # envelope/metadata (re-packaging and chunking)". Since both are deferred
+    # it enumerates them without permitting them — "neither of the two the
+    # profile enumerates (`re-packaging`, `chunking`) is profiled" — so the
+    # anchor is what the clause ENUMERATES, not what it permits. The set is
+    # still the thing checked: deferral changed the status of these members,
+    # not which members exist.
+    sentence = next(s for s in clause.split(". ")
+                    if "the profile enumerates" in s or "only permitted transformations" in s)
+    inside = re.search(r"(?:envelope/metadata|profile enumerates)\s*\((.*?)\)",
+                       sentence).group(1)
+    members = re.split(r",| and ", inside.replace("*", "").replace("`", ""))
     return {" ".join(m.split()).lower() for m in members if m.strip()}
 
 
@@ -112,7 +119,7 @@ def test_the_readers_are_not_fooled_by_a_reworded_sentence(tmp_path):
     copy = tmp_path / "TS.md"
     shutil.copy(TS, copy)
     text = copy.read_text(encoding="utf-8")
-    text = text.replace("(**re-packaging** and **chunking**)",
+    text = text.replace("(`re-packaging`, `chunking`)",
                         "(re-packaging, chunking and MLS re-encryption on an epoch change)")
     copy.write_text(text, encoding="utf-8")
     clause = copy.read_text(encoding="utf-8")

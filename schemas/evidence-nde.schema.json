@@ -1,7 +1,7 @@
 {
   "$id": "https://bw.example.eu/schemas/evidence-nde.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "evidence-nde (v2.11)",
+  "title": "evidence-nde (v2.12)",
   "description": "Non-Delivery Evidence. Issued by RDP(out) or RDP(in) when a message cannot be delivered or accepted within policy windows.",
   "type": "object",
   "required": [
@@ -24,7 +24,7 @@
     },
     "version": {
       "type": "string",
-      "const": "2.11"
+      "const": "2.12"
     },
     "profile": {
       "$ref": "evidence-common.schema.json#/$defs/Profile"

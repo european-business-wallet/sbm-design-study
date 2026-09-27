@@ -3,7 +3,7 @@
 openapi: "3.1.0"
 info:
   title: SM-MLS RDP-RDP relay companion contract (profile 2)
-  version: "11.0.0"
+  version: "12.0.0"
   description: |
     F-15: the normative four-corner RDP-to-RDP relay surface — scoped to
     HOMOGENEOUS SM-MLS federations (the X-09 claim matrix: both RDPs

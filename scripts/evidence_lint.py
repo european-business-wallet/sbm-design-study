@@ -55,6 +55,7 @@ DE_AVAILABILITY_EVENT = "D.1-ContentConsignment"  # DE event only at the declare
 # NDE is the pre-submission case (A.2) — the recipient-refusal case is an RE (C.4).
 # X-25: loaded from registries/reason-codes.json via lint_cli — registering a
 # reason (or binding its events) is a registry action, not a lint-code change.
+import lint_cli  # noqa: E402  — R26-PUB-02
 from lint_cli import RECIPIENT_VALIDATION_FAILURES  # noqa: E402  — R23-01
 from lint_cli import (NDE_REASON_EVENT, REGISTERED_NDE_REASONS,  # noqa: E402
                       REGISTERED_RE_REASONS, REASON_LEXICAL, RE_REASON_KIND,
@@ -256,9 +257,18 @@ def _production_wallet_sig(v, obj):
     (LINT-PROD-01/03). Without it the confirmation key cannot be anchored to a
     QSealC / Trusted List, which is what makes it an *advanced* signature (TS
     clause 5.1) rather than a bare key."""
-    conf = obj.get("s3_attestation") or obj.get("recipient_confirmation")
-    if isinstance(conf, dict) and conf.get("wallet_signature_b64"):
-        _production_identity(v, conf.get("wallet_signature_b64"), "wallet_signature_b64")
+    # The RECIPIENT-ack set, which is the scope this precheck already had —
+    # `s3_attestation or recipient_confirmation` — plus the proof type that was
+    # missing from it. Deriving it from the wider wallet-proof set instead
+    # extended a production identity requirement to `sender_confirmation` and
+    # `reveal_confirmation`, which is a normative tightening and not this
+    # fix's to make: whether those must carry a QSealC identity in production
+    # evidence is a live question and is reported, not decided here.
+    for key in sorted(lint_cli.RECIPIENT_ACK_PROOF_FIELDS):
+        conf = obj.get(key)
+        if isinstance(conf, dict) and conf.get("wallet_signature_b64"):
+            _production_identity(v, conf["wallet_signature_b64"],
+                                 f"{key}.wallet_signature_b64")
 
 
 def _production_pass(v, obj):
@@ -745,11 +755,43 @@ def lint_nde_semantics(v, nde, se=None):
                   f"recipient_validation_failure.failure {vfr.get('failure')!r} is not a "
                   "registered cause (registries/reason-codes.json "
                   "`recipient_validation_failures`)")
+        # R26-PUB-03: the SENDER's side of every comparison is in the SE, and
+        # was copyable. The recipient's observation cannot be checked — the
+        # parts are encrypted and absent, which is the whole reason this is an
+        # attributable assertion — but a `declared` value that is not what the
+        # sender declared, or a `part_id` the manifest never described, makes
+        # the evidence internally inconsistent, and both reached a sealed
+        # terminal outcome.
+        declared_parts = {d.get("part_id"): d for d in (se or {}).get("manifest") or []}
         for part in vfr.get("parts") or []:
+            pid = part.get("part_id")
             if part.get("failure") not in RECIPIENT_VALIDATION_FAILURES:
                 v.add("LINT-NDE-08",
-                      f"part {part.get('part_id')!r}: failure {part.get('failure')!r} is "
+                      f"part {pid!r}: failure {part.get('failure')!r} is "
                       "not a registered cause")
+            if se is None or not declared_parts:
+                continue
+            described = declared_parts.get(pid)
+            if part.get("failure") == "part-undescribed":
+                if described is not None:
+                    v.add("LINT-NDE-08",
+                          f"part {pid!r} is claimed undescribed and the manifest describes it")
+                continue
+            if described is None:
+                v.add("LINT-NDE-08",
+                      f"part {pid!r} is not in the SE's manifest, so the sender declared "
+                      "nothing about it — only an undescribed-part claim may name a part "
+                      "the manifest does not carry")
+                continue
+            if "declared" in part and part["declared"] != described.get("digest"):
+                v.add("LINT-NDE-08",
+                      f"part {pid!r}: `declared` is not the digest the sender declared for "
+                      "it — the sender's side of the comparison is in the SE and is not the "
+                      "recipient's to state")
+            if "declared_length" in part and part["declared_length"] != described.get("length"):
+                v.add("LINT-NDE-08",
+                      f"part {pid!r}: `declared_length` is not the length the sender "
+                      "declared for it")
             # `observed` is present exactly where a comparison WAS made. A
             # digest on a part that was absent would assert a computation over
             # octets nobody received.
@@ -1157,8 +1199,7 @@ def _verify_demo_pass(v, obj):
     t = obj.get("type")
     _verify_cose(v, (obj.get("seal") or {}).get("cose_b64"),
                  "demo", f"{t} seal")
-    for key in ("s3_attestation", "recipient_confirmation",
-                "sender_confirmation", "refusal_confirmation"):
+    for key in sorted(lint_cli.WALLET_PROOF_FIELDS):
         conf = obj.get(key) or {}
         if conf.get("wallet_signature_b64"):
             _verify_cose(v, conf["wallet_signature_b64"],

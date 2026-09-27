@@ -104,8 +104,9 @@ Proposed, pending A12:
   part's octets are reassembled before hashing whatever framing carried them,
   so its digest is the construction above like any other. **A13 closed on
   27 September 2026** on the ground that the profile has no chunked part: the
-  framing operation it defines acts on the envelope, and nothing splits a
-  manifest part. If a later revision ever introduces one, whether its chunks are
+  profile has no operation that splits a manifest part — the envelope
+  transformations are themselves deferred ([A15](../REVIEW_AGENDA.md)), and this
+  rests on the part rule, which holds either way. If a later revision ever introduces one, whether its chunks are
   salted is decided **there**, after the descriptor and the evidence that would
   make a chunk an object at all — not carried here as a question about something
   the profile does not have.

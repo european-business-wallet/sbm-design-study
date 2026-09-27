@@ -199,7 +199,16 @@ def test_the_carrier_is_a_stated_compatibility_boundary():
     id_text = " ".join((ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text().split())
     assert "first mandatory carrier for Mode C, and it is a compatibility boundary" \
         in id_text.replace("**", "")
-    assert "declaring **1.4 or later**" in id_text
+    # NOT "an envelope declaring 1.4": the headers carry no version property,
+    # so that phrasing named a wire field that does not exist. The edition is
+    # what an implementation is BUILT to, agreed out of band.
+    assert "It is not carried per message" in id_text.replace("**", "")
+    assert "The envelope headers declare no version" in id_text
+    assert "the profile provides no in-band negotiation for it" in id_text
+    import json
+    envelope = json.loads((ROOT / "schemas" / "envelope.schema.json").read_text())
+    assert not [k for k in envelope["properties"] if "version" in k.lower()], \
+        "if a version header is ever added, this sentence must change with it"
     assert "nothing may be assumed about the carrier of an implementation built to an " \
            "earlier one" in id_text
     assert "a later edition does not reach backwards" in id_text

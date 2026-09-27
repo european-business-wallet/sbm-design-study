@@ -232,12 +232,52 @@ rc-common = (
 rc-signed  = { rc-common, device_id: tstr, wallet_signature_b64: cose-b64 }
 rc-session = { rc-common, ? device_id: tstr, session_authenticated: true }
 
+; The recipient's assertion that the decrypted payload FAILED VALIDATION, which
+; is not a digest comparison: under Mode C the declared payload_hash is the
+; digest of the MANIFEST, so wrong parts recompute to the value the sender
+; declared and there is no differing digest to carry. It names the octets it
+; decrypted, the commitment it was checking, a typed cause, and the per-part
+; detail where parts exist - and carries NO payload_hash of its own, because
+; there is none to compute.
+;
+; The runtime sealed this object for a day while `nde-body` had no arm for it,
+; so an implementation following this file refused an outcome the reference
+; implementation issued. The test that was meant to catch it validated the JSON
+; projection and said, in its own comment, that it had validated the retained
+; form.
+rvf-cause = "part-digest-mismatch" / "part-length-mismatch" / "part-absent"
+          / "part-undescribed" / "part-id-duplicate" / "payload-framing-invalid"
+rvf-part  = {
+  part_id: tstr,
+  failure: rvf-cause,
+  ? declared: raw-hash,          ; the manifest's digest for this part
+  ? observed: raw-hash,          ; present ONLY for part-digest-mismatch, where
+  ? declared_length: decimal-str, ; a comparison was actually made
+  ? observed_length: decimal-str,
+}
+rvf-common = (
+  mid: member-id,
+  failure: rvf-cause,
+  envelope_hash: envelope-hash,          ; the octets the recipient decrypted
+  declared_payload_hash: content-hash,   ; the commitment it was checking
+  verified_at: iso-timestamp,
+  message_id: tstr,
+  mls_group_id: mls-group-id,
+  mls_epoch: mls-epoch,
+  mls_state: mls-state,
+  acceptance_policy_ref: acceptance-policy-ref,
+  ? parts: [+ rvf-part],
+)
+recipient-validation-failure = rvf-signed / rvf-session
+rvf-signed  = { rvf-common, device_id: tstr, wallet_signature_b64: cose-b64 }
+rvf-session = { rvf-common, ? device_id: tstr, session_authenticated: true }
+
 ; ============================================================================
 ; Evidence bodies (the dCBOR payload the COSE_Sign1 signs; the projection decodes it)
 ; ============================================================================
 
 se-body = {
-  type: "SE-v1", version: "2.11", profile: profile,
+  type: "SE-v1", version: "2.12", profile: profile,
   message_id: tstr, event: "A.1-SubmissionAcceptance",
   evidence_id: evidence-id, policy_id: policy-id,
   acceptance_policy_ref: acceptance-policy-ref, scope_ref: scope-ref,
@@ -277,7 +317,7 @@ sender-confirmation = { mid: member-id, device_id: tstr, message_id: tstr,
 ; confirmation-bearing grades (s3_attestation present, recipient-verified-digest).
 de-body = de-availability / de-confirmed
 de-common = (
-  type: "DE-v1", version: "2.11", profile: profile,
+  type: "DE-v1", version: "2.12", profile: profile,
   message_id: tstr,
   evidence_id: evidence-id, policy_id: policy-id,
   acceptance_policy_ref: acceptance-policy-ref, scope_ref: scope-ref,
@@ -311,9 +351,9 @@ quorum-ack = { mid: member-id, ack_at: iso-timestamp,
 
 ; NDE — reason drives event and the conditional fields; recipient_confirmation
 ; is required for payload-hash-mismatch, redirect_uid for uid-merged.
-nde-body = nde-mismatch / nde-merged / nde-plain
+nde-body = nde-mismatch / nde-validation-failure / nde-merged / nde-plain
 nde-common = (
-  type: "NDE-v1", version: "2.11", profile: profile,
+  type: "NDE-v1", version: "2.12", profile: profile,
   message_id: tstr,
   event: "A.2-SubmissionRejection" / "B.3-RelayFailure" / "C.5-AcceptanceRejectionExpiry"
        / "D.2-ContentConsignmentFailure" / "E.2-ContentHandoverFailure",
@@ -328,6 +368,8 @@ nde-common = (
 nde-reason = tstr
 nde-plain    = { nde-common, reason: nde-reason }
 nde-mismatch = { nde-common, reason: "payload-hash-mismatch", recipient_confirmation: recipient-confirmation }
+nde-validation-failure = { nde-common, reason: "payload-validation-failed",
+                           recipient_validation_failure: recipient-validation-failure }
 nde-merged   = { nde-common, reason: "uid-merged", redirect_uid: uid }
 
 ; X-29 (2.3): the refusal carries WHO refused and the recipient-produced proof.
@@ -338,7 +380,7 @@ refusal-confirmation = { mid: member-id, result: "refused", message_id: tstr,
                          ? session_authenticated: true,
                          ? session_binding: session-binding }
 re-body = {
-  type: "RE-v1", version: "2.11", profile: profile,
+  type: "RE-v1", version: "2.12", profile: profile,
   message_id: tstr, event: "C.4-ConsignmentRejection",
   evidence_id: evidence-id, policy_id: policy-id,
   recipient_uid: uid,
@@ -352,7 +394,7 @@ re-body = {
 }
 
 ce-body = {
-  type: "CE-v1", version: "2.11", profile: profile,
+  type: "CE-v1", version: "2.12", profile: profile,
   message_id: tstr, event: "change-of-data",
   evidence_id: evidence-id, policy_id: policy-id,
   transformation: "re-packaging" / "chunking",  ; X-24 (2.5): observable only
@@ -365,7 +407,7 @@ ce-body = {
 ; RelayEvidence — B.1 acceptance (no reason) vs B.2 rejection (typed reason).
 relay-body = relay-accept / relay-reject
 relay-common = (
-  type: "RelayEvidence-v1", version: "2.11",
+  type: "RelayEvidence-v1", version: "2.12",
   ? profile: tstr, ? evidence_id: tstr,
   message_id: tstr,
   sending_rdp_id: tstr, receiving_rdp_id: tstr, hop_at: iso-timestamp,
@@ -374,7 +416,7 @@ relay-common = (
 ; X-04/D5 (2.2): grade-commitment-mismatch dispute evidence — rebuts (never
 ; retracts) an availability DE; carried in the EP's OPTIONAL disputes[].
 gcm-body = {
-  type: "GCM-v1", version: "2.11", profile: profile,
+  type: "GCM-v1", version: "2.12", profile: profile,
   message_id: tstr, event: "D.6-ContentAccessTracking",
   evidence_id: evidence-id, policy_id: policy-id,
   recipient_uid: uid, mid: member-id, auth_context: auth-context,
@@ -398,7 +440,7 @@ relay-reject = { relay-common, event: "B.2-RelayRejection",
 ; sub-artefact yields an evidence-body validated in turn. (The JSON PROJECTION
 ; nests the decoded sub-bodies — see the evidence-ep JSON Schema.)
 ep-body = {
-  type: "EP-v1", version: "2.11",
+  type: "EP-v1", version: "2.12",
   message_id: tstr,
   se: bstr,                 ; embedded SE artefact bytes
   outcomes: [+ bstr],       ; embedded DE/NDE/RE artefact bytes

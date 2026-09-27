@@ -214,6 +214,39 @@ def test_the_guard_catches_the_phrasings_that_got_past_it():
                                 "test a guess against it."), spelling
 
 
+def test_the_agent_branch_promises_no_more_than_the_evidence_branch():
+    """R26-PUB-05. The two locations the previous review named were corrected;
+    the agent branch was not, and a reviewer entering by agent expertise met a
+    stronger guarantee than one entering by security.
+
+    Two distinct claims had to be bounded. The commitment hides the class *from
+    that field* — but the standing `mandate_ref.scope` is published in the
+    signed member binding and the resolved `scope_ref` gives the set of classes
+    the message could have belonged to. And an opening proves what the sender
+    COMMITTED TO, not what it encrypted: a sender may commit to a permitted
+    class and encrypt something else, because no party to the reveal inspects
+    the plaintext.
+    """
+    agent = " ".join((ROOT / "docs" / "agent-profile-explainer.md").read_text(
+        encoding="utf-8").split())
+    assert "Before a dispute neither the mandate nor the class is disclosed" not in agent
+    assert "The commitment itself discloses neither the mandate nor the class" in agent
+    assert "a scope covering one class gives that class" in agent
+    assert "not that the declared class describes the encrypted document" in agent
+
+    umbrella = " ".join((ROOT / "Secure-Business-Messaging-Profile.md").read_text(
+        encoding="utf-8").split())
+    assert "without the mandate or the class leaking —" not in umbrella
+    assert "from the commitment" in umbrella.replace("**", "")
+
+    ts = " ".join((ROOT / "etsi" / "TS-SBM-QERDS-Binding-v0.1.md").read_text(
+        encoding="utf-8").split())
+    assert "shows the agent acted within its mandate;" not in ts
+    assert "the class the sender committed to lies within the mandate's scope" in \
+        ts.replace("**", "")
+    assert "an opening that fails to verify establishes neither misuse nor overreach" in ts
+
+
 def test_the_consolidated_threat_model_carries_the_digest_residual():
     """The Internet-Draft's consideration defers to the umbrella for the
     consolidated threat model — "what the metadata reveals, to which observer,

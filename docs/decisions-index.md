@@ -75,4 +75,4 @@ Every other open question — the implementer guide (G1–G4), the legal questio
 ## Author questions
 
 - **What does a UID cost an entity?** The record names who operates the infrastructure; who pays for issuance, and on what terms, is not recorded. ([SBM-ADR-0001](adr/SBM-ADR-0001.md))
-- **Why MLS?** The record explains how MLS is profiled, not why it was chosen over other end-to-end protocols; no comparison is written down. ([SBM-ADR-0003](adr/SBM-ADR-0003.md))
+- **Why MLS, against named alternatives?** *Why this choice* states the requirements the choice was made from, what MLS supplies natively and what a pairwise composition would have to be given — as assurance and complexity, not impossibility. No specific competing protocol or product is assessed, and no such comparison is written down. ([SBM-ADR-0003](adr/SBM-ADR-0003.md))

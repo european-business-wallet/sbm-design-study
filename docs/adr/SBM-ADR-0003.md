@@ -17,7 +17,7 @@ cost: >-
   who routes a group after formation is open ([A10](../REVIEW_AGENDA.md))
 open_questions: [A10]
 author_questions:
-  - "Why MLS? The record explains how MLS is profiled, not why it was chosen over other end-to-end protocols; no comparison is written down."
+  - "Why MLS, against named alternatives? *Why this choice* states the requirements the choice was made from, what MLS supplies natively and what a pairwise composition would have to be given — as assurance and complexity, not impossibility. No specific competing protocol or product is assessed, and no such comparison is written down."
 supersedes: []
 ---
 
@@ -69,16 +69,34 @@ provider. And *a provider that never holds content keys*, because the whole
 legal argument rests on a provider attesting delivery of something it cannot
 read.
 
-**What that excludes, in kind.** A pairwise protocol with per-device ratchets
-meets asynchrony and multiple devices, and gives no group object: "the devices
-of the recipient entity at this instant" becomes a provider's list, which is
-precisely the thing the evidence must not depend on. A server-side group with
-transport encryption gives the group object and breaks the last requirement.
-A key-agreement-per-message design meets confidentiality and makes the
-device set a matter of who was online. MLS is the one shape in which the group,
-its membership and its epoch are cryptographic state that both parties hold and
-a third party can be shown — which is what `mls_group_id`, `mls_epoch` and
-`mls_state` in the evidence are.
+**What MLS supplies natively, and what an alternative would have to be given.**
+The argument is about what comes with the protocol, not about what other
+protocols make impossible — an earlier revision of this section claimed the
+latter and was wrong to.
+
+A pairwise design meets asynchrony and multiple devices on its own: published
+prekeys let a sender encrypt to a recipient who is offline (X3DH; HPKE's
+single-shot encryption to a public key needs no live participation at all), and
+multi-device session management is a solved problem in that family (Sesame).
+What such a design does not carry is a **group object**: a membership that both
+parties hold as cryptographic state, changes by a signed operation, and advances
+a counter a third party can be shown. This profile's evidence names
+`mls_group_id`, `mls_epoch` and `mls_state` because those are exactly that
+state; on a pairwise base they would have to be **specified, implemented and
+proven by this profile** — a signed roster with its own versioning and conflict
+rules, a membership-change operation, an epoch equivalent, and a story for how a
+verifier years later checks that the devices it names were the members then.
+
+A server-side group gives the group object and breaks the requirement that the
+provider never holds content keys, which is not a matter of composition: it is
+the boundary the whole legal argument rests on.
+
+So the choice is **assurance and complexity, not impossibility**. MLS brings
+group membership, its epochs and its transcript as reviewed, implemented
+machinery with its own security analysis; the alternative is a smaller base plus
+a roster mechanism this study would own end to end. Nothing here assesses whether
+a particular pairwise composition could satisfy the full requirement set — that
+comparison is not written down, and the record says so under *Unanswered*.
 
 **What it costs, stated where an architect will look for it.** Persistent group
 state per relationship, which a provider must store and a wallet must not lose.
@@ -143,7 +161,9 @@ The Internet-Draft, *Group Topology* and *Group Establishment*.
 
 ## Unanswered
 
-A comparison against named alternatives. *Why MLS at all* above states the
-requirements the choice was made from and the shapes they exclude, which is the
-level the decision was actually taken at; it is not an assessment of specific
-competing protocols or products, and none is written down.
+A comparison against named alternatives. *Why this choice* above states the
+requirements the choice was made from, what MLS supplies natively and what a
+pairwise composition would have to be given instead — a difference of assurance
+and complexity. It is not an assessment of any specific competing protocol or
+product: whether a particular composition could satisfy the full requirement set
+is not established either way, and no such comparison is written down.

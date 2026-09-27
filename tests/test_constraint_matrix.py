@@ -76,8 +76,16 @@ def test_matrix_schema_and_linter_agree(desc, mutate):
 
 
 def test_positive_the_valid_sample_passes_both():
+    """The control for the matrix above — and it seals an artefact, so it is
+    held to all three representations. A shipped sample is covered by
+    `make cddl-check`; what this seals at runtime is covered by nothing else,
+    and asserting one projection valid is claiming more than that establishes
+    (see `test_suite_claims_what_it_checks.py`)."""
+    import cddl_check
     assert lc.validate_body(SE) == []
-    assert "LINT-PKG-12" not in [r for r, _ in el.lint(mock.evidence_artifact(copy.deepcopy(SE)))]
+    art = mock.evidence_artifact(copy.deepcopy(SE))
+    assert "LINT-PKG-12" not in [r for r, _ in el.lint(art)]
+    assert cddl_check._check_body(art["projection"], "constraint-matrix control")
 
 
 def test_b6_regression_subcases_remain():

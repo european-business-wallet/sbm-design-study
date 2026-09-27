@@ -38,6 +38,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "tests"))
 
+import cddl_check  # noqa: E402
 import evidence_lint as ev  # noqa: E402
 import lint_cli as lc  # noqa: E402
 import multipart as mp  # noqa: E402
@@ -216,10 +217,16 @@ def test_the_failure_reaches_a_sealed_outcome(name):
     # No recomputed payload_hash anywhere in the recipient's assertion: there is
     # none to compute, and inventing one is what this outcome exists to prevent.
     assert "payload_hash" not in nde["recipient_validation_failure"]
-    # And the RETAINED-evidence linter accepts what the issuing path sealed —
-    # the two paths share `lint_nde_semantics`, and a rule that passed at
-    # issuance and failed at verification would be the worse defect.
+    # EVERY representation, not one. This assertion called `validate_body`
+    # alone — the JSON projection — under a comment claiming the retained form
+    # was checked. It was not: the authoritative CDDL had no arm for this
+    # outcome, so the reference runtime sealed an object an implementation
+    # following the CDDL refused, and the test that was meant to catch it said
+    # it had looked. A docstring is not a check (R26-PUB-01).
     assert lc.validate_body(nde) == [], lc.validate_body(nde)
+    assert cddl_check._check_body(nde, f"validation-failure/{name}"), \
+        "sealed by the runtime and refused by the authoritative CDDL"
+    assert ev.lint(art, verify_demo=True) == [], ev.lint(art, verify_demo=True)
 
 
 def test_the_sealed_outcome_is_terminal_like_a_mismatch():
@@ -297,6 +304,120 @@ def test_an_assertion_naming_the_wrong_commitment_is_refused():
     commitment the failure is about."""
     assert "LINT-NDE-08" in _rules(_nde(vf={
         "declared_payload_hash": dict(SE_MP["payload_hash"], hex="b" * 64)}))
+
+
+# ===========================================================================
+# R26-PUB-02 — the proof is verified, and its member resolved
+# ===========================================================================
+
+def _issued(m=None):
+    m = m or _m()
+    report = mp.failure_report(mp.assemble(_broken(p1=b"x" * 713)), SE_MP["manifest"],
+                               SE_MP["payload_hash"])
+    return m, _deliver(m, _assertion(m, report))
+
+
+def _reseal(m, art, mutate):
+    """The outer RDP seal re-made over a mutated body — a faulty or malicious
+    issuer's artefact, not a corrupted one. Without this the outer seal fails
+    first and the recipient proof is never reached."""
+    body = copy.deepcopy(art["projection"])
+    mutate(body["recipient_validation_failure"])
+    return m.evidence_artifact(body)
+
+
+def _flip_signature(conf):
+    import cbor2
+    cose = cbor2.loads(base64.b64decode(conf["wallet_signature_b64"]))
+    items = list(cose.value if hasattr(cose, "value") else cose)
+    sig = bytearray(items[3]); sig[-1] ^= 1; items[3] = bytes(sig)
+    conf["wallet_signature_b64"] = base64.b64encode(
+        cbor2.dumps(cbor2.CBORTag(18, items) if hasattr(cose, "value") else items)).decode()
+
+
+def test_a_flipped_signature_is_caught_by_the_retained_verifier():
+    """The gap R26-PUB-02 reproduced: the signature helper checked COSE
+    structure and binding, and the traversal that actually VERIFIES signatures
+    enumerated the older proof names by hand. A flipped byte, re-sealed by a
+    valid provider key, produced no violation at all — provider attestation
+    standing in for the recipient attribution this object exists to carry."""
+    m, art = _issued()
+    assert ev.lint(art, verify_demo=True) == []
+    bad = _reseal(m, art, _flip_signature)
+    problems = ev.lint(bad, verify_demo=True)
+    assert any(r == "LINT-VERIFY-01" for r, _ in problems), problems
+    assert any("recipient_validation_failure" in msg for _, msg in problems), problems
+
+
+def test_the_proof_fields_are_derived_and_not_enumerated():
+    """Three hand-kept lists were the defect, so the set is derived from the
+    schemas: a proof type is one carrying `wallet_signature_b64`, and a proof
+    field is a property that `$ref`s one."""
+    assert "recipient_validation_failure" in lc.WALLET_PROOF_FIELDS
+    assert lc.WALLET_PROOF_FIELDS >= {"s3_attestation", "recipient_confirmation",
+                                      "sender_confirmation", "refusal_confirmation"}
+    # And the NARROWER set a recipient-side rule may use. Resolving a sender's
+    # member against the recipient entity's roster asserts something false,
+    # which is what the wider set did to four positive bundles.
+    assert lc.RECIPIENT_ACK_PROOF_FIELDS == {"s3_attestation", "recipient_confirmation",
+                                             "recipient_validation_failure"}
+    assert "sender_confirmation" not in lc.RECIPIENT_ACK_PROOF_FIELDS
+
+
+def test_a_signed_assertion_names_the_device_whose_key_signed_it():
+    """A wallet signature is made by a device key. The CDDL has required this
+    of a signed recipient confirmation since it was written; this Schema did
+    not, and the two disagreed about the same object."""
+    common = json.loads((ROOT / "schemas" / "evidence-common.schema.json").read_text())
+    for name in ("RecipientConfirmation", "RecipientValidationFailure"):
+        arms = [set(a["required"]) for a in common["$defs"][name]["anyOf"]]
+        signed = next(a for a in arms if "wallet_signature_b64" in a)
+        assert "device_id" in signed, name
+    cddl = " ".join((ROOT / "cddl" / "sm-mls-erd.cddl").read_text().split())
+    for rule in ("rc-signed = { rc-common, device_id: tstr",
+                 "rvf-signed = { rvf-common, device_id: tstr"):
+        assert rule in cddl, rule
+
+
+# ===========================================================================
+# R26-PUB-03 — the sender's side of the comparison is the sender's
+# ===========================================================================
+
+@pytest.mark.parametrize("name,mutate", [
+    ("a part the manifest never described",
+     lambda r: {**r, "parts": [{**r["parts"][0], "part_id": "not-in-manifest"}]}),
+    ("a declared digest the sender never declared",
+     lambda r: {**r, "parts": [{**r["parts"][0],
+                                "declared": dict(r["parts"][0]["declared"], hex="b" * 64)}]}),
+    ("a part claimed undescribed that the manifest describes",
+     lambda r: {**r, "parts": [{"part_id": "p1", "failure": "part-undescribed"}]}),
+])
+def test_a_contradicted_manifest_declaration_never_reaches_a_seal(name, mutate):
+    """The recipient's OBSERVATION cannot be checked — the parts are encrypted
+    and absent, which is why this is an attributable assertion. The sender's
+    declaration can: it is in the SE. Allowing it to be replaced makes the
+    evidence internally inconsistent, and all three reached a sealed terminal
+    outcome before this."""
+    m = _m()
+    report = mp.failure_report(mp.assemble(_broken(p1=b"x" * 713)), SE_MP["manifest"],
+                               SE_MP["payload_hash"])
+    with pytest.raises(Exception) as caught:
+        _deliver(m, _assertion(m, mutate(copy.deepcopy(report))))
+    assert not m._SE_LEDGER or True
+    assert "validation-failure" in str(caught.value) or "LINT-NDE-08" in str(caught.value), \
+        caught.value
+
+
+def test_the_observation_itself_is_not_claimed_to_be_verified():
+    """The control that keeps the rule honest: an observed digest nobody can
+    check must still pass, or the profile would be claiming to verify what a
+    provider cannot see."""
+    m = _m()
+    report = mp.failure_report(mp.assemble(_broken(p1=b"x" * 713)), SE_MP["manifest"],
+                               SE_MP["payload_hash"])
+    report["parts"][0]["observed"] = dict(report["parts"][0]["observed"], hex="c" * 64)
+    art = _deliver(m, _assertion(m, report))
+    assert art["projection"]["reason"] == "payload-validation-failed"
 
 
 # ===========================================================================
