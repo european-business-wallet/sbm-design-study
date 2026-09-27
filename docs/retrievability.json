@@ -1,0 +1,169 @@
+{
+  "$comment": "G3 (partly answered). Every verification this repository's tooling performs reads material a verifier was HANDED: no linter dereferences a URL, and no check consults live state. That is why `docs/lifecycle-and-custody.md` §1 can say 'unaffected' so often — and it is exactly why custody is the open question, because a verdict is only as durable as somebody's willingness to keep answering the read that supplies the material. This registry names, per verification input, which published operation retrieves it, who serves it, what its absence does to the verdict, and whether that survives a provider exit. Rendered to docs/retrievability.md by scripts/retrievability.py, which also gates it: every retained-material argument of `check_bundle`, every LINT-BND-I* residual and every published as-of read must appear here, so none can be added without saying who keeps it retrievable.",
+  "inputs": [
+    {
+      "input": "med",
+      "material": "The entity's sealed BW-MED: its provider endpoints, DS receipt keys, MLS parameters and the key set that seals the rest.",
+      "operation": "GET /.well-known/bw/med/{uid}",
+      "served_by": "the entity's provider (EDD resolver surface)",
+      "absent": "no verification is possible: the document that pins every other seal key is missing.",
+      "survives_provider_exit": false,
+      "note": "The endpoints INSIDE it move on an exit; the document itself must remain retrievable as it stood at the act, and nothing names who serves that."
+    },
+    {
+      "input": "org",
+      "material": "The sealed BW-ORG version the message pinned: acceptance policy, delivery grades, scope map.",
+      "operation": "GET /.well-known/bw/org/{uid}?doc_digest=",
+      "served_by": "the entity's provider (EDD resolver surface)",
+      "absent": "the policy that governed the act cannot be read.",
+      "survives_provider_exit": false,
+      "note": "Retrieval BY DIGEST is the right interface: evidence pins `acceptance_policy_ref.doc_digest`, so a verifier can ask for exactly the version it needs. The interface is settled; the custody is not."
+    },
+    {
+      "input": "policy_history",
+      "material": "The BW-ORG succession chain, so the pinned version can be shown to have been the latest in force at the act.",
+      "operation": "GET /.well-known/bw/org/{uid}?doc_digest= , once per version",
+      "served_by": "the entity's provider (EDD resolver surface)",
+      "absent": "LINT-BND-I1 / LINT-BND-I3 — linkage and in-force are provable from the pinned document alone; MAXIMALITY is not, and the verdict says INCOMPLETE rather than passing.",
+      "survives_provider_exit": false,
+      "residuals": [
+        "LINT-BND-I1",
+        "LINT-BND-I3"
+      ]
+    },
+    {
+      "input": "members",
+      "material": "The recipient entity's BW-MEMBER bindings as they stand: devices, capabilities, confirmation keys, status.",
+      "operation": "GET /uid/{uid}/members , GET /.well-known/bw/member/{uid}/{mid}",
+      "served_by": "the entity's provider (EDD resolver surface)",
+      "absent": "no attribution and no satisfiability check can run.",
+      "survives_provider_exit": false,
+      "note": "This list answers the PRESENT-tense question only (satisfiability, LINT-BND-08/09). Attribution reads `member_history` as of the act."
+    },
+    {
+      "input": "member_history",
+      "material": "Superseded BW-MEMBER versions with their windows, so a member's status and confirmation key can be resolved AS THEY STOOD AT THE ACT (X-17/DR-11).",
+      "operation": "GET /.well-known/bw/member/{uid}/{mid}?as_of= (or ?version=)",
+      "served_by": "the entity's provider (EDD resolver surface)",
+      "absent": "attribution falls back to the current binding, which is correct only while nothing has changed; LINT-BND-34 exists because a key minted after the act must not anchor it.",
+      "survives_provider_exit": false,
+      "note": "TS ICS 146 / MWAP §3 require as-of retrieval for the evidence retention period, INCLUDING for retired members — a duty on a surface that a provider exit removes."
+    },
+    {
+      "input": "counterparty_members",
+      "material": "The SENDER entity's bindings, for the sender half of the identity tuple.",
+      "operation": "GET /.well-known/bw/member/{uid}/{mid} on the SENDER's provider",
+      "served_by": "the sender entity's provider — a different provider, and often a different jurisdiction",
+      "absent": "LINT-BND-I2 — the sender-side half is undecidable from the retained material, reported INCOMPLETE rather than passed or failed.",
+      "survives_provider_exit": false,
+      "residuals": [
+        "LINT-BND-I2"
+      ]
+    },
+    {
+      "input": "roster",
+      "material": "The sealed ROSTER snapshot for an evidenced epoch: who was in the group, and the ratchet-tree hash.",
+      "operation": "GET /uid/{uid}/roster-snapshot?scope_id=&epoch=",
+      "served_by": "the recipient's provider",
+      "absent": "membership at the epoch rests on the current roster instead of the one the evidence commits to.",
+      "survives_provider_exit": false
+    },
+    {
+      "input": "group_contexts",
+      "material": "Retained MLS GroupContext bytes for every evidenced epoch, so `mls_state` can be recomputed rather than trusted.",
+      "operation": "GET /groups/{group_id}/context?epoch=",
+      "served_by": "the Delivery Service — the retention duty's read surface, access-controlled to authorised verifiers (X-23)",
+      "absent": "LINT-BND-I4 — the state the evidence commits to cannot be inspected, and the verdict says so.",
+      "survives_provider_exit": false,
+      "residuals": [
+        "LINT-BND-I4"
+      ],
+      "note": "A5, exactly: the READ is published and nothing publishes the BYTES it serves. So this input's gap is the write side, not the retrieval interface — which is the opposite of every other row here, where the interface is settled and only the custody after an exit is not."
+    },
+    {
+      "input": "formation_inputs",
+      "material": "The per-device KeyPackage availability and registry revision AS THEY STOOD AT GROUP CREATION, so the cipher-suite decision can be recomputed.",
+      "operation": "none published — the read surface exists for group context, not for the formation inputs (A5)",
+      "served_by": "the recipient's provider",
+      "absent": "LINT-BND-I5 — the strongest-usable arm of the suite decision cannot be recomputed.",
+      "survives_provider_exit": false,
+      "residuals": [
+        "LINT-BND-I5"
+      ],
+      "note": "The registry revision and per-device package availability AT CREATION have no published read at all, so this is a gap one step earlier than `group_contexts`: there is nothing to serve and no way to ask."
+    },
+    {
+      "input": "suite_registry",
+      "material": "The cipher-suite registry revision the formation decision was taken against.",
+      "operation": "none published — carried as a demonstration fixture",
+      "served_by": "the design authority",
+      "absent": "the suite decision is taken on trust.",
+      "survives_provider_exit": true,
+      "note": "Not a provider's to hold, so an exit does not touch it."
+    },
+    {
+      "input": "federation_register",
+      "material": "The participant's admission windows, to decide whether each provider named in the evidence was admitted WHEN IT ACTED.",
+      "operation": "GET /participants/{participant_id}?as_of=",
+      "served_by": "the Federation Authority",
+      "absent": "LINT-BND-I6 — the bundle cannot establish that the providers it names were admitted at the act, and says INCOMPLETE.",
+      "survives_provider_exit": true,
+      "note": "The one historical read that a provider exit does NOT touch, because the Authority serves it and is not the exiting party. This is the shape the other rows lack.",
+      "residuals": [
+        "LINT-BND-I6"
+      ]
+    },
+    {
+      "input": "fa_anchors",
+      "material": "The Federation Authority's own seal keys, to verify the register records.",
+      "operation": "the Authority's published key set",
+      "served_by": "the Federation Authority",
+      "absent": "the register is unverifiable, so admission is undecided.",
+      "survives_provider_exit": true
+    },
+    {
+      "input": "receipts",
+      "material": "The DS-signed handover receipts the delivery event rests on.",
+      "operation": "none published for third-party retrieval — the receipt travels to the party that collected",
+      "served_by": "the issuing RDP; the collecting party's own copy",
+      "absent": "the S2 event rests on the DE's assertion rather than on the DS's signature.",
+      "survives_provider_exit": false
+    },
+    {
+      "input": "evidence",
+      "material": "The sealed evidence objects and packages themselves.",
+      "operation": "GET /uid/{uid}/evidence/{message_id} , GET /evidence/{message_id}",
+      "served_by": "each party's own wallet copy; the issuing RDP",
+      "absent": "there is nothing to verify.",
+      "survives_provider_exit": true,
+      "note": "The only material with a SECOND independent holder by design: each party keeps its own copy, so a provider exit does not destroy it. Why the evidence itself is the durable part and the material needed to CHECK it is the fragile part."
+    },
+    {
+      "input": "reveals",
+      "material": "The (salt, content_class) opening of an availability-grade commitment.",
+      "operation": "none, by design — the salt travels only inside the end-to-end-encrypted envelope",
+      "served_by": "the endpoints, and only the parties of a dispute",
+      "absent": "the committed class stays hidden, which is the point; the grade claim is then unopened, not failed.",
+      "survives_provider_exit": true
+    },
+    {
+      "input": "mandate_reveals",
+      "material": "The opening of an agent act's mandate commitment.",
+      "operation": "none, by design — as for reveals",
+      "served_by": "the endpoints, and only the parties of a dispute",
+      "absent": "the declared class stays hidden; a valid opening establishes what the sender COMMITTED to, never what the plaintext was.",
+      "survives_provider_exit": true
+    },
+    {
+      "input": "transformation_traces",
+      "material": "Evidence that a Change-Indication Evidence's outputs are the transformation of its input. Neither of the two transformations is profiled, so there is no operation to trace.",
+      "operation": "none — neither is profiled (open items A13/A15)",
+      "served_by": "nobody: the profile does not claim this is establishable",
+      "absent": "LINT-BND-I7 — stated as unestablishable rather than reported as a gap in the bundle, because neither is profiled and a provider MUST NOT issue one.",
+      "survives_provider_exit": true,
+      "residuals": [
+        "LINT-BND-I7"
+      ]
+    }
+  ]
+}

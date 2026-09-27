@@ -59,14 +59,14 @@ lint-demo:
 # cddl-check / doc-lint with a PINNED `cddl` tool, fail-closed under CI; the reuse
 # job: reuse lint). 'make lint' alone is the structural subset — see README
 # # Conformance.
-conformance: versions lint-catalogue rule-ownership adr-index test schema-smoke lint lint-demo cddl-check cross-representation openapi-validate doc-lint reuse
-	@echo "CONFORMANCE: all gates green (versions, lint-catalogue, rule-ownership, adr-index, preflight+test, schema-smoke, lint, lint-demo, cddl-check, cross-representation, openapi-validate, doc-lint, reuse)"
+conformance: versions lint-catalogue rule-ownership adr-index test schema-smoke lint lint-demo cddl-check cross-representation retrievability openapi-validate doc-lint reuse
+	@echo "CONFORMANCE: all gates green (versions, lint-catalogue, rule-ownership, adr-index, preflight+test, schema-smoke, lint, lint-demo, cddl-check, cross-representation, retrievability, openapi-validate, doc-lint, reuse)"
 
 # N-04: the FULL bar requires the `cddl` tool (cddl-check above is fail-closed).
 # conformance-lite is the escape hatch for contributors without a Rust toolchain:
 # identical gates, but cddl-check-lite TOLERATES a missing `cddl` (prints [skip]).
 # It is NOT the conformance bar — CI and releases use `make conformance`.
-conformance-lite: versions lint-catalogue rule-ownership adr-index test schema-smoke lint lint-demo cddl-check-lite cross-representation openapi-validate doc-lint reuse
+conformance-lite: versions lint-catalogue rule-ownership adr-index test schema-smoke lint lint-demo cddl-check-lite cross-representation retrievability openapi-validate doc-lint reuse
 	@echo "CONFORMANCE-LITE: gates green — but cddl-check may have SKIPPED (install cddl and run 'make conformance' for the full fail-closed bar)"
 
 # DR-09: meta-validate every published OpenAPI contract with a PINNED
@@ -132,6 +132,12 @@ trace:
 # Both directions were previously answered only by a human reading two files.
 cross-representation:
 	$(PY) scripts/cross_representation.py
+
+# G3: which material a verification depends on, who serves it, and which rows a
+# provider exit leaves with no named server. Gated against check_bundle's own
+# arguments, the declared LINT-BND-I* residuals and every published as-of read.
+retrievability:
+	$(PY) scripts/retrievability.py
 
 cddl-check:
 	$(PY) scripts/cddl_check.py

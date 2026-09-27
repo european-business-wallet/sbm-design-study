@@ -18,7 +18,75 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-27, edition r29
+## Current — 2026-09-27, edition r30
+
+**No artefact version moves and nothing changes on the wire.** One of the four
+deferred implementer questions is now partly answered: what changes at a key or
+role transition, and what a provider's migration or exit does to evidence already
+issued.
+
+| Artefact | This edition | Previous |
+|---|---|---|
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.12** | 2.12 |
+| Profile-2 companion contracts (wallet–RDP, delivery service, relay) | **13.0.0** | 13.0.0 |
+
+**The transition claims are now checked rather than asserted.** The lifecycle
+document states, for each change an organisation goes through, what happens to new
+traffic, to messages in flight and to evidence already issued. Those statements
+were prose, and a reader acting on one had nothing to tell the author when it
+stopped being true. Every one of them is now a check, and a guard fails if a
+change is described without one.
+
+They all hold. A replaced device is a **new enrolment** and inherits nothing,
+while the item already queued for the device it replaced is untouched. A policy
+version published after an act leaves the version that act pinned alone — and one
+already in force at the act is reported, because then the message pinned a
+superseded version. A member suspended or retired afterwards keeps its
+acknowledgement.
+
+**And they hold for one reason worth stating plainly: verification reads the
+documents a verifier was handed, never live state and never an address.** The
+strongest form of that is now asserted — rewrite *every* endpoint in an
+organisation's discovery document to point at a different provider, and its
+evidence verifies exactly as before.
+
+**Which is why what remains of the question is custody.** A verdict is only as
+durable as somebody's willingness to keep answering the read that supplies it, and
+nothing said which reads those were. A new document now says it per input: what the
+material is, which published read retrieves it, who serves it, what its absence
+does to the verdict, and whether that survives a provider exit. **Of seventeen
+inputs a verification can take, ten depend on material a provider exit leaves with
+no named server.**
+
+Exactly one historical read is served by a party that is *not* the exiting provider
+— the federation register's admission history, held by the Federation Authority —
+and that is the shape the others lack. The asymmetry underneath it is worth seeing:
+the evidence itself has a second independent holder by design, because each party
+keeps its own copy, while most of the material needed to *check* that evidence has
+only one.
+
+The failure is **graceful**. An absent input degrades a verdict to *incomplete* and
+never to a silent pass — the specification already had rules whose whole job is to
+say "the material to decide is not here". So this is a gap in what has been
+specified, not a fault in what has been built, and saying which it is decides how
+much machinery it deserves.
+
+**The new document is generated and gated, not written and trusted.** It is checked
+against three things the tooling already states for itself: every input the
+retained-evidence verifier accepts, every rule that reports material as absent, and
+every published read that takes an as-of selector. It caught two mistakes in its own
+first draft — a rule no input claimed, and an input asserting that nothing publishes
+retained group state when a published read serves exactly that. The second was worth
+more than a correction: the gap there is that nothing publishes the **bytes** that
+read serves, which is the opposite shape from every other input, where the interface
+is settled and only the custody after an exit is not.
+
+**What is still not answered**: which party serves the history for acts before a
+provider change, and what becomes of each item still in flight when a provider
+exits. Both would change published surfaces, so they are left as decisions to be
+taken deliberately rather than folded into an analysis.
+
+## Edition r29 — 2026-09-27
 
 **No artefact version moves and nothing changes on the wire.** An external
 verification of edition r27 found four of its seven points closed and three only
