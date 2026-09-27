@@ -966,6 +966,40 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 f"against the published confirmation key of {smid!r}/{sdid!r} — "
                 "the submission was not authorised by that member's device "
                 f"(X-03/D4): {why}")
+    def _check_published_key(ev, field, conf):
+        """LINT-BND-21 for ONE proof: its signature against the published
+        confirmation_key anchor of the device it names, resolved at its own act.
+
+        One helper rather than an inline block, because the inline block was
+        what went wrong: it read a loop variable after the loop and silently
+        checked whichever proof happened to be last. A helper takes the proof it
+        is meant to check as an argument, so a caller cannot pass the wrong one
+        by forgetting to.
+        """
+        if not conf.get("wallet_signature_b64"):
+            return                      # session-authenticated: nothing to verify
+        mid, did = conf.get("mid"), conf.get("device_id")
+        if not did:
+            add("LINT-BND-21",
+                f"{ev.get('type')} {field} by {mid!r} is wallet-signed but carries "
+                "no device_id — the confirmation key is resolved per "
+                "(mid, device_id) (finding D)")
+            return
+        # DR-11: the key as it stood at the act, not now.
+        pub = _anchor_at(mid, did, _act_time(ev, conf),
+                         f"{ev.get('type')} {field} {mid!r}/{did!r}")
+        if not pub:
+            add("LINT-BND-21",
+                f"{ev.get('type')} {field} by {mid!r}/{did!r} has no resolvable "
+                "confirmation_key anchor — nowhere to verify the wallet signature "
+                "(finding D)")
+        elif (why := _verify_wallet_sig(conf["wallet_signature_b64"], pub)):
+            add("LINT-BND-21",
+                f"{ev.get('type')} {field} wallet_signature_b64 does not verify "
+                f"against the published confirmation key of {mid!r}/{did!r} — the "
+                "proof was not produced by that member's device "
+                f"(INTF-1/S1): {why}")
+
     # X-31: the confirmation checks sweep NESTED objects too — an EP's
     # outcomes carry the same s3/quorum/refusal confirmations as top-level
     # evidence, and the shipped federated fixture proved a foreign-member s3
@@ -987,15 +1021,35 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
         # acceptance policy (including any-one).
         for _key in sorted(lc.RECIPIENT_ACK_PROOF_FIELDS):
             conf = ev.get(_key)
-            if not (isinstance(conf, dict) and conf.get("mid")):
+            if not isinstance(conf, dict):
                 continue
-            why = _resolves_acker(conf.get("mid"), conf.get("device_id"),
-                                  _act_time(ev, conf))
-            if why:
-                add("LINT-BND-12",
-                    f"{ev.get('type')} {_key} mid {conf.get('mid')!r} does not "
-                    f"resolve to an active, ack-capable member of {entity!r} ({why}) "
-                    "— TS clause 6 INTF-2")
+            if conf.get("mid"):
+                why = _resolves_acker(conf.get("mid"), conf.get("device_id"),
+                                      _act_time(ev, conf))
+                if why:
+                    add("LINT-BND-12",
+                        f"{ev.get('type')} {_key} mid {conf.get('mid')!r} does not "
+                        f"resolve to an active, ack-capable member of {entity!r} ({why}) "
+                        "— TS clause 6 INTF-2")
+            # LINT-BND-21 (finding D, twenty-second review; R27-PUB-02): where the
+            # proof carries a wallet advanced electronic signature, that signature
+            # MUST verify against the signing device's PUBLISHED confirmation_key
+            # anchor — resolved per (mid, device_id) from BW-MEMBER, exactly as the
+            # reference wallet verifier does. This is what makes INTF-1/S1 real: a
+            # confirmation minted by an RDP under a foreign key (finding F) does NOT
+            # verify against the member's OWN published key. Fail-closed.
+            #
+            # It runs HERE, once per selected proof. It used to run after this loop
+            # on whatever `conf` the last iteration had left behind, and since
+            # `s3_attestation` sorts last, every NDE carrying a
+            # `recipient_confirmation` or a `recipient_validation_failure` and no
+            # s3 attestation reached the check with `conf` as None and was not
+            # verified at all. A forged recipient proof naming a known, active
+            # member passed LINT-BND-12 and nothing else objected. That was a
+            # regression: before the derived-set loop the line read
+            # `conf = ev.get("s3_attestation") or ev.get("recipient_confirmation")`,
+            # so the mismatch confirmation WAS checked; the new type never was.
+            _check_published_key(ev, _key, conf)
         for acker in (ev.get("quorum") or []):
             if isinstance(acker, dict) and acker.get("mid"):
                 # X-05: a wallet-signed entry names its device — resolve the
@@ -1028,36 +1082,6 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                             "does not verify against the published confirmation key — "
                             "the acknowledgement was not produced by that member's "
                             f"device (X-05): {why}")
-        # LINT-BND-21 (finding D, twenty-second review): where the recipient
-        # confirmation carries a wallet advanced electronic signature, that
-        # signature MUST verify against the confirming device's PUBLISHED
-        # confirmation_key anchor — resolved per (mid, device_id) from BW-MEMBER,
-        # exactly as the reference wallet verifier does. This is the reference-
-        # verifier check at lint time, and it is what makes INTF-1/S1 real: a
-        # confirmation minted by an RDP under a foreign key (finding F) does NOT
-        # verify against the member's OWN published key. Fail-closed.
-        if isinstance(conf, dict) and conf.get("wallet_signature_b64"):
-            mid, did = conf.get("mid"), conf.get("device_id")
-            if not did:
-                add("LINT-BND-21",
-                    f"{ev.get('type')} confirmation by {mid!r} is wallet-signed but "
-                    "carries no device_id — the confirmation key is resolved per "
-                    "(mid, device_id) (finding D)")
-            else:
-                # DR-11: the key as it stood at verified_at, not now.
-                pub = _anchor_at(mid, did, _act_time(ev, conf),
-                                 f"{ev.get('type')} confirmation {mid!r}/{did!r}")
-                if not pub:
-                    add("LINT-BND-21",
-                        f"{ev.get('type')} confirmation by {mid!r}/{did!r} has no "
-                        "resolvable confirmation_key anchor — nowhere to verify the "
-                        "wallet signature (finding D)")
-                elif (why := _verify_wallet_sig(conf["wallet_signature_b64"], pub)):
-                    add("LINT-BND-21",
-                        f"{ev.get('type')} wallet_signature_b64 does not verify against "
-                        f"the published confirmation key of {mid!r}/{did!r} — the "
-                        "confirmation was not produced by that member's device "
-                        f"(INTF-1/S1): {why}")
         # LINT-BND-29 (X-29, evidence 2.3): a member refusal is an attributable
         # act. The refusing mid must resolve to an ACTIVE member of the recipient
         # entity (no ack capability needed — declining is not acknowledging), and

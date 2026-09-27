@@ -965,7 +965,7 @@ This aligns with the European approach to governing consequential automated beha
 |---|---|
 | **Prompt / content injection** from an identified-but-hostile counterparty | Untrusted-input posture (above): received content **MUST NOT** escalate the agent's authority or push it outside mandate scope. Whether a given payload is *safe to act on* is an **application-layer** responsibility. |
 | **Malicious counterparty instructions** | Same untrusted-input posture + **mandate-scope enforcement** at the wallet-agent interface (Annex R.4). |
-| **Mandate overreach** (agent acts outside its scope) | Wallet refuses out-of-scope instructions (Annex R.4); an **opposable** act's `mandate_commitment` makes overreach **provable** on reveal (A1). |
+| **Mandate overreach** (agent acts outside its scope) | Wallet refuses out-of-scope instructions (Annex R.4); an **opposable** act's `mandate_commitment` makes an out-of-scope **declaration** provable on reveal (A1) — it binds the class the sender committed to, not the encrypted content, so an in-scope opening does not certify the agent's actual conduct (the I-D, *Mandate Commitment*). |
 | **Replayed agent instructions / messages** | Global `message_id` uniqueness and intake replay rejection (TS clause 6 INTF-4) + MLS transport replay protection. |
 | **Compromised agent process** | Wallet **key isolation** — the agent holds no keys, so a compromise cannot forge channel authentication or evidence — and **act-time mandate validity** (A2): a lapsed mandate stops yielding acceptance. |
 

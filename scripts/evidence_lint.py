@@ -692,6 +692,75 @@ def lint_de(v, de, se=None):
               "transmitted-octet chain breaks at the delivery boundary (F-02)")
 
 
+#: Per-cause shape of one part's detail: (REQUIRED, FORBIDDEN) field names.
+#:
+#: Grounded in what `multipart.failure_report` actually emits for each cause, so
+#: no rule here can be broken by the issuing path itself — the recipient's own
+#: code is the definition of what an honest report of that cause looks like.
+#: `observed` is the field that matters most: it asserts a digest computed over
+#: octets, so on a part that was never received, or never described, it claims a
+#: computation nobody could have performed.
+_RVF_PART_FIELDS = {
+    "part-digest-mismatch": ({"declared", "observed"}, set()),
+    "part-length-mismatch": ({"declared_length", "observed_length"}, {"observed"}),
+    "part-absent":          ({"declared", "declared_length"},
+                             {"observed", "observed_length"}),
+    "part-undescribed":     (set(), {"declared", "declared_length", "observed"}),
+    "part-id-duplicate":    (set(), {"observed"}),
+}
+
+
+def _lint_rvf_part_intrinsic(v, part):
+    """One part's detail against itself (LINT-NDE-08, R27-PUB-03).
+
+    Everything here is decidable from the assertion alone: which fields a cause
+    requires and forbids, whether a claimed mismatch actually differs, and
+    whether the two sides of a comparison are even comparable. None of it needs
+    the sender's manifest, which is why it must not sit behind a branch that
+    exits when no SE is supplied.
+    """
+    pid, cause = part.get("part_id"), part.get("failure")
+    required, forbidden = _RVF_PART_FIELDS.get(cause, (set(), set()))
+    for field in sorted(required - set(part)):
+        v.add("LINT-NDE-08",
+              f"part {pid!r}: {cause} does not carry `{field}` — a cause whose "
+              "detail is incomplete states no comparison that can be read")
+    for field in sorted(forbidden & set(part)):
+        v.add("LINT-NDE-08",
+              f"part {pid!r}: `{field}` is carried for {cause!r}, where there is "
+              "nothing for it to describe — an observation of octets that were "
+              "not received, or a declaration the sender never made")
+    if cause == "part-digest-mismatch":
+        declared, observed = part.get("declared"), part.get("observed")
+        if isinstance(declared, dict) and isinstance(observed, dict):
+            if declared == observed:
+                v.add("LINT-NDE-08",
+                      f"part {pid!r}: observed == declared, which contradicts the "
+                      "mismatch claimed for it")
+            elif ((declared.get("alg"), declared.get("hash_mode"))
+                  != (observed.get("alg"), observed.get("hash_mode"))):
+                v.add("LINT-NDE-08",
+                      f"part {pid!r}: the observed digest is "
+                      f"{observed.get('alg')}/{observed.get('hash_mode')} and the "
+                      f"declared one is {declared.get('alg')}/"
+                      f"{declared.get('hash_mode')} — two digests in different "
+                      "domains are unequal whatever the octets were, so their "
+                      "inequality is not evidence of a mismatch")
+        dl, ol = part.get("declared_length"), part.get("observed_length")
+        if dl is not None and ol is not None and dl != ol:
+            v.add("LINT-NDE-08",
+                  f"part {pid!r}: a digest mismatch carries differing lengths "
+                  f"({dl!r} vs {ol!r}) — a part whose length is wrong is a "
+                  "part-length-mismatch, the more precise cause the recipient "
+                  "reports first")
+    elif cause == "part-length-mismatch":
+        dl, ol = part.get("declared_length"), part.get("observed_length")
+        if dl is not None and ol is not None and dl == ol:
+            v.add("LINT-NDE-08",
+                  f"part {pid!r}: declared_length == observed_length ({dl!r}), "
+                  "which contradicts the length mismatch claimed for it")
+
+
 def lint_nde(v, nde, se=None):
     _check_evidence_seal(v, nde)
     lint_nde_semantics(v, nde, se=se)
@@ -769,6 +838,18 @@ def lint_nde_semantics(v, nde, se=None):
                 v.add("LINT-NDE-08",
                       f"part {pid!r}: failure {part.get('failure')!r} is "
                       "not a registered cause")
+            # R27-PUB-03: the assertion's INTRINSIC consistency — what its own
+            # fields say about each other — needs no manifest and so is checked
+            # whether or not an SE is at hand. These checks used to sit AFTER the
+            # two `continue`s below, so an assertion verified without its SE was
+            # never examined at all, and one claiming `part-undescribed` was
+            # never examined even WITH it. A digest mismatch whose two digests
+            # were equal passed standalone and failed the moment the SE was
+            # supplied — which proved the dependency was on control flow, not on
+            # evidence: the equality of an assertion's own two fields is visible
+            # without knowing anything the sender declared.
+            _lint_rvf_part_intrinsic(v, part)
+            # --- from here on, what only the SENDER's manifest can settle ---
             if se is None or not declared_parts:
                 continue
             described = declared_parts.get(pid)
@@ -792,22 +873,6 @@ def lint_nde_semantics(v, nde, se=None):
                 v.add("LINT-NDE-08",
                       f"part {pid!r}: `declared_length` is not the length the sender "
                       "declared for it")
-            # `observed` is present exactly where a comparison WAS made. A
-            # digest on a part that was absent would assert a computation over
-            # octets nobody received.
-            if part.get("failure") == "part-digest-mismatch":
-                if not part.get("observed") or not part.get("declared"):
-                    v.add("LINT-NDE-08",
-                          f"part {part.get('part_id')!r}: a digest mismatch names both the "
-                          "declared and the observed digest, or it is not a comparison")
-                elif part["observed"] == part["declared"]:
-                    v.add("LINT-NDE-08",
-                          f"part {part.get('part_id')!r}: observed == declared, which "
-                          "contradicts the mismatch claimed for it")
-            elif part.get("observed") is not None:
-                v.add("LINT-NDE-08",
-                      f"part {part.get('part_id')!r}: an observed digest is carried for "
-                      f"{part.get('failure')!r}, where no comparison was made")
         if vfr.get("message_id") != nde.get("message_id"):
             v.add("LINT-NDE-08", "recipient_validation_failure.message_id != NDE message_id")
         if se is not None:

@@ -401,9 +401,17 @@ def test_a_contradicted_manifest_declaration_never_reaches_a_seal(name, mutate):
     m = _m()
     report = mp.failure_report(mp.assemble(_broken(p1=b"x" * 713)), SE_MP["manifest"],
                                SE_MP["payload_hash"])
+    # R27-PUB-03: this read `assert not m._SE_LEDGER or True`, which is true
+    # whatever the code does — the state claim the test's own name makes was
+    # never asserted. The refusal must leave the aggregate EXACTLY as it was, so
+    # the comparison is before against after, not against emptiness: a rejection
+    # that recorded a partial outcome would satisfy "nothing new is sealed"
+    # while still having moved the state a later confirmation reads.
+    before = copy.deepcopy(m._CONFIRMATION_STATE), copy.deepcopy(m._SE_LEDGER)
     with pytest.raises(Exception) as caught:
         _deliver(m, _assertion(m, mutate(copy.deepcopy(report))))
-    assert not m._SE_LEDGER or True
+    assert (m._CONFIRMATION_STATE, m._SE_LEDGER) == before, \
+        "the refusal moved the confirmation aggregate or the SE ledger"
     assert "validation-failure" in str(caught.value) or "LINT-NDE-08" in str(caught.value), \
         caught.value
 
@@ -442,3 +450,118 @@ def test_the_normative_text_states_the_distinction():
     assert "the same value the sender declared" in id_text
     assert "`malformed-envelope` **MUST NOT** be reused" in id_text
     assert "A Mode A recipient is unaffected" in id_text
+
+
+# ===========================================================================
+# R27-PUB-03 — the assertion's INTRINSIC consistency, checked without the SE
+# ===========================================================================
+#
+# What one part's detail says about ITSELF needs no manifest: whether a cause
+# carries the fields it must, whether a claimed mismatch actually differs,
+# whether the two sides of a comparison are comparable at all. Those checks used
+# to sit behind two `continue`s — one taken when no SE was supplied, one taken
+# for every `part-undescribed` claim — so an assertion verified from retained
+# evidence alone was never examined, and an undescribed-part claim was never
+# examined even with the SE at hand. A digest mismatch whose two digests were
+# equal passed standalone and failed the moment an SE was supplied, which is how
+# we know the dependency was control flow and not evidence: the equality of an
+# assertion's own two fields is visible without knowing anything the sender said.
+
+def _rvf_report(**over):
+    """The real recipient's report for a payload with a wrong part, as the base
+    for each contradiction — so every probe below starts from something the
+    recipient's own code produces."""
+    report = mp.failure_report(mp.assemble(_broken(p1=b"x" * 713)),
+                              SE_MP["manifest"], SE_MP["payload_hash"])
+    report.update(over)
+    return report
+
+
+def _one_part(cause, **fields):
+    return _rvf_report(failure=cause,
+                       parts=[dict(part_id="p1", failure=cause, **fields)])
+
+
+DIGEST = {"alg": "SHA-256", "hash_mode": "raw-sha256", "hex": "a" * 64}
+
+CONTRADICTIONS = {
+    "a digest mismatch whose digests are equal":
+        lambda: _one_part("part-digest-mismatch", declared=dict(DIGEST),
+                          observed=dict(DIGEST)),
+    "a digest mismatch missing the observed side":
+        lambda: _one_part("part-digest-mismatch", declared=dict(DIGEST)),
+    "a digest mismatch across two digest domains":
+        lambda: _one_part("part-digest-mismatch", declared=dict(DIGEST),
+                          observed={"alg": "SHA-512", "hash_mode": "raw-sha512",
+                                    "hex": "b" * 128}),
+    "a digest mismatch carrying differing lengths":
+        lambda: _one_part("part-digest-mismatch", declared=dict(DIGEST),
+                          observed=dict(DIGEST, hex="c" * 64),
+                          declared_length="713", observed_length="5"),
+    "a length mismatch whose lengths are equal":
+        lambda: _one_part("part-length-mismatch", declared_length="713",
+                          observed_length="713"),
+    "a length mismatch carrying no lengths":
+        lambda: _one_part("part-length-mismatch"),
+    "an undescribed part carrying an observed digest":
+        lambda: _one_part("part-undescribed", observed=dict(DIGEST)),
+    "an absent part carrying an observed length":
+        lambda: _one_part("part-absent", declared=dict(DIGEST),
+                          declared_length="713", observed_length="5"),
+}
+
+
+def _semantics(report, se):
+    """LINT-NDE-08 over an NDE carrying this report, with or without its SE."""
+    nde = _nde(recipient_validation_failure=dict(
+        _assertion(_m(), copy.deepcopy(report)),
+    ), reason="payload-validation-failed")
+    v = ev.Violations()
+    ev.lint_nde_semantics(v, nde, se=se)
+    return [m for r, m in v.items if r == "LINT-NDE-08"]
+
+
+@pytest.mark.parametrize("name", sorted(CONTRADICTIONS))
+def test_a_self_contradictory_part_is_caught_without_the_senders_manifest(name):
+    """The regression's sharpest edge: no SE at all, and still caught."""
+    assert _semantics(CONTRADICTIONS[name](), None), \
+        f"{name} passed standalone verification"
+
+
+@pytest.mark.parametrize("name", sorted(CONTRADICTIONS))
+def test_a_self_contradictory_part_is_caught_with_the_manifest_too(name):
+    assert _semantics(CONTRADICTIONS[name](), SE_MP), \
+        f"{name} passed verification with the SE supplied"
+
+
+@pytest.mark.parametrize("name", sorted(CONTRADICTIONS))
+def test_a_self_contradictory_part_never_reaches_a_seal(name):
+    """Through the real authenticated intake. The undescribed-part case used to
+    seal a terminal outcome that the retained-evidence linter then accepted."""
+    m = _m()
+    m._CONFIRMATION_STATE.clear()
+    before = copy.deepcopy(m._CONFIRMATION_STATE), copy.deepcopy(m._SE_LEDGER)
+    with pytest.raises(Exception) as caught:
+        _deliver(m, _assertion(m, CONTRADICTIONS[name]()))
+    assert (m._CONFIRMATION_STATE, m._SE_LEDGER) == before, \
+        f"{name}: the refusal moved stored state"
+    assert "LINT-NDE-08" in str(caught.value) or "validation-failure" in str(caught.value), \
+        caught.value
+
+
+def test_the_shipped_vector_is_what_the_recipient_code_produces():
+    """The positive control, and a guard on the vector itself: its part detail is
+    exactly `failure_report`'s output for a payload with one wrong length and one
+    wrong digest. The vector carried a digest mismatch with DIFFERING lengths
+    before this — a shape the recipient cannot produce, because a wrong length is
+    reported as the more precise cause and stops there."""
+    vector = _ld("sample-NDE-validation-failure.json")["recipient_validation_failure"]
+    fixtures = parts()
+    produced = mp.failure_report(
+        mp.assemble(dict(fixtures, p1=b"short", p2=b"Z" * len(fixtures["p2"]))),
+        SE_MP["manifest"], SE_MP["payload_hash"])
+    assert vector["failure"] == produced["failure"]
+    assert vector["parts"] == produced["parts"]
+    # and every part-detail field stays exercised by it (XREP-01)
+    carried = {k for p in vector["parts"] for k in p}
+    assert {"declared", "observed", "declared_length", "observed_length"} <= carried

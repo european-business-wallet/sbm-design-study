@@ -960,10 +960,19 @@ specified in {{TS-SBM-QERDS}}, clause 6.
 
 An agent (system member, umbrella Annex R) acts under a scoped mandate, but
 `content_class` is never echoed in evidence — so without a commitment a verifier
-cannot show the agent's message fell within the mandate's authorised class scope
-(the same gap the grade commitment solves for availability). The **mandate
-commitment** closes it: an **opposable** agent SE carries a salted commitment
-any verifier can check after a deliberate reveal.
+cannot show even which class the agent DECLARED for its message, let alone relate
+that declaration to the mandate's authorised class scope (the same gap the grade
+commitment solves for availability). The **mandate commitment** closes that much:
+an **opposable** agent SE carries a salted commitment any verifier can check
+after a deliberate reveal, establishing the class the sender **committed to** and
+whether that declared class lies within the scope.
+
+It establishes no more than that. The commitment binds the sender's declaration,
+and no party to the reveal inspects the plaintext, so an in-scope opening does
+not certify what the encrypted content actually was or that the agent's conduct
+stayed within its mandate; a sender could commit to a permitted class and encrypt
+something else. {{TS-SBM-QERDS}}, clause 6 states the same limit for the grade
+commitment.
 
 **Construction.** With `salt` the envelope's `mandate_commitment_salt` (16 random
 bytes, fresh per message, 32 lowercase hex), `mandate_id` the `SE.mandate_ref.id`
@@ -1000,8 +1009,10 @@ only by internal audit, payload reveal, or the dispute path — never by externa
 verification. The reveal procedure — either party disclosing `(salt,
 content_class)`, any verifier recomputing against the referenced BW-ORG version
 and checking the class is **in the mandate's scope** (`BW-MEMBER.mandate_ref.scope`)
-— is specified in {{TS-SBM-QERDS}}, clause 6; an out-of-scope reveal is provable
-agent overreach.
+— is specified in {{TS-SBM-QERDS}}, clause 6. A reveal of an out-of-scope class
+establishes that the **declaration** was outside the scope — overreach in the
+declared act — and an opening that fails to verify establishes neither misuse nor
+overreach, only that the reveal does not match the commitment.
 
 # Confidentiality Scopes
 
