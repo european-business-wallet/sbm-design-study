@@ -18,7 +18,69 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-27, edition r30
+## Current — 2026-09-28, edition r31
+
+**Access-breaking, and deliberately.** Two published operations now require the
+authentication the specification always said they required. Nothing changes on the
+wire for a message, and no evidence version moves.
+
+| Artefact | This edition | Previous |
+|---|---|---|
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.12** | 2.12 |
+| EDD resolver contract (OpenAPI) | **2.0.0** | 1.13.0 |
+| Profile-2 companion contracts (wallet–RDP, delivery service, relay) | **13.0.0** | 13.0.0 |
+
+**An entity's complete member roster was readable by anyone.** The umbrella gives
+every published resolver path exactly one access rule, in a table that says of
+itself that the resolver contract is the full contract — so the two are
+descriptions of one thing. Nothing compared them, and for two paths they
+disagreed.
+
+The signed roster snapshot is an entity's *complete* membership at one point in
+its history: every active member, their roles, each pinned to the exact published
+binding that described them. The umbrella required an authenticated counterparty
+to read it. The contract asked for nothing, and there is no reference
+implementation of that surface to settle the difference — so anyone generating a
+client from the published document read an organisation's internal structure
+without identifying themselves.
+
+What makes it plainly a fault rather than a judgement call is the operation
+beside it. The ordinary member listing — paginated, explicitly non-authoritative,
+disclosing *less* — **was** authenticated, and the umbrella says in as many words
+that anonymous access to that surface is not conformant. The control was inverted
+against the disclosure. The KeyPackage pointer had the same shape on a smaller
+scale: the resolver serves only a redirect, so what was readable was the pointer,
+but a pointer names an entity's messaging provider and confirms the entity exists
+to anyone who asks.
+
+Both now require an authenticated counterparty. That breaks any client relying on
+reaching them anonymously, which is the point, and why the resolver contract takes
+its first major version.
+
+**And the check that compares the two.** The access rule each path carries is now
+read from the umbrella's table and from the contract and compared in both
+directions — a path the umbrella protects and the contract does not, and a path
+the contract protects that the umbrella calls public — with completeness, since
+the umbrella's own claim is that every path has exactly one rule. Both sides were
+already machine-readable; nothing had put them beside each other.
+
+**Who sees what, elsewhere, is now checked rather than stated.** The weight is on
+the negative claims, because a claim that a party sees something is at worst
+generous while a claim that it sees nothing is what a deployment relies on. The
+strongest of them: the values that travel only inside the end-to-end-encrypted
+envelope — the content class, and the salts that open a grade or mandate
+commitment — appear in no sealed object and in no schema outside a dispute
+disclosure. The salts carry the most weight, because a commitment is only as
+private as its salt and the commitment itself is published in evidence by design:
+a salt that reached a sealed object would let anyone holding it test a guess.
+
+**What is still not answered**: how long each party keeps what it sees. The
+evidence retention period is a regulated duty and this profile does not choose it;
+for the other parties nothing is set. That is a policy question rather than
+something derivable, and putting numbers here would be the kind of over-claim this
+edition removes.
+
+## Edition r30 — 2026-09-27
 
 **No artefact version moves and nothing changes on the wire.** One of the four
 deferred implementer questions is now partly answered: what changes at a key or

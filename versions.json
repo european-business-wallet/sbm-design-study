@@ -393,8 +393,8 @@
       ]
     },
     "edd_openapi": {
-      "value": "1.13.0",
-      "note": "EDD resolver OpenAPI contract; versions independently of the evidence family (umbrella §9.3).",
+      "value": "2.0.0",
+      "note": "EDD resolver OpenAPI contract; versions independently of the evidence family (umbrella §9.3). 2.0.0 is a MAJOR bump because it NARROWS access: the roster snapshot and the KeyPackage pointer now declare the authentication the umbrella's normative access table always required, so a client that relied on anonymous access to either is broken by it — deliberately.",
       "bindings": [
         {
           "kind": "text",

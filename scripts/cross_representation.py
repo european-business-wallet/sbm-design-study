@@ -75,6 +75,7 @@ Exit 0 when every surface agrees, 1 otherwise. Wired into `make conformance`.
 import inspect
 import json
 import pathlib
+import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -276,14 +277,148 @@ def check_contract():
             for f in compare_request(component, entry, doc)]
 
 
+# ---------------------------------------------------------------------------
+# XREP-03 — the normative access table against the contract's declared security
+# ---------------------------------------------------------------------------
+
+#: The umbrella's normative access table: one row per published EDD path, with
+#: the access rule that governs it. The prose around it says so outright — "The
+#: table is normative; `edd-resolver-openapi.yaml` is the full contract" — which
+#: makes the two descriptions of one access rule, and nothing compared them.
+ACCESS_TABLE_HEADER = ("| Path | Authoritative operator | Data owner | Storage | Access |")
+ACCESS_CONTRACT = "edd-resolver-openapi.yaml"
+
+#: An Access cell demands authentication unless it only PERMITS it. The
+#: `.well-known` row reads "Public; production MAY authenticate", which is a
+#: deployment's option and not a requirement this contract must carry.
+_DEMANDS_AUTH = re.compile(r"authenticated|authorised|authorized", re.I)
+_PERMITS_ONLY = re.compile(r"MAY authenticate", re.I)
+
+
+def _expand(path):
+    """One table cell into the pattern(s) it rules on.
+
+    `/.well-known/bw/med|org|member/…` names three families, not one path, and
+    the `…` stands for a parameter suffix that differs between them
+    (`/{uid}` for med and org, `/{uid}/{mid}` for member). So an alternation
+    expands to one pattern each, and a trailing `…` makes the pattern a PREFIX
+    rather than an exact path.
+    """
+    is_prefix = path.rstrip("/").endswith("…")
+    match = re.search(r"([a-z-]+(?:\|[a-z-]+)+)", path)
+    paths = ([path.replace(match.group(1), alt) for alt in match.group(1).split("|")]
+             if match else [path])
+    return [p.rstrip("…").rstrip("/") for p in paths], is_prefix
+
+
+def access_table(prose):
+    """[(path, demands_auth)] from the normative table, one entry per path."""
+    if ACCESS_TABLE_HEADER not in prose:
+        raise SystemExit("XREP-03: the normative access table is not in the profile "
+                         "under the heading this gate reads — it was renamed, moved "
+                         "or removed, and the comparison would silently check nothing")
+    body = prose.split(ACCESS_TABLE_HEADER, 1)[1].split("\n\n", 1)[0]
+    out = []
+    for line in body.splitlines():
+        if not line.startswith("|") or set(line) <= set("|-: "):
+            continue
+        # A cell may carry an UNESCAPED `|` inside a code span — the
+        # `bw/med|org|member` row does — and splitting on it there shifts every
+        # column right, so the Access cell read as something else entirely and
+        # the row silently ruled on nothing. Protect code spans first.
+        guarded = re.sub(r"`[^`]*`", lambda m: m.group(0).replace("|", "\x00"), line)
+        cells = [c.strip().replace("\x00", "|") for c in guarded.split("|")[1:-1]]
+        if len(cells) < 5:
+            continue
+        demands = bool(_DEMANDS_AUTH.search(cells[4])) and not _PERMITS_ONLY.search(cells[4])
+        for quoted in re.findall(r"`([^`]+)`", cells[0]):
+            for one in quoted.split(","):
+                one = one.strip().removeprefix("GET ").strip()
+                if not one.startswith("/"):
+                    continue
+                patterns, is_prefix = _expand(one)
+                out.extend((p, is_prefix, demands) for p in patterns)
+    return out
+
+
+def declared_security(doc):
+    """path -> the security schemes its operations declare (empty list = none)."""
+    out = {}
+    for path, item in (doc.get("paths") or {}).items():
+        if not isinstance(item, dict):
+            continue
+        for method, op in item.items():
+            if not isinstance(op, dict) or method == "parameters":
+                continue
+            out[path] = sorted({k for entry in (op.get("security") or []) for k in entry})
+    return out
+
+
+def check_access():
+    """The access rule, stated twice, compared once.
+
+    A published contract that omits a security requirement its own specification
+    states is not a documentation slip: a client is generated from the contract,
+    so the contract is what gets built. Both of the mismatches this found were in
+    that direction — `/uid/{uid}/roster-snapshot` and `/uid/{uid}/keypackages`
+    demanded an authenticated counterparty in the umbrella and declared nothing
+    here, and the roster snapshot is the entity's COMPLETE signed roster where
+    the browsing mirror beside it, which discloses strictly less, was
+    authenticated. The access control was inverted against the disclosure.
+    """
+    import yaml
+
+    prose = (ROOT / "Secure-Business-Messaging-Profile.md").read_text(encoding="utf-8")
+    doc = yaml.safe_load((ROOT / ACCESS_CONTRACT).read_text(encoding="utf-8"))
+    declared, findings = declared_security(doc), []
+    # Resolve each rule against the paths the contract actually publishes, so a
+    # prefix rule governs the family it names and an exact rule governs one path.
+    ruled = {}
+    for pattern, is_prefix, demands in access_table(prose):
+        matched = [p for p in declared
+                   if (p.startswith(pattern) if is_prefix else p == pattern)]
+        if not matched:
+            findings.append(
+                f"XREP-03 the normative access table rules on `{pattern}` and "
+                f"{ACCESS_CONTRACT} publishes no such operation — a rule with "
+                "nothing to govern")
+        for path in matched:
+            ruled[path] = demands
+
+    for path, demands in sorted(ruled.items()):
+        schemes = declared[path]
+        if demands and not schemes:
+            findings.append(
+                f"XREP-03 `{path}`: the normative access table requires an "
+                f"authenticated caller and {ACCESS_CONTRACT} declares no security, so "
+                "a client generated from the published contract calls it anonymously "
+                "— and the contract is what gets built")
+        if schemes and not demands:
+            findings.append(
+                f"XREP-03 `{path}`: {ACCESS_CONTRACT} demands {schemes} and the "
+                "normative access table calls it public — a caller entitled by the "
+                "specification is refused by the contract")
+
+    for path in sorted(set(declared) - set(ruled)):
+        findings.append(
+            f"XREP-03 {ACCESS_CONTRACT} publishes `{path}` and the normative access "
+            "table does not rule on it — every path is supposed to have exactly one "
+            "access-control rule, and this one has none")
+    return findings
+
+
 def main():
-    findings = check_vectors() + check_contract()
+    findings = check_vectors() + check_contract() + check_access()
     for line in findings:
         print(f"[FAIL] {line}")
     schemas = len(list((ROOT / "schemas").glob("evidence-*.schema.json")))
+    import yaml
+    ruled = len(access_table((ROOT / "Secure-Business-Messaging-Profile.md")
+                             .read_text(encoding="utf-8")))
     print(f"cross-representation: {schemas} evidence schemas held by sealed "
           f"vectors, {len(NON_BODY) + len(EXECUTED)} request shapes checked "
-          f"against the reference — {len(findings)} divergence(s)")
+          f"against the reference, {ruled} published path(s) against the "
+          f"normative access table — {len(findings)} divergence(s)")
     return 1 if findings else 0
 
 

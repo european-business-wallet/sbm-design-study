@@ -897,7 +897,7 @@
       }
     },
     "edd-resolver-openapi.yaml": {
-      "version": "1.13.0",
+      "version": "2.0.0",
       "operations": {
         "GET /.well-known/bw/med/{uid}": [],
         "GET /.well-known/bw/member/{uid}/{mid}": [],
@@ -909,14 +909,20 @@
           "counterpartyAuth",
           "counterpartyMtls"
         ],
-        "GET /uid/{uid}/keypackages": [],
+        "GET /uid/{uid}/keypackages": [
+          "counterpartyAuth",
+          "counterpartyMtls"
+        ],
         "GET /uid/{uid}/members": [
           "counterpartyAuth",
           "counterpartyMtls"
         ],
         "GET /uid/{uid}/rdp": [],
         "GET /uid/{uid}/redirect": [],
-        "GET /uid/{uid}/roster-snapshot": [],
+        "GET /uid/{uid}/roster-snapshot": [
+          "counterpartyAuth",
+          "counterpartyMtls"
+        ],
         "GET /uid/{uid}/status-assertion": []
       },
       "security_schemes": {

@@ -2,12 +2,13 @@
 openapi: "3.1.0"
 info:
   title: EDD Resolver
-  version: "1.13.0"
+  version: "2.0.0"
   description: |
     European Directory of Entities (EDD) resolver API.
 
     This API contract is versioned INDEPENDENTLY (semantic versioning) of the
-    evidence `version` and of the specification edition; contract v1.13.0 (X-36: authenticated, bounded member enumeration).
+    evidence `version` and of the specification edition; contract v2.0.0 (G4: the roster snapshot and the KeyPackage pointer carry the
+    authentication the umbrella's normative access table always required).
     (v1.7.0: the core `DirectoryRecord` carries `authorized_seal_keys` — the
     entity's discovery-seal key-set pinned per UID, so a discovery document is
     authentic only when its seal key is pinned for its own UID (finding X-01).
@@ -259,6 +260,20 @@ paths:
         AS-OF (by epoch) for the evidence-retention period (the F-03/R2
         duty extended). The unsigned member-enumeration surface remains the
         browsing mirror; THIS is the atomicity anchor.
+
+        v2.0.0: this operation declared NO security while the browsing mirror
+        it anchors (/uid/{uid}/members) declared counterpartyAuth — so the
+        access control was inverted against the disclosure. The snapshot is the
+        COMPLETE active roster, every member pinned to an exact sealed
+        BW-MEMBER version, where the mirror is paginated and non-authoritative.
+        The umbrella's normative access table said "Authenticated counterparty"
+        for this path throughout, and §8.4 calls anonymous access to the
+        enumeration surface non-conformant; the contract simply did not carry
+        it, and a client generated from this document read an entity's
+        organisational structure anonymously.
+      security:
+        - counterpartyAuth: []
+        - counterpartyMtls: []
       parameters:
         - $ref: '#/components/parameters/Uid'
         - in: query
@@ -312,6 +327,16 @@ paths:
         state. Lifetime is bounded per the active profile (30 days production /
         90 days pilot). The credential is cross-checked against the current
         EDD record / MED before the MSP serves a KeyPackage.
+
+        v2.0.0: the umbrella's normative access table says "Authenticated
+        requester (R7)" for this path and the contract declared no security.
+        The EDD serves only a 302 and holds no pool, so what leaked was the
+        pointer rather than the packages — but a pointer names the entity's MSP
+        and confirms the entity to anyone who asks, and R7 required the
+        requester to be authenticated before either.
+      security:
+        - counterpartyAuth: []
+        - counterpartyMtls: []
       parameters:
         - $ref: '#/components/parameters/Uid'
         - in: query

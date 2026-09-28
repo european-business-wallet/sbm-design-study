@@ -438,14 +438,23 @@ def test_the_breaking_change_is_versioned_as_breaking():
     # gained a required field, and `collection_token` became mandatory at
     # runtime rather than optional in the reference.
     assert major >= 6
-    # The resolver has never had a breaking change: every bump it has taken was
-    # additive (an alternative gained) or transitive (a type it references
-    # narrowed, which the digest-domain pass made visible). So the PROPERTY is
-    # that its major stands at 1, not that its minor holds a particular value —
-    # which is what this assertion pinned until that pass moved it, and the same
-    # drift family the test exists to catch.
+    # The resolver took its FIRST breaking change at 2.0.0 (G4). Every bump
+    # before it was additive (an alternative gained) or transitive (a type it
+    # references narrowed); this one NARROWS ACCESS, which breaks any client
+    # that relied on reaching two paths anonymously — deliberately, because the
+    # umbrella's normative access table had required an authenticated
+    # counterparty for both throughout and the contract did not carry it.
+    #
+    # So what is pinned is the major AND the narrowing that earned it: a major
+    # bump with nothing behind it would satisfy a bare version assertion, which
+    # is the drift family this test exists to catch.
     edd = manifest["dimensions"]["edd_openapi"]["value"]
-    assert edd.split(".")[0] == "1", f"the resolver took a breaking change: {edd}"
+    assert edd.split(".")[0] == "2", f"the resolver's major moved unexpectedly: {edd}"
+    resolver = yaml.safe_load((ROOT / "edd-resolver-openapi.yaml").read_text(encoding="utf-8"))
+    for path in ("/uid/{uid}/roster-snapshot", "/uid/{uid}/keypackages"):
+        schemes = {k for entry in (resolver["paths"][path]["get"].get("security") or [])
+                   for k in entry}
+        assert schemes, f"{path} lost the authentication the major bump was taken for"
 
 
 # ---------------------------------------------------------------------------

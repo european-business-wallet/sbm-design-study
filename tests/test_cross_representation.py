@@ -182,3 +182,94 @@ def test_every_published_evidence_field_is_held_by_a_vector():
 
 def test_the_reference_and_the_published_contract_describe_one_protocol():
     assert xrep.check_contract() == []
+
+
+# ---------------------------------------------------------------------------
+# XREP-03 — the normative access table against the contract's declared security
+# ---------------------------------------------------------------------------
+
+def _table(*rows):
+    """A normative access table of our own, built the way the profile builds it."""
+    header = xrep.ACCESS_TABLE_HEADER
+    lines = [header, "|---|---|---|---|---|"]
+    lines += [f"| `GET {path}` | op | owner | stored | {access} |" for path, access in rows]
+    return "prose before\n\n" + "\n".join(lines) + "\n\nprose after\n"
+
+
+def _contract(**paths):
+    return {"paths": {p: {"get": ({"security": [{s: []} for s in schemes]}
+                                  if schemes else {})}
+                      for p, schemes in paths.items()}}
+
+
+def test_a_path_the_table_protects_and_the_contract_does_not_is_caught(monkeypatch):
+    """The defect, in shape: the umbrella required an authenticated counterparty
+    for the roster snapshot and the contract declared nothing, so a generated
+    client read an entity's complete roster anonymously."""
+    monkeypatch.setattr(xrep, "access_table",
+                        lambda _: [("/a", False, True)])
+    monkeypatch.setattr(xrep, "declared_security", lambda _: {"/a": []})
+    findings = xrep.check_access()
+    assert len(findings) == 1, findings
+    assert "calls it anonymously" in findings[0]
+
+
+def test_a_path_the_contract_protects_and_the_table_calls_public_is_caught(monkeypatch):
+    """The other direction: a caller the specification entitles is refused."""
+    monkeypatch.setattr(xrep, "access_table", lambda _: [("/a", False, False)])
+    monkeypatch.setattr(xrep, "declared_security", lambda _: {"/a": ["someAuth"]})
+    findings = xrep.check_access()
+    assert len(findings) == 1 and "entitled by the specification" in findings[0]
+
+
+def test_a_published_path_no_rule_governs_is_caught(monkeypatch):
+    monkeypatch.setattr(xrep, "access_table", lambda _: [("/a", False, True)])
+    monkeypatch.setattr(xrep, "declared_security",
+                        lambda _: {"/a": ["x"], "/unruled": []})
+    assert any("/unruled" in f and "has none" in f for f in xrep.check_access())
+
+
+def test_a_rule_governing_nothing_is_caught(monkeypatch):
+    monkeypatch.setattr(xrep, "access_table", lambda _: [("/gone", False, True)])
+    monkeypatch.setattr(xrep, "declared_security", lambda _: {})
+    assert any("nothing to govern" in f for f in xrep.check_access())
+
+
+def test_the_table_parser_survives_an_unescaped_pipe_in_a_code_span():
+    """`bw/med|org|member` carries an unescaped `|` inside a code span. Splitting
+    the row on `|` there shifts every column right, so the Access cell reads as
+    something else and the row silently rules on nothing — which is how three
+    paths went ungoverned until the parser protected code spans."""
+    parsed = xrep.access_table(_table(
+        ("/.well-known/bw/med|org|member/…", "Public; production MAY authenticate"),
+        ("/uid/{uid}/members", "**Authenticated counterparty, REQUIRED**")))
+    families = {path for path, is_prefix, _ in parsed if is_prefix}
+    assert families == {"/.well-known/bw/med", "/.well-known/bw/org",
+                        "/.well-known/bw/member"}, parsed
+    assert ("/uid/{uid}/members", False, True) in parsed
+
+
+def test_may_authenticate_is_an_option_and_not_a_requirement():
+    """A row that PERMITS authentication must not be read as demanding it, or
+    every public discovery path would be reported."""
+    parsed = xrep.access_table(_table(("/pub", "Public; production MAY authenticate")))
+    assert parsed == [("/pub", False, False)], parsed
+
+
+def test_a_renamed_or_removed_table_stops_the_gate():
+    """The failure this gate must not have: the heading changes, the parser finds
+    nothing, and a comparison over zero rows passes."""
+    with pytest.raises(SystemExit):
+        xrep.access_table("a profile with no access table in it")
+
+
+def test_the_live_contract_matches_the_normative_table():
+    assert xrep.check_access() == []
+
+
+def test_every_published_edd_path_is_governed():
+    """The completeness half, on the live tree: the profile says every path has
+    exactly one access rule, so the table must reach all of them."""
+    import yaml
+    doc = yaml.safe_load((ROOT / xrep.ACCESS_CONTRACT).read_text(encoding="utf-8"))
+    assert len(xrep.declared_security(doc)) >= 13
