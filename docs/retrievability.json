@@ -1,12 +1,12 @@
 {
-  "$comment": "G3 (partly answered). Every verification this repository's tooling performs reads material a verifier was HANDED: no linter dereferences a URL, and no check consults live state. That is why `docs/lifecycle-and-custody.md` §1 can say 'unaffected' so often — and it is exactly why custody is the open question, because a verdict is only as durable as somebody's willingness to keep answering the read that supplies the material. This registry names, per verification input, which published operation retrieves it, who serves it, what its absence does to the verdict, and whether that survives a provider exit. Rendered to docs/retrievability.md by scripts/retrievability.py, which also gates it: every retained-material argument of `check_bundle`, every LINT-BND-I* residual and every published as-of read must appear here, so none can be added without saying who keeps it retrievable.",
+  "$comment": "G3 (partly answered). Every verification this repository's tooling performs reads material a verifier was HANDED: no linter dereferences a URL, and no check consults live state. That is why `docs/lifecycle-and-custody.md` §1 can say 'unaffected' so often — and it is exactly why custody is the open question, because a verdict is only as durable as somebody's willingness to keep answering the read that supplies the material. This registry names, per verification input, which published operation retrieves it, who serves it, what its absence does to the verdict, and whether that survives a provider exit. An absent input does not have ONE consequence: a required one leaves a stated property unproven and, where a residual rule names it, reported INCOMPLETE; an OPTIONAL opening simply stays unopened; and where a current binding can stand in for a historical one the answer silently becomes a question about today. Each row says which of those it is (R30-PUB-04). Rendered to docs/retrievability.md by scripts/retrievability.py, which also gates it: every retained-material argument of `check_bundle`, every LINT-BND-I* residual and every published as-of read must appear here, so none can be added without saying who keeps it retrievable.",
   "inputs": [
     {
       "input": "med",
-      "material": "The entity's sealed BW-MED: its provider endpoints, DS receipt keys, MLS parameters and the key set that seals the rest.",
+      "material": "The entity's sealed BW-MED: its provider endpoints, DS receipt keys and MLS parameters. Sealed by a key the DIRECTORY RECORD authorises — the MED is not its own trust anchor.",
       "operation": "GET /.well-known/bw/med/{uid}",
       "served_by": "the entity's provider (EDD resolver surface)",
-      "absent": "no verification is possible: the document that pins every other seal key is missing.",
+      "absent": "the entity's provider endpoints and DS receipt keys are unknown, so the material they point at cannot be resolved. R30-PUB-04: this row said the MED 'pins every other seal key'. It does not — `DirectoryRecord.authorized_seal_keys` does, and a retained MED is no substitute for the historical directory authorisation that made it acceptable.",
       "survives_provider_exit": false,
       "note": "The endpoints INSIDE it move on an exit; the document itself must remain retrievable as it stood at the act, and nothing names who serves that."
     },
@@ -21,7 +21,7 @@
     },
     {
       "input": "policy_history",
-      "material": "The BW-ORG succession chain, so the pinned version can be shown to have been the latest in force at the act.",
+      "material": "The BW-ORG succession chain: the versions linking the pinned one to its predecessors, so linkage and in-force at the act can be shown. It does NOT establish that the pinned version was the latest — a retained prefix looks complete whether or not a successor was omitted, which is what LINT-BND-I3 says and what this row used to contradict (R30-PUB-04).",
       "operation": "GET /.well-known/bw/org/{uid}?doc_digest= , once per version",
       "served_by": "the entity's provider (EDD resolver surface)",
       "absent": "LINT-BND-I1 / LINT-BND-I3 — linkage and in-force are provable from the pinned document alone; MAXIMALITY is not, and the verdict says INCOMPLETE rather than passing.",
@@ -143,7 +143,7 @@
       "material": "The (salt, content_class) opening of an availability-grade commitment.",
       "operation": "none, by design — the salt travels only inside the end-to-end-encrypted envelope",
       "served_by": "the endpoints, and only the parties of a dispute",
-      "absent": "the committed class stays hidden, which is the point; the grade claim is then unopened, not failed.",
+      "absent": "the grade commitment stays unopened, which is the point; the claim that rests on it is then unproven rather than failed. R30-PUB-04: not the same as the class being hidden — a cleartext `scope_ref` resolved against a published scope map can narrow it, and a scope covering one class gives it. What an unopened commitment withholds is the committed value, not every inference about the message.",
       "survives_provider_exit": true
     },
     {
@@ -151,7 +151,7 @@
       "material": "The opening of an agent act's mandate commitment.",
       "operation": "none, by design — as for reveals",
       "served_by": "the endpoints, and only the parties of a dispute",
-      "absent": "the declared class stays hidden; a valid opening establishes what the sender COMMITTED to, never what the plaintext was.",
+      "absent": "the mandate commitment stays unopened, which is the point; the claim that rests on it is then unproven rather than failed. R30-PUB-04: not the same as the class being hidden — a cleartext `scope_ref` resolved against a published scope map can narrow it, and a scope covering one class gives it. What an unopened commitment withholds is the committed value, not every inference about the message.",
       "survives_provider_exit": true
     },
     {
@@ -164,6 +164,24 @@
       "residuals": [
         "LINT-BND-I7"
       ]
+    },
+    {
+      "input": "directory_record",
+      "material": "The EU-governed directory record for the entity: where to resolve it, and `authorized_seal_keys` — the set that decides which key may seal its BW-MED/ORG/MEMBER documents.",
+      "operation": "GET /resolve/{uid}",
+      "served_by": "the EDD core registry",
+      "absent": "no discovery document can be shown to have been sealed by a key the entity was entitled to use, so the whole discovery chain is unanchored (`check_directory_pin`).",
+      "survives_provider_exit": true,
+      "note": "R30-PUB-04 found this missing from the inventory entirely: RETR-01 demands the arguments of `check_bundle`, and the trust anchors are arguments of `discovery_lint` instead. Registry-held, so an exit does not strand it — but the AS-OF question does: the record is served current, and nothing publishes the authorisation as it stood at a past act."
+    },
+    {
+      "input": "trust_store",
+      "material": "The configured trust anchors a verifier resolves seals against.",
+      "operation": "none published — a verifier's own configuration",
+      "served_by": "the verifying party",
+      "absent": "no seal resolves to an anchor, so nothing is attributable (`check_trust`).",
+      "survives_provider_exit": true,
+      "note": "Held by the verifier rather than by any provider, which is why it survives — and why it is the one input whose absence is the verifier's own problem."
     }
   ]
 }

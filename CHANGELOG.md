@@ -18,7 +18,78 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-28, edition r31
+## Current — 2026-09-28, edition r32
+
+**Contract-breaking.** A refusal flow that could not be carried out, and a
+signature checked against the wrong key. A publication-readiness review of the
+previous edition raised six points; all six are corrected here, and two of them
+mattered.
+
+| Artefact | This edition | Previous |
+|---|---|---|
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.12** | 2.12 |
+| EDD resolver contract (OpenAPI) | **2.0.0** | 2.0.0 |
+| Profile-2 companion contracts (wallet–RDP, delivery service, relay) | **14.0.0** | 13.0.0 |
+
+**A device could not obtain the value its refusal had to sign.** The previous
+edition made the pre-join proof mandatory: refusing a group invitation before
+joining requires a signature over content that includes a single-use value the
+delivery service issues with the invitation. That value was never published. The
+response a device receives did not carry it, and the response's schema — which
+rejects anything it does not describe — could not have carried it. **So the
+specification demanded a proof whose input nobody holding the specification could
+obtain.**
+
+It looked finished because the reference's own client helper fetched the value
+from the service's internal state, which is an access no real device has, while
+the comment directly above that code said the value is never supplied by default.
+A statement that was false, sitting exactly where a reader would go to check.
+
+The value is now a required part of the response, and the helper refuses to
+proceed without it rather than looking it up. Because a service that does not
+deliver it cannot support the published refusal flow, the companion contracts
+take a major version.
+
+**And the signature was checked against the wrong key.** The point of a pre-join
+proof is that it is verified against the key carried by the exact invitation
+package the device was given: a device that has joined nothing has no published
+document and no wallet key to be checked against. The reference recomputed a key
+from the device's name instead — the same name the test fixtures use, so the two
+always agreed and no test could tell them apart, while the error message said the
+package had been consulted.
+
+Putting a different, genuine key inside the package showed the inversion plainly:
+a refusal signed with the key the package **actually carried** was rejected, and
+one signed with a key that was **not in the package at all** was accepted. The key
+now comes from the retained package, whose reference is recomputed over those
+bytes before it is trusted.
+
+**A trace that claimed more than it showed.** The generated walk-through of the
+published operations says the stages compose in order, with the values the run
+produced. They did not: the sending stage sealed one message, the delivery stage
+took its group from a fixture, and the confirmation stage confirmed a different
+message entirely. A fault stopping the sent message from reaching confirmation
+would have left every heading in place and the document looking correct. One
+message now crosses every stage, and the check is made against the run rather
+than against the finished document.
+
+**Four overstatements in the new custody inventory**, corrected. It called the
+entity's messaging descriptor the document that pins every other sealing key —
+the registry's directory record does that. It said a chain of policy versions can
+show the pinned one was the latest, which is precisely what such a chain cannot
+show and what the inventory's own next sentence said. It said an unopened
+commitment keeps the message's class hidden, when what it withholds is the
+committed value and not every inference about the message. And it promised one
+consequence for every missing input, where the consequences differ. Reviewing it
+turned up something the review had not: two trust anchors were missing from the
+inventory altogether.
+
+Two smaller corrections: a malformed proof now produces a typed refusal that
+changes nothing, rather than an untyped error; and dispute evidence embedded in a
+package is now checked against its own definition, as every other embedded object
+already was.
+
+## Edition r31 — 2026-09-28
 
 **Access-breaking, and deliberately.** Two published operations now require the
 authentication the specification always said they required. Nothing changes on the

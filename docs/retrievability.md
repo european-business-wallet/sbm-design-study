@@ -12,11 +12,16 @@ verifies unchanged (`tests/test_lifecycle_claims.py`). That is why
 so often, and exactly why custody is the open question: a verdict is only as
 durable as somebody's willingness to keep answering the read that supplies it.
 
-Of the 17 inputs a retained-evidence verification can take,
+Of the 19 inputs a retained-evidence verification can take,
 **10 depend on material a provider exit leaves with no named
-server**. The failure is graceful — an absent input degrades the verdict to
-INCOMPLETE, never to a silent pass — so this is a specification gap and not a
-defect. It is the gap [G3](REVIEW_AGENDA.md) names.
+server**. No absence turns into a silent pass — but the consequences differ,
+and each row below says which one applies. A REQUIRED input leaves a stated
+property unproven, and where a residual rule names it the verdict is reported
+INCOMPLETE. An OPTIONAL opening simply stays unopened, which is not a gap.
+And where a current binding can stand in for a historical one, the answer
+quietly becomes a question about today rather than about the act. So this is
+a specification gap and not a defect — the gap [G3](REVIEW_AGENDA.md) names —
+and saying which kind of absence each input has is part of stating it.
 
 Generated from `docs/retrievability.json` and gated: every argument
 `bundle_lint.check_bundle` accepts, every `LINT-BND-I*` residual and every
@@ -43,12 +48,14 @@ published read taking an as-of selector must appear below.
 | `reveals` | none, by design — the salt travels only inside the end-to-end-encrypted envelope | the endpoints, and only the parties of a dispute | yes |
 | `mandate_reveals` | none, by design — as for reveals | the endpoints, and only the parties of a dispute | yes |
 | `transformation_traces` | none — neither is profiled (open items A13/A15) | nobody: the profile does not claim this is establishable | yes |
+| `directory_record` | GET /resolve/{uid} | the EDD core registry | yes |
+| `trust_store` | none published — a verifier's own configuration | the verifying party | yes |
 
 ## What each absence does to the verdict
 
-**`med`** — The entity's sealed BW-MED: its provider endpoints, DS receipt keys, MLS parameters and the key set that seals the rest.
+**`med`** — The entity's sealed BW-MED: its provider endpoints, DS receipt keys and MLS parameters. Sealed by a key the DIRECTORY RECORD authorises — the MED is not its own trust anchor.
 
-- *Absent:* no verification is possible: the document that pins every other seal key is missing.
+- *Absent:* the entity's provider endpoints and DS receipt keys are unknown, so the material they point at cannot be resolved. R30-PUB-04: this row said the MED 'pins every other seal key'. It does not — `DirectoryRecord.authorized_seal_keys` does, and a retained MED is no substitute for the historical directory authorisation that made it acceptable.
 - The endpoints INSIDE it move on an exit; the document itself must remain retrievable as it stood at the act, and nothing names who serves that.
 
 **`org`** — The sealed BW-ORG version the message pinned: acceptance policy, delivery grades, scope map.
@@ -56,7 +63,7 @@ published read taking an as-of selector must appear below.
 - *Absent:* the policy that governed the act cannot be read.
 - Retrieval BY DIGEST is the right interface: evidence pins `acceptance_policy_ref.doc_digest`, so a verifier can ask for exactly the version it needs. The interface is settled; the custody is not.
 
-**`policy_history`** — The BW-ORG succession chain, so the pinned version can be shown to have been the latest in force at the act.
+**`policy_history`** — The BW-ORG succession chain: the versions linking the pinned one to its predecessors, so linkage and in-force at the act can be shown. It does NOT establish that the pinned version was the latest — a retained prefix looks complete whether or not a successor was omitted, which is what LINT-BND-I3 says and what this row used to contradict (R30-PUB-04).
 
 - *Absent:* LINT-BND-I1 / LINT-BND-I3 — linkage and in-force are provable from the pinned document alone; MAXIMALITY is not, and the verdict says INCOMPLETE rather than passing.
 - *Declared residual:* LINT-BND-I1, LINT-BND-I3
@@ -118,16 +125,26 @@ published read taking an as-of selector must appear below.
 
 **`reveals`** — The (salt, content_class) opening of an availability-grade commitment.
 
-- *Absent:* the committed class stays hidden, which is the point; the grade claim is then unopened, not failed.
+- *Absent:* the grade commitment stays unopened, which is the point; the claim that rests on it is then unproven rather than failed. R30-PUB-04: not the same as the class being hidden — a cleartext `scope_ref` resolved against a published scope map can narrow it, and a scope covering one class gives it. What an unopened commitment withholds is the committed value, not every inference about the message.
 
 **`mandate_reveals`** — The opening of an agent act's mandate commitment.
 
-- *Absent:* the declared class stays hidden; a valid opening establishes what the sender COMMITTED to, never what the plaintext was.
+- *Absent:* the mandate commitment stays unopened, which is the point; the claim that rests on it is then unproven rather than failed. R30-PUB-04: not the same as the class being hidden — a cleartext `scope_ref` resolved against a published scope map can narrow it, and a scope covering one class gives it. What an unopened commitment withholds is the committed value, not every inference about the message.
 
 **`transformation_traces`** — Evidence that a Change-Indication Evidence's outputs are the transformation of its input. Neither of the two transformations is profiled, so there is no operation to trace.
 
 - *Absent:* LINT-BND-I7 — stated as unestablishable rather than reported as a gap in the bundle, because neither is profiled and a provider MUST NOT issue one.
 - *Declared residual:* LINT-BND-I7
+
+**`directory_record`** — The EU-governed directory record for the entity: where to resolve it, and `authorized_seal_keys` — the set that decides which key may seal its BW-MED/ORG/MEMBER documents.
+
+- *Absent:* no discovery document can be shown to have been sealed by a key the entity was entitled to use, so the whole discovery chain is unanchored (`check_directory_pin`).
+- R30-PUB-04 found this missing from the inventory entirely: RETR-01 demands the arguments of `check_bundle`, and the trust anchors are arguments of `discovery_lint` instead. Registry-held, so an exit does not strand it — but the AS-OF question does: the record is served current, and nothing publishes the authorisation as it stood at a past act.
+
+**`trust_store`** — The configured trust anchors a verifier resolves seals against.
+
+- *Absent:* no seal resolves to an anchor, so nothing is attributable (`check_trust`).
+- Held by the verifier rather than by any provider, which is why it survives — and why it is the one input whose absence is the verifier's own problem.
 
 ## The shape that works
 

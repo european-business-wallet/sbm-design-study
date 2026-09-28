@@ -39,7 +39,7 @@ branches are the point, and each names the registered reason the operation
 returned.
 
 
-**35 steps**, of which 23 succeeded and 12 were refused by design.
+**36 steps**, of which 21 succeeded and 15 were refused by design.
 
 
 ## Channel formation
@@ -103,6 +103,12 @@ The second member's device, invited on the same reservation.
 **Negative branch.** Holding `keypackage_ref` proves nothing: it is a hash of the package's PUBLIC bytes, returned to the creator by the reservation and held by the Delivery Service — the two parties best placed to forge a refusal attributed to this device both have it.
 
 **Refused:** `refusal-request-invalid` — refusal-request-invalid: the refusal does not satisfy the published `WelcomeRefusalRequest`: [('$', "'refusal_proof' is a required property")] (R10-05)
+
+### → `GET /welcome (the refusing device)`
+
+The device collects its Welcome and, with it, the single-use `refusal_nonce` a refusal must sign. Everything the proof commits to reaches the device through this response.
+
+**Returned:** `device_id, welcomes`
 
 ### → `the device builds the pre-join proof`
 
@@ -209,23 +215,23 @@ The DS signs a receipt over the device's acknowledgement. The instant is the **s
 
 ## Confirmation
 
-### → `POST /confirmations (s3, first member)`
+### ✗ `POST /confirmations (s3, first member)`
 
 One member of the recipient entity confirms verification. Under a quorum policy this counts and does not yet end the message.
 
-**Returned:** None
+**Refused:** `confirmation-rejected` — confirmation-rejected: the s3 is not about this message: the evidence it would rest on fails ['LINT-DE-16'] — nothing is stored or sealed (R12-01/R12-02)
 
-### → `POST /confirmations (s3, replay by the same member)`
+### ✗ `POST /confirmations (s3, replay by the same member)`
 
 **Retry branch.** An exact retry returns what the first returned; the member's act is counted once.
 
-**Returned:** None
+**Refused:** `confirmation-rejected` — confirmation-rejected: the s3 is not about this message: the evidence it would rest on fails ['LINT-DE-16'] — nothing is stored or sealed (R12-01/R12-02)
 
-### → `POST /confirmations (s3, second member)`
+### ✗ `POST /confirmations (s3, second member)`
 
 The quorum is satisfied — **S4**. The delivery decision is the instant THIS provider observed the completing act.
 
-**Returned:** None
+**Refused:** `confirmation-rejected` — confirmation-rejected: the s3 is not about this message: the evidence it would rest on fails ['LINT-DE-16'] — nothing is stored or sealed (R12-01/R12-02)
 
 ### ✗ `POST /confirmations (foreign member)`
 

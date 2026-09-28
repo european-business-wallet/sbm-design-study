@@ -1667,6 +1667,40 @@ def _demo_keypackage(uid, mid, device_id, cipher_suite):
         demo_public_key_b64(f"leaf:{mid}:{device_id}")])).encode()
 
 
+def _leaf_key_of(keypackage_ref, cipher_suite=None):
+    """The leaf signature key carried by the RETAINED package that
+    `keypackage_ref` names (G1 / R30-PUB-02).
+
+    This is the whole point of the pre-join proof: the Delivery Service verifies
+    a refusal against the key of the exact package the invitation consumed,
+    because a device that has joined nothing has no discovery document and no
+    wallet key to be checked against.
+
+    `refuse_welcome` used to compute `demo_public_key_b64(f"leaf:{mid}:{did}")`
+    instead — the same label the fixture generator uses, so the two agreed for
+    every shipped package and nothing noticed. A package carrying a DIFFERENT
+    valid key made the inversion plain: a refusal signed with the key the
+    package actually carried was REJECTED, and one signed with a key that was
+    not in the package at all was ACCEPTED. The reference followed the
+    identity, and the error message said it had followed the package.
+
+    The reference recomputes the ref over the retained bytes before trusting
+    them, so a stored package that no longer hashes to the name it is filed
+    under yields no key rather than the wrong one.
+    """
+    for reservation in _RESERVATIONS.values():
+        for target in reservation.get("targets") or []:
+            if target.get("keypackage_ref") != keypackage_ref:
+                continue
+            package = base64.b64decode(target["keypackage_b64"])
+            suite = cipher_suite or reservation.get("cipher_suite")
+            if mls_wire.keypackage_ref(package, cipher_suite=suite) != keypackage_ref:
+                return None
+            fields = package.decode("utf-8").split("|")
+            return base64.b64decode(fields[-1]) if len(fields) >= 5 else None
+    return None
+
+
 def _reservation_response(r):
     """The PUBLIC `Reservation` — built from the record, never the record.
 
@@ -2199,23 +2233,27 @@ def welcome_refusal_proof(welcome_id, *, credential, reason, offered_suite,
     deterministic leaf seed; a real device holds the private half of the leaf
     key its KeyPackage published and signs with that.
 
-    The nonce is the one the Welcome arrived with. It is not defaulted: a proof
-    built without the value the DS issued is not a fresh proof, and silently
-    supplying one would hide exactly the replay this exists to stop.
+    The nonce is the one the Welcome arrived with, and the CALLER supplies it
+    from the queue item `GET /welcome` returned. It is not defaulted, and — since
+    R30-PUB-01 — it is not looked up either.
+
+    It used to be. This docstring said "it is not defaulted" while the code
+    below read the value out of `_WELCOME_QUEUE` and `_INVITATIONS` when the
+    caller passed none, which is the service's private state: a device on the
+    other side of the boundary has no such access. So the reference demonstrated
+    a flow that nobody holding the contract could execute, and the false
+    sentence in this docstring is what let it look finished. The lookup is gone;
+    a caller without the nonce must fetch its queue, which is where the value
+    now is.
     """
     device = _device_of(credential)
-    entry_for_nonce = next((e for e in _INVITATIONS.values()
-                            if e["welcome_id"] == welcome_id), None)
-    if not nonce:
-        queued = next((w for w in _WELCOME_QUEUE.get(device, [])
-                       if w["welcome_id"] == welcome_id), None)
-        nonce = (queued or {}).get("refusal_nonce") \
-            or (entry_for_nonce or {}).get("refusal_nonce")
     if not nonce:
         raise InvitationError(
             "refusal-proof-required",
             "no nonce: a refusal signs the value the Delivery Service issued "
-            "with the Welcome, and this device has no such Welcome")
+            "with the Welcome, and this builder will not read it out of the "
+            "service's own state — take it from the `refusal_nonce` of the "
+            "queue item `GET /welcome` returned for this Welcome")
     entry = next((e for e in _INVITATIONS.values()
                   if e["welcome_id"] == welcome_id), None)
     kp_ref = (entry or {}).get("invitation", {}).get("keypackage_ref") \
@@ -2289,6 +2327,34 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
             "unknown, already handled, expired, or belonging to another "
             "device — uniformly indistinguishable (R7-03)")
 
+    # R10-05: the published request, EXECUTED — as `ReceiptAckRequest` and
+    # `InvitationDeposit` already are. It was inline and could not be
+    # referenced, so the reason/suite/floor rules below were the only ones
+    # applied, while the published body (including which reasons may carry a
+    # floor) went unchecked.
+    # G1: the proof travels IN the request, so the published shape carries it
+    # and this validation executes it. It used to be a keyword the reference
+    # checked by hand while `WelcomeRefusalRequest` had no field for it at all
+    # — the contract and the reference describing different operations, which
+    # is the defect this repository keeps finding one surface at a time.
+    #
+    # R30-PUB-05: this ran AFTER the proof's fields were read, so a proof
+    # missing `signature_b64` raised a bare KeyError — an untyped escape from a
+    # function whose every other refusal is a typed `InvitationError`. The
+    # identity checks above still come first, because they are what keeps the
+    # queue from being an existence oracle; the SHAPE of the request is settled
+    # here, before anything indexes into it.
+    request = {"reason": reason, "offered_suite": offered_suite,
+               **({} if refusal_proof is None else {"refusal_proof": refusal_proof}),
+               **({} if required_floor is None else {"required_floor": required_floor})}
+    problems = validate_contract_object("delivery-service-openapi.yaml",
+                                        "WelcomeRefusalRequest", request)
+    if problems and reason in GROUP_ESTABLISHMENT_REASONS:
+        raise InvitationError(
+            "refusal-request-invalid",
+            f"the refusal does not satisfy the published "
+            f"`WelcomeRefusalRequest`: {problems[:2]} (R10-05)")
+
     # G1 — THE PRE-JOIN PROOF. Holding `keypackage_ref` proves nothing: it is a
     # hash of the package's PUBLIC bytes, returned to the creator by the
     # reservation and held by the Delivery Service, so the two parties best
@@ -2318,8 +2384,13 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
         raise InvitationError(
             "refusal-proof-replayed",
             "this nonce has already been spent; a refusal is usable once")
-    leaf_pub = base64.b64decode(demo_public_key_b64(
-        f"leaf:{device[1]}:{device[2]}"))
+    leaf_pub = _leaf_key_of(inv["keypackage_ref"], offered_suite)
+    if proof and leaf_pub is None:
+        raise InvitationError(
+            "refusal-proof-invalid",
+            "the KeyPackage this invitation consumed is not retrievable, or no "
+            "longer hashes to the reference it is filed under, so there is no "
+            "leaf signature key to verify the refusal against")
     if proof and not mls_wire.verify_welcome_refusal(
             leaf_pub, proof["signature_b64"],
             welcome_id=welcome_id, keypackage_ref=inv["keypackage_ref"],
@@ -2368,16 +2439,6 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
     # checked by hand while `WelcomeRefusalRequest` had no field for it at all
     # — the contract and the reference describing different operations, which
     # is the defect this repository keeps finding one surface at a time.
-    request = {"reason": reason, "offered_suite": offered_suite,
-               **({} if refusal_proof is None else {"refusal_proof": refusal_proof}),
-               **({} if required_floor is None else {"required_floor": required_floor})}
-    problems = validate_contract_object("delivery-service-openapi.yaml",
-                                        "WelcomeRefusalRequest", request)
-    if problems and reason in GROUP_ESTABLISHMENT_REASONS:
-        raise InvitationError(
-            "refusal-request-invalid",
-            f"the refusal does not satisfy the published "
-            f"`WelcomeRefusalRequest`: {problems[:2]} (R10-05)")
     if reason not in GROUP_ESTABLISHMENT_REASONS:
         raise InvitationError(
             "refusal-reason-unknown",
@@ -2584,10 +2645,15 @@ def collect_welcomes(*, credential, at="2026-04-04T10:05:00Z"):
     served (R11-06)."""
     device = _device_of(credential)
     queue = {"device_id": device[2],
+             # R30-PUB-01: `refusal_nonce` is DELIVERED. The proof was required
+             # and this value was withheld, so the published flow could not be
+             # executed from the published contract — and the reference's own
+             # helper hid it by reading the service's private queue.
              "welcomes": [{k: v for k, v in i.items()
                            if k in ("welcome_id", "recipient_device",
                                     "welcome_b64", "queued_at",
-                                    "group_info_commitment", "offered_suite")}
+                                    "group_info_commitment", "offered_suite",
+                                    "refusal_nonce")}
                           for i in _WELCOME_QUEUE.get(device, [])
                           if _live(i, at)]}
     problems = validate_contract_object("delivery-service-openapi.yaml",

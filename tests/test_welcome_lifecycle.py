@@ -96,7 +96,11 @@ def test_an_unacknowledged_invitation_stops_routing_when_it_expires():
 
 def test_a_joined_invitation_keeps_routing_after_its_window_and_cannot_be_refused():
     m = il._m(); dev = il._invite(m)
-    wid = m.collect_welcomes(credential=dev)["welcomes"][0]["welcome_id"]
+    item = m.collect_welcomes(credential=dev)["welcomes"][0]
+    wid = item["welcome_id"]
+    # Collected while the Welcome was live, and still held after joining: the
+    # device is not missing the nonce, it is no longer entitled to refuse.
+    prejoin.nonce_for(m, wid, credential=dev)
     m.ack_welcome(wid, credential=dev)
     with pytest.raises(m.InvitationError) as exc:
         _refuse(m, wid, dev)

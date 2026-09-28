@@ -412,9 +412,14 @@ def test_the_queue_item_is_typed_in_the_contract():
     item = DS["components"]["schemas"]["WelcomeQueue"]["properties"]["welcomes"]["items"]
     # R10-05: the commitment the device must check, and the suite it is
     # computed under, are DELIVERED to it.
+    # R30-PUB-01: so is `refusal_nonce`. Everything a refusal must SIGN has to
+    # reach the device that signs it, and this response is the only thing that
+    # device receives — the proof was required while its input was withheld,
+    # and the reference hid the gap by reading the value from its own state.
     assert set(item["required"]) == {"welcome_id", "recipient_device",
                                      "welcome_b64", "queued_at",
-                                     "group_info_commitment", "offered_suite"}
+                                     "group_info_commitment", "offered_suite",
+                                     "refusal_nonce"}
 
 
 # ===========================================================================

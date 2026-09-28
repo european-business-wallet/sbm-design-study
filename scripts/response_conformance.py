@@ -150,7 +150,13 @@ def drive():
     # G1: the refusal carries the pre-join proof — a signature under the
     # KeyPackage's leaf key over the DS-issued nonce — built the way a device
     # builds it, through the reference's own helper.
+    # R30-PUB-01: the nonce comes from the QUEUE ITEM just collected, which is
+    # the only place a device can get it. This sweep drives the published
+    # operations, so taking it from anywhere else would make the sweep pass on
+    # an exchange no client could perform.
     _refusing = dict(DEVICE, keypackage_ref=pkg["keypackage_ref"])
+    _queued_item = next(w for w in welcomes["welcomes"]
+                        if w["welcome_id"] == queued["welcome_id"])
     refusal = mock.refuse_welcome(
         queued["welcome_id"], credential=_refusing,
         reason="suite-below-published-floor", offered_suite=SUITE,
@@ -159,7 +165,7 @@ def drive():
         refusal_proof=mock.welcome_refusal_proof(
             queued["welcome_id"], credential=_refusing,
             reason="suite-below-published-floor", offered_suite=SUITE,
-            required_floor=SUITE))
+            required_floor=SUITE, nonce=_queued_item["refusal_nonce"]))
     outcomes = {"outcomes": mock.collect_outcomes(credential=MEMBER)}
 
     return {

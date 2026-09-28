@@ -530,8 +530,8 @@
       ]
     },
     "companion_contracts": {
-      "value": "13.0.0",
-      "note": "The profile-2 companion contracts — wallet-RDP, Delivery Service, RDP relay — versioned together as one stream; versions independently of the evidence family (umbrella §9.3).",
+      "value": "14.0.0",
+      "note": "The profile-2 companion contracts — wallet-RDP, Delivery Service, RDP relay — versioned together as one stream; versions independently of the evidence family (umbrella §9.3). 14.0.0 is a MAJOR bump because the Welcome queue item gained a REQUIRED `refusal_nonce`: a service that does not deliver it cannot support the published refusal flow, which required the value to be signed while publishing no way to obtain it (R30-PUB-01).",
       "bindings": [
         {
           "kind": "text",

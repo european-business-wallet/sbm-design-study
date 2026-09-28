@@ -89,7 +89,16 @@ def _validate(raw: bytes, rule: str, label: str) -> bool:
 def _check_body(body, label):
     ok = _validate(cbor2.dumps(body, canonical=True), _body_rule(body), f"{label} body")
     if body.get("type") == "EP-v1":   # recurse into embedded sub-artefacts
-        for sub in [body.get("se")] + list(body.get("outcomes") or []) + list(body.get("changes") or []):
+        # R30-PUB-06: `disputes` was missing from this list. The EP body embeds
+        # four kinds of sub-artefact and this reached three, so the GCM inside a
+        # dispute was never validated against `gcm-body` — while the gate's own
+        # description said every embedded body gets its specific rule. It went
+        # unnoticed because no sample carried a dispute until the
+        # cross-representation work required one, and the standalone GCM sample
+        # exercises the rule by itself, which is not the same claim.
+        for sub in ([body.get("se")] + list(body.get("outcomes") or [])
+                    + list(body.get("changes") or [])
+                    + list(body.get("disputes") or [])):
             sub_cose = cbor2.loads(bytes(sub))[0]
             sub_body = cbor2.loads(cbor2.loads(bytes(sub_cose))[2])
             ok = _check_body(sub_body, f"{label}/{sub_body.get('type')}") and ok

@@ -92,7 +92,8 @@ def test_a_substituted_group_info_is_detected_refused_and_reported():
     assert list(validator.iter_errors(request)), "the proof is required"
     proof = m.welcome_refusal_proof(item["welcome_id"], credential=dev,
                                     reason=request["reason"],
-                                    offered_suite=request["offered_suite"])
+                                    offered_suite=request["offered_suite"],
+                                    nonce=item["refusal_nonce"])
     assert list(validator.iter_errors(dict(request, refusal_proof=proof))) == []
     assert list(validator.iter_errors(dict(request, refusal_proof=proof,
                                            required_floor=tc.SUITE))), \

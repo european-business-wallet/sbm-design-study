@@ -3,7 +3,7 @@
 openapi: "3.1.0"
 info:
   title: SM-MLS Delivery Service companion contract (profile 2)
-  version: "13.0.0"
+  version: "14.0.0"
   description: |
     F-15: the normative MLS Delivery Service surface at
     `BW-MED.mls.ds_url` — the COMPLETE KeyPackage reservation lifecycle
@@ -1604,9 +1604,33 @@ components:
             type: object
             unevaluatedProperties: false
             required: [welcome_id, recipient_device, welcome_b64, queued_at,
-                       group_info_commitment, offered_suite]
+                       group_info_commitment, offered_suite, refusal_nonce]
             properties:
               welcome_id: { type: string }
+              refusal_nonce:
+                type: string
+                minLength: 1
+                description: >-
+                  The single-use value a refusal of THIS Welcome must sign
+                  (`WelcomeRefusalProof.nonce`; the I-D, *Group Establishment*).
+                  Issued by the Delivery Service with the Welcome and delivered
+                  HERE, because this response is the only thing the invited
+                  device receives.
+
+                  R30-PUB-01: the proof was made required and this value was
+                  not published, so the refusal flow could not be executed by
+                  anyone holding only the contract. The reference's own client
+                  helper appeared to work because it read the value out of the
+                  service's private queue — a demonstration that cannot exist
+                  across a real boundary, and the reason "the reference passes"
+                  is not evidence that the published operations compose.
+
+                  Spent only when a refusal is ACCEPTED, so a rejected refusal
+                  leaves the device able to try again with the same value; an
+                  exact retry of an accepted refusal converges before the proof
+                  is examined. A device that has acknowledged the Welcome has
+                  joined and no longer refuses, so the value's life is the
+                  Welcome's.
               group_info_commitment:
                 $ref: 'schemas/evidence-common.schema.json#/$defs/GroupInfoCommitment'
                 description: >-

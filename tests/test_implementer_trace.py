@@ -11,7 +11,9 @@ composing with itself — not an interoperability result, not the four-corner
 path, not production trust, and it does not reach a Delivery Evidence object.
 Those absences are the difference between answering G2 and appearing to.
 """
+import json
 import pathlib
+import re
 import subprocess
 import sys
 
@@ -35,6 +37,46 @@ def test_the_trace_composes_the_whole_flow_not_one_stage():
     for operation in ("/keypackages/{uid}/reservations", "/welcomes", "/submissions",
                       "/messages", "/confirmations"):
         assert operation in text, operation
+
+
+def test_one_message_crosses_every_stage_that_handles_a_message():
+    """R30-PUB-03 — the assertion this file was missing.
+
+    Checking headings and operation names cannot tell a composition from a
+    collection of scenarios, and it did not: the submission sealed
+    `01HZ5INTAKE…` while delivery took its group from a shipped fixture and
+    confirmation confirmed the fixture's `01HZ3ABCD…` entirely. A regression
+    stopping the submitted message from reaching confirmation would have left
+    every heading in place and the trace green.
+
+    So the identity is asserted, not the layout: whatever message the run
+    submits, that is the one the later stages handle, and no OTHER message id
+    appears anywhere in the document.
+    """
+    sys.path[:0] = [str(ROOT / "scripts"), str(ROOT / "tests")]
+    import trace_flow
+
+    recorded = trace_flow.run()[0]          # run() returns (trace, m, i, se)
+    steps = recorded.steps
+    by_section = {}
+    for step in steps:
+        by_section.setdefault(step["section"], []).append(json.dumps(step["detail"],
+                                                                    default=str))
+
+    sent = [i for i in re.findall(r"\b01HZ[0-9A-Z]{8,30}\b",
+                                 " ".join(by_section.get("Sending", [])))]
+    assert sent, "the Sending stage produced no message id to carry"
+    carried = max(set(sent), key=sent.count)
+
+    for section in ("Delivery", "Confirmation"):
+        blob = " ".join(by_section.get(section, []))
+        others = set(re.findall(r"\b01HZ[0-9A-Z]{8,30}\b", blob)) - {carried}
+        assert carried in blob, (
+            f"{section} handles no message the run produced — the stages are a "
+            "collection of scenarios rather than a composition")
+        assert not others, (
+            f"{section} also handles {sorted(others)}, which the run did not "
+            f"submit; the trace claims to compose {carried}")
 
 
 def test_the_negative_and_retry_branches_are_there_and_named():

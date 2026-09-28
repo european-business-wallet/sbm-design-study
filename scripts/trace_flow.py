@@ -222,8 +222,21 @@ def run():
            lambda: m.refuse_welcome(wid2, credential=refuser,
                                     reason="group-info-mismatch", offered_suite=SUITE))
 
+    # R30-PUB-01: the nonce comes from the device's own queue item, through the
+    # published `GET /welcome`. This trace exists to show that the PUBLISHED
+    # operations compose, so a step that reached into the service's state would
+    # be demonstrating the opposite of what the document claims.
+    _queued = t.step(
+        "Channel formation", "GET /welcome (the refusing device)",
+        "The device collects its Welcome and, with it, the single-use "
+        "`refusal_nonce` a refusal must sign. Everything the proof commits to "
+        "reaches the device through this response.",
+        lambda: m.collect_welcomes(credential=refuser))
+    _item = next((w for w in (_queued or {}).get("welcomes", [])
+                  if w["welcome_id"] == wid2), None)
     proof = m.welcome_refusal_proof(wid2, credential=refuser,
-                                    reason="group-info-mismatch", offered_suite=SUITE)
+                                    reason="group-info-mismatch", offered_suite=SUITE,
+                                    nonce=(_item or {}).get("refusal_nonce"))
 
     t.step("Channel formation", "the device builds the pre-join proof",
            "**G1.** A signature under the KeyPackage's **leaf signature key** — RFC 9420 "
@@ -318,16 +331,28 @@ def run():
            lambda: i.submit(ob._meta(), org=ORG, members=MEMBERS))
 
     # --- 3. Delivery: the Delivery Service observes the handover ------------
-    msg = ob.SE["message_id"] if isinstance(ob.SE, dict) else None
+    # R30-PUB-03: every stage from here on uses THE SEALED SE THE SUBMISSION
+    # RETURNED. The delivery stage used to take its message id from the request
+    # metadata and its group from a shipped fixture, and the confirmation stage
+    # confirmed the fixture's message entirely — a different message from the
+    # one submitted. So the document claimed the state machines compose while a
+    # regression stopping the submitted message from reaching confirmation would
+    # have left the trace green. The values below are the run's own.
+    submitted = se.get("projection", se) if isinstance(se, dict) else {}
+    if not submitted.get("message_id"):
+        raise SystemExit(
+            "the submission produced no sealed SE, so there is nothing to carry "
+            "into delivery — the trace will not fall back to a fixture and call "
+            "the result a composition (R30-PUB-03)")
     octets = base64.b64decode(ob._meta()["mls_message_b64"])
     rdp_out = "urn:sbm:rdp:demo-out"
     mid, dev_id = "F1N2C3D4P", "dev-01"
-    message_id = ob._meta()["message_id"]
+    message_id = submitted["message_id"]
 
     t.step("Delivery", "POST /messages (DS accepts)",
            "The Delivery Service accepts the transmitted octets for routing. Nothing "
            "is queued for a device until it has.",
-           lambda: i.ds_accept_message(message_id, ob.SE["mls_group_id"],
+           lambda: i.ds_accept_message(message_id, submitted["mls_group_id"],
                                        base64.b64encode(octets).decode(),
                                        principal=rdp_out))
 
@@ -371,26 +396,30 @@ def run():
     # --- 4. Confirmation: the members speak, and the message ends -----------
     import test_confirmation_acts as ca
     c = ca._m()
+    # The SE crosses the boundary as DATA — which is what a recipient-side
+    # provider receives — so the members confirm the message that was actually
+    # submitted, under the policy that SE pins.
+    _se = submitted
 
     t.step("Confirmation", "POST /confirmations (s3, first member)",
            "One member of the recipient entity confirms verification. Under a quorum "
            "policy this counts and does not yet end the message.",
-           lambda: ca._deliver(c, "s3", ca._s3("F1N2C3D4P"), ca._member("F1N2C3D4P")))
+           lambda: ca._deliver(c, "s3", ca._s3("F1N2C3D4P", se=_se), ca._member("F1N2C3D4P"), se=_se))
 
     t.step("Confirmation", "POST /confirmations (s3, replay by the same member)",
            "**Retry branch.** An exact retry returns what the first returned; the "
            "member's act is counted once.",
-           lambda: ca._deliver(c, "s3", ca._s3("F1N2C3D4P"), ca._member("F1N2C3D4P")))
+           lambda: ca._deliver(c, "s3", ca._s3("F1N2C3D4P", se=_se), ca._member("F1N2C3D4P"), se=_se))
 
     t.step("Confirmation", "POST /confirmations (s3, second member)",
            "The quorum is satisfied — **S4**. The delivery decision is the instant "
            "THIS provider observed the completing act.",
-           lambda: ca._deliver(c, "s3", ca._s3("F2X3Y4Z55"), ca._member("F2X3Y4Z55")))
+           lambda: ca._deliver(c, "s3", ca._s3("F2X3Y4Z55", se=_se), ca._member("F2X3Y4Z55"), se=_se))
 
     t.step("Confirmation", "POST /confirmations (foreign member)",
            "**Negative branch.** A member the recipient entity does not publish "
            "cannot confirm for it, whatever it signs.",
-           lambda: ca._deliver(ca._m(), "s3", ca._s3("ZZZZZZZZZ"), ca._member("ZZZZZZZZZ")))
+           lambda: ca._deliver(ca._m(), "s3", ca._s3("ZZZZZZZZZ", se=_se), ca._member("ZZZZZZZZZ"), se=_se))
 
     # a mismatch, on its own runtime so the terminal state is its own
     t.step("Confirmation", "POST /confirmations (mismatch) → NDE",
@@ -398,8 +427,9 @@ def run():
            "and it differed. The NDE carries the recipient's proof, and the two "
            "digests must differ — equality would contradict the claim.",
            lambda: ca._deliver(ca._m(), "mismatch",
-                               dict(copy.deepcopy(ca.PROOF), mid="F1N2C3D4P"),
-                               ca._member("F1N2C3D4P")))
+                               dict(copy.deepcopy(ca.PROOF), mid="F1N2C3D4P",
+                                    message_id=_se["message_id"]),
+                               ca._member("F1N2C3D4P"), se=_se))
 
     # --- 5. Multipart: the failure that has its own outcome -----------------
     import test_validation_failure_outcome as vf

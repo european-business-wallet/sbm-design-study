@@ -36,6 +36,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 
 import mls_wire as w  # noqa: E402
 import prejoin  # noqa: E402
+from lint_cli import request_schema  # noqa: E402
 import test_current_claims as tc  # noqa: E402
 
 SUITE = tc.SUITE
@@ -143,8 +144,10 @@ def test_a_signature_by_another_device_does_not_verify():
 
 def test_a_refusal_carrying_another_welcomes_nonce_is_refused():
     m, dep, cred = _fresh()
-    proof = m.welcome_refusal_proof(dep["welcome_id"], credential=cred,
-                                    reason="group-info-mismatch", offered_suite=SUITE)
+    proof = m.welcome_refusal_proof(
+        dep["welcome_id"], credential=cred, reason="group-info-mismatch",
+        offered_suite=SUITE,
+        nonce=prejoin.nonce_for(m, dep["welcome_id"], credential=cred))
     with pytest.raises(m.InvitationError) as exc:
         m.refuse_welcome(dep["welcome_id"], credential=cred,
                          reason="group-info-mismatch", offered_suite=SUITE,
@@ -154,13 +157,15 @@ def test_a_refusal_carrying_another_welcomes_nonce_is_refused():
 
 def test_an_accepted_refusal_spends_its_nonce():
     m, dep, cred = _fresh()
+    # Held from collection, the way the device holds it: once the refusal is
+    # accepted the invitation is handled and its item leaves the queue, so the
+    # value cannot be fetched again — which is the point of it being single-use.
+    nonce = prejoin.nonce_for(m, dep["welcome_id"], credential=cred)
     accepted = prejoin.refuse(m, dep["welcome_id"], credential=cred,
                               reason="group-info-mismatch", offered_suite=SUITE,
                               refused_at=tc.IN_WINDOW)
     assert accepted["outcome_id"]
-    assert m.welcome_refusal_proof(
-        dep["welcome_id"], credential=cred, reason="group-info-mismatch",
-        offered_suite=SUITE)["nonce"] in m._SPENT_REFUSAL_NONCES
+    assert nonce in m._SPENT_REFUSAL_NONCES
 
 
 def test_a_rejected_refusal_does_NOT_spend_its_nonce():
@@ -169,8 +174,10 @@ def test_a_rejected_refusal_does_NOT_spend_its_nonce():
     out-of-window instant or an unregistered reason burned it, and the device
     had no way to correct a recoverable error."""
     m, dep, cred = _fresh()
-    proof = m.welcome_refusal_proof(dep["welcome_id"], credential=cred,
-                                    reason="group-info-mismatch", offered_suite=SUITE)
+    proof = m.welcome_refusal_proof(
+        dep["welcome_id"], credential=cred, reason="group-info-mismatch",
+        offered_suite=SUITE,
+        nonce=prejoin.nonce_for(m, dep["welcome_id"], credential=cred))
     with pytest.raises(m.InvitationError):
         m.refuse_welcome(dep["welcome_id"], credential=cred,
                          reason="group-info-mismatch", offered_suite=SUITE,
@@ -189,21 +196,27 @@ def test_an_exact_retry_converges_and_a_replay_does_not():
     DIFFERENT claim. The idempotent path answers before the proof is examined,
     which is what lets both hold at once."""
     m, dep, cred = _fresh()
-    first = prejoin.refuse(m, dep["welcome_id"], credential=cred,
-                           reason="group-info-mismatch", offered_suite=SUITE,
-                           refused_at=tc.IN_WINDOW)
-    again = prejoin.refuse(m, dep["welcome_id"], credential=cred,
-                           reason="group-info-mismatch", offered_suite=SUITE,
-                           refused_at=tc.IN_WINDOW)
+    # Built once, from the queue item, and reused: it is both what an honest
+    # client retries with and what a captor would replay.
+    captured = m.welcome_refusal_proof(
+        dep["welcome_id"], credential=cred, reason="group-info-mismatch",
+        offered_suite=SUITE,
+        nonce=prejoin.nonce_for(m, dep["welcome_id"], credential=cred))
+    # A retry re-sends the SAME request — including the same proof. It cannot
+    # fetch a fresh nonce, because the invitation is handled and its queue item
+    # is gone; a client whose response was lost holds what it sent and sends it
+    # again, which is exactly the case the idempotent path exists for.
+    send = lambda: m.refuse_welcome(
+        dep["welcome_id"], credential=cred, reason="group-info-mismatch",
+        offered_suite=SUITE, refused_at=tc.IN_WINDOW, refusal_proof=captured)
+    first, again = send(), send()
     assert first["outcome_id"] == again["outcome_id"], "a retry must converge"
 
-    proof = m.welcome_refusal_proof(dep["welcome_id"], credential=cred,
-                                    reason="group-info-mismatch", offered_suite=SUITE)
     with pytest.raises(m.InvitationError) as exc:
         m.refuse_welcome(dep["welcome_id"], credential=cred,
                          reason="suite-below-published-floor", offered_suite=SUITE,
                          required_floor=SUITE, refused_at=tc.IN_WINDOW,
-                         members=tc.FLOOR_MEMBERS, refusal_proof=proof)
+                         members=tc.FLOOR_MEMBERS, refusal_proof=captured)
     assert exc.value.reason == "invitation-conflict", exc.value.reason
 
 
@@ -251,3 +264,127 @@ def test_the_agenda_records_what_is_answered_and_what_is_not():
         encoding="utf-8").splitlines() if l.startswith("| G1 |"))
     assert "Answered" in row
     assert "SignWithLabel" in row or "leaf signature key" in row
+
+
+# ===========================================================================
+# R30-PUB-01 / R30-PUB-02 — the two things the demonstration did not do
+# ===========================================================================
+
+def test_a_client_holding_only_the_published_response_can_refuse():
+    """The acceptance test for R30-PUB-01.
+
+    The proof was made REQUIRED and the value it must sign was never published,
+    so nobody holding the contract could build one. The reference looked
+    finished because its own client helper read the nonce out of the service's
+    private queue — an access no device has.
+
+    So this client is given nothing but the SERIALISED response: the queue item
+    round-trips through JSON, and the request is validated against the published
+    `WelcomeRefusalRequest` before it is sent. Nothing here touches
+    `_WELCOME_QUEUE`, `_INVITATIONS` or any other ledger.
+    """
+    m, dep, cred = _fresh()
+    wire = json.loads(json.dumps(
+        m.collect_welcomes(credential=cred, at=tc.IN_WINDOW)))
+    assert m.validate_contract_object(
+        "delivery-service-openapi.yaml", "WelcomeQueue", wire) == [], \
+        "the queue a device receives must satisfy its own published schema"
+    item = next(w for w in wire["welcomes"] if w["welcome_id"] == dep["welcome_id"])
+
+    proof = m.welcome_refusal_proof(
+        item["welcome_id"], credential=cred, reason="group-info-mismatch",
+        offered_suite=item["offered_suite"], nonce=item["refusal_nonce"])
+
+    request = {"reason": "group-info-mismatch",
+               "offered_suite": item["offered_suite"], "refusal_proof": proof}
+    _, validator = request_schema("delivery-service-openapi.yaml",
+                                  "WelcomeRefusalRequest")
+    assert list(validator.iter_errors(request)) == [], "the request must be valid"
+
+    outcome = m.refuse_welcome(item["welcome_id"], credential=cred,
+                               refused_at=tc.IN_WINDOW, **request)
+    assert outcome["outcome_id"], "a refusal built from the published response must land"
+
+
+def test_the_builder_will_not_supply_a_nonce_the_caller_did_not_receive():
+    """The other half: the helper must not quietly close the gap again."""
+    m, dep, cred = _fresh()
+    with pytest.raises(m.InvitationError) as exc:
+        m.welcome_refusal_proof(dep["welcome_id"], credential=cred,
+                                reason="group-info-mismatch", offered_suite=SUITE)
+    assert exc.value.reason == "refusal-proof-required"
+
+
+def _with_replaced_leaf_key(label="leaf:A-DIFFERENT-DEVICE:dev"):
+    """A runtime whose demo packages carry ANOTHER valid leaf key.
+
+    Changed before any operation, so reserve/commit/deposit run normally and the
+    `keypackage_ref` correctly hashes the changed bytes. Nothing else moves.
+    """
+    m = tc._mock()
+    original = m._demo_keypackage
+    replacement = m.demo_public_key_b64(label)
+    m._demo_keypackage = lambda uid, mid, did, cs: (
+        original(uid, mid, did, cs).rsplit(b"|", 1)[0] + b"|" + replacement.encode())
+    dep, pkg = tc._deposited(m)
+    cred = dict(tc.TARGET_DEV, keypackage_ref=pkg["keypackage_ref"]
+                if isinstance(pkg, dict) else tc.DEMO_KP_REF)
+    return m, dep, cred, label
+
+
+@pytest.mark.parametrize("signer,accepted", [
+    ("the key the package carries", True),
+    ("a key derived from the device's labels", False),
+])
+def test_the_verdict_follows_the_package_not_the_identity(signer, accepted):
+    """The acceptance test for R30-PUB-02, and the defect it names.
+
+    The Delivery Service must verify against the leaf key of the EXACT package
+    the invitation consumed — that is the whole reason a pre-join refusal can be
+    attributed to a device that has joined nothing. It instead recomputed
+    `demo_public_key_b64(f"leaf:{mid}:{device_id}")`, the same label the fixture
+    generator uses, so the two agreed for every shipped package and no test
+    could tell them apart.
+
+    Replacing the key inside the package made the inversion plain: a refusal
+    signed with the key the package ACTUALLY carried was rejected, and one
+    signed with a key that was not in the package at all was accepted.
+    """
+    m, dep, cred, replaced = _with_replaced_leaf_key()
+    item = m.collect_welcomes(credential=cred, at=tc.IN_WINDOW)["welcomes"][0]
+    inv = next(e for e in m._INVITATIONS.values()
+               if e["welcome_id"] == dep["welcome_id"])
+    seed = replaced if accepted else \
+        f"leaf:{tc.TARGET_DEV['mid']}:{tc.TARGET_DEV['device_id']}"
+    signature = w.sign_welcome_refusal(
+        m.demo_seed_bytes(seed), welcome_id=dep["welcome_id"],
+        keypackage_ref=inv["invitation"]["keypackage_ref"], offered_suite=SUITE,
+        required_floor=None, reason="group-info-mismatch",
+        nonce=item["refusal_nonce"])
+    send = lambda: m.refuse_welcome(
+        dep["welcome_id"], credential=cred, reason="group-info-mismatch",
+        offered_suite=SUITE, refused_at=tc.IN_WINDOW,
+        refusal_proof={"nonce": item["refusal_nonce"], "signature_b64": signature})
+    if accepted:
+        assert send()["outcome_id"], f"{signer} must verify"
+    else:
+        with pytest.raises(m.InvitationError) as exc:
+            send()
+        assert exc.value.reason == "refusal-proof-invalid", exc.value.reason
+
+
+def test_a_malformed_proof_is_a_typed_refusal_that_changes_nothing():
+    """R30-PUB-05: `proof["signature_b64"]` was read before the request shape
+    was validated, so a proof missing it raised a bare KeyError — the one
+    untyped escape from a function whose every other refusal is an
+    `InvitationError`."""
+    m, dep, cred = _fresh()
+    item = m.collect_welcomes(credential=cred, at=tc.IN_WINDOW)["welcomes"][0]
+    with pytest.raises(m.InvitationError) as exc:
+        m.refuse_welcome(dep["welcome_id"], credential=cred,
+                         reason="group-info-mismatch", offered_suite=SUITE,
+                         refused_at=tc.IN_WINDOW,
+                         refusal_proof={"nonce": item["refusal_nonce"]})
+    assert exc.value.reason == "refusal-request-invalid"
+    assert item["refusal_nonce"] not in m._SPENT_REFUSAL_NONCES, \
+        "a refusal refused for its shape must not spend the device's one nonce"
