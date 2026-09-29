@@ -18,7 +18,47 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-29, edition r33
+## Current — 2026-09-29, edition r34
+
+**No artefact version moves and nothing changes on the wire.** An independent
+verification of the previous edition returned a go-ahead — suitable for
+publication as an exploratory design study inviting expert review, with every
+outstanding correction from the two preceding rounds confirmed closed and no
+blocking regression found. It recorded three items that did not justify holding
+publication. They were cheap, and two of them were introduced by the previous
+edition's own corrections, so they are closed here rather than carried.
+
+| Artefact | This edition | Previous |
+|---|---|---|
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.12** | 2.12 |
+| EDD resolver contract (OpenAPI) | **2.0.0** | 2.0.0 |
+| Profile-2 companion contracts (wallet–RDP, delivery service, relay) | **15.0.0** | 15.0.0 |
+
+**A step in the walk-through read like a published operation and was not.** The
+previous edition added a read of the confirmation state so the page would show
+what the three acts before it produced, rather than asserting it in prose. That
+was the right correction, and it was labelled as though a published operation
+served it. None does: the value is read straight from the reference. In the one
+document whose whole purpose is to show what the published surface can do, that
+would have sent an implementer looking for an endpoint that does not exist. The
+step now says on the page that it is not a published operation, and a check
+requires every step either to be one or to say it is not.
+
+**A refusal whose reason was not text crashed before anything could refuse it.**
+The check for a registered reason ran before the check that the reason was text
+at all, so a structured value raised an internal type error instead of a refusal.
+The published request definition rejects such a value, so this was reachable only
+by calling the reference directly — but a component whose refusals are all typed
+except for one shape of input is still a rule an implementer cannot follow.
+
+**And a count kept by hand, removed rather than corrected.** The review agenda
+stated how many steps the walk-through contains; adding the state read-back made
+that number wrong, as it had been once before. The agenda now describes what the
+walk-through covers and leaves the counting to the generated document — the same
+correction the custody inventory received a day earlier, applied to the number
+that occasioned it.
+
+## Edition r33 — 2026-09-29
 
 **Contract-breaking.** An independent verification of the previous edition found
 three of its six corrections complete and three only partly done. All four

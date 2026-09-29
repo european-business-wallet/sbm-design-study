@@ -137,7 +137,7 @@ def test_the_nominal_confirmations_actually_succeed():
     refused = [s["operation"] for s in nominal if s["outcome"] != "ok"]
     assert not refused, f"a nominal confirmation was refused: {refused}"
 
-    state = next((s for s in steps if s["operation"] == "GET the confirmation state"), None)
+    state = next((s for s in steps if "confirmation aggregate" in s["operation"]), None)
     assert state and state["outcome"] == "ok", "the trace does not read the state back"
     assert state["detail"]["state"] == "satisfied", state["detail"]
     assert sorted(state["detail"]["counted"]) == ["F1N2C3D4P", "F2X3Y4Z55"], \
@@ -157,3 +157,28 @@ def test_the_document_shows_no_refusal_where_it_claims_success():
         if says_success and block.startswith("\u2717"):
             contradictions.append(block.splitlines()[0])
     assert not contradictions, contradictions
+
+
+def test_every_step_is_a_published_operation_or_says_it_is_not():
+    """R33-OBS-02 — the document traces PUBLISHED operations, so a step that is
+    not one must say so on the page.
+
+    The confirmation aggregate is read from the reference directly; no contract
+    operation serves it. Labelled `GET the confirmation state` it read exactly
+    like the published calls around it, and an implementer would have gone
+    looking for an endpoint that does not exist — in the one document whose
+    whole purpose is to show what the published surface can do.
+    """
+    text = DOC.read_text(encoding="utf-8")
+    for heading in re.findall(r"^### .*$", text, re.M):
+        looks_published = re.search(r"`(GET|POST|PUT|DELETE|PATCH) /", heading)
+        if not looks_published:
+            continue
+        block = text.split(heading, 1)[1].split("\n### ", 1)[0]
+        assert "Not a published operation" not in block, (
+            f"{heading} is written as a published call and says it is not one")
+    diagnostic = [h for h in re.findall(r"^### .*$", text, re.M) if "diagnostic" in h]
+    assert diagnostic, "the aggregate read-back must be marked as a diagnostic"
+    for heading in diagnostic:
+        block = text.split(heading, 1)[1].split("\n### ", 1)[0]
+        assert "Not a published operation" in block, heading

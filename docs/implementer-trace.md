@@ -233,9 +233,9 @@ The quorum is satisfied — **S4**. The delivery decision is the instant THIS pr
 
 **Returned:** None
 
-### → `GET the confirmation state`
+### → `(diagnostic) the confirmation aggregate, read directly`
 
-The acceptance policy is **satisfied** — two distinct members, the retry counted once. This is the state the previous three steps produced, read back: the trace prints what the run reached rather than asserting it in prose (R32-RES-01).
+**Not a published operation.** No contract operation serves this; it is the reference's own `confirmation_state`, read here so the page SHOWS what the three acts above produced instead of asserting it in prose (R32-RES-01). Every other step in this document is a published call — an implementer should not go looking for this one (R33-OBS-02). The acceptance policy is **satisfied**: two distinct members, the retry counted once.
 
 **Returned:** `state` = `satisfied`, `counted` = `F1N2C3D4P, F2X3Y4Z55`
 

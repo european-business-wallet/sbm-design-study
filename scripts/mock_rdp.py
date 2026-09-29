@@ -2360,7 +2360,12 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
     # and fell through to the proof's fields, where a missing `signature_b64`
     # raised a bare KeyError. Two invalid things in one request must still give a
     # typed answer about one of them.
-    if reason not in GROUP_ESTABLISHMENT_REASONS:
+    # R33-OBS-01: the membership test came first, so a reason that is not even a
+    # string — a list, an object — raised `TypeError: unhashable` before anything
+    # could refuse it. The published Schema rejects both, so this is the
+    # in-process helper rather than an exposed endpoint; it is still the one
+    # shape of malformed input that escaped untyped after the R32 pass.
+    if not isinstance(reason, str) or reason not in GROUP_ESTABLISHMENT_REASONS:
         raise InvitationError(
             "refusal-reason-unknown",
             f"{reason!r} is not a registered group-establishment outcome "

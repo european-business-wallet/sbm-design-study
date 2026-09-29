@@ -468,3 +468,22 @@ def test_the_queue_cannot_deliver_a_nonce_the_proof_would_reject():
             f"the two surfaces disagree about {value!r}: the queue "
             f"{'rejects' if response_rejects else 'accepts'} it and the proof "
             f"{'rejects' if request_rejects else 'accepts'} it")
+
+
+@pytest.mark.parametrize("reason", [[], {}, 7, None, ("group-info-mismatch",)],
+                         ids=["list", "object", "number", "null", "tuple"])
+def test_a_reason_that_is_not_a_string_is_refused_rather_than_crashing(reason):
+    """R33-OBS-01: the registry test came before the type test, so a reason that
+    is not hashable raised `TypeError: unhashable` — the last shape of malformed
+    input that escaped untyped. The published Schema rejects all of these, so
+    this is the in-process helper and not an exposed endpoint; a reference whose
+    refusals are typed except for one input is still a rule nobody can follow."""
+    m, dep, cred = _fresh()
+    item = m.collect_welcomes(credential=cred, at=tc.IN_WINDOW)["welcomes"][0]
+    before = (copy.deepcopy(m._OUTCOMES), copy.deepcopy(m._SPENT_REFUSAL_NONCES))
+    with pytest.raises(m.InvitationError) as caught:
+        m.refuse_welcome(dep["welcome_id"], credential=cred, reason=reason,
+                         offered_suite=SUITE, refused_at=tc.IN_WINDOW,
+                         refusal_proof={"nonce": item["refusal_nonce"]})
+    assert caught.value.reason == "refusal-reason-unknown"
+    assert (m._OUTCOMES, m._SPENT_REFUSAL_NONCES) == before
