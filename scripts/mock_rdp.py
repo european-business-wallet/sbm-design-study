@@ -2254,10 +2254,18 @@ def welcome_refusal_proof(welcome_id, *, credential, reason, offered_suite,
             "with the Welcome, and this builder will not read it out of the "
             "service's own state — take it from the `refusal_nonce` of the "
             "queue item `GET /welcome` returned for this Welcome")
-    entry = next((e for e in _INVITATIONS.values()
-                  if e["welcome_id"] == welcome_id), None)
-    kp_ref = (entry or {}).get("invitation", {}).get("keypackage_ref") \
-        or credential.get("keypackage_ref")
+    # R32: the package reference comes from the DEVICE's own credential — it
+    # holds the package it was invited with. This read `_INVITATIONS` first and
+    # fell back to the credential, so a client that genuinely had no access to
+    # the service's tables still appeared to work here, which is the same
+    # illusion the nonce lookup created and the reason that one was missed.
+    kp_ref = credential.get("keypackage_ref")
+    if not kp_ref:
+        raise InvitationError(
+            "refusal-proof-required",
+            "the credential does not name the KeyPackage this device was "
+            "invited with; a refusal signs that reference, and this builder "
+            "will not look it up in the service's records")
     seed = demo_seed_bytes(f"leaf:{device[1]}:{device[2]}")
     return {"nonce": nonce,
             "signature_b64": mls_wire.sign_welcome_refusal(
@@ -2347,13 +2355,35 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
     request = {"reason": reason, "offered_suite": offered_suite,
                **({} if refusal_proof is None else {"refusal_proof": refusal_proof}),
                **({} if required_floor is None else {"required_floor": required_floor})}
+    # R32-RES-02: the REASON is settled first, because the shape check below used
+    # to be conditional on it — so an unregistered reason skipped the shape check
+    # and fell through to the proof's fields, where a missing `signature_b64`
+    # raised a bare KeyError. Two invalid things in one request must still give a
+    # typed answer about one of them.
+    if reason not in GROUP_ESTABLISHMENT_REASONS:
+        raise InvitationError(
+            "refusal-reason-unknown",
+            f"{reason!r} is not a registered group-establishment outcome "
+            f"({sorted(GROUP_ESTABLISHMENT_REASONS)}). The reason is enumerated "
+            "so a creator can act on it; a free-text value retained verbatim is "
+            "an attacker-chosen string in the creator's queue (R8-04)")
     problems = validate_contract_object("delivery-service-openapi.yaml",
                                         "WelcomeRefusalRequest", request)
-    if problems and reason in GROUP_ESTABLISHMENT_REASONS:
+    if problems:
         raise InvitationError(
             "refusal-request-invalid",
             f"the refusal does not satisfy the published "
             f"`WelcomeRefusalRequest`: {problems[:2]} (R10-05)")
+    # And the suite it CLAIMS is checked against the record before any of it is
+    # used: the key resolution below recomputes the package reference, and a
+    # suite the registry does not know made that raise a ValueError out of the
+    # hash-function lookup — an untyped escape introduced by the R30-PUB-02 fix.
+    if offered_suite != inv["offered_suite"]:
+        raise InvitationError(
+            "invitation-suite-mismatch",
+            f"the refusal says it was offered {offered_suite!r}; this "
+            f"invitation offered {inv['offered_suite']!r}. The DS validates "
+            "the claim against the record rather than echoing it (R7-03)")
 
     # G1 — THE PRE-JOIN PROOF. Holding `keypackage_ref` proves nothing: it is a
     # hash of the package's PUBLIC bytes, returned to the creator by the
@@ -2384,7 +2414,10 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
         raise InvitationError(
             "refusal-proof-replayed",
             "this nonce has already been spent; a refusal is usable once")
-    leaf_pub = _leaf_key_of(inv["keypackage_ref"], offered_suite)
+    # The package's identity is fixed by the reservation that created it, so the
+    # reference is recomputed under the RETAINED suite — never under a value the
+    # request supplied, which is the caller's claim about it.
+    leaf_pub = _leaf_key_of(inv["keypackage_ref"])
     if proof and leaf_pub is None:
         raise InvitationError(
             "refusal-proof-invalid",
@@ -2439,20 +2472,6 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
     # checked by hand while `WelcomeRefusalRequest` had no field for it at all
     # — the contract and the reference describing different operations, which
     # is the defect this repository keeps finding one surface at a time.
-    if reason not in GROUP_ESTABLISHMENT_REASONS:
-        raise InvitationError(
-            "refusal-reason-unknown",
-            f"{reason!r} is not a registered group-establishment outcome "
-            f"({sorted(GROUP_ESTABLISHMENT_REASONS)}). The reason is enumerated "
-            "so a creator can act on it; a free-text value retained verbatim is "
-            "an attacker-chosen string in the creator's queue (R8-04)")
-    if offered_suite != inv["offered_suite"]:
-        raise InvitationError(
-            "invitation-suite-mismatch",
-            f"the refusal says it was offered {offered_suite!r}; this "
-            f"invitation offered {inv['offered_suite']!r}. The DS validates "
-            "the claim against the record rather than echoing it (R7-03)")
-
     # R10-05: a GroupInfo mismatch is not a cipher-suite refusal, and does not
     # pretend to be one. The device recomputed the commitment it read from its
     # WelcomeQueue item and it did not match; no floor is involved, so none

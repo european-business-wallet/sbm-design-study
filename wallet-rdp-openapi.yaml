@@ -3,7 +3,7 @@
 openapi: "3.1.0"
 info:
   title: SM-MLS Wallet-RDP companion contract (profile 2)
-  version: "14.0.0"
+  version: "15.0.0"
   description: |
     F-15: the normative wallet-RDP surface — the submission-metadata
     contract, recipient confirmation delivery, and party evidence retrieval.

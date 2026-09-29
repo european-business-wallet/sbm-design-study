@@ -3,7 +3,7 @@
 openapi: "3.1.0"
 info:
   title: SM-MLS Delivery Service companion contract (profile 2)
-  version: "14.0.0"
+  version: "15.0.0"
   description: |
     F-15: the normative MLS Delivery Service surface at
     `BW-MED.mls.ds_url` — the COMPLETE KeyPackage reservation lifecycle
@@ -1283,6 +1283,19 @@ components:
             rather than merely asserted.
         refusal_proof:
           $ref: '#/components/schemas/WelcomeRefusalProof'
+    RefusalNonce:
+      type: string
+      minLength: 8
+      description: >-
+        The single-use value the Delivery Service issues with a Welcome and a
+        refusal of it must sign.
+
+        R32-OBS-01: the queue that DELIVERS this value and the proof that must
+        QUOTE it constrained it differently — `minLength: 1` on the response and
+        `minLength: 8` on the request. A response its own validator accepted
+        could therefore carry a value the request validator forbade the client
+        to echo, which is a contract that contradicts itself about one field.
+        One definition now, referenced by both, so they cannot drift again.
     WelcomeRefusalProof:
       description: >-
         G1 — THE PRE-JOIN PROOF, with its bytes named. This security scheme's
@@ -1310,8 +1323,7 @@ components:
       required: [nonce, signature_b64]
       properties:
         nonce:
-          type: string
-          minLength: 8
+          $ref: '#/components/schemas/RefusalNonce'
           description: >-
             The single-use value this service issued with the Welcome. It is
             inside the signature, so a captured refusal cannot be replayed. The
@@ -1608,8 +1620,7 @@ components:
             properties:
               welcome_id: { type: string }
               refusal_nonce:
-                type: string
-                minLength: 1
+                $ref: '#/components/schemas/RefusalNonce'
                 description: >-
                   The single-use value a refusal of THIS Welcome must sign
                   (`WelcomeRefusalProof.nonce`; the I-D, *Group Establishment*).

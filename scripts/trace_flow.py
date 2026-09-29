@@ -107,6 +107,10 @@ def _short(value, limit=110):
             p = value["projection"]
             return (f"{p.get('type')} `{_stable(p.get('evidence_id', ''))}` — "
                     f"{p.get('event', '')}")
+        if "state" in value:            # a confirmation aggregate: show what it REACHED
+            counted = value.get("counted") or []
+            return (f"`state` = `{value['state']}`, `counted` = "
+                    f"`{', '.join(sorted(counted)) if counted else '—'}`")
         return "`" + ", ".join(sorted(value)[:5]) + "`"
     if isinstance(value, list):
         return f"{len(value)} item(s)"
@@ -415,6 +419,13 @@ def run():
            "The quorum is satisfied — **S4**. The delivery decision is the instant "
            "THIS provider observed the completing act.",
            lambda: ca._deliver(c, "s3", ca._s3("F2X3Y4Z55", se=_se), ca._member("F2X3Y4Z55"), se=_se))
+
+    t.step("Confirmation", "GET the confirmation state",
+           "The acceptance policy is **satisfied** — two distinct members, the retry "
+           "counted once. This is the state the previous three steps produced, read "
+           "back: the trace prints what the run reached rather than asserting it in "
+           "prose (R32-RES-01).",
+           lambda: ca._state(c, se=_se))
 
     t.step("Confirmation", "POST /confirmations (foreign member)",
            "**Negative branch.** A member the recipient entity does not publish "

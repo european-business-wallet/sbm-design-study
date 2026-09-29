@@ -7,7 +7,7 @@
 
 This catalogue is the **normative definition** of every `LINT-*` conformance rule referenced by the umbrella (§9.4) and the TS (Annex A ICS pro forma). It exists so an assessor can build an independent checker that reproduces every verdict from this document and the sample vectors **without reading the reference Python**. The scripts under `scripts/` (`evidence_lint.py`, `discovery_lint.py`, `bundle_lint.py`, `lint_cli.py`) are the **versioned reference implementation** of this catalogue, not its definition: a change to a rule's behaviour MUST be accompanied by a change to this catalogue and its tests (enforced by `tests/test_lint_catalogue.py`).
 
-**Rules:** 160 · **with a naming test:** 149/160 · **catalogue version:** 1.
+**Rules:** 160 · **with a naming test:** 150/160 · **catalogue version:** 1.
 
 **Profile applicability.** `core` rules apply to every deployment; `production` rules apply only under `--profile production`; `agent` rules apply only where a system member (Annex R) is enrolled; `four-corner` rules apply only to relay/federated (profile-2) evidence.
 
@@ -98,7 +98,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Predicate (PASS iff):** s3_attestation.mls_group_id MUST equal se.mls_group_id AND s3_attestation.mls_epoch MUST equal se.mls_epoch.
 - **Error outcome:** s3_attestation MLS session != se.mls_group_id/mls_epoch
 - **Reference implementation:** `lint_de`
-- **Tests:** _(no dedicated test names this id — coverage gap, tracked)_
+- **Tests:** `test_confirmation_acts.py`
 
 ### LINT-DE-05 · `core`
 
@@ -206,7 +206,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Predicate (PASS iff):** s3_attestation.envelope_hash MUST equal se.envelope_hash AND s3_attestation.mls_state MUST equal se.mls_state. Since evidence 2.2 (R-02/D3) both are dedicated fixed types: EnvelopeHash = {format: 'mls10-message', hex} — SHA-256 over the TLS-serialized RFC 9420 MLSMessage as transmitted — and MlsStateHash = {format: 'mls10-group-context', hex} — SHA-256 over the TLS-serialized §8.1 GroupContext (cipher suite/version/extensions inside). Reference serializer: scripts/mls_wire.py.
 - **Error outcome:** s3_attestation.envelope_hash != se.envelope_hash | s3_attestation.mls_state != se.mls_state
 - **Reference implementation:** `lint_de`
-- **Tests:** `test_mls_binding.py`, `test_mls_commitments.py`
+- **Tests:** `test_confirmation_acts.py`, `test_implementer_trace.py`, `test_mls_binding.py`, `test_mls_commitments.py`
 
 ### LINT-DE-17 · `core`
 

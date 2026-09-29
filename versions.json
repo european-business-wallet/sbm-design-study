@@ -530,8 +530,8 @@
       ]
     },
     "companion_contracts": {
-      "value": "14.0.0",
-      "note": "The profile-2 companion contracts — wallet-RDP, Delivery Service, RDP relay — versioned together as one stream; versions independently of the evidence family (umbrella §9.3). 14.0.0 is a MAJOR bump because the Welcome queue item gained a REQUIRED `refusal_nonce`: a service that does not deliver it cannot support the published refusal flow, which required the value to be signed while publishing no way to obtain it (R30-PUB-01).",
+      "value": "15.0.0",
+      "note": "The profile-2 companion contracts — wallet-RDP, Delivery Service, RDP relay — versioned together as one stream; versions independently of the evidence family (umbrella §9.3). 15.0.0 narrows the same field again: the queue and the proof constrained `refusal_nonce` differently (minLength 1 against 8), so a response its own validator accepted could carry a value the request validator forbade the client to echo. One shared definition now, and the response is the tighter of the two — which a server emitting a short value is broken by, deliberately (R32-OBS-01).",
       "bindings": [
         {
           "kind": "text",

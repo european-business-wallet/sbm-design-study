@@ -18,7 +18,68 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-28, edition r32
+## Current — 2026-09-29, edition r33
+
+**Contract-breaking.** An independent verification of the previous edition found
+three of its six corrections complete and three only partly done. All four
+residuals are closed here. The first is the plainest kind of fault: the previous
+edition shipped a generated document that disagreed with itself, and the
+disagreement was printed on the page.
+
+| Artefact | This edition | Previous |
+|---|---|---|
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.12** | 2.12 |
+| EDD resolver contract (OpenAPI) | **2.0.0** | 2.0.0 |
+| Profile-2 companion contracts (wallet–RDP, delivery service, relay) | **15.0.0** | 14.0.0 |
+
+**Three acts the walk-through described as successful were refused.** The
+previous edition carried the sent message into the confirmation stage — its
+identifier and the policy that governs it — and left the example's *original*
+commitment to the transmitted bytes. A confirmation that names one message while
+committing to another message's bytes is not about that message, and the verifier
+refused all three, correctly. The document then printed those three refusals
+beneath headings saying that the first act counts, that the retry counts once,
+and that the acceptance policy is satisfied.
+
+The check added alongside that change asked whether the sent message's identifier
+**appears** in the confirmation section. It does — the mismatch example carries
+the same identifier — so the check passed while every act it was meant to
+describe failed. An outcome is not evidence of a state transition, and a passing
+check is not evidence about a generated page.
+
+A confirmation now commits to the message it is about: the transmitted bytes, the
+group state, the session and the declared payload, every value the verifier
+compares. The walk-through reads the resulting state back as a step of its own,
+so the page **shows** that the policy is satisfied and which two members counted,
+rather than asserting it in prose. Three checks now assert the transition itself,
+one of them simply refusing to let a step whose prose claims success be rendered
+as a refusal.
+
+**Two malformed requests escaped as untyped errors**, one of them introduced by
+the previous edition's own correction. A refusal carrying an unregistered reason
+skipped the check on the request's shape — that check was conditional on the
+reason being known — and fell through to the proof's fields. And a refusal naming
+a cipher suite the registry does not know reached the new key resolution, which
+recomputed the package's identity under the suite the *request* supplied. The
+reason, the shape and the claimed suite are settled before any cryptography now,
+and the package is resolved under the suite the **retained reservation** records,
+never a value the caller supplied. Neither case spends the device's single-use
+value or changes any state.
+
+**The contract contradicted itself about one field.** The response that delivers
+the single-use refusal value allowed a one-character value; the proof that must
+quote it required eight. A response its own validator accepted could therefore
+carry a value the client was forbidden to echo. One shared definition now,
+referenced by both, and the regression asserts that the two **agree** rather than
+asserting the number. Because the delivering side tightens, the companion
+contracts take a major version.
+
+**And two summaries that restated a generated inventory** — the review agenda and
+the lifecycle note — still carried the count and the blanket claim that the
+inventory itself had corrected a day earlier. They link to the generated document
+now instead of restating figures that go stale as it grows.
+
+## Edition r32 — 2026-09-28
 
 **Contract-breaking.** A refusal flow that could not be carried out, and a
 signature checked against the wrong key. A publication-readiness review of the

@@ -216,12 +216,15 @@ what it describes, and the umbrella's *Document map* says which governs what.
 | [`docs/wallet-assurance-profile.md`](docs/wallet-assurance-profile.md) | The minimum wallet assurance baseline: key protection, device binding, confirmation-key lifecycle, compromise latency, attestation. |
 | [`CHANGELOG.md`](CHANGELOG.md) | The history of the artefacts: versions, and what changed on the wire. |
 
-Four documents are generated rather than hand-kept, each checked by a gate
-that fails when the copy drifts from its source:
+Six documents are generated rather than hand-kept, each checked by a gate that
+fails when the copy drifts from its source:
 [`docs/lint-catalogue.md`](docs/lint-catalogue.md),
 [`docs/rule-ownership.md`](docs/rule-ownership.md),
-[`docs/decisions-index.md`](docs/decisions-index.md) and
-[`docs/project-counts.json`](docs/project-counts.json).
+[`docs/decisions-index.md`](docs/decisions-index.md),
+[`docs/project-counts.json`](docs/project-counts.json),
+[`docs/implementer-trace.md`](docs/implementer-trace.md) — produced by driving
+the reference through the published operations — and
+[`docs/retrievability.md`](docs/retrievability.md).
 
 ---
 
@@ -238,7 +241,7 @@ what a green bar does and does not mean, and how to send feedback.
 | BW-MED / BW-ORG / BW-MEMBER | 2.1 / 2.7 / 2.2 |
 | EDD resolver contract (OpenAPI) | 2.0.0 |
 | Federation register contract (OpenAPI) | 3.0.0 |
-| Profile-2 companion contracts (wallet-RDP / DS / relay) | 14.0.0 |
+| Profile-2 companion contracts (wallet-RDP / DS / relay) | 15.0.0 |
 | TS (QERDS binding) | v0.35 |
 
 Generated-and-checked from [`versions.json`](versions.json), the single source
@@ -426,7 +429,7 @@ specification does **not** yet answer — protocol, production trust and legal �
 with the assumption each one rests on, and what is not yet written, the
 implementer guide, carried as G1 to G4.
 
-- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r32`,
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r33`,
   the git tag of that name; earlier tags of this snapshot stay where they are
   and each names the edition it was cut from. Cite the tag, or the commit you
   hold, so an answer can be matched to the text it answers. The reviewer

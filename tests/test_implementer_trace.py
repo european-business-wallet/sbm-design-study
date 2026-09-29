@@ -109,3 +109,51 @@ def test_the_gap_it_answers_and_the_ones_it_does_not():
         "the row must point at what now answers it, or the answer is unfindable"
     # And the trace names the gap it exposes rather than hiding behind it.
     assert "**G1**" in DOC.read_text(encoding="utf-8")
+
+
+
+def test_the_nominal_confirmations_actually_succeed():
+    """R32-RES-01 — what the continuity check above could not see.
+
+    Asserting that the submitted id APPEARS in the Confirmation section was
+    satisfied by the mismatch branch, which carries the same id. So all three
+    nominal confirmations could be — and were — REFUSED while the check passed,
+    and the published document printed three refusals beside prose saying the
+    quorum was satisfied. The confirmation relabelled the fixture instead of
+    binding to the SE, and LINT-DE-16 rejected it, correctly.
+
+    An outcome is not evidence of a state transition. This asserts the
+    transition: the three nominal acts succeed, the retry does not double-count,
+    and the policy ends SATISFIED.
+    """
+    sys.path[:0] = [str(ROOT / "scripts"), str(ROOT / "tests")]
+    import trace_flow
+
+    steps = trace_flow.run()[0].steps
+    nominal = [s for s in steps
+               if s["section"] == "Confirmation"
+               and s["operation"].startswith("POST /confirmations (s3")]
+    assert len(nominal) == 3, [s["operation"] for s in nominal]
+    refused = [s["operation"] for s in nominal if s["outcome"] != "ok"]
+    assert not refused, f"a nominal confirmation was refused: {refused}"
+
+    state = next((s for s in steps if s["operation"] == "GET the confirmation state"), None)
+    assert state and state["outcome"] == "ok", "the trace does not read the state back"
+    assert state["detail"]["state"] == "satisfied", state["detail"]
+    assert sorted(state["detail"]["counted"]) == ["F1N2C3D4P", "F2X3Y4Z55"], \
+        "the quorum must be two DISTINCT members — a retry counted twice would " \
+        "satisfy a count without satisfying the policy"
+
+
+def test_the_document_shows_no_refusal_where_it_claims_success():
+    """The cheapest guard, and the one that would have caught it on sight: a step
+    whose prose says an act counts must not be rendered as a refusal."""
+    text = DOC.read_text(encoding="utf-8")
+    blocks = text.split("### ")[1:]
+    contradictions = []
+    for block in blocks:
+        says_success = any(phrase in block for phrase in
+                           ("this counts", "counted once", "quorum is satisfied"))
+        if says_success and block.startswith("\u2717"):
+            contradictions.append(block.splitlines()[0])
+    assert not contradictions, contradictions

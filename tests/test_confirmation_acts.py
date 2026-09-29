@@ -68,9 +68,25 @@ def _deliver(m, kind, conf, cred, *, se=SE, at="2026-04-04T10:47:00Z",
                                   members=members, org=org)
 
 
+#: What a recipient's confirmation must commit to from the SE it is about — the
+#: transmitted octets, the group state, the session and the declared payload.
+#: LINT-DE-04 and LINT-DE-16 compare each of these against the SE.
+_BOUND_TO_SE = ("message_id", "acceptance_policy_ref", "envelope_hash",
+                "mls_state", "mls_group_id", "mls_epoch", "payload_hash")
+
+
 def _s3(mid, se=SE):
-    return dict(copy.deepcopy(S3), mid=mid, message_id=se["message_id"],
-                acceptance_policy_ref=copy.deepcopy(se["acceptance_policy_ref"]))
+    """A confirmation ABOUT `se`.
+
+    R32-RES-01: this used to relabel the fixture — message id and policy from
+    the SE, every binding left as the fixture's. Against the default SE the two
+    coincided and nothing showed; against any other SE the confirmation named
+    one message while committing to another's octets, and LINT-DE-16 rejected
+    it, correctly. The implementer trace then printed three refusals beside
+    prose saying the quorum was satisfied.
+    """
+    bound = {k: copy.deepcopy(se[k]) for k in _BOUND_TO_SE if k in se}
+    return dict(copy.deepcopy(S3), mid=mid, **bound)
 
 
 def _state(m, se=SE):

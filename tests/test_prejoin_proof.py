@@ -23,6 +23,7 @@ below: a refusal the Service rejects for another reason must **not** burn the
 nonce, and an exact retry must converge **before** the proof is examined.
 """
 import base64
+import copy
 import hashlib
 import json
 import pathlib
@@ -388,3 +389,82 @@ def test_a_malformed_proof_is_a_typed_refusal_that_changes_nothing():
     assert exc.value.reason == "refusal-request-invalid"
     assert item["refusal_nonce"] not in m._SPENT_REFUSAL_NONCES, \
         "a refusal refused for its shape must not spend the device's one nonce"
+
+
+# ===========================================================================
+# R32-RES-02 / R32-OBS-01 — every invalid request gets a typed answer
+# ===========================================================================
+
+def _live(m, dep, cred):
+    return m.collect_welcomes(credential=cred, at=tc.IN_WINDOW)["welcomes"][0]
+
+
+@pytest.mark.parametrize("label,overrides", [
+    ("an unregistered reason, with a proof missing its signature",
+     {"reason": "unknown-reason", "proof": lambda n: {"nonce": n}}),
+    ("an unregistered reason, with a well-formed proof",
+     {"reason": "unknown-reason", "proof": lambda n: {"nonce": n, "signature_b64": "a" * 90}}),
+    ("a suite the invitation was not offered under",
+     {"offered_suite": "UNKNOWN", "proof": lambda n: {"nonce": n, "signature_b64": "a" * 90}}),
+    ("a proof that is not an object at all",
+     {"proof": lambda n: "not-a-proof"}),
+])
+def test_every_invalid_refusal_is_typed_and_changes_nothing(label, overrides):
+    """R32-RES-02. Two invalid things in one request must still give a typed
+    answer about one of them.
+
+    The shape check used to be conditional on the reason being registered, so an
+    unregistered reason skipped it and fell through to the proof's fields — a
+    bare `KeyError`. And the key resolution recomputed the package reference
+    under the suite the REQUEST supplied, so a suite the registry does not know
+    raised a `ValueError` out of the hash-function lookup: a path the fix for
+    the key-resolution defect introduced.
+
+    Neither is a demonstrated production fault — this is the reference's error
+    handling — but an untyped escape from a function whose every other refusal
+    is an `InvitationError` is a rule an implementer cannot follow.
+    """
+    m, dep, cred = _fresh()
+    item = _live(m, dep, cred)
+    before = (copy.deepcopy(m._OUTCOMES), copy.deepcopy(m._SPENT_REFUSAL_NONCES))
+    with pytest.raises(m.InvitationError) as caught:
+        m.refuse_welcome(
+            dep["welcome_id"], credential=cred,
+            reason=overrides.get("reason", "group-info-mismatch"),
+            offered_suite=overrides.get("offered_suite", SUITE),
+            refused_at=tc.IN_WINDOW,
+            refusal_proof=overrides["proof"](item["refusal_nonce"]))
+    assert caught.value.reason, f"{label}: refused without a reason code"
+    assert (m._OUTCOMES, m._SPENT_REFUSAL_NONCES) == before, \
+        f"{label}: an invalid request moved stored state"
+    assert item["refusal_nonce"] not in m._SPENT_REFUSAL_NONCES, \
+        f"{label}: spent the device's one nonce on a request it refused"
+
+
+def test_the_queue_cannot_deliver_a_nonce_the_proof_would_reject():
+    """R32-OBS-01: the response and the request constrained the same value
+    differently — `minLength: 1` delivering, `minLength: 8` quoting — so a
+    response its own validator accepted could carry a value the client was
+    forbidden to echo. One shared definition now; this asserts the agreement
+    rather than the number, so tightening either side keeps them together."""
+    m, dep, cred = _fresh()
+    queue = m.collect_welcomes(credential=cred, at=tc.IN_WINDOW)
+    _, request_validator = request_schema("delivery-service-openapi.yaml",
+                                          "WelcomeRefusalRequest")
+
+    def refused_by(value):
+        candidate = copy.deepcopy(queue)
+        candidate["welcomes"][0]["refusal_nonce"] = value
+        response_errors = m.validate_contract_object(
+            "delivery-service-openapi.yaml", "WelcomeQueue", candidate)
+        request_errors = list(request_validator.iter_errors(
+            {"reason": "group-info-mismatch", "offered_suite": SUITE,
+             "refusal_proof": {"nonce": value, "signature_b64": "a" * 90}}))
+        return bool(response_errors), bool(request_errors)
+
+    for value in ("x", "1234567", "12345678", queue["welcomes"][0]["refusal_nonce"]):
+        response_rejects, request_rejects = refused_by(value)
+        assert response_rejects == request_rejects, (
+            f"the two surfaces disagree about {value!r}: the queue "
+            f"{'rejects' if response_rejects else 'accepts'} it and the proof "
+            f"{'rejects' if request_rejects else 'accepts'} it")

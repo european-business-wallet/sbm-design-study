@@ -15,7 +15,6 @@
   },
   "coverage_gap": [
     "LINT-000",
-    "LINT-DE-04",
     "LINT-DE-06",
     "LINT-DISC-000",
     "LINT-DISC-02",
