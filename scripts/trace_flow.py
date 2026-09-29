@@ -424,9 +424,12 @@ def run():
            "**Not a published operation.** No contract operation serves this; it is the "
            "reference's own `confirmation_state`, read here so the page SHOWS what the "
            "three acts above produced instead of asserting it in prose (R32-RES-01). "
-           "Every other step in this document is a published call — an implementer "
-           "should not go looking for this one (R33-OBS-02). The acceptance policy is "
-           "**satisfied**: two distinct members, the retry counted once.",
+           "The trace mixes published calls with local work a party does for itself "
+           "— building a proof, re-verifying parts — and each is named for what it "
+           "does. This one is different in kind: it reads the service's own state, "
+           "which no operation exposes, so an implementer should not go looking for "
+           "it (R33-OBS-02, R34-OBS-01). The acceptance policy is **satisfied**: two "
+           "distinct members, the retry counted once.",
            lambda: ca._state(c, se=_se))
 
     t.step("Confirmation", "POST /confirmations (foreign member)",

@@ -18,7 +18,46 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-29, edition r34
+## Current — 2026-09-29, edition r35
+
+**No artefact version moves and nothing changes on the wire.** The independent
+verification of the previous edition confirmed its three outstanding observations
+closed and repeated the go-ahead for expert review. It recorded one optional
+wording improvement, explicitly not a reason to wait — and it was an overclaim of
+the kind these editions have spent a week removing, so it is corrected rather
+than carried into the edition that gets circulated.
+
+| Artefact | This edition | Previous |
+|---|---|---|
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.12** | 2.12 |
+| EDD resolver contract (OpenAPI) | **2.0.0** | 2.0.0 |
+| Profile-2 companion contracts (wallet–RDP, delivery service, relay) | **15.0.0** | 15.0.0 |
+
+**One sentence claimed more than the document does.** Marking the one step that
+reads the service's internal state, the previous edition wrote that every other
+step in the walk-through is a published call. It is not. The walk-through also
+records work a party does for itself — a device assembling its pre-join proof, a
+recipient re-checking the parts it received — and those are named for what they
+do rather than written as though an operation served them, which is why they need
+no disclaimer. The sentence now says what is true: the walk-through mixes
+published calls with local processing, and the one step in question differs in
+kind, because it reads state that no operation exposes.
+
+The check that guards this had the same reach in its own description, implying it
+compared every step against the published contracts. It checks how a step is
+presented. Comparing the contracts themselves is a different check's work, and it
+now says so — a check that overstates what it proves is the same fault one level
+down.
+
+**On the review record.** Four rounds of independent verification stand behind
+this edition. The first two found real faults in corrections this study had
+already declared complete, including a required flow whose input the contract
+never published and a generated document that contradicted itself on the page.
+The last two found nothing blocking. Both the faults and their corrections are in
+the entries below, because a study that records only its successes is the kind of
+document this one is trying not to be.
+
+## Edition r34 — 2026-09-29
 
 **No artefact version moves and nothing changes on the wire.** An independent
 verification of the previous edition returned a go-ahead — suitable for

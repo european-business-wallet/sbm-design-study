@@ -160,14 +160,20 @@ def test_the_document_shows_no_refusal_where_it_claims_success():
 
 
 def test_every_step_is_a_published_operation_or_says_it_is_not():
-    """R33-OBS-02 — the document traces PUBLISHED operations, so a step that is
-    not one must say so on the page.
+    """R33-OBS-02 — a step written like an HTTP call must be one.
 
     The confirmation aggregate is read from the reference directly; no contract
     operation serves it. Labelled `GET the confirmation state` it read exactly
     like the published calls around it, and an implementer would have gone
     looking for an endpoint that does not exist — in the one document whose
     whole purpose is to show what the published surface can do.
+
+    R34-OBS-01: what this checks is PRESENTATION, and the docstring used to
+    imply more. The trace also contains local work — a device building its
+    proof, a recipient re-verifying parts — and those steps are named for what
+    they do rather than dressed as endpoints, which is why they need no
+    disclaimer. This does not compare every step against the OpenAPI documents;
+    that comparison is `cross_representation`'s, over the contracts themselves.
     """
     text = DOC.read_text(encoding="utf-8")
     for heading in re.findall(r"^### .*$", text, re.M):
