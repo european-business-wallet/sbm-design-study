@@ -2752,6 +2752,40 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
             "receipt-unverifiable",
             "the receipt names no ds_kid, so 'the DS's published key' has no "
             "referent and the verifying key cannot be resolved (R3-04)")
+    # SBM-ADR-0015: the key is the issuing RDP's OWN, published in its
+    # BW-PROVIDER descriptor. Both arms below are the sentence this function's
+    # docstring already made — "a kid published only in a BW-MED does not
+    # resolve" — and neither was enforced. The resolver read `ds_receipt_keys`
+    # off whatever mapping it was handed, so the BW-MED 2.1 projection, which
+    # still publishes `ds-demo-2026`, verified a receipt when passed as
+    # `provider=`: the parameter was renamed from `med` and the check was not
+    # moved with it. Both checks are settled HERE rather than at the call sites,
+    # because there is one implementation of the receipt check and the bundle
+    # path was tighter only by accident — `_descriptor_for` matches on
+    # `participant_id`, and a MED has none to match.
+    kind = (provider or {}).get("type")
+    if kind != "BW-PROVIDER-v1":
+        raise ReceiptVerificationError(
+            "receipt-unverifiable",
+            f"the document supplied as the issuing RDP's descriptor is of type "
+            f"{kind!r}, not 'BW-PROVIDER-v1' — a receipt key is resolved from "
+            "the provider's own descriptor and from nothing else, so the MED "
+            "path stays deleted rather than reachable by argument "
+            "(SBM-ADR-0015)")
+    issuer, held_by = receipt.get("issuing_rdp_id"), provider.get("participant_id")
+    if not issuer:
+        raise ReceiptVerificationError(
+            "receipt-unverifiable",
+            "the receipt names no issuing_rdp_id, so no descriptor can be shown "
+            "to be its issuer's and the key it publishes authorises nothing "
+            "(SBM-ADR-0015)")
+    if held_by != issuer:
+        raise ReceiptVerificationError(
+            "receipt-unverifiable",
+            f"the descriptor supplied is {held_by!r}'s and the receipt is issued "
+            f"by {issuer!r} — a provider publishes its own receipt keys, so "
+            "another participant's descriptor cannot authorise this one "
+            "(SBM-ADR-0015)")
     if not (provider or {}).get("ds_receipt_keys"):
         raise ReceiptVerificationError(
             "receipt-unverifiable",
@@ -2878,7 +2912,7 @@ def resolve_ds_receipt_key(provider, kid, at):
     if not keys:
         raise ReceiptKeyError(
             f"no ds_receipt_keys entry with kid {kid!r} in the issuing RDP's "
-            "BW-MED — the receipt names a key nobody published")
+            "BW-PROVIDER descriptor — the receipt names a key nobody published")
     if len(keys) > 1:
         raise ReceiptKeyError(
             f"{len(keys)} ds_receipt_keys entries share kid {kid!r} — a "

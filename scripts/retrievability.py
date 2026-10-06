@@ -27,6 +27,17 @@ added without saying who keeps it retrievable:
   RETR-02  every declared incomplete-verification residual (`LINT-BND-I*`) is
            claimed by some row. Those rules exist precisely to say "the material
            to decide is absent" — so each must name whose material it was.
+  RETR-04  every input says HOW IT REACHES THE VERIFIER (`supplied_as`), and a
+           bundle manifest key it names must be one `bundle_lint.lint_bundle`
+           actually reads. RETR-01 asks whether an input is described; this asks
+           whether the described input can be supplied at all. The cycle that
+           moved the DS receipt key to the provider's descriptor added
+           `provider_descriptors` to `check_bundle`, documented it here, and
+           defined no manifest key — so the published entry point could not hand
+           it over and a retained receipt could not be verified from the command
+           line, whatever the manifest said. One cycle earlier the same omission
+           had happened to `group_contexts`, and `bundle_lint.py` carries its own
+           note about it. A named-but-unread key is that defect, in bytes.
   RETR-03  every published read that takes an as-of selector (`as_of`,
            `version`, `doc_digest`, `epoch`) appears in some row's `operation`.
            A historical read nobody depends on is dead surface; one that is
@@ -135,6 +146,30 @@ def check(data):
                 "registry row depends on it — either a verification needs it and "
                 "the row is missing, or the operation is surface nothing reads")
 
+    # RETR-04: the key a row names must be one the loader reads.
+    import inspect as _inspect
+    import re as _re
+    import bundle_lint as _bl
+    loader = _inspect.getsource(_bl.lint_bundle)
+    # The two forms the loader uses, and only those: a key named in a COMMENT
+    # must not count as a key the loader reads.
+    read = set(_re.findall(r'manifest(?:\.get\(|\[)"([a-z_]+)"', loader))
+    for row in rows:
+        stated = str(row.get("supplied_as", "")).strip()
+        if not stated:
+            findings.append(
+                f"RETR-04 row {row['input']!r} does not state `supplied_as` — an "
+                "input nobody can supply is documented custody of material the "
+                "verifier never receives")
+            continue
+        for key in _re.findall(r"`([a-z_]+)`", stated):
+            if key not in read and key == row["input"]:
+                findings.append(
+                    f"RETR-04 row {row['input']!r} names the bundle manifest key "
+                    f"`{key}`, which `lint_bundle` does not read — so the "
+                    "published entry point cannot supply this input and every "
+                    "rule that needs it is reachable only from a hand-built call")
+
     for row in rows:
         for field in ("material", "operation", "served_by", "absent"):
             if not str(row.get(field, "")).strip():
@@ -180,16 +215,19 @@ def render_md(data):
         "",
         "Generated from `docs/retrievability.json` and gated: every argument",
         "`bundle_lint.check_bundle` accepts, every `LINT-BND-I*` residual and every",
-        "published read taking an as-of selector must appear below.",
+        "published read taking an as-of selector must appear below — and every row",
+        "must say how the material REACHES a verifier, so an input the published",
+        "entry point cannot be handed is a finding rather than a documented input.",
         "",
         "## Per input",
         "",
-        "| Input | Retrieved by | Served by | Survives a provider exit |",
-        "|---|---|---|---|",
+        "| Input | Retrieved by | Served by | Supplied to the verifier as | Survives a provider exit |",
+        "|---|---|---|---|---|",
     ]
     for row in rows:
         mark = "yes" if row["survives_provider_exit"] else "**no**"
-        out.append(f"| `{row['input']}` | {row['operation']} | {row['served_by']} | {mark} |")
+        out.append(f"| `{row['input']}` | {row['operation']} | {row['served_by']} | "
+                   f"{row['supplied_as']} | {mark} |")
     out += ["", "## What each absence does to the verdict", ""]
     for row in rows:
         out.append(f"**`{row['input']}`** — {row['material']}")

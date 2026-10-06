@@ -15,6 +15,7 @@
     "sample-BW-ORG-scoped.json": "bw-org.schema.json",
     "sample-BW-ORG.json": "bw-org.schema.json",
     "sample-BW-PROVIDER.json": "bw-provider.schema.json",
+    "sample-BW-PROVIDER-in.json": "bw-provider.schema.json",
     "sample-CE-repackaging.json": "evidence-ce.schema.json",
     "sample-CE.json": "evidence-ce.schema.json",
     "sample-DE-availability.json": "evidence-de.schema.json",

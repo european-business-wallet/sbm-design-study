@@ -774,6 +774,7 @@ def emit_stage1_registry():
         "formations": [_formation]}, indent=2, ensure_ascii=False) + "\n")
     print("regenerated formation-inputs.demo.json")
 
+
     # R10-11: suite-registry.demo.json is NOT regenerated. It is the registry
     # AS IT STOOD when the demo groups were formed — the retained material a
     # bundle verifier recomputes their cipher-suite decision against — and
@@ -786,6 +787,84 @@ def emit_stage1_registry():
         json.dumps(out, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def emit_retained_receipt():
+    """SBM-ADR-0015: the retained DS receipt the bundle verifier's receipt path
+    needs in order to be EXERCISED rather than reported absent.
+
+    No sample manifest carried a `receipts` entry, so LINT-BND-38 and
+    LINT-BND-I8 were reachable only from a hand-built call to `check_bundle` —
+    and that is how the cycle that moved the receipt key to the provider's
+    descriptor shipped a manifest loader which could not supply it. A sample
+    makes the published entry point carry the rule.
+
+    Generated, never hand-edited: a receipt is SIGNED material whose delivery
+    context must be the one the availability DE already attests. Every relation
+    below is CHECKED and raises rather than writing a receipt that would prove
+    something about different octets, a different instant or another provider.
+    """
+    import mls_wire as _w
+    de = _content(json.loads(
+        (ROOT / "samples" / "sample-DE-availability.json").read_text(encoding="utf-8")))
+    desc = _content(json.loads(
+        (ROOT / "samples" / "sample-BW-PROVIDER-in.json").read_text(encoding="utf-8")))
+    member = _content(json.loads(
+        (ROOT / "samples" / "sample-BW-MEMBER-fr.json").read_text(encoding="utf-8")))
+    if desc["participant_id"] != de["rdp_id"]:
+        raise SystemExit(
+            f"the descriptor supplied publishes {desc['participant_id']}'s keys and "
+            f"the DE is issued by {de['rdp_id']} — a receipt verified against "
+            "another provider's descriptor is the defect, not the fixture")
+    ds_key = desc["ds_receipt_keys"][0]
+    # The receipt attests the handover of the OCTETS THE DE COMMITS TO, so they
+    # are derived the same way rather than invented.
+    group, epoch = "Zzw1S4pWq9T5n7xYbXc2dQ", "3"
+    octets = _w.demo_mls_message(de["message_id"], group, epoch)
+    if _w.envelope_hash(octets)["hex"] != de["envelope_hash"]["hex"]:
+        raise SystemExit(
+            "the generated octets do not hash to the envelope_hash the "
+            "availability DE pins — a receipt over other octets substantiates "
+            "another delivery")
+    mid, device_id = member["mid"], member["devices"][0]["device_id"]
+    session = {"kind": "token-digest", "digest": "b" * 64}
+    cred = {"kind": "device", "uid": de["recipient_uid"], "mid": mid,
+            "device_id": device_id, "session": session["digest"]}
+    # The DS lifecycle, run rather than faked: accepted, queued, collected
+    # through the published operation, then acknowledged with the token it
+    # issued. A fixture that skipped it would reintroduce the orphan receipt.
+    mock._DELIVERY_ITEMS.clear()
+    mock._DS_LEDGER.clear()
+    mock._ACK_LEDGER.clear()
+    mock.ds_accept_message(de["message_id"], "demo-group",
+                           base64.b64encode(octets).decode(),
+                           principal=de["rdp_id"])
+    mock.queue_delivery(de["rdp_id"], de["message_id"],
+                        recipient_uid=de["recipient_uid"], mid=mid,
+                        device_id=device_id)
+    got = mock.collect_messages(credential=cred, session_binding=session)
+    token = next(i["collection_token"] for i in got["items"]
+                 if i["message_id"] == de["message_id"])
+    receipt = mock.receipt_ack(
+        message_id=de["message_id"], device_id=device_id, credential=cred,
+        session_binding=session, octets=octets,
+        # At the availability grade the DE is DATED BY this receipt, so the
+        # instant the DS signs is the instant the DE published.
+        server_clock=de["delivered_at"],
+        ds_kid=ds_key["kid"], ds_seed="ds-in", issuing_rdp_id=de["rdp_id"],
+        collection_token=token)
+    if receipt["server_time"] != de["delivered_at"]:
+        raise SystemExit("the receipt's instant is not the one the DE published")
+    # Whether the SIGNATURE verifies is NOT checked here. `verify_ds_receipt` has
+    # two callers by design — the live path and the bundle path — and a generator
+    # calling it would be a third copy of the question in a place no verdict
+    # depends on. The bar asks it through the published entry point: this receipt
+    # ships in `bundle.default.manifest.json`, so a receipt that did not verify
+    # would fail `make lint` with LINT-BND-38. What is checked above is what the
+    # bar cannot see — that the octets and the instant are the DE's own.
+    (ROOT / "samples" / "receipt.availability.demo.json").write_text(
+        json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print("regenerated receipt.availability.demo.json")
+
+
 def main():
     n = 0
     for p in sorted((ROOT / "samples").glob("sample-*.json")):
@@ -795,6 +874,9 @@ def main():
     emit_stage1_registry()
     emit_stage1_federation_register()
     print("regenerated registry.stage1.demo.json")
+    # AFTER the descriptors and the register: the receipt is verified against a
+    # descriptor this run may just have re-sealed.
+    emit_retained_receipt()
     print(f"{n} evidence samples regenerated")
 
 

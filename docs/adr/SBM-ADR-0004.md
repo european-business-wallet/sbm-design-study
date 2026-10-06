@@ -3,9 +3,11 @@ id: SBM-ADR-0004
 title: "The MSP separated from the RDP, with the relay left RDP-to-RDP"
 label: "MSP and RDP separated"
 decision_status: superseded
-implementation_status: [specified, in-reference, planned]
+implementation_status: [specified, in-reference]
 implementation: >-
-  relay: in force. MSP identity, `observed_by`, `receipt_digest`, composition axis: planned, not implemented ([A6](../REVIEW_AGENDA.md))
+  relay: in force, and the only part ever built. The participant model, `observed_by`,
+  `receipt_digest` and the composition axis were never implemented, and SBM-ADR-0015
+  withdrew them rather than leaving them to be built
 choice: >-
   the MSP is each side's local delivery service and a participant in its own right; the relay stays RDP-to-RDP;
   a DE should bind the observation it rests on; provider composition is a deployment axis, not a rung · §7.2, [§13.1](../../Secure-Business-Messaging-Profile.md#131-institutional-roles)
@@ -15,7 +17,7 @@ benefit: >-
   evidence authorship stays with qualified parties; transport and evidence become separable markets
 cost: >-
   one more interface, and a trusted observer: separation makes a false S2 *attributable*, not impossible ([A9](../REVIEW_AGENDA.md))
-open_questions: [A6, A9]
+open_questions: []
 author_questions: []
 supersedes: []
 analysed_not_decided: >-

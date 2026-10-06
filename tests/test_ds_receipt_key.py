@@ -77,8 +77,15 @@ DS = yaml.safe_load((ROOT / "delivery-service-openapi.yaml").read_text())
 # Service was a second provider; the MED path is deleted, and a kid published
 # only there must not resolve — which `test_a_kid_only_in_a_med_does_not_resolve`
 # below asserts.
-PROVIDER = json.loads(
+#: The shipped descriptor, as the RDP that issues these receipts would publish
+#: it. The sample is `urn:sbm:rdp:mockeu-001`'s and the receipts built here are
+#: issued by `urn:sbm:rdp:demo-out`; SBM-ADR-0015 makes a descriptor authorise
+#: its OWN participant's receipts and nobody else's, so the two must agree. The
+#: mismatch was harmless until this round only because nothing compared them.
+ISSUER = "urn:sbm:rdp:demo-out"
+SHIPPED_PROVIDER = json.loads(
     (ROOT / "samples" / "sample-BW-PROVIDER.json").read_text())["projection"]
+PROVIDER = dict(SHIPPED_PROVIDER, participant_id=ISSUER)
 MED = json.loads((ROOT / "samples" / "sample-BW-MED.json").read_text())["projection"]
 SE = json.loads((ROOT / "samples" / "sample-SE.json").read_text())["projection"]
 
@@ -115,9 +122,15 @@ def _digest():
     return {"format": "mls10-message", "hex": hashlib.sha256(OCTETS).hexdigest()}
 
 
-def _provider(*keys):
-    return {"participant_id": PROVIDER["participant_id"],
-            "ds_receipt_keys": list(keys)}
+def _provider(*keys, participant_id=None, kind="BW-PROVIDER-v1"):
+    """A descriptor as its own participant publishes it.
+
+    `type` and `participant_id` are not decoration: the receipt check refuses a
+    document of another kind, and refuses one belonging to another RDP.
+    """
+    doc = {"type": kind, "participant_id": participant_id or PROVIDER["participant_id"],
+           "ds_receipt_keys": list(keys)}
+    return {k: v for k, v in doc.items() if v is not None}
 
 
 DEMO_KEY = PROVIDER["ds_receipt_keys"][0]
@@ -279,15 +292,56 @@ def test_the_med_no_longer_publishes_the_receipt_key():
 
 
 def test_a_kid_only_in_a_med_does_not_resolve():
-    """The deleted fallback, asserted. A descriptor that publishes no receipt
-    key must refuse the receipt even when the entity's MED still carries the
-    very `kid` it names."""
+    """The deleted fallback, asserted against the real thing.
+
+    This test used to hand in a mapping with NO `ds_receipt_keys` at all, so it
+    was refused for having nothing to resolve and proved the property by proxy:
+    it passed against the base function, which read `ds_receipt_keys` off
+    whatever it was given and would have resolved the key had the mapping
+    carried one. What must be refused is a document that DOES carry the kid and
+    is not the issuing provider's descriptor — otherwise SBM-ADR-0015's move is
+    a rename, and a provider could keep publishing its receipt key on its
+    customers' documents with nothing to notice.
+
+    The MED here is built from the CURRENT sample plus the key. The 2.1 sample
+    that really carried it is history and is not resurrected as a fixture.
+    """
     receipt = _ack()
-    stale = {"participant_id": PROVIDER["participant_id"]}      # no ds_receipt_keys
+    assert receipt["ds_kid"] == DEMO_KEY["kid"], (
+        "the receipt must name the key the document below publishes, or this "
+        "passes for the wrong reason")
+    med = dict(copy.deepcopy(MED), ds_receipt_keys=[copy.deepcopy(DEMO_KEY)])
+    assert med["type"] == "BW-MED-v1" and "participant_id" not in med
     with pytest.raises(mock.AckRejected) as caught:
-        mock.delivered_at_from_receipt(receipt, _digest(), provider=stale,
+        mock.delivered_at_from_receipt(receipt, _digest(), provider=med,
                                        expect=_expect(receipt))
     assert caught.value.reason == "receipt-unverifiable"
-    assert receipt["ds_kid"] == DEMO_KEY["kid"], (
-        "the receipt must name the key the descriptor would have published, or "
-        "this passes for the wrong reason")
+    assert "BW-PROVIDER-v1" in caught.value.detail, caught.value.detail
+
+
+def test_another_rdps_descriptor_does_not_authorise_this_receipt():
+    """The sibling, and the half `_descriptor_for` gets right by selection: a
+    genuine BW-PROVIDER-v1, publishing the very key the receipt names, that
+    belongs to a different participant. A provider publishes its OWN receipt
+    keys; the direct path compared nothing, so any descriptor carrying the kid
+    would do."""
+    receipt = _ack()
+    other = _provider(DEMO_KEY, participant_id="urn:sbm:rdp:someone-else")
+    with pytest.raises(mock.AckRejected) as caught:
+        mock.delivered_at_from_receipt(receipt, _digest(), provider=other,
+                                       expect=_expect(receipt))
+    assert caught.value.reason == "receipt-unverifiable"
+    assert "someone-else" in caught.value.detail and \
+        receipt["issuing_rdp_id"] in caught.value.detail, caught.value.detail
+
+
+def test_a_descriptor_with_no_participant_is_refused():
+    """A BW-PROVIDER-v1 that names no participant authorises nothing: there is
+    no party whose keys these are. Fail closed rather than fall through to the
+    key lookup, which would have accepted it."""
+    receipt = _ack()
+    anonymous = {"type": "BW-PROVIDER-v1", "ds_receipt_keys": [copy.deepcopy(DEMO_KEY)]}
+    with pytest.raises(mock.AckRejected) as caught:
+        mock.delivered_at_from_receipt(receipt, _digest(), provider=anonymous,
+                                       expect=_expect(receipt))
+    assert caught.value.reason == "receipt-unverifiable"

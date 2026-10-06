@@ -157,9 +157,14 @@ def test_a_backdated_client_timestamp_cannot_change_delivered_at():
     delivered_at = mock.delivered_at_from_receipt(
         receipt, {"format": "mls10-message",
                   "hex": hashlib.sha256(OCTETS).hexdigest()},
-        # SBM-ADR-0015: the receipt key is the issuing RDP's.
-        provider=json.loads(
+        # SBM-ADR-0015: the receipt key is the issuing RDP's OWN, so the
+        # descriptor must be that RDP's. The shipped sample belongs to
+        # `urn:sbm:rdp:mockeu-001` and this receipt is issued by
+        # `urn:sbm:rdp:demo-out`; the check now compares the two, so the fixture
+        # states whose descriptor it is instead of relying on nobody looking.
+        provider=dict(json.loads(
             (ROOT / "samples" / "sample-BW-PROVIDER.json").read_text())["projection"],
+            participant_id=receipt["issuing_rdp_id"]),
         expect=_expect(receipt))
     assert delivered_at == AFTER_EXPIRY
     assert instant(delivered_at) > instant(EXPIRES), \

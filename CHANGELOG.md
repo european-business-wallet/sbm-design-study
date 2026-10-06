@@ -18,7 +18,72 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-10-06, edition r36
+## Current — 2026-10-06, edition r37
+
+**The receipt key must be reachable, and checked. No artefact version moves.**
+The previous edition moved the Delivery-Service receipt key from the customer's
+discovery document to the provider's own descriptor, where a provider's key
+belongs. The schema move was real. The verifier's half of it was not, and this
+edition is the half.
+
+**It was a rename.** The function that resolves the key read the published key
+list off whatever document it was handed, and the argument had simply been
+renamed: handed the OLD version of a customer's document — which still publishes
+the key — it resolved the receipt and returned a delivery instant. The reference
+already carried the sentence *a key published only in a customer's document must
+not resolve, or the move would be a rename*, and it was a property of the prose.
+The check now refuses a document that is not a provider descriptor, one belonging
+to a different provider than the receipt names, and a receipt that names no
+provider at all. The test meant to forbid this handed in a document with no keys
+at all, so it was refused for having nothing to resolve: it proved the property by
+proxy and passes unchanged against the unfixed function.
+
+**And the key could not be supplied.** The bundle verifier could take a provider
+descriptor, and the command that verifies a bundle read no manifest entry for one
+— so after the move a retained receipt could not be verified from the command
+line at all, whatever the bundle supplied. No shipped bundle carried a receipt, so
+nothing noticed. The identical omission had happened one cycle earlier to another
+input, and the verifier carries its own note about it.
+
+| Artefact | This edition | Previous |
+|---|---|---|
+| Umbrella profile | **2.1, edition 2026-10-06** | 2.1, edition 2026-10-06 |
+| TS-shaped QERDS binding | **v0.36** | v0.36 |
+| BW-MED / BW-ORG / BW-MEMBER discovery documents | **2.2** / 2.7 / 2.2 | 2.2 / 2.7 / 2.2 |
+| BW-PROVIDER provider descriptor | **1.1** | 1.1 |
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.12** | 2.12 |
+| EDD resolver contract (OpenAPI) | **2.0.0** | 2.0.0 |
+| Profile-2 companion contracts (wallet–RDP, delivery service, relay) | **15.0.0** | 15.0.0 |
+
+**A shipped bundle now retains a receipt**, so the rule is exercised by the
+conformance bar instead of by a hand-built call. The receipt is the one behind the
+availability-grade delivery evidence, generated from the octets that evidence
+commits to and dated at the instant it published; the generator refuses to write
+one that disagrees with either. Two provider descriptors travel with it, so
+choosing the right one is a decision the verifier has to make rather than a
+single candidate it cannot get wrong. A second descriptor had to be added: the
+receipt belongs to the recipient's provider, and the only one this study shipped
+was the sender's.
+
+**What makes an input reachable is now stated and gated.** The retrievability
+registry says, for every input a retained-evidence verification can take, how the
+material REACHES a verifier — and a bundle entry the verifier does not read is a
+finding rather than a documented input. That is the rule that would have caught
+both omissions. It also records what a reader could not otherwise discover: one
+input arrives under a different name than it has, two are the verifier's own
+configuration, and one is supplied by nothing because no operation produces it.
+
+**Three decision records claimed more than they should.** One, superseded three
+weeks ago and never implemented beyond its relay, still carried a planned
+implementation and named two questions as open — and the decisions index rendered
+that as a plan that stands. The check accepted it because it asked whether a named
+question is a real row on the review agenda, and a row stays on the agenda after
+it closes: existence was never openness. The check now reads the agenda's own
+closure markers, and it found the same defect in two records this round had not
+set out to look at. Nothing in the superseded record's body changed — it is the
+analysis the current decision rests on.
+
+## Edition r36 — 2026-10-06
 
 **One provider role. Nothing changes on the wire.** A decision taken in September
 separated the delivery service from the evidence provider, each with its own

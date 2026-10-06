@@ -17,8 +17,9 @@ benefit: >-
   the legally operative act is chosen and visible; mailbox deposit never counts
 cost: >-
   recipient cooperation at the default grades; one member's refusal or mismatch ends the message;
-  the availability grade rests on the DS's observation ([A9](../REVIEW_AGENDA.md))
-open_questions: [A9]
+  the availability grade rests on the DS's observation, which SBM-ADR-0015 makes the
+  RDP's own ([A9](../REVIEW_AGENDA.md), resolved)
+open_questions: []
 author_questions: []
 supersedes: []
 ---
@@ -101,4 +102,6 @@ TS, clause 6, for the operative act and its evidence.
 
 ## Open questions
 
-- [A9](../REVIEW_AGENDA.md): who observes S2.
+- None. [A9](../REVIEW_AGENDA.md) — who observes S2 — was resolved on 6 October 2026
+  by [SBM-ADR-0015](SBM-ADR-0015.md): the observer is the RDP, which operates the
+  Delivery Service as part of its qualified service.

@@ -23,5 +23,12 @@
   ],
   "formation_inputs": "formation-inputs.demo.json",
   "suite_registry": "suite-registry.demo.json",
-  "federation_register": "federation.stage1.demo.json"
+  "federation_register": "federation.stage1.demo.json",
+  "receipts": {
+    "01HZ3AVLBCDEFGH9JKMN0PQRST": "receipt.availability.demo.json"
+  },
+  "provider_descriptors": [
+    "sample-BW-PROVIDER.json",
+    "sample-BW-PROVIDER-in.json"
+  ]
 }

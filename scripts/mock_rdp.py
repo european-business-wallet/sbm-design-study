@@ -993,7 +993,8 @@ def resolve_transferred(issuing_rdp_id, message_id, *, principal,
 
 def receipt_ack(message_id, device_id, *, credential,
                 session_binding, octets, server_clock, client_acked_at=None,
-                ds_kid="ds-demo-2026", issuing_rdp_id="urn:sbm:rdp:demo-out",
+                ds_kid="ds-demo-2026", ds_seed="ds",
+                issuing_rdp_id="urn:sbm:rdp:demo-out",
                 collection_token=_REQUIRED):
     """DR-10 — the Delivery Service's acknowledged handover (DS contract 1.2.0).
 
@@ -1198,7 +1199,11 @@ def receipt_ack(message_id, device_id, *, credential,
             f"published `DeliveryReceipt`: {problems[:3]} — nothing is signed "
             "and the item is not acknowledged (R8-02)")
     receipt["ds_signature"] = base64.b64encode(
-        seal_cose({k: v for k, v in receipt.items()}, kid=ds_kid, seed="ds")
+        # `ds_seed` travels with `ds_kid`: a receipt is verified against the key
+        # the ISSUING RDP publishes in its own descriptor (SBM-ADR-0015), so a
+        # mock standing in for two providers must be able to sign as either. The
+        # default is the key `sample-BW-PROVIDER.json` publishes.
+        seal_cose({k: v for k, v in receipt.items()}, kid=ds_kid, seed=ds_seed)
     ).decode()
     # ...and the COMPLETE object, before it becomes the ledger's answer to
     # every future acknowledgement of this event.

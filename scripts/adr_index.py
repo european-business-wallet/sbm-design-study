@@ -71,6 +71,28 @@ def agenda_ids():
     return set(re.findall(r"^\| ((?:A|G|P|L)\d+) \|", text, re.M))
 
 
+#: The words the review agenda uses to mark a question it no longer carries.
+#: `scripts/doc_lint.py` gates the agenda's own prose; this gates the records
+#: that cite it.
+CLOSED_MARKERS = ("RESOLVED", "CLOSED")
+
+
+def closed_agenda_ids():
+    """The agenda rows that record themselves as answered or withdrawn.
+
+    `agenda_ids()` answers "is this a real row", which is what the existing rule
+    asks — and a row stays on the agenda after it closes, so A6 and A9 remained
+    valid `open_questions` three weeks after SBM-ADR-0015 withdrew one and
+    answered the other. Existence is not openness.
+    """
+    out = set()
+    for line in AGENDA.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^\| ((?:A|G|P|L)\d+) \|", line)
+        if m and any(re.search(rf"\b{w}\b", line) for w in CLOSED_MARKERS):
+            out.add(m.group(1))
+    return out
+
+
 def check(records=None):
     """[problem, ...] — empty when the records and the index are consistent."""
     records = load() if records is None else records
@@ -99,9 +121,35 @@ def check(records=None):
             if not isinstance(fm.get(key), list):
                 problems.append(f"{name}: `{key}` must be a list")
         known = agenda_ids()
+        closed = closed_agenda_ids()
         for q in fm.get("open_questions") or []:
             if not AGENDA_ID_RE.match(str(q)) or q not in known:
                 problems.append(f"{name}: open question {q!r} is not on the review agenda")
+            elif q in closed:
+                problems.append(
+                    f"{name}: `open_questions` names {q}, which the review agenda "
+                    "records as closed — the index renders this as a question the "
+                    "record still carries, and a reader has no way to tell it from "
+                    "one that is open. Move it to `analysed_not_decided` if the "
+                    "history matters")
+        tags = fm.get("implementation_status") or []
+        if fm.get("decision_status") == "superseded" and "planned" in tags:
+            problems.append(
+                f"{name}: a superseded record carries the `planned` tag — the index "
+                "lists it under *Decided is not implemented*, which says a plan "
+                "stands. Say what the Status section says instead")
+        impl = str(fm.get("implementation") or "")
+        for q in sorted(closed):
+            # The defect shape is a plan and a closed question in ONE clause —
+            # "…: planned, not implemented ([A6])". A record may legitimately say
+            # that a question is closed and, in another sentence, that something
+            # else is still planned, so a sentence break ends the match.
+            near = rf"(\bplanned\b[^.;]{{0,120}}\b{q}\b|\b{q}\b[^.;]{{0,120}}\bplanned\b)"
+            if re.search(near, impl, re.I):
+                problems.append(
+                    f"{name}: `implementation` describes work as planned in the same "
+                    f"clause as {q}, which the agenda records as closed — a plan "
+                    "whose question was withdrawn is not a plan")
         for s in fm.get("supersedes") or []:
             if ID_RE.match(str(s)) and s not in ids:
                 problems.append(f"{name}: supersedes {s}, which does not exist")

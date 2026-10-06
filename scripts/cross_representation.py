@@ -175,6 +175,12 @@ NON_BODY = {
                         "client-supplied instant let a device backdate into a "
                         "window that had closed",
         "ds_kid": "the DS's signing key identifier",
+        "ds_seed": "WHICH of its own keys the mock signs with — server-side key "
+                   "material, not a wire value. A receipt is verified against the "
+                   "key the ISSUING RDP publishes in its own descriptor "
+                   "(SBM-ADR-0015), so a mock standing in for two providers must "
+                   "be able to sign as either; a client that could choose it "
+                   "would be choosing whose receipt this is",
     },
     "MessageSubmission": {
         "accepted_at": "the server's acceptance instant",

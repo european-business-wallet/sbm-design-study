@@ -1,0 +1,19 @@
+{
+  "message_id": "01HZ3AVLBCDEFGH9JKMN0PQRST",
+  "issuing_rdp_id": "urn:sbm:rdp:mockeu-002",
+  "recipient_uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
+  "mid": "F1N2C3D4P",
+  "device_id": "dev-01",
+  "session_binding": {
+    "kind": "token-digest",
+    "digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "server_time": "2026-04-04T09:58:41Z",
+  "message_digest": {
+    "format": "mls10-message",
+    "hex": "51c80f5505706c6f9a97ad3e84131e94aea2653f5f38428595abbd5b544d52e3"
+  },
+  "ds_kid": "ds-in-2026",
+  "ds_alg": "EdDSA",
+  "ds_signature": "hE+iAScESmRzLWluLTIwMjagWQGuqmNtaWRpRjFOMkMzRDRQZmRzX2FsZ2VFZERTQWZkc19raWRqZHMtaW4tMjAyNmlkZXZpY2VfaWRmZGV2LTAxam1lc3NhZ2VfaWR4GjAxSFozQVZMQkNERUZHSDlKS01OMFBRUlNUa3NlcnZlcl90aW1ldDIwMjYtMDQtMDRUMDk6NTg6NDFabXJlY2lwaWVudF91aWR4GkVVLUZSLVBTQklELVpZV1ZUU1JRUE5NOE00bmlzc3VpbmdfcmRwX2lkdnVybjpzYm06cmRwOm1vY2tldS0wMDJubWVzc2FnZV9kaWdlc3SiY2hleHhANTFjODBmNTUwNTcwNmM2ZjlhOTdhZDNlODQxMzFlOTRhZWEyNjUzZjVmMzg0Mjg1OTVhYmJkNWI1NDRkNTJlM2Zmb3JtYXRtbWxzMTAtbWVzc2FnZW9zZXNzaW9uX2JpbmRpbmeiZGtpbmRsdG9rZW4tZGlnZXN0ZmRpZ2VzdHhAYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYlhA4mEp8A8h9tojlECTwDfKuzrCV4FmTQ74Kfr0eXsviFSoeqkD43TEL/9TkCpHlmEKHNTGfIJnFwmETD4yQ2kCBQ=="
+}

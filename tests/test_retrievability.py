@@ -16,6 +16,7 @@ serves, which is the opposite shape from every other row, where the interface is
 settled and only the custody after an exit is not.
 """
 import copy
+import inspect
 import pathlib
 import sys
 
@@ -146,3 +147,55 @@ def test_the_evidence_itself_is_durable_and_the_material_to_check_it_is_not(data
     rows = {r["input"]: r for r in data["inputs"]}
     assert rows["evidence"]["survives_provider_exit"] is True
     assert rows["member_history"]["survives_provider_exit"] is False
+
+
+# ---------------------------------------------------------------------------
+# RETR-04 — an input the published entry point cannot be handed
+# ---------------------------------------------------------------------------
+
+def test_every_input_says_how_it_reaches_the_verifier(data):
+    """RETR-01 asks whether an input is described. This asks whether it can be
+    SUPPLIED — the question nothing asked when `provider_descriptors` was added
+    to `check_bundle`, documented in this registry, and given no manifest key."""
+    assert [r["input"] for r in data["inputs"] if not str(r.get("supplied_as", "")).strip()] == []
+
+
+def test_a_row_that_does_not_say_how_it_is_supplied_is_caught(data):
+    broken = copy.deepcopy(data)
+    next(r for r in broken["inputs"] if r["input"] == "receipts").pop("supplied_as")
+    findings = retr.check(broken)
+    assert any(f.startswith("RETR-04") and "receipts" in f for f in findings), findings
+
+
+def test_a_manifest_key_the_loader_does_not_read_is_caught(data, monkeypatch):
+    """The defect itself, in the shape it shipped in: the registry names the key
+    and `lint_bundle` reads nothing. Driven by replacing the loader's source
+    rather than by editing the loader, so the probe states the relation it
+    checks instead of depending on today's spelling."""
+    import bundle_lint
+    real = inspect.getsource(bundle_lint.lint_bundle)
+    without = real.replace('manifest.get("provider_descriptors")',
+                           'manifest.get("something_else_entirely")')
+    assert without != real, "the loader must read the key, or this probe is vacuous"
+    monkeypatch.setattr(inspect, "getsource",
+                        lambda obj: without if obj is bundle_lint.lint_bundle else real)
+    findings = retr.check(data)
+    assert any(f.startswith("RETR-04") and "provider_descriptors" in f
+               for f in findings), findings
+
+
+def test_a_differently_spelled_key_is_not_a_finding(data):
+    """`reveals` is supplied by the manifest key `grade_reveals`. The rule must
+    read the key the row NAMES, not assume the argument's own spelling — the
+    registry says which, which is half of why the column is worth having."""
+    row = next(r for r in data["inputs"] if r["input"] == "reveals")
+    assert "grade_reveals" in row["supplied_as"]
+    assert [f for f in retr.check(data) if f.startswith("RETR-04")] == []
+
+
+def test_an_input_nothing_supplies_may_say_so(data):
+    """`transformation_traces` has no manifest key because no operation produces
+    the material. Stating that is an answer; leaving the field empty is not."""
+    row = next(r for r in data["inputs"] if r["input"] == "transformation_traces")
+    assert "nothing supplies it" in row["supplied_as"]
+    assert [f for f in retr.check(data) if f.startswith("RETR-04")] == []

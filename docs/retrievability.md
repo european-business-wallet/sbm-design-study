@@ -25,38 +25,40 @@ and saying which kind of absence each input has is part of stating it.
 
 Generated from `docs/retrievability.json` and gated: every argument
 `bundle_lint.check_bundle` accepts, every `LINT-BND-I*` residual and every
-published read taking an as-of selector must appear below.
+published read taking an as-of selector must appear below — and every row
+must say how the material REACHES a verifier, so an input the published
+entry point cannot be handed is a finding rather than a documented input.
 
 ## Per input
 
-| Input | Retrieved by | Served by | Survives a provider exit |
-|---|---|---|---|
-| `med` | GET /.well-known/bw/med/{uid} | the entity's provider (EDD resolver surface) | **no** |
-| `org` | GET /.well-known/bw/org/{uid}?doc_digest= | the entity's provider (EDD resolver surface) | **no** |
-| `policy_history` | GET /.well-known/bw/org/{uid}?doc_digest= , once per version | the entity's provider (EDD resolver surface) | **no** |
-| `members` | GET /uid/{uid}/members , GET /.well-known/bw/member/{uid}/{mid} | the entity's provider (EDD resolver surface) | **no** |
-| `member_history` | GET /.well-known/bw/member/{uid}/{mid}?as_of= (or ?version=) | the entity's provider (EDD resolver surface) | **no** |
-| `counterparty_members` | GET /.well-known/bw/member/{uid}/{mid} on the SENDER's provider | the sender entity's provider — a different provider, and often a different jurisdiction | **no** |
-| `roster` | GET /uid/{uid}/roster-snapshot?scope_id=&epoch= | the recipient's provider | **no** |
-| `group_contexts` | GET /groups/{group_id}/context?epoch= | the Delivery Service — the retention duty's read surface, access-controlled to authorised verifiers (X-23) | **no** |
-| `formation_inputs` | none published — the read surface exists for group context, not for the formation inputs (A5) | the recipient's provider | **no** |
-| `suite_registry` | none published — carried as a demonstration fixture | the design authority | yes |
-| `federation_register` | GET /participants/{participant_id}?as_of= | the Federation Authority | yes |
-| `fa_anchors` | the Authority's published key set | the Federation Authority | yes |
-| `receipts` | none published for third-party retrieval — the receipt travels to the party that collected | the issuing RDP; the collecting party's own copy | **no** |
-| `evidence` | GET /uid/{uid}/evidence/{message_id} , GET /evidence/{message_id} | each party's own wallet copy; the issuing RDP | yes |
-| `reveals` | none, by design — the salt travels only inside the end-to-end-encrypted envelope | the endpoints, and only the parties of a dispute | yes |
-| `mandate_reveals` | none, by design — as for reveals | the endpoints, and only the parties of a dispute | yes |
-| `transformation_traces` | none — neither is profiled (open items A13/A15) | nobody: the profile does not claim this is establishable | yes |
-| `directory_record` | GET /resolve/{uid} | the EDD core registry | yes |
-| `trust_store` | none published — a verifier's own configuration | the verifying party | yes |
-| `provider_descriptors` | the provider's own discovery surface; the descriptor's seal key is pinned to the participant by the membership register (LINT-TRUST-07) | each RDP, for itself | **no** |
+| Input | Retrieved by | Served by | Supplied to the verifier as | Survives a provider exit |
+|---|---|---|---|---|
+| `med` | GET /.well-known/bw/med/{uid} | the entity's provider (EDD resolver surface) | bundle manifest key `med` | **no** |
+| `org` | GET /.well-known/bw/org/{uid}?doc_digest= | the entity's provider (EDD resolver surface) | bundle manifest key `org` | **no** |
+| `policy_history` | GET /.well-known/bw/org/{uid}?doc_digest= , once per version | the entity's provider (EDD resolver surface) | bundle manifest key `policy_history` | **no** |
+| `members` | GET /uid/{uid}/members , GET /.well-known/bw/member/{uid}/{mid} | the entity's provider (EDD resolver surface) | bundle manifest key `members` | **no** |
+| `member_history` | GET /.well-known/bw/member/{uid}/{mid}?as_of= (or ?version=) | the entity's provider (EDD resolver surface) | bundle manifest key `member_history` | **no** |
+| `counterparty_members` | GET /.well-known/bw/member/{uid}/{mid} on the SENDER's provider | the sender entity's provider — a different provider, and often a different jurisdiction | bundle manifest key `counterparty_members` | **no** |
+| `roster` | GET /uid/{uid}/roster-snapshot?scope_id=&epoch= | the recipient's provider | bundle manifest key `roster` | **no** |
+| `group_contexts` | GET /groups/{group_id}/context?epoch= | the Delivery Service — the retention duty's read surface, access-controlled to authorised verifiers (X-23) | bundle manifest key `group_contexts` | **no** |
+| `formation_inputs` | none published — the read surface exists for group context, not for the formation inputs (A5) | the recipient's provider | bundle manifest key `formation_inputs` | **no** |
+| `suite_registry` | none published — carried as a demonstration fixture | the design authority | bundle manifest key `suite_registry` | yes |
+| `federation_register` | GET /participants/{participant_id}?as_of= | the Federation Authority | bundle manifest key `federation_register` | yes |
+| `fa_anchors` | the Authority's published key set | the Federation Authority | not a manifest key — the verifier's own configured Federation-Authority anchors, passed by `bundle_lint.py --trust-store` | yes |
+| `receipts` | none published for third-party retrieval — the receipt travels to the party that collected | the issuing RDP; the collecting party's own copy | bundle manifest key `receipts` | **no** |
+| `evidence` | GET /uid/{uid}/evidence/{message_id} , GET /evidence/{message_id} | each party's own wallet copy; the issuing RDP | bundle manifest key `evidence` | yes |
+| `reveals` | none, by design — the salt travels only inside the end-to-end-encrypted envelope | the endpoints, and only the parties of a dispute | bundle manifest key `grade_reveals` — the manifest key and the argument are spelled differently, which is why this column exists | yes |
+| `mandate_reveals` | none, by design — as for reveals | the endpoints, and only the parties of a dispute | bundle manifest key `mandate_reveals` | yes |
+| `transformation_traces` | none — neither is profiled (open items A13/A15) | nobody: the profile does not claim this is establishable | nothing supplies it: no operation produces the material (A13/A15), so no manifest key is defined and none should be | yes |
+| `directory_record` | GET /resolve/{uid} | the EDD core registry | not a bundle input — read live from the EDD core registry; no manifest key | yes |
+| `trust_store` | none published — a verifier's own configuration | the verifying party | not a manifest key — the verifier's own configuration, passed by `bundle_lint.py --trust-store` | yes |
+| `provider_descriptors` | the provider's own discovery surface; the descriptor's seal key is pinned to the participant by the membership register (LINT-TRUST-07) | each RDP, for itself | bundle manifest key `provider_descriptors`. Added 2026-10-06: the cycle that moved this key to the provider's descriptor gave `check_bundle` the argument and defined no manifest key, so a retained receipt could not be verified through `bundle_lint.py` at all | **no** |
 
 ## What each absence does to the verdict
 
-**`med`** — The entity's sealed BW-MED: its provider endpoints, DS receipt keys and MLS parameters. Sealed by a key the DIRECTORY RECORD authorises — the MED is not its own trust anchor.
+**`med`** — The entity's sealed BW-MED: its provider endpoints and MLS parameters. SBM-ADR-0015 moved the DS receipt keys OFF it, to the provider's own BW-PROVIDER descriptor. Sealed by a key the DIRECTORY RECORD authorises — the MED is not its own trust anchor.
 
-- *Absent:* the entity's provider endpoints and DS receipt keys are unknown, so the material they point at cannot be resolved. R30-PUB-04: this row said the MED 'pins every other seal key'. It does not — `DirectoryRecord.authorized_seal_keys` does, and a retained MED is no substitute for the historical directory authorisation that made it acceptable.
+- *Absent:* the entity's provider endpoints are unknown, so the material they point at cannot be resolved. R30-PUB-04: this row said the MED 'pins every other seal key'. It does not — `DirectoryRecord.authorized_seal_keys` does, and a retained MED is no substitute for the historical directory authorisation that made it acceptable.
 - The endpoints INSIDE it move on an exit; the document itself must remain retrievable as it stood at the act, and nothing names who serves that.
 
 **`org`** — The sealed BW-ORG version the message pinned: acceptance policy, delivery grades, scope map.

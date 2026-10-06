@@ -1,0 +1,26 @@
+{
+  "sm_artifact_b64": "hFgaogEnBFVtb2NrZXUtMDAyLWRlc2NyaXB0b3KgWQG3qWNraWR1bW9ja2V1LTAwMi1kZXNjcmlwdG9yZHR5cGVuQlctUFJPVklERVItdjFlcm9sZXOBY3JkcGd2ZXJzaW9uYzEuMWllbmRwb2ludHOiaGV2aWRlbmNleDNodHRwczovL21vY2tldS0wMDIuZXhhbXBsZS5ldS9ldmlkZW5jZS97bWVzc2FnZV9pZH1pZGlzY292ZXJ5eC1odHRwczovL21vY2tldS0wMDIuZXhhbXBsZS5ldS8ud2VsbC1rbm93bi9yZHBqZXhwaXJlc19hdHQyMDI3LTA2LTMwVDIzOjU5OjU5Wmthc3NlcnRlZF9hdHQyMDI2LTAxLTAxVDAwOjAwOjAwWm5wYXJ0aWNpcGFudF9pZHZ1cm46c2JtOnJkcDptb2NrZXUtMDAyb2RzX3JlY2VpcHRfa2V5c4GkY2FsZ2VFZERTQWNraWRqZHMtaW4tMjAyNmp2YWxpZF9mcm9tdDIwMjYtMDEtMDFUMDA6MDA6MDBabnB1YmxpY19rZXlfYjY0eCxsSW9DRnJOWXRuNTA4eXdCbmR0V2VZc0wxM2VSbnYwSFRSUGx5ME0wcjhrPVhAS6ueFsjUU6xcPvJ4Ffx58Z7vUYySfNDQshbhoU2I21W2WAxzyjM75+15J3SZIXdH/XBjTISQ0ipZ+aZ26Qi/Cg==",
+  "projection": {
+    "type": "BW-PROVIDER-v1",
+    "version": "1.1",
+    "participant_id": "urn:sbm:rdp:mockeu-002",
+    "roles": [
+      "rdp"
+    ],
+    "endpoints": {
+      "discovery": "https://mockeu-002.example.eu/.well-known/rdp",
+      "evidence": "https://mockeu-002.example.eu/evidence/{message_id}"
+    },
+    "asserted_at": "2026-01-01T00:00:00Z",
+    "expires_at": "2027-06-30T23:59:59Z",
+    "kid": "mockeu-002-descriptor",
+    "ds_receipt_keys": [
+      {
+        "kid": "ds-in-2026",
+        "alg": "EdDSA",
+        "public_key_b64": "lIoCFrNYtn508ywBndtWeYsL13eRnv0HTRPly0M0r8k=",
+        "valid_from": "2026-01-01T00:00:00Z"
+      }
+    ]
+  }
+}

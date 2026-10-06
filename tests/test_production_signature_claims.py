@@ -83,8 +83,15 @@ mock = _load("mock_rdp", "mock_rdp.py")
 
 MED = json.loads((ROOT / "samples" / "sample-BW-MED.json").read_text())["projection"]
 # SBM-ADR-0015: the receipt key moved to the provider's descriptor.
-PROVIDER = json.loads(
+#: The shipped descriptor, as the RDP that issues these receipts publishes it:
+#: the sample belongs to `urn:sbm:rdp:mockeu-001` and the receipts built here
+#: are issued by `urn:sbm:rdp:demo-out`. SBM-ADR-0015 makes a descriptor
+#: authorise its own participant's receipts and nobody else's, so the fixture
+#: states whose descriptor it is.
+ISSUER = "urn:sbm:rdp:demo-out"
+SHIPPED_PROVIDER = json.loads(
     (ROOT / "samples" / "sample-BW-PROVIDER.json").read_text())["projection"]
+PROVIDER = dict(SHIPPED_PROVIDER, participant_id=ISSUER)
 SE = json.loads((ROOT / "samples" / "sample-SE.json").read_text())["projection"]
 
 OCTETS = b"\x00\x01" + b"the exact octets handed to the device" * 3
@@ -263,7 +270,12 @@ def test_the_bundle_layer_rejects_an_algorithm_disagreement():
 
 
 def test_a_receipt_with_no_published_keys_is_reported():
-    bare = {"participant_id": _receipt()["issuing_rdp_id"]}   # descriptor, no keys
+    # A GENUINE descriptor of the issuing RDP that publishes no receipt key —
+    # so this reaches the "no referent" arm rather than the kind or participant
+    # one. Without `type` it used to pass by tripping over a check that did not
+    # exist yet.
+    bare = {"type": "BW-PROVIDER-v1",
+            "participant_id": _receipt()["issuing_rdp_id"]}   # descriptor, no keys
     issues = _bnd38({SE["message_id"]: _receipt()}, descriptors=[bare])
     assert issues and "has no referent" in issues[0]
 
@@ -1399,3 +1411,69 @@ def test_a_receipt_with_no_descriptor_for_its_issuer_is_reported_as_incomplete()
         receipts={SE["message_id"]: _receipt()}, provider_descriptors=[])
         if r == "LINT-BND-38"]
     assert not fatal, "absent material must not be reported as a bad receipt"
+
+
+# ---------------------------------------------------------------------------
+# R1 — the published entry point, not the function it wraps
+#
+# Every test above reaches LINT-BND-38 by calling `check_bundle` with the
+# descriptors already in hand. That is the test that existed, and it is the one
+# that missed this: `check_bundle` grew `provider_descriptors` in the cycle that
+# moved the receipt key there, `docs/retrievability.json` documented the input,
+# and `lint_bundle` — the function `bundle_lint.py <manifest>` runs — read no
+# manifest key for it. So after the move a retained receipt could not be
+# verified from the command line at ALL, whatever the manifest supplied, and no
+# sample manifest carried one for the bar to notice over.
+#
+# The same omission, with its own note in the file, had happened one cycle
+# earlier for `group_contexts`.
+# ---------------------------------------------------------------------------
+
+MANIFEST = ROOT / "samples" / "bundle.default.manifest.json"
+
+
+def _through_the_loader(**edits):
+    """`lint_bundle` on the shipped manifest, edited in memory. Nothing is
+    written: the manifest on disk is the one the bar runs."""
+    import bundle_lint as bl
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    manifest.update(edits)
+    issues = bl.lint_bundle(manifest, str(ROOT / "samples"))
+    return [(r, m) for r, m in issues if r in ("LINT-BND-I8", "LINT-BND-38")]
+
+
+def test_the_shipped_manifest_verifies_its_retained_receipt():
+    """The receipt the bar carries resolves its key and verifies, through the
+    loader. Before this round the identical material reported LINT-BND-I8 from
+    the command line while verifying clean when handed to `check_bundle`."""
+    assert _through_the_loader() == []
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    assert manifest["receipts"], "the manifest must actually retain a receipt"
+    assert len(manifest["provider_descriptors"]) > 1, (
+        "more than one descriptor must be supplied, or selection by "
+        "participant_id is satisfied by there being nothing to select")
+
+
+def test_without_the_descriptor_entry_the_receipt_is_reported_incomplete():
+    """And the absence is INCOMPLETE, not a violation: the key cannot be
+    resolved, so the handover rests on the DE's assertion alone."""
+    import bundle_lint as bl
+    found = _through_the_loader(provider_descriptors=[])
+    assert [r for r, _ in found] == ["LINT-BND-I8"], found
+    assert all(bl.is_incomplete(r) for r, _ in found), \
+        "an unresolvable key is an unproven property, not a falsified one"
+
+
+def test_another_providers_descriptor_does_not_resolve_the_receipt():
+    """The selection, exercised: supply only the OTHER RDP's descriptor — a
+    genuine sealed BW-PROVIDER, published by an admitted participant, that
+    simply is not the receipt's issuer."""
+    import bundle_lint as bl
+    other = "sample-BW-PROVIDER.json"
+    descriptor = bl._load(str(ROOT / "samples" / other))
+    receipt = bl._load(str(ROOT / "samples" / json.loads(
+        MANIFEST.read_text(encoding="utf-8"))["receipts"]["01HZ3AVLBCDEFGH9JKMN0PQRST"]))
+    assert descriptor["participant_id"] != receipt["issuing_rdp_id"], \
+        "this probe needs a descriptor that is NOT the issuer's"
+    found = _through_the_loader(provider_descriptors=[other])
+    assert [r for r, _ in found] == ["LINT-BND-I8"], found

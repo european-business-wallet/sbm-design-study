@@ -383,13 +383,23 @@ def _run_default():
 
 def test_a_valid_injected_property_EMITS_ITS_GAP():
     """Requirement 3, and the acceptance test: inject a property with an
-    applicable precondition and an absent input, and the verifier must emit its
-    declared gap through the CLI — never skip it."""
+    applicable precondition and an ABSENT input, and the verifier must emit its
+    declared gap through the CLI — never skip it.
+
+    The absence is now arranged HERE. This probe used to run the shipped default
+    manifest and rely on its carrying no `receipts`; when that manifest gained a
+    retained receipt — so that the receipt path would be exercised by the bar at
+    all — the precondition it tests silently stopped applying and the probe
+    tested nothing. A probe builds its world.
+    """
+    manifest = _default()
+    manifest.pop("receipts", None)
+    assert "receipts" not in manifest, "the input must be absent, or this proves nothing"
     with _injected(id="relay-chain-authenticity", input="receipts",
                    gap_rule="LINT-BND-I4", when={"kind": "always"},
                    precondition="always",
                    establishes="that the retained relay chain is authentic"):
-        code, out = _run_default()
+        code, out = _cli(manifest)
     assert code == 3, out
     assert "the retained relay chain is authentic" in out
     assert "no `receipts`" in out

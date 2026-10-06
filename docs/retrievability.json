@@ -3,10 +3,11 @@
   "inputs": [
     {
       "input": "med",
-      "material": "The entity's sealed BW-MED: its provider endpoints, DS receipt keys and MLS parameters. Sealed by a key the DIRECTORY RECORD authorises — the MED is not its own trust anchor.",
+      "material": "The entity's sealed BW-MED: its provider endpoints and MLS parameters. SBM-ADR-0015 moved the DS receipt keys OFF it, to the provider's own BW-PROVIDER descriptor. Sealed by a key the DIRECTORY RECORD authorises — the MED is not its own trust anchor.",
       "operation": "GET /.well-known/bw/med/{uid}",
       "served_by": "the entity's provider (EDD resolver surface)",
-      "absent": "the entity's provider endpoints and DS receipt keys are unknown, so the material they point at cannot be resolved. R30-PUB-04: this row said the MED 'pins every other seal key'. It does not — `DirectoryRecord.authorized_seal_keys` does, and a retained MED is no substitute for the historical directory authorisation that made it acceptable.",
+      "supplied_as": "bundle manifest key `med`",
+      "absent": "the entity's provider endpoints are unknown, so the material they point at cannot be resolved. R30-PUB-04: this row said the MED 'pins every other seal key'. It does not — `DirectoryRecord.authorized_seal_keys` does, and a retained MED is no substitute for the historical directory authorisation that made it acceptable.",
       "survives_provider_exit": false,
       "note": "The endpoints INSIDE it move on an exit; the document itself must remain retrievable as it stood at the act, and nothing names who serves that."
     },
@@ -15,6 +16,7 @@
       "material": "The sealed BW-ORG version the message pinned: acceptance policy, delivery grades, scope map.",
       "operation": "GET /.well-known/bw/org/{uid}?doc_digest=",
       "served_by": "the entity's provider (EDD resolver surface)",
+      "supplied_as": "bundle manifest key `org`",
       "absent": "the policy that governed the act cannot be read.",
       "survives_provider_exit": false,
       "note": "Retrieval BY DIGEST is the right interface: evidence pins `acceptance_policy_ref.doc_digest`, so a verifier can ask for exactly the version it needs. The interface is settled; the custody is not."
@@ -24,6 +26,7 @@
       "material": "The BW-ORG succession chain: the versions linking the pinned one to its predecessors, so linkage and in-force at the act can be shown. It does NOT establish that the pinned version was the latest — a retained prefix looks complete whether or not a successor was omitted, which is what LINT-BND-I3 says and what this row used to contradict (R30-PUB-04).",
       "operation": "GET /.well-known/bw/org/{uid}?doc_digest= , once per version",
       "served_by": "the entity's provider (EDD resolver surface)",
+      "supplied_as": "bundle manifest key `policy_history`",
       "absent": "LINT-BND-I1 / LINT-BND-I3 — linkage and in-force are provable from the pinned document alone; MAXIMALITY is not, and the verdict says INCOMPLETE rather than passing.",
       "survives_provider_exit": false,
       "residuals": [
@@ -36,6 +39,7 @@
       "material": "The recipient entity's BW-MEMBER bindings as they stand: devices, capabilities, confirmation keys, status.",
       "operation": "GET /uid/{uid}/members , GET /.well-known/bw/member/{uid}/{mid}",
       "served_by": "the entity's provider (EDD resolver surface)",
+      "supplied_as": "bundle manifest key `members`",
       "absent": "no attribution and no satisfiability check can run.",
       "survives_provider_exit": false,
       "note": "This list answers the PRESENT-tense question only (satisfiability, LINT-BND-08/09). Attribution reads `member_history` as of the act."
@@ -45,6 +49,7 @@
       "material": "Superseded BW-MEMBER versions with their windows, so a member's status and confirmation key can be resolved AS THEY STOOD AT THE ACT (X-17/DR-11).",
       "operation": "GET /.well-known/bw/member/{uid}/{mid}?as_of= (or ?version=)",
       "served_by": "the entity's provider (EDD resolver surface)",
+      "supplied_as": "bundle manifest key `member_history`",
       "absent": "attribution falls back to the current binding, which is correct only while nothing has changed; LINT-BND-34 exists because a key minted after the act must not anchor it.",
       "survives_provider_exit": false,
       "note": "TS ICS 146 / MWAP §3 require as-of retrieval for the evidence retention period, INCLUDING for retired members — a duty on a surface that a provider exit removes."
@@ -54,6 +59,7 @@
       "material": "The SENDER entity's bindings, for the sender half of the identity tuple.",
       "operation": "GET /.well-known/bw/member/{uid}/{mid} on the SENDER's provider",
       "served_by": "the sender entity's provider — a different provider, and often a different jurisdiction",
+      "supplied_as": "bundle manifest key `counterparty_members`",
       "absent": "LINT-BND-I2 — the sender-side half is undecidable from the retained material, reported INCOMPLETE rather than passed or failed.",
       "survives_provider_exit": false,
       "residuals": [
@@ -65,6 +71,7 @@
       "material": "The sealed ROSTER snapshot for an evidenced epoch: who was in the group, and the ratchet-tree hash.",
       "operation": "GET /uid/{uid}/roster-snapshot?scope_id=&epoch=",
       "served_by": "the recipient's provider",
+      "supplied_as": "bundle manifest key `roster`",
       "absent": "membership at the epoch rests on the current roster instead of the one the evidence commits to.",
       "survives_provider_exit": false
     },
@@ -73,6 +80,7 @@
       "material": "Retained MLS GroupContext bytes for every evidenced epoch, so `mls_state` can be recomputed rather than trusted.",
       "operation": "GET /groups/{group_id}/context?epoch=",
       "served_by": "the Delivery Service — the retention duty's read surface, access-controlled to authorised verifiers (X-23)",
+      "supplied_as": "bundle manifest key `group_contexts`",
       "absent": "LINT-BND-I4 — the state the evidence commits to cannot be inspected, and the verdict says so.",
       "survives_provider_exit": false,
       "residuals": [
@@ -85,6 +93,7 @@
       "material": "The per-device KeyPackage availability and registry revision AS THEY STOOD AT GROUP CREATION, so the cipher-suite decision can be recomputed.",
       "operation": "none published — the read surface exists for group context, not for the formation inputs (A5)",
       "served_by": "the recipient's provider",
+      "supplied_as": "bundle manifest key `formation_inputs`",
       "absent": "LINT-BND-I5 — the strongest-usable arm of the suite decision cannot be recomputed.",
       "survives_provider_exit": false,
       "residuals": [
@@ -97,6 +106,7 @@
       "material": "The cipher-suite registry revision the formation decision was taken against.",
       "operation": "none published — carried as a demonstration fixture",
       "served_by": "the design authority",
+      "supplied_as": "bundle manifest key `suite_registry`",
       "absent": "the suite decision is taken on trust.",
       "survives_provider_exit": true,
       "note": "Not a provider's to hold, so an exit does not touch it."
@@ -106,6 +116,7 @@
       "material": "The participant's admission windows, to decide whether each provider named in the evidence was admitted WHEN IT ACTED.",
       "operation": "GET /participants/{participant_id}?as_of=",
       "served_by": "the Federation Authority",
+      "supplied_as": "bundle manifest key `federation_register`",
       "absent": "LINT-BND-I6 — the bundle cannot establish that the providers it names were admitted at the act, and says INCOMPLETE.",
       "survives_provider_exit": true,
       "note": "The one historical read that a provider exit does NOT touch, because the Authority serves it and is not the exiting party. This is the shape the other rows lack.",
@@ -118,6 +129,7 @@
       "material": "The Federation Authority's own seal keys, to verify the register records.",
       "operation": "the Authority's published key set",
       "served_by": "the Federation Authority",
+      "supplied_as": "not a manifest key — the verifier's own configured Federation-Authority anchors, passed by `bundle_lint.py --trust-store`",
       "absent": "the register is unverifiable, so admission is undecided.",
       "survives_provider_exit": true
     },
@@ -126,6 +138,7 @@
       "material": "The DS-signed handover receipts the delivery event rests on.",
       "operation": "none published for third-party retrieval — the receipt travels to the party that collected",
       "served_by": "the issuing RDP; the collecting party's own copy",
+      "supplied_as": "bundle manifest key `receipts`",
       "absent": "the S2 event rests on the DE's assertion rather than on the DS's signature.",
       "survives_provider_exit": false
     },
@@ -134,6 +147,7 @@
       "material": "The sealed evidence objects and packages themselves.",
       "operation": "GET /uid/{uid}/evidence/{message_id} , GET /evidence/{message_id}",
       "served_by": "each party's own wallet copy; the issuing RDP",
+      "supplied_as": "bundle manifest key `evidence`",
       "absent": "there is nothing to verify.",
       "survives_provider_exit": true,
       "note": "The only material with a SECOND independent holder by design: each party keeps its own copy, so a provider exit does not destroy it. Why the evidence itself is the durable part and the material needed to CHECK it is the fragile part."
@@ -143,6 +157,7 @@
       "material": "The (salt, content_class) opening of an availability-grade commitment.",
       "operation": "none, by design — the salt travels only inside the end-to-end-encrypted envelope",
       "served_by": "the endpoints, and only the parties of a dispute",
+      "supplied_as": "bundle manifest key `grade_reveals` — the manifest key and the argument are spelled differently, which is why this column exists",
       "absent": "the grade commitment stays unopened, which is the point; the claim that rests on it is then unproven rather than failed. R30-PUB-04: not the same as the class being hidden — a cleartext `scope_ref` resolved against a published scope map can narrow it, and a scope covering one class gives it. What an unopened commitment withholds is the committed value, not every inference about the message.",
       "survives_provider_exit": true
     },
@@ -151,6 +166,7 @@
       "material": "The opening of an agent act's mandate commitment.",
       "operation": "none, by design — as for reveals",
       "served_by": "the endpoints, and only the parties of a dispute",
+      "supplied_as": "bundle manifest key `mandate_reveals`",
       "absent": "the mandate commitment stays unopened, which is the point; the claim that rests on it is then unproven rather than failed. R30-PUB-04: not the same as the class being hidden — a cleartext `scope_ref` resolved against a published scope map can narrow it, and a scope covering one class gives it. What an unopened commitment withholds is the committed value, not every inference about the message.",
       "survives_provider_exit": true
     },
@@ -159,6 +175,7 @@
       "material": "Evidence that a Change-Indication Evidence's outputs are the transformation of its input. Neither of the two transformations is profiled, so there is no operation to trace.",
       "operation": "none — neither is profiled (open items A13/A15)",
       "served_by": "nobody: the profile does not claim this is establishable",
+      "supplied_as": "nothing supplies it: no operation produces the material (A13/A15), so no manifest key is defined and none should be",
       "absent": "LINT-BND-I7 — stated as unestablishable rather than reported as a gap in the bundle, because neither is profiled and a provider MUST NOT issue one.",
       "survives_provider_exit": true,
       "residuals": [
@@ -170,6 +187,7 @@
       "material": "The EU-governed directory record for the entity: where to resolve it, and `authorized_seal_keys` — the set that decides which key may seal its BW-MED/ORG/MEMBER documents.",
       "operation": "GET /resolve/{uid}",
       "served_by": "the EDD core registry",
+      "supplied_as": "not a bundle input — read live from the EDD core registry; no manifest key",
       "absent": "no discovery document can be shown to have been sealed by a key the entity was entitled to use, so the whole discovery chain is unanchored (`check_directory_pin`).",
       "survives_provider_exit": true,
       "note": "R30-PUB-04 found this missing from the inventory entirely: RETR-01 demands the arguments of `check_bundle`, and the trust anchors are arguments of `discovery_lint` instead. Registry-held, so an exit does not strand it — but the AS-OF question does: the record is served current, and nothing publishes the authorisation as it stood at a past act."
@@ -179,6 +197,7 @@
       "material": "The configured trust anchors a verifier resolves seals against.",
       "operation": "none published — a verifier's own configuration",
       "served_by": "the verifying party",
+      "supplied_as": "not a manifest key — the verifier's own configuration, passed by `bundle_lint.py --trust-store`",
       "absent": "no seal resolves to an anchor, so nothing is attributable (`check_trust`).",
       "survives_provider_exit": true,
       "note": "Held by the verifier rather than by any provider, which is why it survives — and why it is the one input whose absence is the verifier's own problem."
@@ -188,6 +207,7 @@
       "material": "The sealed BW-PROVIDER descriptor of each RDP named in the evidence, carrying the `ds_receipt_keys` that verify its Delivery-Service receipts.",
       "operation": "the provider's own discovery surface; the descriptor's seal key is pinned to the participant by the membership register (LINT-TRUST-07)",
       "served_by": "each RDP, for itself",
+      "supplied_as": "bundle manifest key `provider_descriptors`. Added 2026-10-06: the cycle that moved this key to the provider's descriptor gave `check_bundle` the argument and defined no manifest key, so a retained receipt could not be verified through `bundle_lint.py` at all",
       "absent": "LINT-BND-I8 — the key that signed a retained receipt cannot be resolved, so the handover rests on the DE's assertion alone and the verdict says INCOMPLETE rather than passing.",
       "survives_provider_exit": false,
       "residuals": [

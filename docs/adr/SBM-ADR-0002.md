@@ -5,7 +5,10 @@ label: "A governed federation, four instruments"
 decision_status: accepted
 implementation_status: [specified, in-reference, planned]
 implementation: >-
-  specified; the register admits RDPs and is in the reference; admission for messaging providers is planned, not implemented ([A6](../REVIEW_AGENDA.md)); an operated register not established
+  specified; the register admits RDPs and is in the reference, its `role` enum closed to
+  `rdp` by decision rather than as a stage since SBM-ADR-0015 withdrew the second
+  participant kind ([A6](../REVIEW_AGENDA.md), closed). What remains planned: an
+  OPERATED register — none is established, and the shipped one is a file
 choice: >-
   admitted, supervised providers; Trusted Lists (qualification), membership register (admission),
   EDD (identity), design authority (change control) kept apart · [§13.1](../../Secure-Business-Messaging-Profile.md#131-institutional-roles)
@@ -85,9 +88,10 @@ authority, and it admits RDPs only.
 - **Decision:** accepted.
 - **Implementation:** specified; the register admits RDPs and is in the
   reference — its `role` enum is closed to `rdp`, and provider descriptors are
-  sealed by the participant. Admission for messaging providers is planned and
-  not implemented ([A6](../REVIEW_AGENDA.md)); an operated register is not
-  established.
+  sealed by the participant. [SBM-ADR-0015](SBM-ADR-0015.md) withdrew the second
+  participant kind (6 October 2026), so the closed `role` enum is the decision and
+  not a stage on the way to another one ([A6](../REVIEW_AGENDA.md), closed); an
+  operated register is not established.
 
 ## Supersedes
 

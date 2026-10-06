@@ -247,6 +247,17 @@ def lint_bundle(manifest, base, fa_anchors=None):
     # R4-03: OPTIONAL retained DS receipts, {message_id: file}.
     receipts = {mid: _load(os.path.join(base, f))
                 for mid, f in (manifest.get("receipts") or {}).items()} or None
+    # SBM-ADR-0015: the BW-PROVIDER descriptors that publish the `ds_receipt_keys`
+    # a retained receipt is verified against — one per RDP named by a receipt,
+    # selected by `participant_id`. THE SAME OMISSION as the R4-06 note below,
+    # in the very cycle that moved this key: `check_bundle` grew the argument,
+    # `docs/retrievability.json` documented the input, and nothing read a
+    # manifest key for it — so after the move a retained receipt could not be
+    # verified through this entry point at all, whatever the manifest supplied,
+    # and only a hand-built call to `check_bundle` could reach the rule. No
+    # sample manifest carried a receipt, so the bar stayed green over it.
+    provider_descriptors = [_load(os.path.join(base, f))
+                            for f in (manifest.get("provider_descriptors") or [])] or None
     # R5-05: OPTIONAL retained GroupContext octets. R4-06 built the semantic
     # verifier, added `group_contexts` to check_bundle and NEVER PASSED IT
     # HERE, and no manifest carried the material — so the rule was reachable
@@ -306,6 +317,7 @@ def lint_bundle(manifest, base, fa_anchors=None):
         suite_registry=suite_registry,
         federation_register=federation_register,
         fa_anchors=fa_anchors,
+        provider_descriptors=provider_descriptors,
     )
 
 
@@ -388,7 +400,15 @@ RETAINED_MATERIAL_INPUTS = (
     # Named here rather than left unnameable, so the gap is reported through
     # the same machinery as every other unestablished property, and so a
     # definition has somewhere to arrive.
-    "transformation_traces")
+    "transformation_traces",
+    # SBM-ADR-0015. Declared here LATE: the cycle that moved the receipt key to
+    # the provider's descriptor added the argument to `check_bundle` and left it
+    # out of this tuple, so the probe above — which asserts every DECLARED input
+    # is a parameter — had nothing to say about a parameter that was not
+    # declared. A one-way subset check cannot see this direction; what does is
+    # the retrievability gate, which now requires every declared input to name
+    # how it reaches the verifier and refuses a manifest key nothing reads.
+    "provider_descriptors")
 
 
 # Batch A / A5 — the ACT's own instant, per evidence type. Admission is asked
@@ -500,6 +520,19 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
     verifier reaches its own verdict instead of taking RDP(out)'s word that it
     checked at issuance. Before R4-03 nothing outside the mock consumed the
     resolver at all.
+
+    `provider_descriptors` (SBM-ADR-0015, optional): the sealed BW-PROVIDER
+    descriptors of the RDPs the receipts name, selected by `participant_id`.
+    They carry the `ds_receipt_keys` the paragraph above resolves against: the
+    key is the ISSUING RDP's own, published by the provider rather than on its
+    customer's BW-MED, and that path is deleted rather than kept as a fallback.
+    Without the issuer's descriptor a retained receipt reports LINT-BND-I8 and
+    the handover rests on the DE's assertion alone.
+
+    This argument, the manifest key, this paragraph and the registry row were
+    added in four different cycles, which is the point of the note beside the
+    loader: the argument arrived first, and for three weeks the published entry
+    point could not supply it.
 
     `policy_history` (R3-02, optional): the ordered BW-ORG chain. Where
     supplied it establishes LINKAGE and IN-FORCE-AT-THE-ACT — the chain is
