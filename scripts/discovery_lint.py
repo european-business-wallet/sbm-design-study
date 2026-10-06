@@ -236,10 +236,25 @@ def lint_med(v, d):
     mls = d.get("mls") or {}
     if not isinstance(mls.get("cipher_suites"), list) or not mls["cipher_suites"]:
         v.add("LINT-DISC-05", "BW-MED mls.cipher_suites must be a non-empty list")
-    for url_field in ("keypackage_url", "ds_url"):
-        u = mls.get(url_field)
+    # SBM-ADR-0015 (BW-MED 2.2): the routing and KeyPackage endpoints are the
+    # RDP's, under `rdp`, not under `mls` — `mls` describes the group's
+    # cryptographic parameters, not who serves them. The `msp` field is
+    # withdrawn with the role; its content is `rdp.delivery_service`.
+    rdp = d.get("rdp") or {}
+    for url_field in ("delivery_service", "keypackage_url", "ds_url"):
+        u = rdp.get(url_field)
         if not (isinstance(u, str) and u.startswith("https://")):
-            v.add("LINT-DISC-05", f"BW-MED mls.{url_field} must be an https URL")
+            v.add("LINT-DISC-05", f"BW-MED rdp.{url_field} must be an https URL")
+    if "msp" in d:
+        v.add("LINT-DISC-05",
+              "BW-MED carries `msp`, withdrawn in 2.2: there is one provider role "
+              "and the Delivery Service is the RDP's (SBM-ADR-0015)")
+    if "ds_receipt_keys" in d:
+        v.add("LINT-DISC-05",
+              "BW-MED carries `ds_receipt_keys`, withdrawn in 2.2: a provider's "
+              "receipt key is published in its own BW-PROVIDER descriptor, and the "
+              "BW-MED path is deleted rather than kept as a fallback "
+              "(SBM-ADR-0015)")
     if not d.get("expires_at"):
         v.add("LINT-DISC-05", "BW-MED must declare expires_at (freshness bound)")
     ss = mls.get("scopes_supported")

@@ -466,7 +466,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                  group_contexts=None, counterparty_members=None,
                  formation_inputs=None, suite_registry=None,
                  federation_register=None, fa_anchors=None,
-                 transformation_traces=None):
+                 transformation_traces=None, provider_descriptors=None):
     """Return a list of (rule, message) violations for a loaded bundle.
 
     `member_history` (DR-11, optional): {mid: [BW-MEMBER versions]}, each
@@ -966,6 +966,17 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 f"against the published confirmation key of {smid!r}/{sdid!r} — "
                 "the submission was not authorised by that member's device "
                 f"(X-03/D4): {why}")
+    def _descriptor_for(rdp_id):
+        """The BW-PROVIDER descriptor of one provider, by `participant_id`.
+
+        `issuing_rdp_id` and `participant_id` are the same value space
+        (`urn:sbm:rdp:…`), so the receipt names its own key's publisher.
+        """
+        for descriptor in (provider_descriptors or []):
+            if isinstance(descriptor, dict) and descriptor.get("participant_id") == rdp_id:
+                return descriptor
+        return None
+
     def _check_published_key(ev, field, conf):
         """LINT-BND-21 for ONE proof: its signature against the published
         confirmation_key anchor of the device it names, resolved at its own act.
@@ -1892,8 +1903,25 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 mid=receipt["mid"], device_id=receipt["device_id"],
                 session_binding=receipt["session_binding"],
                 message_digest=receipt["message_digest"])
+            # SBM-ADR-0015: the receipt key is the ISSUING RDP's, published in
+            # its BW-PROVIDER descriptor and pinned by its membership record.
+            # It used to be read from the entity's BW-MED, because the Delivery
+            # Service was a second provider and the customer's signed document
+            # was the only thing already retained for the evidence period. With
+            # one provider role the key is the RDP's own, and the MED path is
+            # DELETED rather than kept as a fallback — a `kid` published only in
+            # a BW-MED does not resolve.
+            descriptor = _descriptor_for(receipt.get("issuing_rdp_id"))
+            if descriptor is None:
+                add("LINT-BND-I8",
+                    f"DS receipt for {message_id!r}: no BW-PROVIDER descriptor "
+                    f"for the issuing RDP {receipt.get('issuing_rdp_id')!r} was "
+                    "supplied, so the key that signed it cannot be resolved and "
+                    "the handover rests on the DE's assertion alone "
+                    "(SBM-ADR-0015)")
+                continue
             try:
-                verify_ds_receipt(receipt, med, expect=expect)
+                verify_ds_receipt(receipt, descriptor, expect=expect)
             except ReceiptVerificationError as e:
                 add("LINT-BND-38",
                     f"DS receipt for {message_id!r}: {e.detail}")

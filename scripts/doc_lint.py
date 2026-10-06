@@ -252,6 +252,108 @@ def scan():
     return violations
 
 
+# SBM-ADR-0015 — the MSP is not a role. The two roles were never apart on the
+# wire (no Schema, contract or CDDL carries an MSP identity, and the register
+# admits only `rdp`), so what could go stale is the TEXT: a reading path that
+# still teaches a party the protocol does not have.
+#
+# This is its own check rather than another FORBIDDEN pattern because the
+# decision records must keep the word. ADR-0004 decided the MSP WOULD be a
+# participant and ADR-0015 records folding it away; a guard that swept
+# `docs/adr/` would demand the rewriting of the history that explains the
+# change. The other guards sweep the records deliberately — an ADR must not
+# present JCS as current either — so the exclusion is this guard's, not the
+# sweep's.
+#
+# `scripts/doc_lint.py`, `tests/test_figures.py` and
+# `tests/test_policy_evaluator_owner.py` also keep the word, because they are
+# what forbids it.
+#: The role, however it is written. The abbreviation was the whole pattern at
+#: first, which is a scan of the ACRONYM rather than of the role: the study's
+#: outward-facing README spelled it out in plain language — "a messaging service
+#: provider, which need not be qualified" — and the sweep that reported 113
+#: occurrences closed reported it clean.
+STALE_ROLE = re.compile(r"\bMSPs?\b|messaging service provider", re.IGNORECASE)
+#: A path or URL that merely CONTAINS the word is not a role name: the
+#: historical `docs/rdp-msp-trust-analysis/` folder keeps its name, and a
+#: reading path is allowed to link to it. A path is what this matches: a
+#: separator AND an extension, or a directory named with a trailing separator.
+#: The first version of this guard blanked ANY token holding a slash, which read
+#: `RDP/MSP` as a path — and so let the withdrawn name stand in a TS change-
+#: indication clause, an I-D deployment note and the umbrella's own
+#: minimum-viable box, while reporting the tree clean.
+STALE_ROLE_PATH = re.compile(r"\b[\w.-]*[\w]/[\w./-]*(?:\.\w+|/)")
+STALE_ROLE_GLOBS = ["*.md", "docs/*.md", "brief/*.md", "ietf/*.md", "etsi/*.md",
+                    "schemas/*.json", "cddl/*.cddl", "*.yaml",
+                    "docs/diagrams/*.svg", "docs/diagrams/*.mermaid"]
+STALE_ROLE_EXEMPT_DIRS = ("docs/adr/", "docs/reviews/", "docs/rdp-msp-trust-analysis/")
+#: Generated FROM the exempt records, so its mentions are theirs. Flagging it
+#: would demand editing a file nobody edits by hand, to remove a word the
+#: records it renders must keep.
+STALE_ROLE_EXEMPT_FILES = ("docs/decisions-index.md",)
+
+#: A generated document is exempt, which leaves its SOURCE as the only place a
+#: withdrawn role can be corrected — and `docs/rule-ownership.json` is not a
+#: scanned glob, so two rule TITLES naming the withdrawn role rendered into
+#: `docs/rule-ownership.md` while this guard reported the tree clean. These are
+#: the source's prose fields, scanned by name. The pattern fields are deliberately
+#: NOT here: a detector that forbids "the MSP evaluates the acceptance policy"
+#: must keep the word in order to find it.
+STALE_ROLE_JSON_PROSE = ("docs/rule-ownership.json",)
+STALE_ROLE_PROSE_FIELDS = ("title", "owner_anchor", "note")
+
+
+def _json_prose(node, trail=()):
+    """Every prose-field string in a generated document's source, with its path."""
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key in STALE_ROLE_PROSE_FIELDS and isinstance(value, str):
+                yield ".".join(trail + (key,)), value
+            else:
+                yield from _json_prose(value, trail + (str(key),))
+    elif isinstance(node, list):
+        for i, item in enumerate(node):
+            yield from _json_prose(item, trail + (str(i),))
+
+
+def scan_stale_roles():
+    """Every current-facing occurrence of a withdrawn role name (SBM-ADR-0015).
+
+    Returns [(rel, line_no, line)]. The historical records keep the word; so do
+    the three files that forbid it, and the detector patterns that catch it.
+    """
+    import json
+    out, seen = [], set()
+    for g in STALE_ROLE_GLOBS:
+        for path in sorted(ROOT.glob(g)):
+            rel = path.relative_to(ROOT).as_posix()
+            if rel in seen or rel in EXEMPT:
+                continue
+            if rel in STALE_ROLE_EXEMPT_FILES or any(
+                    rel.startswith(d) for d in STALE_ROLE_EXEMPT_DIRS):
+                continue
+            seen.add(rel)
+            for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                # Blank out path-like tokens first, so a link to a historical
+                # folder whose NAME carries the word is not read as a role.
+                scrubbed = re.sub(r"\]\([^)]*\)", "]()", line)
+                scrubbed = re.sub(r"`[\w./-]*[Mm][Ss][Pp][\w./-]*`", "``", scrubbed)
+                scrubbed = STALE_ROLE_PATH.sub(" ", scrubbed)
+                if STALE_ROLE.search(scrubbed):
+                    out.append((rel, n, line.strip()))
+    for rel in STALE_ROLE_JSON_PROSE:
+        path = ROOT / rel
+        if not path.exists():
+            continue
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for field, value in _json_prose(json.loads(path.read_text(encoding="utf-8"))):
+            if not STALE_ROLE.search(STALE_ROLE_PATH.sub(" ", value)):
+                continue
+            n = next((i for i, l in enumerate(lines, 1) if value[:60] in l), 0)
+            out.append((rel, n, f"{field}: {value}"))
+    return out
+
+
 def front_matter(path):
     """The figure's front matter as {key: value}, or None. SVG: an XML comment
     opening `<!-- figure`; Mermaid: `%% figure` … `%% end figure`."""
@@ -647,6 +749,10 @@ def main():
     for rel, n, tok, text in v:
         snippet = text if len(text) <= 120 else text[:117] + "..."
         print(f"[STALE] {rel}:{n}: '{tok}' -> {snippet}")
+    roles = scan_stale_roles()
+    for rel, n, text in roles:
+        snippet = text if len(text) <= 120 else text[:117] + "..."
+        print(f"[ROLE] {rel}:{n}: a withdrawn role name (SBM-ADR-0015) -> {snippet}")
     f = scan_figures()
     for rel, problem in f:
         print(f"[FIGURE] {rel}: {problem}")
@@ -661,7 +767,13 @@ def main():
     for rel, problem in records:
         print(f"[RECORD] {rel}: {problem}")
     f = f + links + licence + records
-    if v or f:
+    if v or f or roles:
+        if roles:
+            print(f"\n{len(roles)} occurrence(s) of a withdrawn role name in "
+                  "current-facing text. SBM-ADR-0015 folds the Delivery Service "
+                  "into the RDP: there is one provider role, and the text must not "
+                  "teach a party the protocol does not have. The decision records "
+                  "keep the word, and so do the three files that forbid it.")
         if v:
             print(f"\n{len(v)} pre-inversion mechanism token(s) found in prose. "
                   f"See docs/adr/SBM-ADR-0008.md for the octet-authoritative model.")

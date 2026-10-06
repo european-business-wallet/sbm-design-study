@@ -82,6 +82,9 @@ bl = _load("bundle_lint", "bundle_lint.py")
 mock = _load("mock_rdp", "mock_rdp.py")
 
 MED = json.loads((ROOT / "samples" / "sample-BW-MED.json").read_text())["projection"]
+# SBM-ADR-0015: the receipt key moved to the provider's descriptor.
+PROVIDER = json.loads(
+    (ROOT / "samples" / "sample-BW-PROVIDER.json").read_text())["projection"]
 SE = json.loads((ROOT / "samples" / "sample-SE.json").read_text())["projection"]
 
 OCTETS = b"\x00\x01" + b"the exact octets handed to the device" * 3
@@ -146,25 +149,27 @@ def _digest():
 # ===========================================================================
 
 def test_a_receipt_verifies_against_the_published_key():
-    assert mock.delivered_at_from_receipt(_receipt(), _digest(), med=MED, expect=_expect()) == EVENT
+    assert mock.delivered_at_from_receipt(_receipt(), _digest(), provider=PROVIDER, expect=_expect()) == EVENT
 
 
 def test_SUBSTITUTING_the_published_key_now_fails():
     """The finding's probe. It used to change nothing, because the published
     key was never used — the check re-derived a demo key from `kid` and a
     hard-coded seed and compared re-encoded bytes."""
-    tampered = copy.deepcopy(MED)
+    tampered = copy.deepcopy(PROVIDER)
     k = tampered["ds_receipt_keys"][0]
     k["public_key_b64"] = "AAAA" + k["public_key_b64"][4:]
     with pytest.raises(mock.AckRejected) as exc:
-        mock.delivered_at_from_receipt(_receipt(), _digest(), med=tampered, expect=_expect())
+        mock.delivered_at_from_receipt(_receipt(), _digest(), provider=tampered,
+                                      expect=_expect())
     assert exc.value.reason == "receipt-unverifiable"
 
 
 def test_a_receipt_with_no_published_key_yields_no_de():
     """Issuing a DE when there is nothing to verify against was the defect."""
     with pytest.raises(mock.AckRejected) as exc:
-        mock.delivered_at_from_receipt(_receipt(), _digest(), med=None, expect=_expect())
+        mock.delivered_at_from_receipt(_receipt(), _digest(), provider=None,
+                                      expect=_expect())
     assert "nothing to verify against" in exc.value.detail or \
            "cannot be resolved" in exc.value.detail
 
@@ -195,9 +200,24 @@ def test_the_verification_no_longer_re_derives_the_signing_key():
 # ...and a verifier reaches its own verdict
 # ---------------------------------------------------------------------------
 
-def _bnd38(receipts, med=MED):
+def _bnd38(receipts, descriptors=None):
+    """LINT-BND-38 over one retained receipt.
+
+    SBM-ADR-0015: the MED is still the entity's document the bundle is about;
+    what moved is where the RECEIPT KEY comes from, so the descriptors are a
+    separate input. `descriptors=None` means none was supplied, which is the
+    case `test_a_receipt_with_no_descriptor_is_reported` exercises.
+    """
+    if descriptors is None:
+        # The descriptor has to be the ISSUING RDP's — that is the whole point
+        # of the move — so it is keyed to the issuer these receipts name rather
+        # than to the shipped sample's own participant_id.
+        issuer = next((r.get("issuing_rdp_id") for r in receipts.values()
+                       if isinstance(r, dict)), None)
+        descriptors = [dict(copy.deepcopy(PROVIDER), participant_id=issuer)]
     return [m for r, m in bl.check_bundle(
-        SE["recipient_uid"], med, {}, [], [copy.deepcopy(SE)], receipts=receipts)
+        SE["recipient_uid"], MED, {}, [], [copy.deepcopy(SE)], receipts=receipts,
+        provider_descriptors=descriptors)
         if r == "LINT-BND-38"]
 
 
@@ -243,7 +263,8 @@ def test_the_bundle_layer_rejects_an_algorithm_disagreement():
 
 
 def test_a_receipt_with_no_published_keys_is_reported():
-    issues = _bnd38({SE["message_id"]: _receipt()}, med={})
+    bare = {"participant_id": _receipt()["issuing_rdp_id"]}   # descriptor, no keys
+    issues = _bnd38({SE["message_id"]: _receipt()}, descriptors=[bare])
     assert issues and "has no referent" in issues[0]
 
 
@@ -349,10 +370,10 @@ def test_the_live_path_returns_the_SIGNED_instant():
     delivery instant nobody had signed while the retained path caught it."""
     moved = _tamper(server_time="2026-04-04T09:00:00Z")
     with pytest.raises(mock.AckRejected) as exc:
-        mock.delivered_at_from_receipt(moved, _digest(), med=MED, expect=_expect())
+        mock.delivered_at_from_receipt(moved, _digest(), provider=PROVIDER, expect=_expect())
     assert "SIGNED payload says" in exc.value.detail
     # ...and the honest instant is the signed one, not whatever is presented.
-    assert mock.delivered_at_from_receipt(_receipt(), _digest(), med=MED, expect=_expect()) == EVENT
+    assert mock.delivered_at_from_receipt(_receipt(), _digest(), provider=PROVIDER, expect=_expect()) == EVENT
 
 
 def test_the_two_paths_agree_on_every_tampering():
@@ -372,7 +393,7 @@ def test_the_two_paths_agree_on_every_tampering():
     for label, receipt in cases:
         live_failed = False
         try:
-            mock.delivered_at_from_receipt(receipt, _digest(), med=MED, expect=_expect())
+            mock.delivered_at_from_receipt(receipt, _digest(), provider=PROVIDER, expect=_expect())
         except mock.AckRejected:
             live_failed = True
         retained_failed = bool(_bnd38({SE["message_id"]: receipt}))
@@ -422,7 +443,7 @@ def test_a_receipt_for_A_cannot_authorise_B_even_with_identical_ciphertext():
     receipt = _receipt(message_id="01HZ6MESSAGE_A0000000001")
     with pytest.raises(mock.AckRejected) as exc:
         mock.delivered_at_from_receipt(
-            receipt, _digest(), med=MED,
+            receipt, _digest(), provider=PROVIDER,
             expect=_expect(message_id="01HZ6MESSAGE_B0000000002"))
     assert exc.value.reason == "receipt-context-mismatch"
 
@@ -434,7 +455,7 @@ def test_a_receipt_for_A_cannot_authorise_B_even_with_identical_ciphertext():
 ])
 def test_cross_context_receipt_reuse_fails(field, other):
     with pytest.raises(mock.AckRejected) as exc:
-        mock.delivered_at_from_receipt(_receipt(), _digest(), med=MED,
+        mock.delivered_at_from_receipt(_receipt(), _digest(), provider=PROVIDER,
                                        expect=_expect(**{field: other}))
     assert exc.value.reason == "receipt-context-mismatch"
 
@@ -443,7 +464,7 @@ def test_a_caller_that_states_nothing_is_refused():
     """Fail closed: 'no expected context' is how the defect existed, so it is
     not a permitted mode."""
     with pytest.raises(mock.AckRejected) as exc:
-        mock.delivered_at_from_receipt(_receipt(), _digest(), med=MED)
+        mock.delivered_at_from_receipt(_receipt(), _digest(), provider=PROVIDER)
     assert exc.value.reason == "receipt-context-missing"
 
 
@@ -453,14 +474,14 @@ def test_re_aliasing_the_key_under_another_kid_fails():
     objects. Re-aliasing one public key under a second published kid and
     changing only the outer selector verified fine — the cryptography was real
     and the attribution was not."""
-    aliased = copy.deepcopy(MED)
+    aliased = copy.deepcopy(PROVIDER)
     second = copy.deepcopy(aliased["ds_receipt_keys"][0])
     second["kid"] = "alias-of-the-same-key"
     aliased["ds_receipt_keys"].append(second)
     receipt = copy.deepcopy(_receipt())
     receipt["ds_kid"] = "alias-of-the-same-key"
     with pytest.raises(mock.AckRejected):
-        mock.delivered_at_from_receipt(receipt, _digest(), med=aliased,
+        mock.delivered_at_from_receipt(receipt, _digest(), provider=aliased,
                                        expect=_expect())
 
 
@@ -700,7 +721,7 @@ def test_a_bare_mapping_is_refused_by_the_verifier():
     _staged_item()
     receipt = mock.receipt_ack(**_ack_args())
     with pytest.raises(ReceiptVerificationError) as exc:
-        verify_ds_receipt(receipt, MED, expect={"message_id": MSG})
+        verify_ds_receipt(receipt, PROVIDER, expect={"message_id": MSG})
     assert exc.value.reason == "receipt-context-invalid"
 
 
@@ -1356,3 +1377,25 @@ def test_the_collection_response_can_only_carry_the_promised_state():
     bad["items"][0]["state"] = "queued"
     assert list(validator.iter_errors(bad)), \
         "the response Schema still admits a state the operation cannot return"
+
+
+def test_a_receipt_with_no_descriptor_for_its_issuer_is_reported_as_incomplete():
+    """LINT-BND-I8 (SBM-ADR-0015): the key is the ISSUING RDP's.
+
+    Supplying no descriptor for the RDP a receipt names is not a failure of the
+    evidence — it is missing verifier material, and the verdict has to say which
+    rather than passing over it. The entity's BW-MED is not consulted: that path
+    is deleted, so a receipt cannot be rescued by a key published there.
+    """
+    issues = [m for r, m in bl.check_bundle(
+        SE["recipient_uid"], MED, {}, [], [copy.deepcopy(SE)],
+        receipts={SE["message_id"]: _receipt()}, provider_descriptors=[])
+        if r == "LINT-BND-I8"]
+    assert issues, "no descriptor for the issuing RDP must be reported, not ignored"
+    assert "cannot be resolved" in issues[0]
+    # And it is a RESIDUAL, not a failure of the receipt: LINT-BND-38 stays quiet.
+    fatal = [r for r, _ in bl.check_bundle(
+        SE["recipient_uid"], MED, {}, [], [copy.deepcopy(SE)],
+        receipts={SE["message_id"]: _receipt()}, provider_descriptors=[])
+        if r == "LINT-BND-38"]
+    assert not fatal, "absent material must not be reported as a bad receipt"

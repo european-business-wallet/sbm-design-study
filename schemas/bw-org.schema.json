@@ -57,7 +57,7 @@
       "additionalProperties": {
         "type": "string",
         "pattern": "^(any-one|all|quorum:[1-9][0-9]*|device-class:[A-Za-z0-9_\\-]+)$",
-        "description": "any-one | all | quorum:n | device-class:<class>. Evaluated over MLS group acknowledgements by RDP(in) alone — the sole evidence-authoritative evaluator (X-10; TS clause 6). The MSP collects and forwards member confirmations; it evaluates nothing. X-16: the KEY is a RoleName — every declared role is addressable as bw:...r/<role>."
+        "description": "any-one | all | quorum:n | device-class:<class>. Evaluated over MLS group acknowledgements by RDP(in) alone — the sole evidence-authoritative evaluator (X-10; TS clause 6). The Delivery Service collects and forwards member confirmations; it evaluates nothing. X-16: the KEY is a RoleName — every declared role is addressable as bw:...r/<role>."
       },
       "minProperties": 1,
       "required": [

@@ -1,8 +1,8 @@
 {
-  "sm_artifact_b64": "hFgaogEnBFVtb2NrZXUtMDAxLWRlc2NyaXB0b3KgWQEvqGNraWR1bW9ja2V1LTAwMS1kZXNjcmlwdG9yZHR5cGVuQlctUFJPVklERVItdjFlcm9sZXOBY3JkcGd2ZXJzaW9uYzEuMGllbmRwb2ludHOiaGV2aWRlbmNleDNodHRwczovL21vY2tldS0wMDEuZXhhbXBsZS5ldS9ldmlkZW5jZS97bWVzc2FnZV9pZH1pZGlzY292ZXJ5eC1odHRwczovL21vY2tldS0wMDEuZXhhbXBsZS5ldS8ud2VsbC1rbm93bi9yZHBqZXhwaXJlc19hdHQyMDI3LTA2LTMwVDIzOjU5OjU5Wmthc3NlcnRlZF9hdHQyMDI2LTAxLTAxVDAwOjAwOjAwWm5wYXJ0aWNpcGFudF9pZHZ1cm46c2JtOnJkcDptb2NrZXUtMDAxWECYhh0eip/zD0xxseBX+INaHnEGVFDuaYJEfhTU7rjanXXuO7PM14tNipWpYqK1uozM3sIU9LlRaZYkpwPBkXYE",
+  "sm_artifact_b64": "hFgaogEnBFVtb2NrZXUtMDAxLWRlc2NyaXB0b3KgWQG5qWNraWR1bW9ja2V1LTAwMS1kZXNjcmlwdG9yZHR5cGVuQlctUFJPVklERVItdjFlcm9sZXOBY3JkcGd2ZXJzaW9uYzEuMWllbmRwb2ludHOiaGV2aWRlbmNleDNodHRwczovL21vY2tldS0wMDEuZXhhbXBsZS5ldS9ldmlkZW5jZS97bWVzc2FnZV9pZH1pZGlzY292ZXJ5eC1odHRwczovL21vY2tldS0wMDEuZXhhbXBsZS5ldS8ud2VsbC1rbm93bi9yZHBqZXhwaXJlc19hdHQyMDI3LTA2LTMwVDIzOjU5OjU5Wmthc3NlcnRlZF9hdHQyMDI2LTAxLTAxVDAwOjAwOjAwWm5wYXJ0aWNpcGFudF9pZHZ1cm46c2JtOnJkcDptb2NrZXUtMDAxb2RzX3JlY2VpcHRfa2V5c4GkY2FsZ2VFZERTQWNraWRsZHMtZGVtby0yMDI2anZhbGlkX2Zyb210MjAyNi0wMS0wMVQwMDowMDowMFpucHVibGljX2tleV9iNjR4LGFqZXlwN0o5dXVVakZqWk14YzVMbzJ1S2FLMU9XdFhMVWx3Z1gzS3Q3MlE9WECqhCNe90eSunc0ggmxnwn1oyBsAyOWuCCKMcC9mqbwJ3nBzeyECXQG+ooOn0Qrq32k0b42EswwD5ZNw1Q0ZogJ",
   "projection": {
     "type": "BW-PROVIDER-v1",
-    "version": "1.0",
+    "version": "1.1",
     "participant_id": "urn:sbm:rdp:mockeu-001",
     "roles": [
       "rdp"
@@ -13,6 +13,14 @@
     },
     "asserted_at": "2026-01-01T00:00:00Z",
     "expires_at": "2027-06-30T23:59:59Z",
-    "kid": "mockeu-001-descriptor"
+    "kid": "mockeu-001-descriptor",
+    "ds_receipt_keys": [
+      {
+        "kid": "ds-demo-2026",
+        "alg": "EdDSA",
+        "public_key_b64": "ajeyp7J9uuUjFjZMxc5Lo2uKaK1OWtXLUlwgX3Kt72Q=",
+        "valid_from": "2026-01-01T00:00:00Z"
+      }
+    ]
   }
 }

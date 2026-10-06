@@ -130,20 +130,21 @@ review judged the specification not yet a frozen baseline for independent
 implementations. This has no agenda entry because it is not a design question;
 it is the single most useful thing an external reader can contribute.
 
-## 8. Delivery evidence across two providers
+## 8. Delivery evidence inside one provider
 
-**Carried open on purpose.** When sender and recipient use different
-providers, the evidence that a message was delivered rests on a receipt the
-recipient's delivery service signs when a device acknowledges the handover.
-The published contracts say that whichever provider issues the delivery
-evidence must verify that receipt; they do not publish how that provider
-obtains it, and they name different providers as the issuer. Having the
-recipient's wallet forward the receipt is not safe, because a recipient could
-suppress delivery evidence by never forwarding it. Nothing in the
-specification claims resistance to a malicious messaging service provider.
-Agenda: A1, and beneath it A9 — who observes the handover, and what a
-messaging service provider acting alone could make a registered delivery
-provider attest — with three models analysed and **none chosen**.
+**Carried open on purpose.** The evidence that a message was delivered rests on
+a receipt signed when a recipient's device acknowledges the handover. That
+receipt is signed by the delivery service, and the delivery service is a
+function of the recipient's own registered delivery provider — one accountable,
+qualified, supervised party, decided on 6 October 2026. The published contracts
+say that the provider issuing the delivery evidence must verify that receipt;
+they do not publish how it obtains it. Having the recipient's wallet forward the
+receipt is not safe, because a recipient could suppress delivery evidence by
+never forwarding it. The gap is now inside one provider rather than between two,
+and no smaller for it. Nothing in the specification claims resistance to a
+malicious provider. Agenda: A1. The question beneath it — who observes the
+handover — is closed: the observer is the provider, and the three models
+analysed before that decision stay readable in the superseded record.
 
 ## 9. Legal effect
 

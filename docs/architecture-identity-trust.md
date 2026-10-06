@@ -15,7 +15,7 @@ The question this note answers: **who does what, who talks to whom, and why is a
 
 ![Four-corner federated architecture — who carries what](diagrams/architecture-four-corner.svg)
 
-Each entity runs **wallet devices**, the only place plaintext exists. Its **Delivery Service** (the MSP) holds its KeyPackages and queues and observes the handover of bytes to a device. Its **Registered Delivery Provider** (the RDP, a qualified trust service provider) seals the evidence. A message goes from the sender's wallet to its RDP, which gets its own Delivery Service to accept the exact octets before it seals the Sending Evidence, then relays the ciphertext **with that SE** to the recipient's RDP. That RDP hands it to its Delivery Service with the origin proven, and the recipient's devices collect it there. The recipient's confirmations reach its RDP, the **sole** evaluator of the acceptance policy (TS clause 6). An MSP may carry them, verbatim; it decides nothing. The two MSPs never relay to each other.
+Each entity runs **wallet devices**, the only place plaintext exists. Its **Delivery Service**, operated by its RDP, holds its KeyPackages and queues and observes the handover of bytes to a device. Its **Registered Delivery Provider** (the RDP, a qualified trust service provider) seals the evidence. A message goes from the sender's wallet to its RDP, which gets its own Delivery Service to accept the exact octets before it seals the Sending Evidence, then relays the ciphertext **with that SE** to the recipient's RDP. That RDP hands it to its Delivery Service with the origin proven, and the recipient's devices collect it there. The recipient's confirmations reach its RDP, the **sole** evaluator of the acceptance policy (TS clause 6). The Delivery Service may carry them, verbatim; it decides nothing. The two RDPs never relay to each other.
 
 In the minimal deployment (Annex P profile 1) one operator runs both RDPs, and no relay occurs. Group formation is the exception to "each side talks to its own providers": the creating wallet reserves KeyPackages, deposits Welcomes, registers as the group's founder and collects replies at the **counterparty's** Delivery Service. Which Delivery Service routes a group whose devices span two, after formation, is open ([A10](REVIEW_AGENDA.md)). The phase-by-phase version is [`federated-flow-explainer.md`](federated-flow-explainer.md).
 
@@ -39,7 +39,7 @@ The **EU Trusted Lists** sit beneath both, and establish only qualification. "Ev
 | **Qualification** — is the provider or certificate qualified? | the Trusted Lists | whether it is admitted, or authorised for an entity |
 | **Observation** — who witnessed the event, and is their report true? | the party that observed it, identified in the evidence | the truth of an observation the sealer did not make |
 
-The last row is where a seal stops. An RDP's seal proves the RDP made a statement; at the availability grade that statement rests on the Delivery Service's signed receipt of the handover, which the RDP does not re-witness. The event is **attributed** to the MSP, not independently established. Who observes S2, and what an MSP alone could make an RDP attest, is undecided ([A9](REVIEW_AGENDA.md)); separating MSP and RDP makes a false observation attributable — once the planned `observed_by` binds the observer ([A6](REVIEW_AGENDA.md)) — not impossible.
+The last row is where a seal stops. An RDP's seal proves the RDP made a statement; at the availability grade that statement rests on the Delivery Service's signed receipt of the handover, which the RDP does not re-witness. The event is **attributed** to the Delivery Service, not independently established. Who observes S2 is **settled** ([A9](REVIEW_AGENDA.md), SBM-ADR-0015): the RDP, which operates the Delivery Service as part of its qualified service. What remains is the trust the design already placed in that provider — no resistance to a malicious one is claimed. The withdrawn alternative was to separate the roles, which would have made a false observation attributable — once the planned `observed_by` bound the observer ([A6](REVIEW_AGENDA.md)) — not impossible.
 
 ## 4. Which key does what
 
@@ -51,7 +51,7 @@ The last row is where a seal stops. An RDP's seal proves the RDP made a statemen
 | Sign a recipient's message act — an `s3` confirmation, a mismatch proof, a message refusal, a reveal | the device's confirmation key | BW-MEMBER, sealed by the pinned entity key | RDP(in) at intake (INTF-1a); any verifier later |
 | Refuse a Welcome before joining | the private key of the KeyPackage the invitation consumed | the device's own KeyPackage | the Delivery Service, against the leaf signature key the consumed package carries — RFC 9420 §5.1.2 `SignWithLabel` over typed content including the single-use `refusal_nonce` the Welcome delivered ([G1](REVIEW_AGENDA.md)) |
 | Seal evidence | the RDP's seal (QSealC), plus a qualified timestamp | the Trusted Lists (qualification) and the register (admission at the act) | any verifier |
-| Sign the S2 receipt | the Delivery Service's receipt key, valid at the receipt's `server_time` | today BW-MED, sealed by the entity key; planned: the MSP's own descriptor ([A6](REVIEW_AGENDA.md)) | the DE issuer — through no published path yet ([A1](REVIEW_AGENDA.md)) — and the retained verifier (`LINT-BND-38`) |
+| Sign the S2 receipt | the issuing RDP's receipt key, valid at the receipt's `server_time` | BW-PROVIDER, sealed by the provider's own descriptor key (SBM-ADR-0015) | the DE issuer — through no published path yet ([A1](REVIEW_AGENDA.md)) — and the retained verifier (`LINT-BND-38`) |
 | Seal an entity's documents | the entity's seal key | the directory record | any resolver |
 | Seal a provider's descriptor | the participant's descriptor key | the register | any verifier |
 | Assert admission | the Federation Authority's key | configuration — a trust anchor | any verifier holding that anchor |
@@ -75,7 +75,7 @@ The umbrella's metadata-privacy inventory (§11.1) is the authority; this is its
 | Actor | Plaintext | Ciphertext | Identity and routing metadata | A dispute reveal |
 |---|---|---|---|---|
 | Wallet devices of the two entities | yes — their own | yes | yes | disclose it, or receive it |
-| Delivery Service (MSP) | never | yes | UIDs, group ids, device principals, sizes, times — **and, on the forwarding path, the evidence fields of the origin's sealed SE**, including `payload_hash` and `scope_ref`, which it decodes and verifies to prove the origin namespace | no |
+| The RDP's Delivery Service | never | yes | UIDs, group ids, device principals, sizes, times — **and, on the forwarding path, the evidence fields of the origin's sealed SE**, including `payload_hash` and `scope_ref`, which it decodes and verifies to prove the origin namespace | no |
 | RDPs | never | yes — they relay it and hash it | the evidence fields they seal, including `scope_ref` | when presented in a dispute |
 | EDD | never | no | resolution queries | no |
 | Time-stamping service | never | no | timing, over seal hashes | no |
@@ -85,6 +85,6 @@ The content class never appears in evidence; a reveal discloses one message's cl
 
 ## 7. What is planned, and what is undecided
 
-- **Planned ([A6](REVIEW_AGENDA.md)):** the MSP's own identity on the wire, its admission, and the DE's binding to the observation it rests on. Decided, not implemented.
-- **Undecided ([A9](REVIEW_AGENDA.md)):** the S2 observer model. Three models are analysed in [SBM-ADR-0004](adr/SBM-ADR-0004.md), *Alternatives considered*; none is selected, and nothing here claims resistance to a malicious MSP.
+- **Withdrawn ([A6](REVIEW_AGENDA.md), SBM-ADR-0015):** a separate transport provider with its own identity on the wire, its admission, and the DE's binding to the observation it rests on. Decided, not implemented.
+- **Resolved ([A9](REVIEW_AGENDA.md), SBM-ADR-0015):** the S2 observer is the RDP. Three models were analysed in [SBM-ADR-0004](adr/SBM-ADR-0004.md), *Alternatives considered*; none is selected, and nothing here claims resistance to a malicious provider.
 - **Open ([A1](REVIEW_AGENDA.md), [A10](REVIEW_AGENDA.md)):** how the DE issuer obtains the S2 receipt; which Delivery Service routes a group after formation.

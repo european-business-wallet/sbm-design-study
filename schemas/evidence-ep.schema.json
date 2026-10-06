@@ -119,7 +119,7 @@
     },
     "states": {
       "type": "array",
-      "description": "Optional. Non-DE, non-operative STATE RECORDS for states S1/S2/S3 (the I-D (Message Flows and Delivery States)): auditable metadata derived from authenticated MSP signals, NOT individually sealed and carrying no Article 43(2) effect; S1/S2 do not establish delivery. Each element records a state and its mapped EN 319 522-1 event and MUST NOT carry any delivery-establishing field (LINT-EP-04). Legally operative facts live in the sealed evidence objects.",
+      "description": "Optional. Non-DE, non-operative STATE RECORDS for states S1/S2/S3 (the I-D (Message Flows and Delivery States)): auditable metadata derived from authenticated Delivery Service signals, NOT individually sealed and carrying no Article 43(2) effect; S1/S2 do not establish delivery. Each element records a state and its mapped EN 319 522-1 event and MUST NOT carry any delivery-establishing field (LINT-EP-04). Legally operative facts live in the sealed evidence objects.",
       "items": {
         "type": "object",
         "required": [

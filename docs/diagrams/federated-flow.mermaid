@@ -6,7 +6,7 @@
 %% question: In what order do the public operations run for one verification-grade message between two entities on different providers, from resolution to verification years later?
 %% profile: 2 (four-corner); one grade (verification), the default scope, one message
 %% status: current
-%% references: docs/federated-flow-explainer.md (the phase-by-phase walkthrough); I-D "Message Flows and Delivery States"; TS clauses 4.1 and 6; wallet-rdp-openapi.yaml; delivery-service-openapi.yaml; rdp-relay-openapi.yaml; docs/REVIEW_AGENDA.md A1, A10
+%% references: docs/federated-flow-explainer.md (the phase-by-phase walkthrough); I-D "Message Flows and Delivery States"; TS clauses 4.1 and 6; wallet-rdp-openapi.yaml; delivery-service-openapi.yaml; rdp-relay-openapi.yaml; docs/adr/SBM-ADR-0015.md (one provider role); docs/REVIEW_AGENDA.md A1, A10
 %% alt: Seven phases. Resolution and discovery at the directory and the recipient's provider. First contact: the sender reserves and commits KeyPackages, creates the group, deposits one Welcome per device and registers as the group's founder; each recipient device collects its Welcome and acknowledges it, which is joining, or refuses it with a typed outcome the creator collects. Submission to RDP(out), which obtains its Delivery Service's acceptance of the same octets before sealing the SE. RDP-to-RDP relay of the octets with the SE; RDP(in) checks them and forwards them to its Delivery Service with the origin proven, then returns B.1 or B.2. Delivery: the device collects and acknowledges, and the Delivery Service signs the S2 receipt; no published operation carries it to an RDP (open, A1). The recipient's confirmation reaches RDP(in), which issues the DE, or on a verified mismatch or at expiry the NDE. RDP(out) composes the Evidence Package. Later verification decodes each artefact, verifies seals and timestamps and checks admission at each act's instant.
 %% end figure
 %% SBM — full four-corner federated flow: verification-grade message between
@@ -17,7 +17,7 @@
 %% R=recipient side.
 %%
 %% The relay is RDP-to-RDP and carries the ciphertext WITH the SE (an
-%% MSP-to-MSP relay was drawn here before and was never published); RDP(in)
+%% relay between two transport providers was drawn here before and was never published); RDP(in)
 %% forwards to its DS with the origin proven by that SE; the join is the
 %% Welcome acknowledgement; the creator is routed as the group's founder;
 %% live admission is a lease. An earlier edition of this figure taught a
@@ -26,10 +26,10 @@ sequenceDiagram
     autonumber
     actor WS as WU-S · Sender wallet (Entity A)
     participant EDD as EDD · Directory
-    participant MO as MSP(out) · DS
+    participant MO as DS(out) · RDP(out)'s
     participant RO as RDP(out) · QERDS
     participant RI as RDP(in) · QERDS
-    participant MI as MSP(in) · DS
+    participant MI as DS(in) · RDP(in)'s
     actor WR as WU-R · Recipient wallet (Entity B)
 
     Note over WS,WR: Phase 1 — Resolution & discovery

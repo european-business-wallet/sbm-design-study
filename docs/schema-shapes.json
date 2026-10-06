@@ -3,15 +3,13 @@
   "shapes": {
     "bw-med.schema.json": {
       "dimension": "discovery_bw_med",
-      "version": "2.1",
+      "version": "2.2",
       "properties": [
         "asserted_at",
-        "ds_receipt_keys",
         "expires_at",
         "identity_credential",
         "kid",
         "mls",
-        "msp",
         "org",
         "policy",
         "protocols",
@@ -24,7 +22,7 @@
     },
     "bw-org.schema.json": {
       "dimension": "discovery_bw_org",
-      "version": "2.6",
+      "version": "2.7",
       "properties": [
         "acceptance_policy",
         "contact_url",

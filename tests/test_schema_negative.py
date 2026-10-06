@@ -512,12 +512,13 @@ def test_edd_openapi_is_a_real_contract():
 
     # F5 (PoC feedback, twelfth review): /uid/{uid}/keypackages is a
     # non-cacheable 302 POINTER — no direct-serve 200 (the EDD holds no pool,
-    # so consume-once accounting lives solely at the MSP), and the redirect
+    # so consume-once accounting lives solely at the RDP that serves it), and
+    # the redirect
     # declares Cache-Control: no-store.
     kp = spec["paths"]["/uid/{uid}/keypackages"]["get"]["responses"]
     assert "200" not in kp, "EDD keypackages must not direct-serve (single-pool accounting)"
     assert "302" in kp and "Cache-Control" in kp["302"]["headers"]
-    assert "409" not in kp, "replay rejection belongs to the MSP pool, not the EDD pointer"
+    assert "409" not in kp, "replay rejection belongs to the serving pool, not the EDD pointer"
     assert "independently" in spec["info"]["description"].lower()
     # N8: BW-MEMBER is on the key-discovery trust path — fail closed on non-active.
     member = spec["paths"]["/.well-known/bw/member/{uid}/{mid}"]["get"]["responses"]

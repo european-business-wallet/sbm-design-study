@@ -210,7 +210,10 @@ def claim_a_later_verifier():
 
 ACTORS = {
     "Wallet devices of the two entities": claim_wallet_devices,
-    "Delivery Service (MSP)": claim_delivery_service,
+    # SBM-ADR-0015 renamed the row: there is one provider role, and the
+    # Delivery Service is the RDP's function. The PROPERTY is unchanged —
+    # never plaintext, and the SE's fields on the forwarding path.
+    "The RDP's Delivery Service": claim_delivery_service,
     "RDPs": claim_rdps,
     "EDD": claim_edd,
     "Time-stamping service": claim_time_stamping_service,

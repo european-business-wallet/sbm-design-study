@@ -83,8 +83,8 @@ the validation rules, conformance requirements and interoperability guidance
 that make all of it checkable.
 
 **Assumed.** That registered delivery providers are admitted, qualified and
-supervised rather than joining freely, and that a messaging service provider,
-which need not be qualified, is admitted to the federation all the same. That
+supervised rather than joining freely, and that the same provider operates the
+delivery service its entities' wallets talk to. That
 an organisation can publish signed statements about its providers, its policy
 and its devices, which a counterparty reads before sending. That a qualified
 timestamp is available from outside the protocol, and that a wallet can hold a
@@ -131,12 +131,12 @@ by the standards owner — question A8 on the
 
 ## 4. The architecture that answers them
 
-Four parties and one instrument each. The **wallet** holds the entity's keys and
-produces the acts the entity is bound by. The **messaging service provider** is
-each side's local delivery service, carrying ciphertext it cannot read. The
-**registered delivery provider** is the qualified party that seals evidence;
-between two organisations there are two of them, and the relay runs provider to
-provider. The **directory** resolves an identifier to the provider, the policy
+Three parties and one instrument each. The **wallet** holds the entity's keys and
+produces the acts the entity is bound by. The **registered delivery provider** is
+the qualified party that carries the ciphertext it cannot read and seals the
+evidence over it; the delivery service each side's wallets talk to is that
+provider's own function, not a party of its own. Between two organisations there
+are two providers, and the relay runs provider to provider. The **directory** resolves an identifier to the provider, the policy
 and the devices that serve it at a given moment.
 
 Underneath, the separation that makes it work is between *what was said* and
@@ -168,9 +168,10 @@ to read first; the umbrella's one-page version is
 Three records are where a first reader most often misreads the design:
 [SBM-ADR-0007](docs/adr/SBM-ADR-0007.md), why delivery is a wallet confirmation
 by default and availability only a declared grade;
-[SBM-ADR-0004](docs/adr/SBM-ADR-0004.md), why the messaging service provider is
-separated from the registered delivery provider and what that separation does
-and does not protect against; and [SBM-ADR-0011](docs/adr/SBM-ADR-0011.md), why
+[SBM-ADR-0004](docs/adr/SBM-ADR-0004.md), why delivery and evidence were once
+separated into two providers and what that separation did and did not protect
+against — superseded by [SBM-ADR-0015](docs/adr/SBM-ADR-0015.md), which folds
+them into one; and [SBM-ADR-0011](docs/adr/SBM-ADR-0011.md), why
 every verdict is read from retained history rather than live state, and what a
 retained history cannot prove.
 
@@ -235,14 +236,14 @@ what a green bar does and does not mean, and how to send feedback.
 
 | Artefact | Version |
 |---|---|
-| Umbrella profile | 2.1 (edition 2026-09-18) |
+| Umbrella profile | 2.1 (edition 2026-10-06) |
 | Evidence objects (SE/DE/NDE/RE/CE/EP) | **2.12** (octet-authoritative) |
 | Application envelope | 1.4 |
-| BW-MED / BW-ORG / BW-MEMBER | 2.1 / 2.7 / 2.2 |
+| BW-MED / BW-ORG / BW-MEMBER | 2.2 / 2.7 / 2.2 |
 | EDD resolver contract (OpenAPI) | 2.0.0 |
 | Federation register contract (OpenAPI) | 3.0.0 |
 | Profile-2 companion contracts (wallet-RDP / DS / relay) | 15.0.0 |
-| TS (QERDS binding) | v0.35 |
+| TS (QERDS binding) | v0.36 |
 
 Generated-and-checked from [`versions.json`](versions.json), the single source
 of truth: `make versions` fails if any schema `const`, schema title, CDDL body,
@@ -429,7 +430,7 @@ specification does **not** yet answer — protocol, production trust and legal �
 with the assumption each one rests on, and what is not yet written, the
 implementer guide, carried as G1 to G4.
 
-- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r35`,
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r36`,
   the git tag of that name; earlier tags of this snapshot stay where they are
   and each names the edition it was cut from. Cite the tag, or the commit you
   hold, so an answer can be matched to the text it answers. The reviewer

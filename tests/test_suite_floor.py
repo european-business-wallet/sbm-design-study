@@ -4,7 +4,7 @@
 Former defect (round-2 review, Medium). The profile permitted a member to
 refuse a suite below a "locally configured floor": optional, unpublished,
 unverifiable — and ambiguous, because "below what it advertised" cannot be read
-when the advertised list also contains the mandatory baseline. An MSP could
+when the advertised list also contains the mandatory baseline. A provider could
 withhold stronger-suite KeyPackages, and (until DR-08) a creator could not
 distinguish legitimate per-device absence from provider-induced withholding.
 
@@ -179,7 +179,7 @@ def test_removing_a_stronger_package_cannot_silently_lower_a_raised_suite():
     assert ms.enforce_floor(members, HW) == HW
 
     victim = next(iter(pool))
-    pool[victim] = {BASELINE}                 # the MSP withholds the stronger
+    pool[victim] = {BASELINE}            # the provider withholds the stronger
     lowered = ms.select_suite_for_devices(members, pool)
     assert lowered == BASELINE
     with pytest.raises(ms.SuiteBelowFloor):

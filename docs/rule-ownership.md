@@ -15,7 +15,7 @@ Document keys: `umbrella` = `Secure-Business-Messaging-Profile.md`, `id` = `ietf
 
 ## Rule families
 
-### Intermediaries (MSP / Delivery Service / RDP) never access plaintext
+### Intermediaries (the RDP and the Delivery Service it operates) never access plaintext
 
 - **Family id:** `intermediary-plaintext-prohibition`
 - **Normative owner:** `id` — Object model, Delivery-Service mapping, and Security Considerations
@@ -24,7 +24,7 @@ Document keys: `umbrella` = `Secure-Business-Messaging-Profile.md`, `id` = `ietf
     - `ts` — ICS row 051 (Evidence carries no plaintext) tagged [I-D]
 - **Note:** An E2EE property, not a sample-checkable LINT rule; owned by the wire/security document.
 
-### KeyPackages are single-use; the MSP removes a consumed KeyPackage and rejects reuse
+### KeyPackages are single-use; the RDP removes a consumed KeyPackage and rejects reuse
 
 - **Family id:** `keypackage-single-use`
 - **Normative owner:** `id` — KeyPackage rules ({{keypackage-rules}})
@@ -60,7 +60,7 @@ Document keys: `umbrella` = `Secure-Business-Messaging-Profile.md`, `id` = `ietf
 - **Informative summaries (must reference the owner):**
     - `umbrella` — §7.2 responsibility table and the §8.3 bullet describe the split and defer to the TS
     - `id` — the delivery-state model consumes the evaluated outcome; it does not evaluate
-- **Note:** X-10: the former two-owner text (umbrella: the MSP evaluates; TS: RDP(in) evaluates) is collapsed to one owner. A prose-ownership family, not a sample-checkable LINT rule.
+- **Note:** X-10: the former two-owner text is collapsed to one owner, RDP(in). The phrasing that is now forbidden is `non_owner_forbidden` above, and tests/test_policy_evaluator_owner.py records the former wording verbatim; both keep a role name SBM-ADR-0015 withdrew, because a detector must carry what it detects. A prose-ownership family, not a sample-checkable LINT rule.
 
 ### Legal-effect issuance is gated on the signed short-lived status assertion (D6)
 

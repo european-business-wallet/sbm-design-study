@@ -3,10 +3,10 @@
 owner: the maintainer (README, Feedback)
 source: docs/diagrams/identity-proof-map.svg (hand-written SVG; this file is the source)
 question: Why is a returned key or claim trusted? Which record authorises which key, for an entity and for a provider, and where do qualification and admission enter?
-profile: all; the provider chain's register is exercised from profile 2, and MSP participation in it is planned (Batch B)
+profile: all; the provider chain's register is exercised from profile 2, and admits one provider role (SBM-ADR-0015)
 status: current
-references: umbrella §5.2 (directory record), §7.1.1 (federation trust model), §8 (discovery documents), §13.1 (institutional roles); federation-register-openapi.yaml; schemas/bw-provider.schema.json; docs/architecture-identity-trust.md
-alt: Two chains side by side. For an entity: a qualified issuer issues the UID; the EDD core registry's directory record, sealed by the registry operator, says where to resolve the entity and pins the entity's authorised seal keys; a pinned key seals the entity's BW-MED, BW-ORG and BW-MEMBER; BW-MEMBER publishes each device's confirmation key and MLS leaf, and BW-MED today publishes the Delivery Service's receipt key; the device's MLS credential authenticates the channel and its confirmation key signs the device's acts. For a provider: the Federation Authority's key is an anchor configured in the verifier; the membership register's record, sealed by it, gives the participant's admission history and pins the key that seals its BW-PROVIDER descriptor of roles and endpoints; an RDP's evidence seal is checked against that admission at the instant of each act. The EU Trusted Lists sit beneath both: they qualify issuers, seal certificates, registered delivery services and time-stamping — which says a provider is qualified, not that it is admitted, nor that a key speaks for a given entity.
+references: umbrella §5.2 (directory record), §7.1.1 (federation trust model), §8 (discovery documents), §13.1 (institutional roles); federation-register-openapi.yaml; schemas/bw-provider.schema.json; schemas/bw-med.schema.json; docs/adr/SBM-ADR-0015.md; docs/architecture-identity-trust.md
+alt: Two chains side by side. For an entity: a qualified issuer issues the UID; the EDD core registry's directory record, sealed by the registry operator, says where to resolve the entity and pins the entity's authorised seal keys; a pinned key seals the entity's BW-MED, BW-ORG and BW-MEMBER; BW-MEMBER publishes each device's confirmation key and MLS leaf, and BW-MED names the entity's RDP and the endpoints it serves, its Delivery Service among them; the device's MLS credential authenticates the channel and its confirmation key signs the device's acts. For a provider: the Federation Authority's key is an anchor configured in the verifier; the membership register's record, sealed by it, gives the participant's admission history and pins the key that seals its BW-PROVIDER descriptor of roles, endpoints and Delivery Service receipt keys; an RDP's evidence seal is checked against that admission at the instant of each act. The EU Trusted Lists sit beneath both: they qualify issuers, seal certificates, registered delivery services and time-stamping — which says a provider is qualified, not that it is admitted, nor that a key speaks for a given entity.
 -->
   <title>Identity and proof provenance — which record authorises which key</title>
   <desc>Two chains: an entity's (UID issuer, directory record, pinned entity seal key, discovery documents, device keys) and a provider's (Federation Authority anchor, membership record, pinned descriptor key, BW-PROVIDER, the RDP's evidence seal checked for admission at the act). The EU Trusted Lists qualify certificates and services beneath both, separately from admission and entity authorisation.</desc>
@@ -43,7 +43,7 @@ alt: Two chains side by side. For an entity: a qualified issuer issues the UID; 
     <rect x="30" y="300" width="410" height="62" rx="7" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.3"/>
     <text x="235" y="318" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1f2937">Discovery documents</text>
     <text x="235" y="335" text-anchor="middle">BW-MEMBER: each device's confirmation key and MLS leaf</text>
-    <text x="235" y="351" text-anchor="middle">BW-MED: the DS receipt key — today; PLANNED: MSP descriptor</text>
+    <text x="235" y="351" text-anchor="middle">BW-MED: the entity's RDP — its DS and KeyPackage endpoints</text>
 
     <rect x="30" y="388" width="410" height="62" rx="7" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.3"/>
     <text x="235" y="406" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1f2937">Device keys</text>
@@ -67,7 +67,7 @@ alt: Two chains side by side. For an entity: a qualified issuer issues the UID; 
     <rect x="520" y="300" width="410" height="62" rx="7" fill="#f8fafc" stroke="#334155" stroke-width="1.3"/>
     <text x="725" y="318" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1f2937">BW-PROVIDER — the provider's descriptor</text>
     <text x="725" y="335" text-anchor="middle">its roles and endpoints</text>
-    <text x="725" y="351" text-anchor="middle">RDPs today; MSPs PLANNED (Batch B)</text>
+    <text x="725" y="351" text-anchor="middle">and its DS receipt keys (SBM-ADR-0015)</text>
 
     <rect x="520" y="388" width="410" height="62" rx="7" fill="#ffffff" stroke="#334155" stroke-width="1.6"/>
     <text x="725" y="406" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1f2937">The RDP's evidence seal + qualified timestamp</text>

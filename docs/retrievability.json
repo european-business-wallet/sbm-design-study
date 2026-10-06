@@ -182,6 +182,18 @@
       "absent": "no seal resolves to an anchor, so nothing is attributable (`check_trust`).",
       "survives_provider_exit": true,
       "note": "Held by the verifier rather than by any provider, which is why it survives — and why it is the one input whose absence is the verifier's own problem."
+    },
+    {
+      "input": "provider_descriptors",
+      "material": "The sealed BW-PROVIDER descriptor of each RDP named in the evidence, carrying the `ds_receipt_keys` that verify its Delivery-Service receipts.",
+      "operation": "the provider's own discovery surface; the descriptor's seal key is pinned to the participant by the membership register (LINT-TRUST-07)",
+      "served_by": "each RDP, for itself",
+      "absent": "LINT-BND-I8 — the key that signed a retained receipt cannot be resolved, so the handover rests on the DE's assertion alone and the verdict says INCOMPLETE rather than passing.",
+      "survives_provider_exit": false,
+      "residuals": [
+        "LINT-BND-I8"
+      ],
+      "note": "SBM-ADR-0015 moved this key off the customer's BW-MED, where it sat because the Delivery Service was a second provider and the entity's signed document was the only thing already retained for the evidence period. A provider's key belongs in the provider's descriptor — but it moves the key onto a surface a provider exit takes away, where it had been on one the entity controls. That is the trade the decision makes, and this row is where it is visible."
     }
   ]
 }

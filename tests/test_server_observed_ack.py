@@ -157,7 +157,9 @@ def test_a_backdated_client_timestamp_cannot_change_delivered_at():
     delivered_at = mock.delivered_at_from_receipt(
         receipt, {"format": "mls10-message",
                   "hex": hashlib.sha256(OCTETS).hexdigest()},
-        med=json.loads((ROOT / "samples" / "sample-BW-MED.json").read_text())["projection"],
+        # SBM-ADR-0015: the receipt key is the issuing RDP's.
+        provider=json.loads(
+            (ROOT / "samples" / "sample-BW-PROVIDER.json").read_text())["projection"],
         expect=_expect(receipt))
     assert delivered_at == AFTER_EXPIRY
     assert instant(delivered_at) > instant(EXPIRES), \

@@ -2,7 +2,7 @@
   "$id": "https://bw.example.eu/schemas/bw-member.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "BW-MEMBER-v1 (v2.2)",
-  "description": "Member Binding: associates a Member ID (MID) with device entries that reference MLS leaf nodes and publish KeyPackages via the MSP. A member is a natural person or a system/agent (member_type; Annex R). Each ack/sign-capable device publishes a confirmation_key anchor (v2.0) so a verifier can resolve and verify the device's wallet advanced electronic signature on a recipient confirmation (TS clause 6 INTF-1(a); finding D).",
+  "description": "Member Binding: associates a Member ID (MID) with device entries that reference MLS leaf nodes and publish KeyPackages via the RDP's Delivery Service. A member is a natural person or a system/agent (member_type; Annex R). Each ack/sign-capable device publishes a confirmation_key anchor (v2.0) so a verifier can resolve and verify the device's wallet advanced electronic signature on a recipient confirmation (TS clause 6 INTF-1(a); finding D).",
   "type": "object",
   "required": [
     "type",

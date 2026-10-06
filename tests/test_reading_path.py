@@ -166,7 +166,7 @@ def test_no_reader_facing_document_points_into_the_unexported_analysis():
     # the export ships is the export's own file and carries no such reference.
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     if "rdp-msp-trust-analysis" in readme:
-        assert "[RDP/MSP trust analysis](docs/rdp-msp-trust-analysis/README.md)" in readme, \
+        assert "](docs/rdp-msp-trust-analysis/README.md)" in readme, \
             "provenance is a resolving link or it is a dangling pointer"
         assert (ROOT / "docs" / "rdp-msp-trust-analysis" / "README.md").exists()
     adr4 = _flat(ROOT / "docs" / "adr" / "SBM-ADR-0004.md")

@@ -1,7 +1,7 @@
 {
   "$id": "https://bw.example.eu/schemas/bw-med.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "BW-MED-v1 (v2.1)",
+  "title": "BW-MED-v1 (v2.2)",
   "description": "Messaging Entity Descriptor. Carries MLS capabilities, KeyPackage discovery URL, and the entity's identity credential (x509 chain or UID QEAA). v1.2 adds the optional mls.scopes_supported capability flag (confidentiality scopes, spec §8.3a).",
   "type": "object",
   "required": [
@@ -9,7 +9,6 @@
     "version",
     "uid",
     "protocols",
-    "msp",
     "rdp",
     "mls",
     "identity_credential"
@@ -21,7 +20,7 @@
     },
     "version": {
       "type": "string",
-      "const": "2.1"
+      "const": "2.2"
     },
     "uid": {
       "$ref": "evidence-common.schema.json#/$defs/Uid"
@@ -37,15 +36,12 @@
       },
       "description": "Supported messaging profiles. MUST include SM-MLS-1.0."
     },
-    "msp": {
-      "type": "string",
-      "format": "uri"
-    },
     "rdp": {
       "type": "object",
       "required": [
         "discovery",
-        "evidence"
+        "evidence",
+        "delivery_service"
       ],
       "properties": {
         "discovery": {
@@ -54,17 +50,31 @@
         },
         "evidence": {
           "type": "string"
+        },
+        "delivery_service": {
+          "type": "string",
+          "format": "uri",
+          "description": "The base URL of the RDP's Delivery Service. This was `msp`, a bare URI naming a second provider; SBM-ADR-0015 withdraws that provider, and the Delivery Service is a function the RDP is responsible for."
+        },
+        "ds_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "MLS Delivery Service endpoint for message submission."
+        },
+        "keypackage_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL from which MLS KeyPackages for the entity's devices can be retrieved."
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "The entity's Registered Delivery Provider: its discovery and evidence surfaces, and the Delivery Service it operates. The MLS routing and KeyPackage endpoints moved here from `mls` with SBM-ADR-0015 — they are the RDP's endpoints, and `mls` describes the group's cryptographic parameters rather than who serves them."
     },
     "mls": {
       "type": "object",
       "description": "MLS-specific discovery data: cipher suites, KeyPackage retrieval URL, and Delivery Service endpoint.",
       "required": [
-        "cipher_suites",
-        "keypackage_url",
-        "ds_url"
+        "cipher_suites"
       ],
       "properties": {
         "cipher_suites": {
@@ -77,16 +87,6 @@
             "const": "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
           },
           "description": "Supported MLS cipher suite identifiers. MUST include the baseline suite."
-        },
-        "keypackage_url": {
-          "type": "string",
-          "format": "uri",
-          "description": "URL from which MLS KeyPackages for the entity's devices can be retrieved."
-        },
-        "ds_url": {
-          "type": "string",
-          "format": "uri",
-          "description": "MLS Delivery Service endpoint for message submission."
         },
         "scopes_supported": {
           "type": "boolean",
@@ -173,49 +173,6 @@
     "wia_ref": {
       "type": "string",
       "description": "Optional reference to the Wallet Instance Attestation (ARF)."
-    },
-    "ds_receipt_keys": {
-      "type": "array",
-      "minItems": 1,
-      "description": "R3-04/R3-T3: the keys that verify this entity's Delivery-Service delivery receipts. The I-D and the DS contract both required RDP(out) to verify `ds_signature` against 'the DS's published key' — and no field, endpoint, `kid`, algorithm, history or rotation existed anywhere, so two conforming implementations could not discover which key verifies a receipt, and a historical receipt could not be validated after a rotation. Published HERE, inside an object that is already signed and already retained for the evidence period, rather than behind a new endpoint that would need its own rotation, history and retention machinery for one key.\n\nValidity is judged at the receipt's `server_time`, NOT at verification time — that is what keeps an old receipt verifiable after the key that signed it is retired.",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "kid",
-          "alg",
-          "public_key_b64",
-          "valid_from"
-        ],
-        "properties": {
-          "kid": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Unique within this entity's key set; the receipt names it."
-          },
-          "alg": {
-            "type": "string",
-            "enum": [
-              "EdDSA",
-              "ES256",
-              "ES384"
-            ],
-            "description": "The COSE algorithm, encoded per the I-D's confirmation-key table (DR-12)."
-          },
-          "public_key_b64": {
-            "type": "string",
-            "minLength": 1,
-            "description": "base64, in the one encoding the declared alg defines."
-          },
-          "valid_from": {
-            "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
-          },
-          "valid_until": {
-            "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp",
-            "description": "Exclusive; absent means current. Half-open, as elsewhere."
-          }
-        }
-      }
     }
   },
   "additionalProperties": false

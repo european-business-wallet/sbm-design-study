@@ -6,18 +6,18 @@
       "issuer_id": "QTSP:MockEU:001",
       "status": "active",
       "asserted_at": "2026-06-01T08:00:00Z",
-      "med_url": "https://msp.example.eu/.well-known/bw/med/EU-DE-EOID-7K3D9W0Q2M5FW0",
-      "signature": "hFWiAScEUGRlc2lnbi1hdXRob3JpdHmgWLalY3VpZHgZRVUtREUtRU9JRC03SzNEOVcwUTJNNUZXMGZzdGF0dXNmYWN0aXZlZ21lZF91cmx4Q2h0dHBzOi8vbXNwLmV4YW1wbGUuZXUvLndlbGwta25vd24vYncvbWVkL0VVLURFLUVPSUQtN0szRDlXMFEyTTVGVzBpaXNzdWVyX2lkb1FUU1A6TW9ja0VVOjAwMWthc3NlcnRlZF9hdHQyMDI2LTA2LTAxVDA4OjAwOjAwWlhAaPBbeIRNz2Nu7R7jQcZ93DQR924GGqIhOVUiVrv1pqMcD4laHEe8QrND989oo046QlJFus9xsmYJEePzKvdMDw==",
-      "timestamp": "MDMEIIJhws0tbZNg48/SfxyxPSSLb+5qOMzykuEIvLzwmMoGGA8yMDI2MDYwMTA4MDAwMFo="
+      "med_url": "https://rdp.example.eu/.well-known/bw/med/EU-DE-EOID-7K3D9W0Q2M5FW0",
+      "signature": "hFWiAScEUGRlc2lnbi1hdXRob3JpdHmgWLalY3VpZHgZRVUtREUtRU9JRC03SzNEOVcwUTJNNUZXMGZzdGF0dXNmYWN0aXZlZ21lZF91cmx4Q2h0dHBzOi8vcmRwLmV4YW1wbGUuZXUvLndlbGwta25vd24vYncvbWVkL0VVLURFLUVPSUQtN0szRDlXMFEyTTVGVzBpaXNzdWVyX2lkb1FUU1A6TW9ja0VVOjAwMWthc3NlcnRlZF9hdHQyMDI2LTA2LTAxVDA4OjAwOjAwWlhA74dxar+v7tXXU3nXwtrEehkB75wNS9XvLUyvqzXOqapx6Mi5uIuBuUaKuI2n1k+mFNuiox7VJvMeCKfm3iQsCA==",
+      "timestamp": "MDMEIHIQhJJJhS7yVfJnZjJw5PmMIC7DliEt8Wb8KiUoWJPSGA8yMDI2MDYwMTA4MDAwMFo="
     },
     {
       "uid": "EU-FR-PSBID-ZYWVTSRQPNM8M4",
       "issuer_id": "PubEAA:MockFR:001",
       "status": "active",
       "asserted_at": "2026-06-01T08:00:00Z",
-      "med_url": "https://msp.example.eu/.well-known/bw/med/EU-FR-PSBID-ZYWVTSRQPNM8M4",
-      "signature": "hFWiAScEUGRlc2lnbi1hdXRob3JpdHmgWLqlY3VpZHgaRVUtRlItUFNCSUQtWllXVlRTUlFQTk04TTRmc3RhdHVzZmFjdGl2ZWdtZWRfdXJseERodHRwczovL21zcC5leGFtcGxlLmV1Ly53ZWxsLWtub3duL2J3L21lZC9FVS1GUi1QU0JJRC1aWVdWVFNSUVBOTThNNGlpc3N1ZXJfaWRxUHViRUFBOk1vY2tGUjowMDFrYXNzZXJ0ZWRfYXR0MjAyNi0wNi0wMVQwODowMDowMFpYQNsYa11Cfc4T4WN6Qp4QfkRo4YHPq/q8o/HXdE/Dvx43/6PUpz/v6lTPc5HbmRUyQePEakpAmo35ndEFIU0vxgM=",
-      "timestamp": "MDMEIMDeoy/v6Fg+ECgY9FP/gHBAGm/tQtl8qfrLBLQycpTSGA8yMDI2MDYwMTA4MDAwMFo="
+      "med_url": "https://rdp.example.eu/.well-known/bw/med/EU-FR-PSBID-ZYWVTSRQPNM8M4",
+      "signature": "hFWiAScEUGRlc2lnbi1hdXRob3JpdHmgWLqlY3VpZHgaRVUtRlItUFNCSUQtWllXVlRTUlFQTk04TTRmc3RhdHVzZmFjdGl2ZWdtZWRfdXJseERodHRwczovL3JkcC5leGFtcGxlLmV1Ly53ZWxsLWtub3duL2J3L21lZC9FVS1GUi1QU0JJRC1aWVdWVFNSUVBOTThNNGlpc3N1ZXJfaWRxUHViRUFBOk1vY2tGUjowMDFrYXNzZXJ0ZWRfYXR0MjAyNi0wNi0wMVQwODowMDowMFpYQLttGWt7G8RhqtucS7LXOCy3PyrKMtE6Y/wY/hE3bNmguECWLcAiyOA6a9bjJHQ3RwOMy+9py7K6Z7HAgHs+vww=",
+      "timestamp": "MDMEIEZepqb2ykgajjUzUpZ9sOq3HFrETRL0Npw54S1OH4seGA8yMDI2MDYwMTA4MDAwMFo="
     }
   ]
 }

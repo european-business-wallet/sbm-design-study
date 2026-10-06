@@ -2,7 +2,7 @@
 id: SBM-ADR-0004
 title: "The MSP separated from the RDP, with the relay left RDP-to-RDP"
 label: "MSP and RDP separated"
-decision_status: accepted
+decision_status: superseded
 implementation_status: [specified, in-reference, planned]
 implementation: >-
   relay: in force. MSP identity, `observed_by`, `receipt_digest`, composition axis: planned, not implemented ([A6](../REVIEW_AGENDA.md))
@@ -147,12 +147,18 @@ schema carries an MSP identifier and the register admits RDPs only.
 
 ## Status
 
-- **Decision:** accepted.
-- **Implementation:** the RDP-to-RDP relay is in force; the MSP identity,
-  `observed_by`, `receipt_digest` and the composition axis are planned and not
-  implemented — no Schema carries `MspId` or `observed_by`, and the register
-  admits only `rdp` ([A6](../REVIEW_AGENDA.md)); the S2 observer model is
-  undecided.
+- **Decision:** **superseded by [SBM-ADR-0015](SBM-ADR-0015.md)** (6 October
+  2026), which folds the Delivery Service into the Registered Delivery Provider:
+  there is one provider role, and the separation this record decided is
+  withdrawn. The relay stays RDP-to-RDP, as decided here. This record's text is
+  unchanged, and its *Alternatives considered* is the analysis ADR-0015 relies
+  on — in particular its third model, *the handover inside the RDP's trust
+  boundary*, and the warning that a co-located or renamed delivery service is
+  **not** that model.
+- **Implementation:** never implemented beyond the relay. No Schema carried
+  `MspId` or `observed_by`, and the register admitted only `rdp`, so the
+  separation existed as text and was withdrawn before anything on the wire
+  depended on it.
 
 ## Supersedes
 

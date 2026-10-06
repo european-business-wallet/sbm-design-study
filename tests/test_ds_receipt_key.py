@@ -72,6 +72,13 @@ def _load(name, filename):
 
 mock = _load("mock_rdp", "mock_rdp.py")
 DS = yaml.safe_load((ROOT / "delivery-service-openapi.yaml").read_text())
+# SBM-ADR-0015: the DS receipt key is the ISSUING RDP's, published in its
+# BW-PROVIDER descriptor. It was on the entity's BW-MED while the Delivery
+# Service was a second provider; the MED path is deleted, and a kid published
+# only there must not resolve — which `test_a_kid_only_in_a_med_does_not_resolve`
+# below asserts.
+PROVIDER = json.loads(
+    (ROOT / "samples" / "sample-BW-PROVIDER.json").read_text())["projection"]
 MED = json.loads((ROOT / "samples" / "sample-BW-MED.json").read_text())["projection"]
 SE = json.loads((ROOT / "samples" / "sample-SE.json").read_text())["projection"]
 
@@ -108,11 +115,12 @@ def _digest():
     return {"format": "mls10-message", "hex": hashlib.sha256(OCTETS).hexdigest()}
 
 
-def _med(*keys):
-    return {"ds_receipt_keys": list(keys)}
+def _provider(*keys):
+    return {"participant_id": PROVIDER["participant_id"],
+            "ds_receipt_keys": list(keys)}
 
 
-DEMO_KEY = MED["ds_receipt_keys"][0]
+DEMO_KEY = PROVIDER["ds_receipt_keys"][0]
 
 
 # ---------------------------------------------------------------------------
@@ -143,12 +151,12 @@ def test_the_receipt_names_its_verifying_key():
 def test_the_published_med_carries_the_key_the_receipt_names():
     """Published in a signed, retained object rather than behind an endpoint
     that would need its own rotation and retention machinery."""
-    assert any(k["kid"] == _ack()["ds_kid"] for k in MED["ds_receipt_keys"])
+    assert any(k["kid"] == _ack()["ds_kid"] for k in PROVIDER["ds_receipt_keys"])
 
 
 def test_rdp_out_resolves_the_key_and_issues_the_de():
     receipt = _ack()
-    assert mock.delivered_at_from_receipt(receipt, _digest(), med=MED, expect=_expect(receipt)) == EVENT
+    assert mock.delivered_at_from_receipt(receipt, _digest(), provider=PROVIDER, expect=_expect(receipt)) == EVENT
 
 
 def test_a_receipt_without_a_kid_yields_no_de():
@@ -156,7 +164,7 @@ def test_a_receipt_without_a_kid_yields_no_de():
     receipt = copy.deepcopy(_ack())
     receipt.pop("ds_kid")
     with pytest.raises(mock.AckRejected) as exc:
-        mock.delivered_at_from_receipt(receipt, _digest(), med=MED, expect=_expect(receipt))
+        mock.delivered_at_from_receipt(receipt, _digest(), provider=PROVIDER, expect=_expect(receipt))
     assert "no referent" in exc.value.detail
 
 
@@ -167,7 +175,7 @@ def test_a_receipt_without_a_kid_yields_no_de():
 def test_a_receipt_verifies_after_the_key_is_rotated_out():
     """The property that decides between judging validity at event time and at
     verification time. A 2026 receipt must still verify in 2033."""
-    rotated = _med(dict(DEMO_KEY, valid_until="2026-06-01T00:00:00Z"),
+    rotated = _provider(dict(DEMO_KEY, valid_until="2026-06-01T00:00:00Z"),
                    dict(DEMO_KEY, kid="ds-demo-2027",
                         valid_from="2026-06-01T00:00:00Z"))
     key = lc.resolve_ds_receipt_key(rotated, "ds-demo-2026", EVENT)
@@ -177,18 +185,18 @@ def test_a_receipt_verifies_after_the_key_is_rotated_out():
     # fixture being called twice for the same message.
     receipt = _ack()
     assert mock.delivered_at_from_receipt(
-        receipt, _digest(), med=rotated, expect=_expect(receipt)) == EVENT
+        receipt, _digest(), provider=rotated, expect=_expect(receipt)) == EVENT
 
 
 def test_a_key_that_had_not_yet_taken_effect_cannot_have_signed_it():
-    future = _med(dict(DEMO_KEY, valid_from="2026-09-01T00:00:00Z"))
+    future = _provider(dict(DEMO_KEY, valid_from="2026-09-01T00:00:00Z"))
     with pytest.raises(lc.ReceiptKeyError) as exc:
         lc.resolve_ds_receipt_key(future, DEMO_KEY["kid"], EVENT)
     assert "after the" in str(exc.value)
 
 
 def test_a_key_already_retired_at_the_event_fails():
-    retired = _med(dict(DEMO_KEY, valid_until="2026-02-01T00:00:00Z"))
+    retired = _provider(dict(DEMO_KEY, valid_until="2026-02-01T00:00:00Z"))
     with pytest.raises(lc.ReceiptKeyError):
         lc.resolve_ds_receipt_key(retired, DEMO_KEY["kid"], EVENT)
 
@@ -196,11 +204,11 @@ def test_a_key_already_retired_at_the_event_fails():
 def test_the_window_is_half_open_at_the_boundary():
     """Consistent with every other window in the profile: an instant on the
     boundary belongs to exactly one key."""
-    boundary = _med(dict(DEMO_KEY, valid_until=EVENT))
+    boundary = _provider(dict(DEMO_KEY, valid_until=EVENT))
     with pytest.raises(lc.ReceiptKeyError):
         lc.resolve_ds_receipt_key(boundary, DEMO_KEY["kid"], EVENT)
     assert lc.resolve_ds_receipt_key(
-        _med(dict(DEMO_KEY, valid_from=EVENT)), DEMO_KEY["kid"], EVENT)
+        _provider(dict(DEMO_KEY, valid_from=EVENT)), DEMO_KEY["kid"], EVENT)
 
 
 # ---------------------------------------------------------------------------
@@ -216,7 +224,7 @@ def test_an_unknown_kid_fails():
 def test_two_keys_sharing_one_kid_fail_closed():
     """The substitution risk the identifier exists to remove — so a duplicate
     identifier cannot be resolved by picking one."""
-    ambiguous = _med(DEMO_KEY, dict(DEMO_KEY, public_key_b64="another-key"))
+    ambiguous = _provider(DEMO_KEY, dict(DEMO_KEY, public_key_b64="another-key"))
     with pytest.raises(lc.ReceiptKeyError) as exc:
         lc.resolve_ds_receipt_key(ambiguous, DEMO_KEY["kid"], EVENT)
     assert "ambiguous" in str(exc.value)
@@ -228,7 +236,7 @@ def test_an_algorithm_disagreement_is_rejected():
     receipt = copy.deepcopy(_ack())
     receipt["ds_alg"] = "ES256"
     with pytest.raises(mock.AckRejected) as exc:
-        mock.delivered_at_from_receipt(receipt, _digest(), med=MED, expect=_expect(receipt))
+        mock.delivered_at_from_receipt(receipt, _digest(), provider=PROVIDER, expect=_expect(receipt))
     assert "algorithm" in exc.value.detail
 
 
@@ -242,11 +250,44 @@ def test_the_contract_requires_the_identifier_and_the_algorithm():
     assert set(receipt["properties"]["ds_alg"]["enum"]) == {"EdDSA", "ES256", "ES384"}
 
 
-def test_the_med_schema_defines_the_key_history():
-    med = json.loads((ROOT / "schemas" / "bw-med.schema.json").read_text())
-    keys = med["properties"]["ds_receipt_keys"]["items"]
+def test_the_provider_schema_defines_the_key_history():
+    """SBM-ADR-0015: the history is published in the PROVIDER's descriptor.
+
+    It was the entity's BW-MED, because the Delivery Service was a second
+    provider and the customer's signed document was the only thing already
+    retained for the evidence period. With one provider role the key is the
+    RDP's own, and the shape — which fields, and that validity is judged at the
+    receipt's own instant — is what had to survive the move.
+    """
+    prov = json.loads((ROOT / "schemas" / "bw-provider.schema.json").read_text())
+    keys = prov["properties"]["ds_receipt_keys"]["items"]
     assert set(keys["required"]) == {"kid", "alg", "public_key_b64", "valid_from"}
     assert "valid_until" in keys["properties"]
-    note = " ".join(med["properties"]["ds_receipt_keys"]["description"].split())
+    note = " ".join(prov["properties"]["ds_receipt_keys"]["description"].split())
     assert "at the receipt's `server_time`" in note
     assert "NOT at verification time" in note
+
+
+def test_the_med_no_longer_publishes_the_receipt_key():
+    """And the path is DELETED, not kept as a fallback (A4). A fallback would
+    make the move a rename: a provider could keep publishing the key on its
+    customers' documents and nothing would notice."""
+    med = json.loads((ROOT / "schemas" / "bw-med.schema.json").read_text())
+    assert "ds_receipt_keys" not in med["properties"]
+    assert "msp" not in med["properties"], \
+        "the MSP is not a role, so the MED names no MSP endpoint"
+
+
+def test_a_kid_only_in_a_med_does_not_resolve():
+    """The deleted fallback, asserted. A descriptor that publishes no receipt
+    key must refuse the receipt even when the entity's MED still carries the
+    very `kid` it names."""
+    receipt = _ack()
+    stale = {"participant_id": PROVIDER["participant_id"]}      # no ds_receipt_keys
+    with pytest.raises(mock.AckRejected) as caught:
+        mock.delivered_at_from_receipt(receipt, _digest(), provider=stale,
+                                       expect=_expect(receipt))
+    assert caught.value.reason == "receipt-unverifiable"
+    assert receipt["ds_kid"] == DEMO_KEY["kid"], (
+        "the receipt must name the key the descriptor would have published, or "
+        "this passes for the wrong reason")

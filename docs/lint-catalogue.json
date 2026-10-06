@@ -520,6 +520,15 @@
       "owner_fn": "check_bundle"
     },
     {
+      "id": "LINT-BND-I8",
+      "input": "a retained DS receipt with no BW-PROVIDER descriptor for its issuing RDP",
+      "precondition": "the bundle carries a receipt whose `issuing_rdp_id` matches no supplied descriptor",
+      "predicate": "SBM-ADR-0015. The key that verifies a Delivery-Service receipt is the ISSUING RDP's, published in its BW-PROVIDER descriptor and pinned to the participant by the membership register (LINT-TRUST-07). Without that descriptor the signature cannot be resolved, so the acknowledged handover rests on the DE's own assertion and the verification is INCOMPLETE rather than passed. The key used to be read from the entity's BW-MED, because the Delivery Service was a second provider and the customer's signed document was the only thing already retained for the evidence period; that path is DELETED, not kept as a fallback, because a fallback would let a provider go on publishing its key on its customers' documents and make the move a rename. Fail-open is not an option here and silence is not either: the verdict says which material is missing.",
+      "error": "that the acknowledged handover is attested by the key the issuing RDP published — NOT ESTABLISHED: no BW-PROVIDER descriptor for that RDP was supplied (SBM-ADR-0015)",
+      "profile": "core",
+      "owner_fn": "check_bundle"
+    },
+    {
       "id": "LINT-CE-01",
       "input": "CE evidence object (with enclosing SE context when nested in an EP)",
       "precondition": "type == CE-v1",

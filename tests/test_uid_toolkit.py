@@ -78,7 +78,7 @@ def _run(*args):
 
 @pytest.fixture(scope="module")
 def artefact():
-    r = _run("med-stub", "--uid", UID, "--host", "msp.example.eu")
+    r = _run("med-stub", "--uid", UID, "--host", "rdp.example.eu")
     assert r.returncode == 0, r.stderr
     return json.loads(r.stdout)
 
@@ -124,7 +124,7 @@ def test_the_projection_equals_the_decoded_payload(artefact):
 
 
 def test_no_active_command_emits_a_removed_dns_discovery_path():
-    r = _run("dns-zone", "--uid", UID, "--host", "msp.example.eu")
+    r = _run("dns-zone", "--uid", UID, "--host", "rdp.example.eu")
     assert r.returncode != 0, "a removed command must not succeed"
     assert "REMOVED" in r.stderr
     assert "TXT" not in r.stdout and "SRV" not in r.stdout
@@ -134,12 +134,12 @@ def test_the_quick_start_commands_execute():
     """The commands the README shows, run as shown."""
     assert _run("gen-uid", "--cc", "DE", "--scheme", "EOID").returncode == 0
     assert _run("val-uid", UID).returncode == 0
-    assert _run("med-stub", "--uid", UID, "--host", "msp.example.eu").returncode == 0
+    assert _run("med-stub", "--uid", UID, "--host", "rdp.example.eu").returncode == 0
 
 
 def test_the_unsealed_body_is_also_the_current_shape():
     """A caller signing with its own key still gets the current body."""
-    r = _run("med-stub", "--uid", UID, "--host", "msp.example.eu", "--no-seal")
+    r = _run("med-stub", "--uid", UID, "--host", "rdp.example.eu", "--no-seal")
     assert r.returncode == 0, r.stderr
     body = json.loads(r.stdout)
     assert body["type"] == "BW-MED-v1"

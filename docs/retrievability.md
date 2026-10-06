@@ -12,8 +12,8 @@ verifies unchanged (`tests/test_lifecycle_claims.py`). That is why
 so often, and exactly why custody is the open question: a verdict is only as
 durable as somebody's willingness to keep answering the read that supplies it.
 
-Of the 19 inputs a retained-evidence verification can take,
-**10 depend on material a provider exit leaves with no named
+Of the 20 inputs a retained-evidence verification can take,
+**11 depend on material a provider exit leaves with no named
 server**. No absence turns into a silent pass — but the consequences differ,
 and each row below says which one applies. A REQUIRED input leaves a stated
 property unproven, and where a residual rule names it the verdict is reported
@@ -50,6 +50,7 @@ published read taking an as-of selector must appear below.
 | `transformation_traces` | none — neither is profiled (open items A13/A15) | nobody: the profile does not claim this is establishable | yes |
 | `directory_record` | GET /resolve/{uid} | the EDD core registry | yes |
 | `trust_store` | none published — a verifier's own configuration | the verifying party | yes |
+| `provider_descriptors` | the provider's own discovery surface; the descriptor's seal key is pinned to the participant by the membership register (LINT-TRUST-07) | each RDP, for itself | **no** |
 
 ## What each absence does to the verdict
 
@@ -145,6 +146,12 @@ published read taking an as-of selector must appear below.
 
 - *Absent:* no seal resolves to an anchor, so nothing is attributable (`check_trust`).
 - Held by the verifier rather than by any provider, which is why it survives — and why it is the one input whose absence is the verifier's own problem.
+
+**`provider_descriptors`** — The sealed BW-PROVIDER descriptor of each RDP named in the evidence, carrying the `ds_receipt_keys` that verify its Delivery-Service receipts.
+
+- *Absent:* LINT-BND-I8 — the key that signed a retained receipt cannot be resolved, so the handover rests on the DE's assertion alone and the verdict says INCOMPLETE rather than passing.
+- *Declared residual:* LINT-BND-I8
+- SBM-ADR-0015 moved this key off the customer's BW-MED, where it sat because the Delivery Service was a second provider and the entity's signed document was the only thing already retained for the evidence period. A provider's key belongs in the provider's descriptor — but it moves the key onto a surface a provider exit takes away, where it had been on one the entity controls. That is the trade the decision makes, and this row is where it is visible.
 
 ## The shape that works
 

@@ -52,7 +52,7 @@ The evidence layer is Layer 3 of the stack, sitting above addressing/discovery (
 - **The recipient wallet** is a *trust participant*, not just an endpoint: after decrypting, it recomputes the digest and produces a **recipient confirmation** — wallet-signed or bound to an authenticated session — that the recipient-side RDP relies upon to issue Delivery Evidence (§6).
 - **RDP(out)** — the sender-side provider — issues Sending Evidence and, in the single-provider case, composes the Evidence Package.
 - **RDP(in)** — the recipient-side provider — issues Delivery, Non-Delivery or Refusal Evidence.
-- **The MSP** (Messaging Service Provider / MLS Delivery Service) routes ciphertext and issues no evidence object. It is nonetheless an **observer** the evidence can rest on: at the availability grade, the Delivery Service's signed receipt of a device's acknowledged handover (S2) is what dates the DE (§6). The receipt's signature can be checked by anyone holding the Delivery Service's key; the event it reports is the MSP's own observation, which the RDP seals without re-witnessing it — attributed, not independently established. Who observes S2, and what an MSP alone could make an RDP attest, is open (review agenda A9). Its other signals appear in the package, if at all, as non-operative state records.
+- **The RDP's Delivery Service** routes ciphertext and issues no evidence object. It is nonetheless an **observer** the evidence can rest on: at the availability grade, the Delivery Service's signed receipt of a device's acknowledged handover (S2) is what dates the DE (§6). The receipt's signature can be checked by anyone holding the Delivery Service's key; the event it reports is the Delivery Service's own observation, which the RDP seals without re-witnessing it — attributed, not independently established. Who observes S2 is settled (review agenda A9, SBM-ADR-0015): the RDP, which operates the Delivery Service as part of its qualified service; what remains is the trust already placed in that provider. Its other signals appear in the package, if at all, as non-operative state records.
 
 In the minimal deployment (Annex P profile 1) RDP(out) and RDP(in) are co-located; in the federated case (profile 2) RDP(out) relays the ciphertext with the sealed SE to RDP(in), and the two exchange per-hop relay evidence, under the four-corner requirements.
 
@@ -100,7 +100,7 @@ Because the RDP handles only ciphertext, it *cannot itself verify* the plaintext
 
 The layer refuses to conflate "the message arrived somewhere" with "delivery occurred". It distinguishes four recipient-side states:
 
-- **S1** — made available to the recipient *provider* (accepted into the MSP queue);
+- **S1** — made available to the recipient *provider* (accepted into the Delivery Service queue);
 - **S2** — the **acknowledged handover**: an enrolled device collected the bytes in an authenticated session and acknowledged them, and the Delivery Service signed a receipt with the instant it observed (retrieval alone is not S2);
 - **S3** — decrypted and **digest-verified** by an authorised wallet within an authenticated session;
 - **S4** — **accepted** under the entity's published acceptance policy (a single authorised member, a role, or a quorum) — each member's confirmation one act, counted once.
@@ -137,7 +137,7 @@ The event is a component of the legal semantics, not decoration, so the layer en
 
 `duplicate-message-id` deserves a note: `message_id` is globally unique per issuing environment (it is the evidence handle and the key of the evidence-retrieval endpoint), not a per-recipient-queue key. An exact retry — same `message_id`, recipient and payload — is handled idempotently; a submission that reuses a `message_id` for a *different* recipient or payload is a collision, rejected at intake with this reason.
 
-SM-MLS is a *new binding* in the sense of EN 319 522-4 (it binds ERD messages and evidence to MLS-over-MSP transport), so the presumption is argued on the preserved *semantic* layer, with CAB confirmation of the profile as the second leg.
+SM-MLS is a *new binding* in the sense of EN 319 522-4 (it binds ERD messages and evidence to MLS transport), so the presumption is argued on the preserved *semantic* layer, with CAB confirmation of the profile as the second leg.
 
 ## 9. Verifiability: schema-valid is necessary, not sufficient
 

@@ -9,7 +9,7 @@
     "edd-resolver-openapi.yaml": {
       "dimension": "edd_openapi",
       "version": "2.0.0",
-      "sha256": "e625952efedb66f9ba7356b64d875b4a4a94704463e8e55b0d3c197865b0b5f1"
+      "sha256": "ff54567242361a369f7c9090a9958dfcf525796d62074abbb8c3dab5f45dfc9f"
     },
     "federation-register-openapi.yaml": {
       "dimension": "federation_register_openapi",
@@ -23,8 +23,8 @@
     },
     "schemas/bw-med.schema.json": {
       "dimension": "discovery_bw_med",
-      "version": "2.1",
-      "sha256": "4c8b32196f3afe75529ac85d33fb95431f092b00a5d7da409d7fdbe8e3ac11c4"
+      "version": "2.2",
+      "sha256": "45725d04b8b2a293450b7de17f9250f22bbdf16c658c518f29b81f2a7d4fb595"
     },
     "schemas/bw-member.schema.json": {
       "dimension": "discovery_bw_member",
@@ -38,8 +38,8 @@
     },
     "schemas/bw-provider.schema.json": {
       "dimension": "discovery_bw_provider",
-      "version": "1.0",
-      "sha256": "fbf25fc1774db9538527d7e4de9e621a841d7752be9e9aed9327d6a02dfacbb1"
+      "version": "1.1",
+      "sha256": "7cb34e1c01d0d132bb27f0b0e5564e08de62952c7fd965c528457cda60626691"
     },
     "schemas/envelope.schema.json": {
       "dimension": "application_envelope",

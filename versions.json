@@ -14,7 +14,7 @@
       ]
     },
     "umbrella_edition": {
-      "value": "2026-09-18",
+      "value": "2026-10-06",
       "note": "The umbrella's edition date. Bound in every place that states it — the umbrella's front matter, its opening section and the README row — so the three cannot drift apart.",
       "bindings": [
         {
@@ -230,7 +230,7 @@
       ]
     },
     "discovery_bw_med": {
-      "value": "2.1",
+      "value": "2.2",
       "bindings": [
         {
           "kind": "json",
@@ -263,7 +263,8 @@
           "file": "Secure-Business-Messaging-Profile.md",
           "pattern": "BW-MED \\*\\*(\\d+\\.\\d+)\\*\\*"
         }
-      ]
+      ],
+      "note": "2.2 (SBM-ADR-0015): `msp` withdrawn — there is one provider role — with the Delivery Service base URL, `ds_url` and `keypackage_url` under `rdp` as the RDP's own endpoints, and `ds_receipt_keys` moved to BW-PROVIDER where a provider's key belongs. Breaking for discovery."
     },
     "discovery_bw_org": {
       "value": "2.7",
@@ -338,8 +339,8 @@
       ]
     },
     "discovery_bw_provider": {
-      "value": "1.0",
-      "note": "BW-PROVIDER-v1, the provider's own signed descriptor. Its OWN stream: it describes a federation participant, not an entity, so it does not move when the entity documents do.",
+      "value": "1.1",
+      "note": "BW-PROVIDER-v1, the provider's own signed descriptor. Its OWN stream: it describes a federation participant, not an entity, so it does not move when the entity documents do. 1.1 (SBM-ADR-0015): gains `ds_receipt_keys`, the half of the withdrawn Batch B that was always the RDP's key rather than the customer's.",
       "bindings": [
         {
           "kind": "json",
@@ -445,7 +446,7 @@
       ]
     },
     "ts": {
-      "value": "v0.35",
+      "value": "v0.36",
       "note": "TS-shaped QERDS-binding revision. In the source repository the TS's change history (formerly its Annex B) is bound in CHANGELOG.md; that table does not travel into this export, so the binding was removed here deliberately and the TS front matter, the README table and the umbrella carry the value.",
       "bindings": [
         {

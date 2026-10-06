@@ -18,7 +18,84 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-09-29, edition r35
+## Current — 2026-10-06, edition r36
+
+**One provider role. Nothing changes on the wire.** A decision taken in September
+separated the delivery service from the evidence provider, each with its own
+identity, admission, descriptor and interface. The consultation asked for the
+opposite, and [`SBM-ADR-0015`](docs/adr/SBM-ADR-0015.md) folds the delivery
+service into the registered delivery provider: one accountable, qualified,
+supervised party carries the ciphertext, observes the handover and attests to it.
+It supersedes [`SBM-ADR-0004`](docs/adr/SBM-ADR-0004.md), whose reasoning stays
+readable where it was written. The cost is recorded in the decision, not softened:
+transport and evidence are no longer separable markets, the provider sits in the
+data path of every delivery, and the privacy argument for separation is given up.
+
+Nothing on the wire moved because nothing on the wire ever carried a second
+provider's identity: no schema, contract, CDDL rule or sample named one, and the
+federation register has only ever admitted registered delivery providers. The
+second role lived in the words — 119 places in the specification set, across the
+umbrella, the Internet-Draft, the TS-shaped binding, nine companion documents,
+four figures, two discovery schemas, the rule-ownership inventory and the review
+agenda; and six more in this study's own README, executive brief and open-items
+list, which are not carried from the specification and were corrected here.
+
+| Artefact | This edition | Previous |
+|---|---|---|
+| Umbrella profile | **2.1, edition 2026-10-06** | 2.1, edition 2026-09-18 |
+| TS-shaped QERDS binding | **v0.36** | v0.35 |
+| BW-MED / BW-ORG / BW-MEMBER discovery documents | **2.2** / 2.7 / 2.2 | 2.1 / 2.7 / 2.2 |
+| BW-PROVIDER provider descriptor | **1.1** | 1.0 |
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.12** | 2.12 |
+| EDD resolver contract (OpenAPI) | **2.0.0** | 2.0.0 |
+| Profile-2 companion contracts (wallet–RDP, delivery service, relay) | **15.0.0** | 15.0.0 |
+
+**Two discovery documents moved, because a key is published by whoever holds it.**
+The receipt that dates an availability-grade delivery is signed by the delivery
+service, and the delivery service is the provider's own function — so the key that
+signs it is published in the provider's descriptor, **BW-PROVIDER 1.1**, sealed by
+the provider's own descriptor key and checked against its admission at the
+receipt's instant. **BW-MED 2.2** no longer names a transport provider and no
+longer carries its keys; it names the entity's registered delivery provider and
+the endpoints that provider serves, its delivery service and KeyPackage pool among
+them.
+
+**The figures were the half a text sweep does not reach.** The four-corner
+architecture now draws each delivery service inside its provider's boundary rather
+than beside it, and says whose decision that is. The federated flow's two
+transport participants became the providers' own delivery services. The
+identity-proof map stops planning a descriptor for a role that no longer exists.
+Correcting their alt text found a line where the recipient's provider signed the
+handover receipt and, one clause later, no published operation carried that
+receipt to a provider — and a figure claiming a single operator runs two providers
+in the minimal deployment profile, where the normative table requires one.
+
+**This study's own words were the last to be corrected, and they were the most
+read.** The architecture roll-call said four parties; it is three. The assumptions
+said a second provider "which need not be qualified" is admitted all the same.
+The executive brief described that provider as a participant in its own right,
+admitted under its own identity, with its admission decided and not yet on the
+wire. [`OPEN-ITEMS.md`](OPEN-ITEMS.md) §8 described delivery evidence across two
+providers and listed the question beneath it as open with three models analysed
+and none chosen. §8 is now *Delivery evidence inside one provider*: **A1 stays
+open** — no published operation carries the handover receipt to the party that
+issues the delivery evidence, a gap now inside one provider rather than between
+two, and no smaller for it — and the question beneath it is closed, the observer
+being the provider.
+
+**The check that was supposed to make this complete was counting the acronym.** A
+sweep of the documents reported 113 occurrences closed and none left; a gate was
+added so the next one cannot drift back. It matched the abbreviation, which is not
+the role: outward-facing prose spells things out, and this study's brief spells it
+out. Six more places were named in words the gate could not see, including the
+umbrella's own example of a discovery document, which published a field the schema
+had removed and a version two releases old — a reader copying it would have
+written a document the shipped linter rejects. The gate now matches the role
+however it is written, and the example is the shipped sample's shape, field for
+field. What no gate reads is stated rather than implied: an embedded example is
+prose, and nothing holds this study's JSON blocks to the schemas they illustrate.
+
+## Edition r35 — 2026-09-29
 
 **No artefact version moves and nothing changes on the wire.** The independent
 verification of the previous edition confirmed its three outstanding observations

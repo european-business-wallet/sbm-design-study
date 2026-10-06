@@ -2702,7 +2702,7 @@ class ReceiptVerificationError(ValueError):
         self.detail = detail
 
 
-def verify_ds_receipt(receipt, med, *, expect=None):
+def verify_ds_receipt(receipt, provider, *, expect=None):
     """THE receipt check — one implementation, both paths (R5-03/R5-V4).
 
     Returns the SIGNED payload, authenticated. Raises
@@ -2752,12 +2752,14 @@ def verify_ds_receipt(receipt, med, *, expect=None):
             "receipt-unverifiable",
             "the receipt names no ds_kid, so 'the DS's published key' has no "
             "referent and the verifying key cannot be resolved (R3-04)")
-    if not (med or {}).get("ds_receipt_keys"):
+    if not (provider or {}).get("ds_receipt_keys"):
         raise ReceiptVerificationError(
             "receipt-unverifiable",
-            f"the receipt names key {kid!r} but the BW-MED publishes no "
-            "ds_receipt_keys — the obligation to verify against 'the published "
-            "key' has no referent (R3-04)")
+            f"the receipt names key {kid!r} but the issuing RDP's BW-PROVIDER "
+            "publishes no ds_receipt_keys — the obligation to verify against "
+            "'the published key' has no referent (R3-04/SBM-ADR-0015). The "
+            "entity's BW-MED is NOT consulted: that path is deleted, so a kid "
+            "published only there does not resolve")
 
     # 1-2. UNTRUSTED: decode the embedded payload to learn which instant the
     # signer claims. Nothing here is believed; it selects what must verify.
@@ -2783,7 +2785,7 @@ def verify_ds_receipt(receipt, med, *, expect=None):
 
     # 3-4. Resolve the published key that must have signed at that instant.
     try:
-        key = resolve_ds_receipt_key(med, kid, at=at)
+        key = resolve_ds_receipt_key(provider, kid, at=at)
     except (ReceiptKeyError, TimestampError) as e:
         raise ReceiptVerificationError("receipt-unverifiable", f"{e} (R3-04)")
     if receipt.get("ds_alg") is not None and key.get("alg") != receipt.get("ds_alg"):
@@ -2860,7 +2862,7 @@ class ReceiptKeyError(ValueError):
     """R3-04: the DS receipt's verification key cannot be resolved."""
 
 
-def resolve_ds_receipt_key(med, kid, at):
+def resolve_ds_receipt_key(provider, kid, at):
     """R3-04/R3-T3: the DS receipt key named by `kid`, as it stood at `at` —
     the receipt's OWN `server_time`, not verification time.
 
@@ -2871,11 +2873,11 @@ def resolve_ds_receipt_key(med, kid, at):
 
     Raises ReceiptKeyError; callers turn it into a typed violation.
     """
-    keys = [k for k in ((med or {}).get("ds_receipt_keys") or [])
+    keys = [k for k in ((provider or {}).get("ds_receipt_keys") or [])
             if k.get("kid") == kid]
     if not keys:
         raise ReceiptKeyError(
-            f"no ds_receipt_keys entry with kid {kid!r} in the DS operator's "
+            f"no ds_receipt_keys entry with kid {kid!r} in the issuing RDP's "
             "BW-MED — the receipt names a key nobody published")
     if len(keys) > 1:
         raise ReceiptKeyError(

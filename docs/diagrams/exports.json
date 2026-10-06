@@ -6,8 +6,8 @@
       "source": "docs/diagrams/federated-flow.mermaid",
       "command": "mmdc -i docs/diagrams/federated-flow.mermaid -o docs/diagrams/federated-flow.svg -b white",
       "tool": "@mermaid-js/mermaid-cli 10.4.0",
-      "source_sha256": "9133afb3132670b2334df95391cba4a667522806e35a7efff144118a085344a4",
-      "export_sha256": "e2b0aa5d5302ec0f3d697050425202a3f7d8dd33540f306da27f58537f34b2c3"
+      "source_sha256": "d9a9a5e6722f1582a9ee99521510f89f3126f1f6e9e1ae784e659a7e713fb03a",
+      "export_sha256": "ec3e746c149ad9b61632bffadab3da80eac4dcbca265fa5cf477204006fd41a8"
     },
     {
       "export": "docs/diagrams/four-corner-architecture-technology-neutral.png",

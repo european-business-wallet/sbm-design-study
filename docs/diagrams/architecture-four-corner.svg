@@ -3,13 +3,13 @@
 owner: the maintainer (README, Feedback)
 source: docs/diagrams/architecture-four-corner.svg (hand-written SVG; this file is the source)
 question: In the four-corner case, who carries the ciphertext, who observes the handover, who validates confirmations and who evaluates the acceptance policy?
-profile: 2 (four-corner). In profile 1 one operator runs both RDPs and no relay occurs.
+profile: 2 (four-corner). In profile 1 a single RDP serves both entities (Annex P) and no relay occurs.
 status: current
-references: umbrella §7.1, §7.2; I-D "Message Flows and Delivery States"; TS clauses 4.1 and 6; delivery-service-openapi.yaml; rdp-relay-openapi.yaml; wallet-rdp-openapi.yaml; docs/federated-flow-explainer.md; docs/REVIEW_AGENDA.md A1, A6, A9, A10
-alt: Entity A's wallet submits the MLS ciphertext and its metadata to RDP(out), which hands the same octets to its Delivery Service, MSP(out), and seals the Sending Evidence only after that service accepts them. RDP(out) relays the ciphertext with the sealed SE to RDP(in); the MSPs do not relay to each other. RDP(in) forwards the octets to its Delivery Service, MSP(in), with the origin proven by the SE. Entity B's devices collect and acknowledge them there, and MSP(in) signs the S2 receipt; no published operation carries that receipt to the RDP that issues the Delivery Evidence (open, A1). Entity B's confirmations reach RDP(in), which alone validates them and evaluates the acceptance policy, then issues DE, NDE or RE. The creating wallet reserves KeyPackages, deposits Welcomes, registers as the group's founder and later collects replies at the counterparty's Delivery Service; which Delivery Service routes a group spanning two after formation is open (A10). MLS keys are negotiated end to end, so every provider carries only ciphertext. RDPs are admitted through the federation register; the MSP as a federation participant is planned (Batch B), not implemented. The EU Trusted Lists establish qualification, which is distinct from admission and from the directory's pin of an entity's seal keys.
+references: umbrella §7.1, §7.2; I-D "Message Flows and Delivery States"; TS clauses 4.1 and 6; delivery-service-openapi.yaml; rdp-relay-openapi.yaml; wallet-rdp-openapi.yaml; docs/federated-flow-explainer.md; docs/adr/SBM-ADR-0015.md (one provider role); docs/REVIEW_AGENDA.md A1, A6, A9, A10
+alt: Entity A's wallet submits the MLS ciphertext and its metadata to RDP(out), which hands the same octets to the Delivery Service it operates and seals the Sending Evidence only after that service accepts them. RDP(out) relays the ciphertext with the sealed SE to RDP(in); the relay is RDP-to-RDP, there being no second provider to relay between. RDP(in) forwards the octets to the Delivery Service it operates, with the origin proven by the SE. Entity B's devices collect and acknowledge them there, and that Delivery Service signs the S2 receipt under the provider's receipt key; no published operation carries it to the evidence-issuing path, inside one provider or across (open, A1). Entity B's confirmations reach RDP(in), which alone validates them and evaluates the acceptance policy, then issues DE, NDE or RE. The creating wallet reserves KeyPackages, deposits Welcomes, registers as the group's founder and later collects replies at the counterparty's Delivery Service; which Delivery Service routes a group spanning two after formation is open (A10). MLS keys are negotiated end to end, so every provider carries only ciphertext. RDPs are admitted through the federation register; there is one provider role (SBM-ADR-0015), and the Delivery Service is drawn inside the RDP boundary that operates it, not implemented. The EU Trusted Lists establish qualification, which is distinct from admission and from the directory's pin of an entity's seal keys.
 -->
   <title>Four-corner federated architecture — who carries what</title>
-  <desc>Entity A's wallet submits ciphertext to RDP(out), which obtains its Delivery Service's acceptance before sealing the Sending Evidence and relays the ciphertext with that SE to RDP(in); RDP(in) forwards it to the recipient's Delivery Service, where Entity B's devices collect and acknowledge it. Confirmations reach RDP(in), the sole evaluator of the acceptance policy. The creator's use of the counterparty's Delivery Service, the receipt's path to the DE issuer (open, A1) and post-formation routing (open, A10) are marked. The MSP as a federation participant is planned (Batch B).</desc>
+  <desc>Entity A's wallet submits ciphertext to RDP(out), which obtains its Delivery Service's acceptance before sealing the Sending Evidence and relays the ciphertext with that SE to RDP(in); RDP(in) forwards it to the recipient's Delivery Service, where Entity B's devices collect and acknowledge it. Confirmations reach RDP(in), the sole evaluator of the acceptance policy. The creator's use of the counterparty's Delivery Service, the receipt's path to the DE issuer (open, A1) and post-formation routing (open, A10) are marked. There is one provider role: the Delivery Service is the RDP's own function (SBM-ADR-0015).</desc>
 
   <defs>
     <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -43,7 +43,7 @@ alt: Entity A's wallet submits the MLS ciphertext and its metadata to RDP(out), 
   <text x="860" y="53" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#64748b">GOVERNANCE — two separate authorities</text>
   <rect x="743" y="58" width="234" height="30" rx="5" fill="#f8fafc" stroke="#334155" stroke-width="1"/>
   <text x="860" y="70" text-anchor="middle" font-size="11" font-weight="bold" fill="#1f2937">Federation Authority</text>
-  <text x="860" y="83" text-anchor="middle" font-size="10" fill="#475569">membership register: admits RDPs · MSP PLANNED</text>
+  <text x="860" y="83" text-anchor="middle" font-size="10" fill="#475569">membership register: admits RDPs</text>
   <rect x="743" y="92" width="234" height="30" rx="5" fill="#f8fafc" stroke="#334155" stroke-width="1"/>
   <text x="860" y="104" text-anchor="middle" font-size="11" font-weight="bold" fill="#1f2937">Design Authority</text>
   <text x="860" y="117" text-anchor="middle" font-size="10" fill="#475569">profile change control · a different body (ADR-0002)</text>
@@ -72,6 +72,9 @@ alt: Entity A's wallet submits the MLS ciphertext and its metadata to RDP(out), 
   <text x="900" y="320" text-anchor="middle" font-size="11" fill="#475569">or session-bound</text>
   <text x="900" y="340" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">plaintext only here</text>
 
+  <!-- one provider (out): the RDP and the Delivery Service it operates -->
+  <rect x="255" y="168" width="200" height="284" rx="12" fill="#f1f5f9" stroke="#334155" stroke-width="1.2" stroke-dasharray="6 4"/>
+  <text x="355" y="446" text-anchor="middle" font-size="10" fill="#475569">one provider · SBM-ADR-0015</text>
   <!-- RDP out -->
   <rect x="265" y="178" width="180" height="86" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.6"/>
   <text x="355" y="199" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">RDP (out) — QERDS</text>
@@ -79,6 +82,9 @@ alt: Entity A's wallet submits the MLS ciphertext and its metadata to RDP(out), 
   <text x="355" y="230" text-anchor="middle" font-size="11" fill="#475569">DS accepted the octets · EP</text>
   <text x="355" y="252" text-anchor="middle" font-size="10.5" fill="#64748b">admitted: federation register</text>
 
+  <!-- one provider (in): the RDP and the Delivery Service it operates -->
+  <rect x="545" y="168" width="200" height="284" rx="12" fill="#f1f5f9" stroke="#334155" stroke-width="1.2" stroke-dasharray="6 4"/>
+  <text x="645" y="446" text-anchor="middle" font-size="10" fill="#475569">one provider · SBM-ADR-0015</text>
   <!-- RDP in -->
   <rect x="555" y="178" width="180" height="86" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.6"/>
   <text x="645" y="199" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">RDP (in) — QERDS</text>
@@ -87,19 +93,19 @@ alt: Entity A's wallet submits the MLS ciphertext and its metadata to RDP(out), 
   <text x="645" y="244" text-anchor="middle" font-size="11" fill="#475569">DE · NDE · RE</text>
   <text x="645" y="258" text-anchor="middle" font-size="10.5" fill="#64748b">admitted: federation register</text>
 
-  <!-- MSP out -->
+  <!-- Delivery Service (out), inside the RDP boundary -->
   <rect x="265" y="348" width="180" height="82" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
-  <text x="355" y="368" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">MSP (out) — Delivery Service</text>
+  <text x="355" y="368" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">its Delivery Service (out)</text>
   <text x="355" y="385" text-anchor="middle" font-size="11" fill="#475569">accepts what RDP(out) submits;</text>
   <text x="355" y="399" text-anchor="middle" font-size="11" fill="#475569">routes devices it saw join</text>
-  <text x="355" y="419" text-anchor="middle" font-size="10.5" fill="#64748b">own identity: PLANNED (Batch B)</text>
+  <text x="355" y="419" text-anchor="middle" font-size="10.5" fill="#64748b">a function of the RDP, not a party</text>
 
-  <!-- MSP in -->
+  <!-- Delivery Service (in), inside the RDP boundary -->
   <rect x="555" y="348" width="180" height="82" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
-  <text x="645" y="368" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">MSP (in) — Delivery Service</text>
+  <text x="645" y="368" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">its Delivery Service (in)</text>
   <text x="645" y="385" text-anchor="middle" font-size="11" fill="#475569">KeyPackages · Welcomes · queues;</text>
   <text x="645" y="399" text-anchor="middle" font-size="11" fill="#475569">observes the handover (S2)</text>
-  <text x="645" y="419" text-anchor="middle" font-size="10.5" fill="#64748b">own identity: PLANNED (Batch B)</text>
+  <text x="645" y="419" text-anchor="middle" font-size="10.5" fill="#64748b">a function of the RDP, not a party</text>
 
   <!-- 1 submit -->
   <line x1="186" y1="292" x2="262" y2="230" stroke="#1f2937" stroke-width="1.7" marker-end="url(#arr)"/>
@@ -126,9 +132,9 @@ alt: Entity A's wallet submits the MLS ciphertext and its metadata to RDP(out), 
   <line x1="553" y1="238" x2="448" y2="238" stroke="#64748b" stroke-width="1.2" stroke-dasharray="2 3" marker-end="url(#arrg)"/>
   <text x="500" y="252" text-anchor="middle" font-size="10" fill="#64748b">B.1 / B.2 hop</text>
   <text x="500" y="264" text-anchor="middle" font-size="10" fill="#64748b">evidence</text>
-  <text x="500" y="380" text-anchor="middle" font-size="10" fill="#475569">the MSPs do not</text>
-  <text x="500" y="392" text-anchor="middle" font-size="10" fill="#475569">relay to each</text>
-  <text x="500" y="404" text-anchor="middle" font-size="10" fill="#475569">other</text>
+  <text x="500" y="380" text-anchor="middle" font-size="10" fill="#475569">the relay is</text>
+  <text x="500" y="392" text-anchor="middle" font-size="10" fill="#475569">RDP-to-RDP:</text>
+  <text x="500" y="404" text-anchor="middle" font-size="10" fill="#475569">no second provider</text>
 
   <!-- 4 forward to DS -->
   <line x1="575" y1="265" x2="575" y2="345" stroke="#1f2937" stroke-width="1.5" marker-end="url(#arr)"/>
@@ -189,8 +195,8 @@ alt: Entity A's wallet submits the MLS ciphertext and its metadata to RDP(out), 
 
   <!-- Notes -->
   <g font-size="10.5" fill="#64748b">
-    <text x="30" y="660">Profile 2 (four-corner). In profile 1 one operator runs both RDPs and no relay occurs. An MSP may carry confirmation objects to RDP(in)</text>
-    <text x="30" y="675">verbatim; it validates, counts and decides nothing (TS clause 6). Who observes S2, and what an MSP alone could make an RDP attest, is open (A9).</text>
+    <text x="30" y="660">Profile 2 (four-corner). In profile 1 one operator runs both RDPs and no relay occurs. The Delivery Service may carry confirmation objects to RDP(in)</text>
+    <text x="30" y="675">verbatim; it validates, counts and decides nothing (TS clause 6). Who observes S2 is settled (A9, SBM-ADR-0015): the RDP, which operates the Delivery Service.</text>
     <text x="30" y="690">Informative. Normative flow: the I-D (Message Flows and Delivery States) and the TS (clauses 4.1, 6). Step by step: docs/federated-flow-explainer.md.</text>
   </g>
 </svg>

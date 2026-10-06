@@ -7,7 +7,7 @@
 
 This catalogue is the **normative definition** of every `LINT-*` conformance rule referenced by the umbrella (§9.4) and the TS (Annex A ICS pro forma). It exists so an assessor can build an independent checker that reproduces every verdict from this document and the sample vectors **without reading the reference Python**. The scripts under `scripts/` (`evidence_lint.py`, `discovery_lint.py`, `bundle_lint.py`, `lint_cli.py`) are the **versioned reference implementation** of this catalogue, not its definition: a change to a rule's behaviour MUST be accompanied by a change to this catalogue and its tests (enforced by `tests/test_lint_catalogue.py`).
 
-**Rules:** 160 · **with a naming test:** 150/160 · **catalogue version:** 1.
+**Rules:** 161 · **with a naming test:** 151/161 · **catalogue version:** 1.
 
 **Profile applicability.** `core` rules apply to every deployment; `production` rules apply only under `--profile production`; `agent` rules apply only where a system member (Annex R) is enrolled; `four-corner` rules apply only to relay/federated (profile-2) evidence.
 
@@ -1426,6 +1426,15 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Error outcome:** the CE transformation is not established — the outputs are attested, their relation to the input is not
 - **Reference implementation:** `check_bundle`
 - **Tests:** `test_ce_transformation_deferred.py`
+
+### LINT-BND-I8 · `core`
+
+- **Input:** a retained DS receipt with no BW-PROVIDER descriptor for its issuing RDP
+- **Precondition:** the bundle carries a receipt whose `issuing_rdp_id` matches no supplied descriptor
+- **Predicate (PASS iff):** SBM-ADR-0015. The key that verifies a Delivery-Service receipt is the ISSUING RDP's, published in its BW-PROVIDER descriptor and pinned to the participant by the membership register (LINT-TRUST-07). Without that descriptor the signature cannot be resolved, so the acknowledged handover rests on the DE's own assertion and the verification is INCOMPLETE rather than passed. The key used to be read from the entity's BW-MED, because the Delivery Service was a second provider and the customer's signed document was the only thing already retained for the evidence period; that path is DELETED, not kept as a fallback, because a fallback would let a provider go on publishing its key on its customers' documents and make the move a rename. Fail-open is not an option here and silence is not either: the verdict says which material is missing.
+- **Error outcome:** that the acknowledged handover is attested by the key the issuing RDP published — NOT ESTABLISHED: no BW-PROVIDER descriptor for that RDP was supplied (SBM-ADR-0015)
+- **Reference implementation:** `check_bundle`
+- **Tests:** `test_production_signature_claims.py`
 
 ### LINT-BND-W1 · `production`
 

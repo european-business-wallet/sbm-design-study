@@ -87,9 +87,27 @@ def test_the_removed_mode_is_gone_from_the_figure_and_cannot_return(figures):
 
 
 def test_a_mermaid_label_is_scanned_and_its_comments_are_not(figures):
+    """The scan reads what a figure draws, not what its commentary recalls.
+
+    The ignored half used to be supplied by the tree itself — a `%%` note about
+    a relay between two providers that was never published. That made the probe
+    depend on a stale token surviving in a shipped source, and SBM-ADR-0015
+    removed the last one. Both halves are planted here instead: a probe builds
+    its world.
+    """
     root, dl = figures
     src = root / "docs/diagrams/federated-flow.mermaid"
-    assert "MSP-to-MSP" in src.read_text(), "the history comment the scan must ignore"
+    assert "MSP" not in src.read_text(), \
+        "no shipped mermaid token names a provider role the profile withdrew"
+
+    # In a comment: recalling a withdrawn design is not drawing a claim.
+    _edit(src, "%% end figure", "%% end figure\n%% an MSP↔MSP relay was drawn here before, and was never published")
+    planted = [p for _, p in dl.scan_figures() if "MSP" in p]
+    # Editing a source without re-rendering is itself a finding, and the right
+    # one; what must not appear is the comment's own words.
+    assert planted == [], planted
+
+    # In a label: the same words, drawn for a reader, are a claim.
     _edit(src, "RO->>RI: POST /relay/messages", "MO->>MI: relay MSP→MSP; RO->>RI: POST /relay/messages")
     assert any("MSP→MSP" in p for _, p in dl.scan_figures())
 

@@ -9,7 +9,7 @@
   "families": [
     {
       "id": "intermediary-plaintext-prohibition",
-      "title": "Intermediaries (MSP / Delivery Service / RDP) never access plaintext",
+      "title": "Intermediaries (the RDP and the Delivery Service it operates) never access plaintext",
       "owner": "id",
       "owner_anchor": "Object model, Delivery-Service mapping, and Security Considerations",
       "owner_present": "MUST NOT (have access to|access|store)[^.\\n]*plaintext",
@@ -29,7 +29,7 @@
     },
     {
       "id": "keypackage-single-use",
-      "title": "KeyPackages are single-use; the MSP removes a consumed KeyPackage and rejects reuse",
+      "title": "KeyPackages are single-use; the RDP removes a consumed KeyPackage and rejects reuse",
       "owner": "id",
       "owner_anchor": "KeyPackage rules ({{keypackage-rules}})",
       "owner_present": "KeyPackages MUST be single-use",
@@ -113,7 +113,7 @@
           "note": "the delivery-state model consumes the evaluated outcome; it does not evaluate"
         }
       ],
-      "note": "X-10: the former two-owner text (umbrella: the MSP evaluates; TS: RDP(in) evaluates) is collapsed to one owner. A prose-ownership family, not a sample-checkable LINT rule."
+      "note": "X-10: the former two-owner text is collapsed to one owner, RDP(in). The phrasing that is now forbidden is `non_owner_forbidden` above, and tests/test_policy_evaluator_owner.py records the former wording verbatim; both keep a role name SBM-ADR-0015 withdrew, because a detector must carry what it detects. A prose-ownership family, not a sample-checkable LINT rule."
     },
     {
       "id": "status-capability",

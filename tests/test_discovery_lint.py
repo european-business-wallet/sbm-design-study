@@ -94,7 +94,16 @@ DISC_NEGATIVE_CASES = [
     ("med-post-seal-mutation", "sample-BW-MED.json", "LINT-DISC-01",
      lambda d: d.update(asserted_at="2099-01-01T00:00:00Z")),
     ("med-bad-ds-url", "sample-BW-MED.json", "LINT-DISC-05",
-     lambda d: d["mls"].update(ds_url="http://insecure.example/ds")),
+     lambda d: d["rdp"].update(ds_url="http://insecure.example/ds")),
+    # SBM-ADR-0015: the withdrawn fields are refused, not ignored — a provider
+    # that kept publishing its receipt key on a customer's document would
+    # otherwise make the move a rename.
+    ("med-carries-withdrawn-msp", "sample-BW-MED.json", "LINT-DISC-05",
+     lambda d: d.update(msp="https://msp.example.eu")),
+    ("med-carries-withdrawn-receipt-key", "sample-BW-MED.json", "LINT-DISC-05",
+     lambda d: d.update(ds_receipt_keys=[{"kid": "x", "alg": "EdDSA",
+                                          "public_key_b64": "AAAA",
+                                          "valid_from": "2026-01-01T00:00:00Z"}])),
     ("med-bad-uid", "sample-BW-MED.json", "LINT-DISC-03",
      lambda d: d.update(uid="not-a-uid")),
     ("org-missing-policy-version", "sample-BW-ORG.json", "LINT-DISC-04",

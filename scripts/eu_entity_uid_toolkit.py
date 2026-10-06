@@ -154,7 +154,7 @@ def _current_version(dimension: str) -> str:
     return dims[dimension]["value"]
 
 
-def med_stub(uid: str, msp: str, rdp_discovery: str, rdp_evidence_tpl: str,
+def med_stub(uid: str, delivery_service: str, rdp_discovery: str, rdp_evidence_tpl: str,
              gen_keys: bool = True, seal: bool = True,
              asserted_at: str = None, expires_at: str = None) -> dict:
     """Emit a CURRENT BW-MED-v1 artefact for `uid`.
@@ -181,7 +181,10 @@ def med_stub(uid: str, msp: str, rdp_discovery: str, rdp_evidence_tpl: str,
     use requires a real qualified certificate and the trust-path validation
     the linter's `--profile production` explicitly does NOT perform.
     """
-    msp_base = msp.rstrip("/")
+    # SBM-ADR-0015 (BW-MED 2.2): one provider role. What was the MSP's base URL
+    # is the RDP's Delivery Service, and the routing and KeyPackage endpoints
+    # move under `rdp` with it.
+    ds_base = delivery_service.rstrip("/")
     if asserted_at is None or expires_at is None:
         import datetime as _dt
         now = _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0)
@@ -192,16 +195,16 @@ def med_stub(uid: str, msp: str, rdp_discovery: str, rdp_evidence_tpl: str,
         "version": _current_version("discovery_bw_med"),
         "uid": uid,
         "protocols": ["SM-MLS-1.0"],
-        "msp": msp,
-        "rdp": {"discovery": rdp_discovery, "evidence": rdp_evidence_tpl},
+        "rdp": {"discovery": rdp_discovery, "evidence": rdp_evidence_tpl,
+                "delivery_service": delivery_service,
+                "keypackage_url": f"{ds_base}/.well-known/bw/keypackages/{uid}",
+                "ds_url": f"{ds_base}/mls/v1"},
         "mls": {
             "cipher_suites": [
                 "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519",
                 "MLS_128_DHKEMP256_AES128GCM_SHA256_P256",
                 "MLS_128_MLKEM768X25519_AES128GCM_SHA256_Ed25519",
             ],
-            "keypackage_url": f"{msp_base}/.well-known/bw/keypackages/{uid}",
-            "ds_url": f"{msp_base}/mls/v1",
         },
         "identity_credential": {
             "type": "x509",
@@ -372,7 +375,7 @@ def main(argv=None):
 
     p_dns = sub.add_parser("dns-zone")
     p_dns.add_argument("--uid", required=True)
-    p_dns.add_argument("--host", required=True, help="Target messaging host (e.g., msp.example.eu)")
+    p_dns.add_argument("--host", required=True, help="Target messaging host (e.g., rdp.example.eu)")
     p_dns.add_argument("--ttl", type=int, default=3600)
     p_dns.add_argument("--length", type=int, default=24)
 
@@ -385,10 +388,13 @@ def main(argv=None):
 
     p_med_stub = sub.add_parser("med-stub")
     p_med_stub.add_argument("--uid", required=True)
-    p_med_stub.add_argument("--msp", required=False, help="https://msp.example")
+    p_med_stub.add_argument("--delivery-service", "--msp", dest="delivery_service",
+                            required=False, help="https://rdp.example — the RDP's "
+                            "Delivery Service base URL (`--msp` is the withdrawn "
+                            "spelling, kept so an existing command line still runs)")
     p_med_stub.add_argument("--rdp-discovery", required=False, help="https://rdp.example/.well-known/rdp")
     p_med_stub.add_argument("--rdp-evidence", required=False, help="https://rdp.example/evidence/{message_id}")
-    p_med_stub.add_argument("--host", help="If set, derives msp/rdp endpoints from https://{host}")
+    p_med_stub.add_argument("--host", help="If set, derives the RDP endpoints from https://{host}")
     p_med_stub.add_argument("--out", required=False, help="Output file (default: stdout)")
     p_med_stub.add_argument("--no-gen-keys", action="store_true", help="Do not generate ephemeral keys")
     p_med_stub.add_argument("--no-seal", action="store_true",
@@ -479,14 +485,14 @@ def main(argv=None):
 
     if args.cmd == "med-stub":
         if args.host:
-            msp = args.msp or f"https://{args.host}"
+            delivery_service = args.delivery_service or f"https://{args.host}"
             rd = args.rdp_discovery or f"https://{args.host}/.well-known/rdp"
             ev = args.rdp_evidence or f"https://{args.host}/evidence/{{message_id}}"
         else:
-            msp = args.msp or "https://msp.example"
+            delivery_service = args.delivery_service or "https://rdp.example"
             rd  = args.rdp_discovery or "https://rdp.example/.well-known/rdp"
             ev  = args.rdp_evidence or "https://rdp.example/evidence/{message_id}"
-        doc = med_stub(args.uid, msp, rd, ev, gen_keys=(not args.no_gen_keys),
+        doc = med_stub(args.uid, delivery_service, rd, ev, gen_keys=(not args.no_gen_keys),
                        seal=(not args.no_seal))
         js = json.dumps(doc, indent=2)
         if args.out:

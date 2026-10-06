@@ -75,7 +75,7 @@ state, never over the content itself.
 
 SM-MLS binds MLS {{RFC9420}} to a registered-delivery context. Application
 messages are MLS PrivateMessages; the routing provider (a Messaging Service
-Provider, MSP) fulfils the MLS Delivery Service role and sees only ciphertext
+Provider) fulfils the MLS Delivery Service role and sees only ciphertext
 and metadata; a Registered Delivery Provider (RDP) observes evidenced events
 and issues COSE_Sign1 {{RFC9052}} evidence objects.
 
@@ -94,7 +94,8 @@ References to Regulation (EU) No 910/2014 {{EU-910-2014}} in this document are
 - **UID**: the canonical entity identifier (defined in {{SBM-UMBRELLA}}).
 - **MID / device_id**: pseudonymous member/device identifiers within an entity.
 - **WU**: Wallet Unit, an MLS endpoint on an entity's device.
-- **MSP**: Messaging Service Provider; the MLS Delivery Service (RFC 9750).
+- **DS**: the MLS Delivery Service (RFC 9750), operated by the RDP as a function
+  of its qualified service — not a separate provider.
 - **RDP**: Registered Delivery Provider; issues evidence.
 - **Evidence object**: SE/DE/NDE/RE/CE; **EP**: Evidence Package.
 - **Seal**: the COSE_Sign1 the RDP applies to an evidence object.
@@ -470,13 +471,14 @@ P-256 device is unaffected.
 
 ## MLS Delivery Service Mapping
 
-The MSP fulfils the MLS Delivery Service role ({{RFC9750}}):
+The RDP fulfils the MLS Delivery Service role ({{RFC9750}}) as a function of its
+own service; the obligations below are the RDP's:
 
-- The MSP MUST implement DS functions: queuing, handshake-message ordering
+- The RDP MUST implement DS functions: queuing, handshake-message ordering
   within a group, and KeyPackage distribution.
-- The MSP MUST NOT have access to plaintext Application message content.
-- The MSP MAY observe metadata (sender/recipient UIDs, group id, size, times).
-- The MSP MUST expose a KeyPackage retrieval endpoint for the entity's devices.
+- The RDP MUST NOT have access to plaintext Application message content.
+- The RDP MAY observe metadata (sender/recipient UIDs, group id, size, times).
+- The RDP MUST expose a KeyPackage retrieval endpoint for the entity's devices.
 
 ## KeyPackage Rules
 
@@ -490,11 +492,11 @@ B2B entities are not always online; asynchronous group creation uses KeyPackages
   KeyPackage consumption grows accordingly; such a device SHOULD size its pool
   as roughly (peers × active scopes it joins) with margin for replenishment
   latency. MLS and the Delivery Service handle the additional groups natively.
-- KeyPackages MUST be single-use: the MSP MUST remove a consumed KeyPackage,
+- KeyPackages MUST be single-use: the RDP MUST remove a consumed KeyPackage,
   MUST NOT serve it again, and MUST notify the device to replenish. A device
   MAY additionally publish a single **last-resort** KeyPackage; its use MUST
   trigger immediate rotation of the device's leaf key.
-- Replay: the MSP MUST reject any reuse of a consumed single-use KeyPackage;
+- Replay: the RDP MUST reject any reuse of a consumed single-use KeyPackage;
   the recipient MUST reject a Welcome built on a KeyPackage it did not publish
   as current. A detected reuse MUST raise an alarm and SHOULD be evidenced as
   NDE with reason `keypackage-replay`.
@@ -1167,7 +1169,7 @@ population proportional to actual traffic:
   resolution; {{mls-group-creation-sequence-informative}} the sequence). No
   message, no group: a published scope map costs nothing until it is used.
 - **Idle expiry and archival.** A group with no traffic MAY be closed after an
-  operator-defined idle period: the members commit a final epoch, the MSP stops
+  operator-defined idle period: the members commit a final epoch, the RDP stops
   serving its KeyPackage bindings, and the wallets retain their local message
   history (evidence remains valid indefinitely — it binds to digests and session
   state, not to a live group).
@@ -1200,13 +1202,13 @@ single-provider profile-1 deployment.
 The sender wallet resolves the recipient UID, fetches the recipient devices'
 KeyPackages, creates the MLS group (adding both parties' devices), and Commits;
 the MLS handshake performs the cryptographic mutual authentication. Welcome
-messages are queued by the recipient MSP for the recipient devices, which verify
+messages are queued by the recipient RDP for the recipient devices, which verify
 credentials and join.
 
 ## Delivery
 
 The sender computes the digest, encrypts the envelope and payload as an MLS
-PrivateMessage, and submits it to the MSP; the sender-side RDP issues SE. The
+PrivateMessage, and submits it to its RDP's Delivery Service; the sender-side RDP issues SE. The
 message is relayed and queued; recipient devices decrypt. DE is issued at state
 S4 with S3 as a precondition (see below).
 
@@ -1228,7 +1230,7 @@ transitions**, not an additional state.
 Recipient-side delivery progresses through four states; an implementation MUST
 NOT conflate them.
 
-- **S1 — available to the recipient provider** (accepted into the MSP queue).
+- **S1 — available to the recipient provider** (accepted into the Delivery Service queue).
 - **S2 — acknowledged handover to the recipient device** (the message
   bytes were TRANSFERRED to an enrolled leaf within an authenticated session
   and the session transport ACKNOWLEDGED the receipt — one exact event, below).
@@ -1752,7 +1754,7 @@ the two domains — and MUST NOT drive any retry, duplicate or dispute
 decision.
 
 A sender MAY retry until `ttl` expires; the sender-side RDP MUST handle
-retries idempotently (`message_id`). On MLS state errors the MSP SHOULD prompt a
+retries idempotently (`message_id`). On MLS state errors the RDP SHOULD prompt a
 group-state re-fetch; an irrecoverably corrupted group MUST be re-created. MLS
 provides transport replay protection; RDPs MUST reject duplicate evidence
 issuance for a given (`message_id`, `payload_hash`).
@@ -1790,7 +1792,7 @@ required.
 
 This document defines the wire protocol — the MLS binding, the application
 envelope, canonicalisation, the delivery states and the evidence objects —
-and the behavioural obligations of the MSP acting as the MLS Delivery Service
+and the behavioural obligations of the RDP acting as the MLS Delivery Service
 ({{mls-delivery-service-mapping}}, {{keypackage-rules}}) and of the RDPs. Four
 HTTP surfaces are deliberately NOT defined by this profile — their WIRE FORM
 is deployment-chosen at profile 1, while **profile 2 REQUIRES the three published
@@ -1812,7 +1814,7 @@ exchange rests on private agreements:
   publication and replenishment, Welcome deposit and collection, handshake
   message submission and ordering, and its error model. (KeyPackage
   *retrieval* is resolvable through the directory: the EDD resolver contract
-  redirects to the MSP pool.) The wire form is deployment-chosen — the MLS
+  redirects to the RDP's Delivery Service pool.) The wire form is deployment-chosen — the MLS
   Delivery Service (RFC 9750) has many valid realisations, so this profile
   constrains behaviour, not bytes — but the surface's REQUIRED properties are
   normative: **idempotent submission** keyed by `message_id` (a retried
@@ -1859,12 +1861,12 @@ exchange rests on private agreements:
   deliverable and its authoritative enumeration is the TS clause 4.1
   companion-contract list.
 
-In a single-operator deployment (one co-located MSP/RDP — deployment
+In a single-operator deployment (one RDP — deployment
 profile 1 of the umbrella's deployment-profiles annex) these interfaces are
 **deployment-defined**: an implementation MUST satisfy the behavioural
 requirements referenced above, but the HTTP shape is not standardised and no
 cross-deployment interoperability claim attaches to it. Interoperability
-between independently operated wallets, MSPs or RDPs (deployment profile 2
+between independently operated wallets or RDPs (deployment profile 2
 and later) MUST NOT be claimed on the basis of this document alone: it
 additionally requires these interfaces to be normatively defined — companion
 OpenAPI contracts in the style of the EDD resolver contract, aligned with the
@@ -2062,7 +2064,7 @@ This rule is what makes an additive registration safe for an older verifier.
 
 WU-S resolves the recipient UID and MED, fetches KeyPackages for the target
 devices, creates the group adding its own and the recipient's devices, Commits,
-and submits the Welcome messages to the recipient MSP, which queues them; the
+and submits the Welcome messages to the recipient RDP, which queues them; the
 recipient devices verify credentials and join. No shared secret or prior
 exchange is required.
 
@@ -2070,7 +2072,7 @@ exchange is required.
 
 SM-MLS-1.0 = MLS {{RFC9420}} baseline suite
 `MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519`; `x509` or `bw_uid_qeaa`
-credentials chaining to EU Trusted Lists; MSP as Delivery Service; single-use
+credentials chaining to EU Trusted Lists; the RDP as Delivery Service; single-use
 KeyPackages; deterministic-CBOR evidence encoding defined in the CDDL; COSE_Sign1
 evidence with seal-then-timestamp sequencing.
 

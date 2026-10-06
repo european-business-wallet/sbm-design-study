@@ -44,16 +44,16 @@ info:
     v1.1.0 narrowed /uid/{uid}/keypackages to a non-cacheable 302 pointer —
     a draft-stage narrowing accepted on the minor stream: the EDD holds no
     KeyPackage pool, so consume-once accounting lives at exactly one place,
-    the MSP pool the redirect targets.)
+    the RDP's Delivery Service pool the redirect targets.)
 
     The EDD operates as a hybrid infrastructure: a centralised core registry
     under EU governance holds authoritative UID records, while a federated
-    discovery layer operated by MSPs hosts MED/ORG/MEMBER documents and MLS
+    discovery layer operated by RDPs hosts MED/ORG/MEMBER documents and MLS
     KeyPackages. The endpoints under /resolve, /uid/{uid}/euid, /euid/{euid}
     and /uid/{uid}/redirect are served by the core registry. The endpoints
     under /uid/{uid}/rdp, /uid/{uid}/evidence/{message_id},
     /uid/{uid}/keypackages and /.well-known/bw/* resolve via the discovery
-    layer (MSP-hosted).
+    layer (RDP-hosted).
 
     Federation trust model (umbrella, "Federation trust model" subsection under
     the authoritative architecture): the core registry's signed
@@ -297,10 +297,10 @@ paths:
               schema: { $ref: '#/components/schemas/Error' }
   /uid/{uid}/keypackages:
     get:
-      summary: Resolve the MSP KeyPackage pool for an entity (pointer)
+      summary: Resolve the RDP's Delivery Service KeyPackage pool for an entity (pointer)
       description: |
         POINTER, not a pool: the EDD does not serve KeyPackage bytes and holds
-        no KeyPackage pool. The response is a 302 to the entity's MSP pool —
+        no KeyPackage pool. The response is a 302 to the entity's RDP Delivery Service pool —
         the pool the entity's sealed MED already names (`mls.keypackage_url`) —
         which owns the KeyPackage pool and ALL single-use pool accounting.
 
@@ -326,12 +326,12 @@ paths:
         be cached (`Cache-Control: no-store`); a GET here never mutates pool
         state. Lifetime is bounded per the active profile (30 days production /
         90 days pilot). The credential is cross-checked against the current
-        EDD record / MED before the MSP serves a KeyPackage.
+        EDD record / MED before the Delivery Service serves a KeyPackage.
 
         v2.0.0: the umbrella's normative access table says "Authenticated
         requester (R7)" for this path and the contract declared no security.
         The EDD serves only a 302 and holds no pool, so what leaked was the
-        pointer rather than the packages — but a pointer names the entity's MSP
+        pointer rather than the packages — but a pointer names the entity's RDP
         and confirms the entity to anyone who asks, and R7 required the
         requester to be authenticated before either.
       security:
@@ -361,7 +361,7 @@ paths:
             availability read (`GET /keypackages/{uid}`).
       responses:
         '302':
-          description: Redirect to the MSP KeyPackage pool (serves KeyPackagesResponse; owns consume-once accounting and keypackage-replay rejection)
+          description: Redirect to the RDP's Delivery Service KeyPackage pool (serves KeyPackagesResponse; owns consume-once accounting and keypackage-replay rejection)
           headers:
             Location: { schema: { type: string, format: uri } }
             Cache-Control:
@@ -798,7 +798,7 @@ components:
       additionalProperties: false
     KeyPackagesResponse:
       type: object
-      description: The shape served at the /uid/{uid}/keypackages redirect target (the MSP pool) — kept in this contract as the documented pool response; the EDD itself never serves it (v1.1.0 pointer mode).
+      description: The shape served at the /uid/{uid}/keypackages redirect target (the RDP's Delivery Service pool) — kept in this contract as the documented pool response; the EDD itself never serves it (v1.1.0 pointer mode).
       required: [uid, keypackages]
       properties:
         uid: { type: string }

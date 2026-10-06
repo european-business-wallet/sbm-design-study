@@ -2715,7 +2715,7 @@ def ack_welcome(welcome_id, *, credential, at="2026-04-04T10:05:00Z"):
     raise WelcomeAccessDenied("unknown, or another device's")
 
 
-def delivered_at_from_receipt(receipt, submitted_envelope_hash, med=None,
+def delivered_at_from_receipt(receipt, submitted_envelope_hash, provider=None,
                               *, expect=None):
     """DR-10 + R3-04 — verify the DS receipt against the DS operator's
     published key, and return the S2 instant FROM THE SIGNED PAYLOAD.
@@ -2741,11 +2741,17 @@ def delivered_at_from_receipt(receipt, submitted_envelope_hash, med=None,
     receipt.
     """
     from lint_cli import verify_ds_receipt, ReceiptVerificationError
-    if med is None:
+    # SBM-ADR-0015: the key is the ISSUING RDP's, from its BW-PROVIDER
+    # descriptor. It was the entity's BW-MED, because the Delivery Service was a
+    # second provider; with one provider role the key is the RDP's own. The MED
+    # path is deleted rather than kept as a fallback — a `kid` published only in
+    # a BW-MED must not resolve, or the move would be a rename.
+    if provider is None:
         raise AckRejected(
             "receipt-unverifiable",
-            "no BW-MED supplied, so the DS receipt key cannot be resolved and "
-            "the signature cannot be verified against anything (R4-03)")
+            "no BW-PROVIDER descriptor supplied for the issuing RDP, so the DS "
+            "receipt key cannot be resolved and the signature cannot be "
+            "verified against anything (R4-03/SBM-ADR-0015)")
     # R6-03: the act being processed is STATED. Without it a valid receipt for
     # message A was accepted while handling message B whenever the ciphertext
     # digest matched — the function had no parameter with which to notice, so
@@ -2757,7 +2763,7 @@ def delivered_at_from_receipt(receipt, submitted_envelope_hash, med=None,
             "no expected delivery context was supplied, so this receipt could "
             "be a valid one for another act. Fail closed (R6-03)")
     try:
-        signed = verify_ds_receipt(receipt, med, expect=expect)
+        signed = verify_ds_receipt(receipt, provider, expect=expect)
     except ReceiptVerificationError as e:
         raise AckRejected(e.reason, e.detail)
 

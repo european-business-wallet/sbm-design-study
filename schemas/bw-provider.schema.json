@@ -1,14 +1,28 @@
 {
   "$id": "https://bw.example.eu/schemas/bw-provider.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "BW-PROVIDER-v1 (v1.0)",
+  "title": "BW-PROVIDER-v1 (v1.1)",
   "description": "Batch A / A3 — the PROVIDER's own signed descriptor. Until this document, providers were named by URL inside the CUSTOMER's document: `BW-MED.rdp` carries `{discovery, evidence}` and `BW-MED.msp` is a bare URI, both published in the entity's MED and sealed by the entity's key. So a provider serving a thousand entities had its endpoints republished in a thousand documents sealed by a thousand different signers, with nothing stating they described the same provider. A descriptor is the provider speaking for itself, sealed by a key the membership register pins to it (LINT-TRUST-07). BW-MED is NOT changed in Batch A: the endpoints are duplicated for now and the duplication is removed in Batch B, when BW-MED begins referencing participants by identity.",
   "type": "object",
-  "required": ["type", "version", "participant_id", "roles", "endpoints",
-               "asserted_at", "expires_at", "kid"],
+  "required": [
+    "type",
+    "version",
+    "participant_id",
+    "roles",
+    "endpoints",
+    "asserted_at",
+    "expires_at",
+    "kid"
+  ],
   "properties": {
-    "type": { "type": "string", "const": "BW-PROVIDER-v1" },
-    "version": { "type": "string", "const": "1.0" },
+    "type": {
+      "type": "string",
+      "const": "BW-PROVIDER-v1"
+    },
+    "version": {
+      "type": "string",
+      "const": "1.1"
+    },
     "participant_id": {
       "$ref": "evidence-common.schema.json#/$defs/RdpId",
       "description": "The participant this descriptor speaks for. The SAME value space the evidence and the membership register use (R7-X1), referenced rather than restated — a descriptor naming a provider in some other notation would be describing somebody the register cannot find."
@@ -17,23 +31,36 @@
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "enum": ["rdp"] },
-      "description": "What this provider is admitted AS. Closed to `rdp` in Batch A, matching the register's `role` enum: the participant model is exercised with one role before a second is introduced. An array rather than a scalar because a participant may hold more than one role once there is more than one."
+      "items": {
+        "type": "string",
+        "enum": [
+          "rdp"
+        ]
+      },
+      "description": "What this provider is admitted AS. `rdp` is the ONE provider role, by decision (SBM-ADR-0015): the Registered Delivery Provider operates the Delivery Service as part of the qualified service it is supervised for. The enumeration was closed to `rdp` in Batch A as a stage, with a second role expected; that second role is withdrawn, and this is no longer a stage. An array rather than a scalar because a participant may hold more than one role should one ever be added."
     },
     "endpoints": {
       "type": "object",
-      "required": ["discovery", "evidence"],
+      "required": [
+        "discovery",
+        "evidence"
+      ],
       "additionalProperties": false,
       "description": "The endpoints today scattered across every customer's `BW-MED.rdp`. Same two fields, same meanings; what changes is who says them and who signs.",
       "properties": {
-        "discovery": { "type": "string", "format": "uri" },
+        "discovery": {
+          "type": "string",
+          "format": "uri"
+        },
         "evidence": {
           "type": "string",
           "description": "Evidence-retrieval URI template, `{message_id}` templated as in BW-MED."
         }
       }
     },
-    "asserted_at": { "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp" },
+    "asserted_at": {
+      "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+    },
     "expires_at": {
       "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp",
       "description": "After this instant the descriptor is stale and a verifier MUST NOT rely on it. Compared as an INSTANT (R9-04), never as a string."
@@ -42,8 +69,51 @@
       "type": "string",
       "minLength": 1,
       "description": "The key that sealed this descriptor. It MUST be one of the `authorized_seal_keys` the membership register pins to this participant (LINT-TRUST-07) — the LINT-TRUST-05 rule one level up: a seal key authorised for another participant cannot seal this one's descriptor."
+    },
+    "ds_receipt_keys": {
+      "type": "array",
+      "minItems": 1,
+      "description": "R3-04/R3-T3, moved here by SBM-ADR-0015 (BW-PROVIDER 1.1): the keys that verify this PROVIDER's Delivery-Service delivery receipts. A receipt's `ds_kid` resolves against the issuing RDP's descriptor, pinned by that RDP's membership record — LINT-TRUST-07 already pins the descriptor's seal key, so the receipt key is a published key inside a pinned document and needs no new pin.\n\nIt was published on the CUSTOMER's BW-MED, because the Delivery Service was a separate provider and the entity's own signed document was the only place already retained for the evidence period. With one provider role the key is the RDP's own, and a provider's key belongs in the provider's descriptor. The BW-MED path is DELETED, not kept as a fallback: a `kid` present only in a BW-MED does not resolve.\n\nValidity is judged at the receipt's `server_time`, NOT at verification time — that is what keeps an old receipt verifiable after the key that signed it is retired.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kid",
+          "alg",
+          "public_key_b64",
+          "valid_from"
+        ],
+        "properties": {
+          "kid": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Unique within this entity's key set; the receipt names it."
+          },
+          "alg": {
+            "type": "string",
+            "enum": [
+              "EdDSA",
+              "ES256",
+              "ES384"
+            ],
+            "description": "The COSE algorithm, encoded per the I-D's confirmation-key table (DR-12)."
+          },
+          "public_key_b64": {
+            "type": "string",
+            "minLength": 1,
+            "description": "base64, in the one encoding the declared alg defines."
+          },
+          "valid_from": {
+            "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp"
+          },
+          "valid_until": {
+            "$ref": "evidence-common.schema.json#/$defs/IsoTimestamp",
+            "description": "Exclusive; absent means current. Half-open, as elsewhere."
+          }
+        }
+      }
     }
   },
   "additionalProperties": false,
-  "$comment": "NO `ds_receipt_keys` in Batch A. Moving the DS receipt anchor off the customer's BW-MED and onto the provider's descriptor is the load-bearing half of Batch B, and doing it here would make an additive batch breaking."
+  "$comment": "SBM-ADR-0015 (BW-PROVIDER 1.1): `ds_receipt_keys` lives here now. Batch A deliberately left it out — \"moving the DS receipt anchor off the customer's BW-MED and onto the provider's descriptor is the load-bearing half of Batch B, and doing it here would make an additive batch breaking\" — and Batch B was withdrawn with the participant model. The move happens anyway, because it is the RDP's key: what the decision removed was the second provider, not the reason the key belongs to the one that signs with it. This is the breaking half, taken deliberately as a discovery bump."
 }

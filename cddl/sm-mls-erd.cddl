@@ -466,7 +466,7 @@ seal-digest = { alg: "SHA-256" / "SHA-512", hex: hex-digest }
 ; descriptions cannot describe different documents.
 ; ============================================================================
 
-bw-med-body = { type: "BW-MED-v1", version: "2.1", * tstr => any }
+bw-med-body = { type: "BW-MED-v1", version: "2.2", * tstr => any }
 
 bw-org-body = { type: "BW-ORG-v1", version: "2.7", * tstr => any }
 
@@ -474,7 +474,7 @@ bw-member-body = { type: "BW-MEMBER-v1", version: "2.2", * tstr => any }
 
 ; Batch A / A3: the PROVIDER speaking for itself, rather than being named by
 ; URL inside every customer's BW-MED.
-bw-provider-body = { type: "BW-PROVIDER-v1", version: "1.0", * tstr => any }
+bw-provider-body = { type: "BW-PROVIDER-v1", version: "1.1", * tstr => any }
 
 mandate = {
   issuer: tstr, id: tstr, scope: [* tstr],

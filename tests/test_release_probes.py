@@ -152,6 +152,10 @@ def test_a_valid_object_cannot_be_accepted_for_the_wrong_act():
     mock = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mock)
     import hashlib
+    # SBM-ADR-0015: the DS receipt key is the issuing RDP's, published in its
+    # BW-PROVIDER descriptor rather than on the customer's BW-MED.
+    provider = json.loads(
+        (ROOT / "samples" / "sample-BW-PROVIDER.json").read_text())["projection"]
     med = json.loads(
         (ROOT / "samples" / "sample-BW-MED.json").read_text())["projection"]
     se = json.loads((ROOT / "samples" / "sample-SE.json").read_text())["projection"]
@@ -172,7 +176,7 @@ def test_a_valid_object_cannot_be_accepted_for_the_wrong_act():
               "hex": hashlib.sha256(octets).hexdigest()}
     with pytest.raises(mock.AckRejected):
         mock.delivered_at_from_receipt(
-            receipt, digest, med=med,
+            receipt, digest, provider=provider,
             expect={"message_id": "01HZ6DIFFERENT00000000002"})
 
 

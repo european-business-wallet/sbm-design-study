@@ -5,13 +5,13 @@
 > **⚠️ Status — exploratory design study, not an official proposal.** This document is an independent technical exploration of how existing EU building blocks — the EUDI Regulation (Regulation (EU) No 910/2014) and its implementing acts, qualified electronic registered delivery (QERDS), IETF MLS, and the EUDI Wallet — *could* be composed into a secure business-messaging profile with registered-delivery legal effect. It is **not** an official proposal, deliverable, or position of the European Commission, any Member State, any supervisory or conformity-assessment body, or any standards organisation, and it confers no legal or regulatory status. RFC 2119 keywords (MUST/SHOULD/…) describe the internal requirements of *this design*, for the purposes of the exploration only. It is shared to invite technical discussion.
 
 **Version:** 2.1 (confidentiality scopes — umbrella)  
-**Date:** 2026-09-18  
+**Date:** 2026-10-06  
 **Supersedes:** v2.0 (2026-07-04)  
 **What this document is for.** It specifies how two businesses exchange messages that are end-to-end encrypted AND carry registered-delivery evidence a qualified provider seals without ever seeing the content: who the parties are and how they are identified (§3–§4), how one finds and verifies the other (§5, §8), how the channel, the providers and the evidence fit together (§7), and who governs what (§13). The wire protocol is in the Internet-Draft and the qualified-service conformance layer is in the TS-shaped profile; the *Document map* below says which document, and which machine-readable artefact, governs which question.
 
 **What it is not.** Not an official proposal of any institution. Not a statement that any provider is qualified, admitted, or legally effective — those are established by external authorities, never by this repository (the README's claim matrix says what a green conformance bar does and does not mean). Not a finished baseline for independent implementations: the open questions are listed, not hidden (`docs/REVIEW_AGENDA.md`).
 
-**Who is involved.** The *entity* (a business, identified by its UID) and its *members* (people or agents, by MID) acting through enrolled *devices* (wallet instances); the *MSP* running each entity's MLS Delivery Service; the *RDP*, a qualified registered-delivery provider that seals the evidence; the *EDD* directory; the *Federation Authority*, which admits providers; the *design authority*, which owns the profile; and the EU Trusted Lists, which say who is qualified.
+**Who is involved.** The *entity* (a business, identified by its UID) and its *members* (people or agents, by MID) acting through enrolled *devices* (wallet instances); the *RDP*, a qualified registered-delivery provider that seals the evidence and runs each entity's MLS Delivery Service; the *EDD* directory; the *Federation Authority*, which admits providers; the *design authority*, which owns the profile; and the EU Trusted Lists, which say who is qualified.
 
 **Where to read first.** The *Document map*; §0 *Scope*; §7.1 *Technical architecture*; §9.4 on what conformance does and does not establish; §13.1 on the institutions. Then the Internet-Draft for the wire, and the TS for the qualified-service obligations.
 
@@ -53,9 +53,9 @@ to make. An implementer who finds one should report it rather than pick a side.
 
 ## 0. Scope
 
-**Current versions.** Evidence objects **2.12** (octet-authoritative) · application envelope **1.4** · BW-MED **2.1** / BW-ORG **2.7** / BW-MEMBER **2.2** · status assertion **1.0** · roster snapshot **1.0** · EDD resolver contract **2.0.0** · federation register contract **3.0.0** · profile-2 companion contracts **15.0.0** · TS **v0.35** · umbrella edition **2026-09-18**. *(Every number in this paragraph is BOUND in `versions.json` and checked by `make versions` — it previously drifted six releases behind while the gate stayed green, because the paragraph carried no binding.)* The discovery documents and the EDD contract version independently of the evidence family (§9.3). The **agent profile** (Annex R, deployment profile 5) is OPTIONAL — a network **MAY** run evidence 2.0 without adopting it (it enrols no system member, and the agent-specific fields never appear). The four-corner **relay evidence** (`RelayEvidence-v1`) and the EP `rdp_chain[].evidence` reference are **profile-2** features, absent from a single-provider profile-1 deployment.
+**Current versions.** Evidence objects **2.12** (octet-authoritative) · application envelope **1.4** · BW-MED **2.2** / BW-ORG **2.7** / BW-MEMBER **2.2** · status assertion **1.0** · roster snapshot **1.0** · EDD resolver contract **2.0.0** · federation register contract **3.0.0** · profile-2 companion contracts **15.0.0** · TS **v0.36** · umbrella edition **2026-10-06**. *(Every number in this paragraph is BOUND in `versions.json` and checked by `make versions` — it previously drifted six releases behind while the gate stayed green, because the paragraph carried no binding.)* The discovery documents and the EDD contract version independently of the evidence family (§9.3). The **agent profile** (Annex R, deployment profile 5) is OPTIONAL — a network **MAY** run evidence 2.0 without adopting it (it enrols no system member, and the agent-specific fields never appear). The four-corner **relay evidence** (`RelayEvidence-v1`) and the EP `rdp_chain[].evidence` reference are **profile-2** features, absent from a single-provider profile-1 deployment.
 
-> **Minimum viable profile.** The profile can be understood — and piloted — with the **default scope alone**. Start with the README's [*Where to start*](README.md) path, deployment **profile 1** of Annex P (a static signed EDD, one co-located MSP/RDP, two wallets), and the four delivery states S1–S4 (the I-D [I-D], *Delivery State Model*). Everything else — confidentiality scopes, records recoverability, the production trust path — is layered on top and can be ignored on first contact.
+> **Minimum viable profile.** The profile can be understood — and piloted — with the **default scope alone**. Start with the README's [*Where to start*](README.md) path, deployment **profile 1** of Annex P (a static signed EDD, one RDP, two wallets), and the four delivery states S1–S4 (the I-D [I-D], *Delivery State Model*). Everything else — confidentiality scopes, records recoverability, the production trust path — is layered on top and can be ignored on first contact.
 
 This specification defines:
 
@@ -112,7 +112,7 @@ The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **
 - **QEAA**: Qualified Electronic Attestation of Attributes (EUDI Regulation).
 - **WIA / WTE**: Wallet Instance Attestation / Wallet Trust Evidence (ARF).
 - **OpenID4VP**: OpenID for Verifiable Presentations (ISO/IEC 18013-7, OpenID Foundation).
-- **DS**: Delivery Service — the MLS architectural component responsible for message routing and ordering (RFC 9750). Mapped to the MSP in this specification.
+- **DS**: Delivery Service — the MLS architectural component responsible for message routing and ordering (RFC 9750). Mapped to **a function of the RDP** in this specification (SBM-ADR-0015): there is one provider role, and the RDP operates the Delivery Service as part of the qualified service it is supervised for.
 - **AS**: Authentication Service — the MLS architectural component responsible for credential validation (RFC 9750). Mapped to the QTSP/Trusted List infrastructure in this specification.
 
 ## 3. UID scheme (EOID / PSBID)
@@ -294,13 +294,13 @@ The core registry is the authoritative source for UID records, lifecycle state, 
 - Guaranteeing availability: 99.9% uptime SLA, with geographically redundant deployment.
 - Publishing signed snapshots of the registry for offline verification and audit.
 
-**Layer B — Discovery Layer (federated, MSP-operated)**
+**Layer B — Discovery Layer (federated, RDP-operated)**
 
-The discovery layer provides real-time resolution of MED/ORG/MEMBER documents, MLS KeyPackage retrieval, and RDP endpoint discovery. It is operated by Messaging Service Providers (MSPs) and Registered Delivery Providers (RDPs) who publish their own endpoint metadata. The core registry references the discovery endpoints (med_url) but does not host the MED/ORG/MEMBER documents themselves.
+The discovery layer provides real-time resolution of MED/ORG/MEMBER documents, MLS KeyPackage retrieval, and RDP endpoint discovery. It is operated by Registered Delivery Providers (RDPs), who publish their own endpoint metadata. The core registry references the discovery endpoints (med_url) but does not host the MED/ORG/MEMBER documents themselves.
 
-The separation ensures that: (a) the core registry remains a compact, high-assurance, low-latency service; (b) the discovery layer scales horizontally with the number of MSPs/RDPs; and (c) MSPs retain operational control of their own metadata and MLS KeyPackage distribution.
+The separation ensures that: (a) the core registry remains a compact, high-assurance, low-latency service; (b) the discovery layer scales horizontally with the number of RDPs; and (c) RDPs retain operational control of their own metadata and MLS KeyPackage distribution.
 
-**Liability:** The core registry operator is liable for the integrity and availability of the registry. MSPs are liable for the correctness and availability of their discovery endpoints and MLS Delivery Service functions. QTSPs remain liable for the accuracy of UID issuance and lifecycle events as per their obligations under Regulation (EU) No 910/2014.
+**Liability:** The core registry operator is liable for the integrity and availability of the registry. RDPs are liable for the correctness and availability of their discovery endpoints and the Delivery Service functions they operate. QTSPs remain liable for the accuracy of UID issuance and lifecycle events as per their obligations under Regulation (EU) No 910/2014.
 
 ### 5.2 Directory record (normative)
 
@@ -333,10 +333,10 @@ described as returning it. The table is normative; `edd-resolver-openapi.yaml`
 | `GET /uid/{uid}/redirect` | **Core registry** | Registry | Registry stores | Public |
 | `GET /uid/{uid}/status-assertion` | **Core registry** | Registry | Issued on demand, never stored long-term | Public (short-lived capability, D6) |
 | `GET /uid/{uid}/rdp` | **Core registry** | Entity (via its sealed MED) | Registry mirrors the MED pointer | Public |
-| `GET /.well-known/bw/med|org|member/…` | **Discovery layer** (entity or its MSP) | Entity (sealed documents) | Discovery layer stores the sealed artefacts | Public; production MAY authenticate |
+| `GET /.well-known/bw/med|org|member/…` | **Discovery layer** (entity or its RDP) | Entity (sealed documents) | Discovery layer stores the sealed artefacts | Public; production MAY authenticate |
 | `GET /uid/{uid}/members` | **Discovery layer** | Entity | Non-authoritative mirror (§8.3a) | **Authenticated counterparty, REQUIRED** |
 | `GET /uid/{uid}/roster-snapshot` | **Discovery layer** | Entity (sealed ROSTER-v1) | Stored for the retention period | Authenticated counterparty |
-| `GET /uid/{uid}/keypackages` | **MSP** (the EDD serves a 302 pointer ONLY) | Entity/MSP | The EDD holds **no pool** | Authenticated requester (R7) |
+| `GET /uid/{uid}/keypackages` | **The RDP's Delivery Service** (the EDD serves a 302 pointer ONLY) | Entity/RDP | The EDD holds **no pool** | Authenticated requester (R7) |
 | `GET /uid/{uid}/evidence/{message_id}` | **RDP** (the EDD serves a 302 pointer ONLY) | The composing sender-side RDP | The EDD stores **no evidence** | **Authenticated + authorised** (party to the message or supervisory); uniform 404 otherwise |
 
 **Evidence pointer semantics (normative).** `{uid}` in
@@ -453,12 +453,11 @@ This clause is the authoritative technical-architecture description for the prof
 | Actor | Role | What it can see |
 |---|---|---|
 | **Wallet Units (WU)** | Business/EUDI Wallet instances on the entities' devices; the E2EE endpoints | Plaintext (their own messages) |
-| **MSP** — Messaging Service Provider | Routes encrypted messages, stores-and-forwards, distributes key material (the MLS "Delivery Service") | Ciphertext and routing metadata only |
-| **RDP** — Registered Delivery Provider | A QERDS-qualified trust service provider (Article 44); issues and archives the legal evidence | Ciphertext, metadata and content hashes; never plaintext |
+| **RDP** — Registered Delivery Provider | A QERDS-qualified trust service provider (Article 44); issues and archives the legal evidence, **and operates the Delivery Service**: routes encrypted messages, stores-and-forwards, distributes key material (SBM-ADR-0015) | Ciphertext, routing metadata and content hashes; never plaintext |
 | **EDD** — European Directory of Entities | Hybrid directory: EU-governed core registry of UIDs + federated discovery layer run by providers | Public entity records |
 | **QTSP issuers** | Issue the entity identifiers (UID as a qualified attestation) and seal certificates; anchor the system in the EU Trusted Lists | Identity records |
 
-The topology is a **four-corner federation**: each entity submits to, and receives evidence from, its own RDP; the RDPs relay the ciphertext with the sealed SE to each other, and each side's MSP is its local Delivery Service — the MSPs do not relay to each other. Group formation is the exception the figure draws: the wallet that creates a group reserves KeyPackages, deposits the Welcomes and registers as the group's founder at the **counterparty's** Delivery Service, and collects replies there; which Delivery Service routes a group whose devices span two, after formation, is open (review agenda A10). Wallets never connect peer-to-peer — that is what makes delivery asynchronous and evidence enforceable — but the *keys* are negotiated end-to-end, so the federation transports only ciphertext.
+The topology is a **four-corner federation**: each entity submits to, and receives evidence from, its own RDP; the RDPs relay the ciphertext with the sealed SE to each other, and each side's Delivery Service is its own RDP's — the relay is RDP-to-RDP, and there is no second provider to relay between. Group formation is the exception the figure draws: the wallet that creates a group reserves KeyPackages, deposits the Welcomes and registers as the group's founder at the **counterparty's** Delivery Service, and collects replies there; which Delivery Service routes a group whose devices span two, after formation, is open (review agenda A10). Wallets never connect peer-to-peer — that is what makes delivery asynchronous and evidence enforceable — but the *keys* are negotiated end-to-end, so the federation transports only ciphertext.
 
 ![Four-corner federated architecture](docs/diagrams/architecture-four-corner.svg)
 
@@ -484,7 +483,7 @@ It is illustrative only; the normative flow is the I-D [I-D] (*Message Flows and
 
 #### 7.1.1 Federation trust model (normative)
 
-The EDD is a **hybrid**: a centralised core registry under EU governance holds the authoritative UID records, while a federated discovery layer operated by each entity's MSP hosts that entity's MED/ORG/MEMBER documents and MLS KeyPackages (§5; EDD resolver contract). A two-provider deployment must therefore resolve a remote counterparty across provider boundaries, and the trust anchoring is as follows.
+The EDD is a **hybrid**: a centralised core registry under EU governance holds the authoritative UID records, while a federated discovery layer operated by each entity's RDP hosts that entity's MED/ORG/MEMBER documents and MLS KeyPackages (§5; EDD resolver contract). A two-provider deployment must therefore resolve a remote counterparty across provider boundaries, and the trust anchoring is as follows.
 
 - **Location authority vs content authority.** The core registry's signed `DirectoryRecord` (`med_url`) authorises *where* to resolve an entity — it is the location anchor. The **entity's own seal** (the COSE_Sign1 seal artefact on BW-MED/ORG/MEMBER, §8) authorises *what* is served — it is the content anchor. A serving provider's discovery layer is **non-authoritative transport**: **no provider's key authorises another entity's content**, so a provider cannot substitute its own signature for the entity's seal. This answers "which key authorises a provider to serve a centrally-registered UID": none of the provider's — the entity's seal does, and the core `DirectoryRecord` authorises only the location.
 
@@ -498,13 +497,13 @@ This is a **resolution-flow** trust model verified at runtime against live, seal
 
 ### 7.2 Roles (normative)
 
-- **WU-S** (Sender Wallet Unit): prepares payload, computes canonical hash, sends via MLS group, triggers SE issuance via its outbound MSP/RDP.
-- **WU-R** (Recipient Wallet Unit): receives MLS PrivateMessage, decrypts, validates, and (if applicable) acknowledges delivery to its inbound RDP/MSP.
-- **MSP** (Messaging Service Provider) / **MLS Delivery Service**: HTTP(S) endpoints for MLS message routing (handshake and application messages), KeyPackage distribution, device sync, and queuing. The MSP does not access plaintext payloads (enforced by MLS encryption); the normative prohibition on intermediary plaintext access is stated once, in the Internet-Draft [I-D] (Object model / Delivery-Service mapping / Security Considerations). In the acceptance flow the MSP **collects and forwards** member confirmations and acknowledgement signals only; the evidence-authoritative policy evaluation belongs to RDP(in) alone (the TS [TS] clause 6; the table below).
-- **RDP** (Registered Delivery Provider): a **QERDS-qualified trust service provider** (Regulation (EU) No 910/2014, Article 44) that issues evidence objects (SE/DE/NDE/RE) and EP, signs them (COSE_Sign1), timestamps them, and exposes retrieval APIs. See the TS [TS] for the RDP trust framework and qualification requirements. *[**TODO(legal):** the MSP is a federation participant in its own right, so a DE may come to rest on an observation made by an ADMITTED but NON-QUALIFIED participant. Whether the act of observation required by Article 44(1)(b) and (c) may be performed by a participant that is not itself a qualified provider — and, if so, what the qualified issuer must bind to make its seal cover what it did witness rather than what it was told — is an external-counsel item. Open, not answered here.]*
-- **Resolver/EDD**: discovery of MSP/RDP, KeyPackage pointers, and linkage (no payload/evidence storage).
+- **WU-S** (Sender Wallet Unit): prepares payload, computes canonical hash, sends via MLS group, triggers SE issuance via its outbound RDP.
+- **WU-R** (Recipient Wallet Unit): receives MLS PrivateMessage, decrypts, validates, and (if applicable) acknowledges delivery to its inbound RDP.
+- **The RDP's Delivery Service** (the MLS Delivery Service of RFC 9750, mapped to a function of the RDP): HTTP(S) endpoints for MLS message routing (handshake and application messages), KeyPackage distribution, device sync, and queuing. It does not access plaintext payloads (enforced by MLS encryption); the normative prohibition on intermediary plaintext access is stated once, in the Internet-Draft [I-D] (Object model / Delivery-Service mapping / Security Considerations). In the acceptance flow it **collects and forwards** member confirmations and acknowledgement signals only; the evidence-authoritative policy evaluation belongs to RDP(in) alone (the TS [TS] clause 6; the table below).
+- **RDP** (Registered Delivery Provider): a **QERDS-qualified trust service provider** (Regulation (EU) No 910/2014, Article 44) that issues evidence objects (SE/DE/NDE/RE) and EP, signs them (COSE_Sign1), timestamps them, and exposes retrieval APIs. See the TS [TS] for the RDP trust framework and qualification requirements. The RDP **operates the Delivery Service as part of the qualified service it is supervised for** (SBM-ADR-0015), so the observation a DE rests on is the qualified provider's own; the earlier question of whether an admitted but non-qualified participant could perform it is moot, there being no such participant.
+- **Resolver/EDD**: discovery of the RDP, KeyPackage pointers, and linkage (no payload/evidence storage).
 - **UID issuer (QTSP/PubEAA)**: issues or attests the **UID** (as a QEAA) and issues the **QSealC** credentials the entity uses in MLS leaf nodes; publishes UID and lifecycle records to the EDD core registry (§4.3). Does **not** issue MIDs and does **not** publish the entity's discovery documents (§4.1).
-- **Discovery publisher (the entity, or its MSP acting for it)**: publishes the entity's **signed** MED/ORG/MEMBER discovery documents (§8) — the entity's wallet-administration function is the signer of BW-ORG and BW-MEMBER under the entity's QSealC (§8.3, §8.4).
+- **Discovery publisher (the entity, or its RDP acting for it)**: publishes the entity's **signed** MED/ORG/MEMBER discovery documents (§8) — the entity's wallet-administration function is the signer of BW-ORG and BW-MEMBER under the entity's QSealC (§8.3, §8.4).
 - **Trust infrastructure / EU Trusted Lists**: the basis for MLS credential validation. The MLS **Authentication Service (AS)** function is realised by validating a leaf node's QSealC credential chain against the Trusted Lists — it is a validation *function*, not a single issuing actor.
 - **RDP**: issues the registered-delivery evidence (see the RDP bullet above).
 
@@ -512,12 +511,16 @@ This is a **resolution-flow** trust model verified at runtime against live, seal
 
 | Step | Component | What it does | What it may NOT do |
 |---|---|---|---|
-| Collect | MSP / Delivery Service | Receives member confirmations and MLS acknowledgement signals; forwards them to RDP(in) verbatim | Validate, filter, count, or evaluate anything evidence-relevant |
-| Validate | RDP(in) | Authenticates each confirmation (INTF-1/1a), resolves the member against the roster (INTF-2), checks the policy ref (INTF-3) | Rely on an MSP-side judgement |
+| Collect | The RDP's Delivery Service | Receives member confirmations and MLS acknowledgement signals; forwards them to RDP(in) verbatim | Validate, filter, count, or evaluate anything evidence-relevant |
+| Validate | RDP(in) | Authenticates each confirmation (INTF-1/1a), resolves the member against the roster (INTF-2), checks the policy ref (INTF-3) | Rely on a Delivery-Service judgement in place of RDP(in)'s evaluation |
 | Evaluate | **RDP(in) — the sole decision-maker** | Evaluates the published `acceptance_policy` over the validated distinct-member set | Delegate the decision |
 | Issue | RDP(in) | Seals the DE recording the evaluated kind and the contributing confirmations | — |
 
-> NOTE — These are **logically distinct responsibilities**, not necessarily distinct organisations: a single provider **MAY** offer several of them in one deployment (e.g. a QTSP that is also the entity's MSP), but the roles remain distinct for conformance and liability. Deployments **MAY** colocate or separate MSP and RDP; the MSP **MAY** be non-qualified while the RDP **MUST** be QERDS-qualified. The logical separation and the evidence-observability rules (TS [TS]) remain normative regardless.
+> NOTE — **Operating the Delivery Service is the RDP's responsibility, and it is not delegable on the wire** (SBM-ADR-0015). The Delivery Service is a function the RDP is accountable for, not a party: the device-authenticated session, the collection token and the acknowledgement over the digest are the RDP's observations, made under its own supervision and liability.
+>
+> An RDP **MAY** use a subcontractor to run it, as a trust service provider may for any component of its service, **under the RDP's own supervision and liability and invisibly to the protocol**. No identifier, admission record or evidence field names such a party: there is nothing to admit, nothing to pin and nothing to bind, because the accountable party is the RDP in every case. A deployment that wanted a separately accountable transport operator would be asking for the model SBM-ADR-0004 took and SBM-ADR-0015 withdrew. *[**TODO(legal):** whether a subcontracted Delivery Service falls within the qualified provider's own conformity assessment, and under which policy requirements for subcontracting; the EN 319 401 clause to be verified before it is cited. Open, not answered here.]*
+>
+> The other roles above remain **logically distinct responsibilities**, not necessarily distinct organisations: a single provider **MAY** offer several of them in one deployment, and the evidence-observability rules (TS [TS]) remain normative regardless.
 
 ### 7.3 Messaging and evidence (Internet-Draft)
 
@@ -553,19 +556,19 @@ The wallet is not merely the MLS endpoint: it is a **trust component of the regi
 
 ### 8.2 BW-MED-v1 (Messaging Entity Descriptor) — normative
 
-**Purpose:** Provide everything a sender needs to discover the entity's MSP, RDP, MLS capabilities, and KeyPackages.
+**Purpose:** Provide everything a sender needs to discover the entity's RDP, its Delivery Service, MLS capabilities, and KeyPackages.
 
 **Required fields:**
 
-- `type` = "BW-MED-v1", `version` = "2.1"
+- `type` = "BW-MED-v1", `version` = "2.2"
 - `uid` = entity UID (canonical form)
 - `protocols` = array, **MUST** include "SM-MLS-1.0"
-- `msp` = base URL of the MSP (HTTPS)
+- `rdp.delivery_service` = base URL of the RDP's Delivery Service (HTTPS). This was `msp`, a bare URI naming a second provider, withdrawn in BW-MED 2.2 (SBM-ADR-0015)
 - `rdp` = object: `discovery` URL, `evidence` URL template
 - `mls` = object (NEW):
   - `cipher_suites` = array of supported MLS cipher suite identifiers (at minimum the REQUIRED baseline)
   - `keypackage_url` = URL to retrieve KeyPackages (`GET /.well-known/bw/keypackages/{uid}`)
-  - `ds_url` = URL for the MLS Delivery Service endpoint (message submission). The **path** is deployment-defined (the Delivery-Service surface is deployment-defined, the I-D [I-D] *Deployment-Defined Interfaces*); the value in the samples (`…/msp/v1`, matching the reference MSP) is illustrative and not normative.
+  - `ds_url` = URL for the MLS Delivery Service endpoint (message submission). The **path** is deployment-defined (the Delivery-Service surface is deployment-defined, the I-D [I-D] *Deployment-Defined Interfaces*); the value in the samples is illustrative and not normative.
   - `scopes_supported` (OPTIONAL, v1.2) = boolean capability flag: `true` ⇒ the entity supports **confidentiality scopes** (§8.3a). Absent or `false` ⇒ default-scope only.
 - `identity_credential` = object:
   - `type` = "x509" or "bw_uid_qeaa"
@@ -589,21 +592,22 @@ The wallet is not merely the MLS endpoint: it is a **trust component of the regi
   "sm_artifact_b64": "...",
   "projection": {
     "type": "BW-MED-v1",
-    "version": "2.0",
+    "version": "2.2",
     "uid": "EU-DE-EOID-7K3D9W0Q2M5FW0",
     "protocols": ["SM-MLS-1.0"],
-    "msp": "https://msp.example.eu",
     "rdp": {
       "discovery": "https://rdp.example.eu/.well-known/rdp",
-      "evidence": "https://rdp.example.eu/evidence/{message_id}"
+      "evidence": "https://rdp.example.eu/evidence/{message_id}",
+      "delivery_service": "https://rdp.example.eu",
+      "ds_url": "https://rdp.example.eu/ds/v1",
+      "keypackage_url": "https://rdp.example.eu/.well-known/bw/keypackages/EU-DE-EOID-7K3D9W0Q2M5FW0"
     },
     "mls": {
       "cipher_suites": [
         "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519",
         "MLS_128_MLKEM768X25519_AES128GCM_SHA256_Ed25519"
       ],
-      "keypackage_url": "https://msp.example.eu/.well-known/bw/keypackages/EU-DE-EOID-7K3D9W0Q2M5FW0",
-      "ds_url": "https://msp.example.eu/mls/v1"
+      "scopes_supported": true
     },
     "identity_credential": {
       "type": "x509",
@@ -627,7 +631,7 @@ The wallet is not merely the MLS endpoint: it is a **trust component of the regi
 - `policy_version` (REQUIRED) — monotonic identifier of this policy publication; `valid_from` (REQUIRED) — the instant it takes force. Together the versioning handle evidence pins (below).
 - `display_name`, `legal_name`, `euid` — descriptive identification (informative to verifiers; the UID attestation is the identity anchor, §4.1).
 - `roles[]` — the declared organisation-level roles (RoleName grammar, Annex A). Every role listed anywhere in this document MUST be declared here.
-- `acceptance_policy` (REQUIRED, non-empty) — the **RoleName-keyed policy map**: each key is a RoleName, each value one of `any-one | all | quorum:n | device-class:<class>` (grammar and satisfiability below). The reserved key **`default` is REQUIRED** — it governs entity-addressed default-scope messages and its eligible set is the **entire active membership**. A BW-ORG without a non-empty map carrying `default` is rejected (`discovery_lint` LINT-DISC-24). Evaluation ownership: **RDP(in) alone** (the TS [TS] clause 6 owns the rule — the MSP collects and forwards, nothing more; the §7.2 responsibility table).
+- `acceptance_policy` (REQUIRED, non-empty) — the **RoleName-keyed policy map**: each key is a RoleName, each value one of `any-one | all | quorum:n | device-class:<class>` (grammar and satisfiability below). The reserved key **`default` is REQUIRED** — it governs entity-addressed default-scope messages and its eligible set is the **entire active membership**. A BW-ORG without a non-empty map carrying `default` is rejected (`discovery_lint` LINT-DISC-24). Evaluation ownership: **RDP(in) alone** (the TS [TS] clause 6 owns the rule — the Delivery Service collects and forwards, nothing more; the §7.2 responsibility table).
 - `scope_map` (OPTIONAL) — the confidentiality-scope descriptors (§8.3a).
 - `delivery_grades` (OPTIONAL) — the per-content-class grade declaration (§8.3b).
 - `max_ttl` (OPTIONAL) — the entity's maximum accepted message TTL (ISO 8601 duration, default `P30D`, `bundle_lint` LINT-BND-27).
@@ -714,7 +718,7 @@ A **delivery grade** states which act makes delivery of a content class legally 
 **Normative behaviour:**
 
 - **Member signature mandatory.** A BW-MEMBER-v1 document **MUST** be sealed as a **COSE_Sign1 artefact** (`sm_artifact_b64`, advanced electronic seal) over its dCBOR payload by the **entity's wallet-administration function under the entity's QSealC** — the same Trusted-List-anchored seal identity that authorises device-credential enrolment (the I-D [I-D], `CRED-1`), **not** the RDP. Unsigned BW-MEMBER documents **MUST** be rejected. This closes the key-discovery trust path: the device and MLS-leaf references a relying party uses are only as trustworthy as the binding that carries them.
-- Each device listed in BW-MEMBER-v1 **MUST** have at least one published MLS KeyPackage available via the MSP.
+- Each device listed in BW-MEMBER-v1 **MUST** have at least one published MLS KeyPackage available via the RDP's Delivery Service.
 - `device_class` is used for `device-class:<class>` acceptance policies.
 - Member documents **MUST NOT** contain personal attributes beyond routing essentials.
 - The `accountability` linkage **MUST** be resolvable by the organisation, and by the RDP **only** under the documented `access_conditions` (dispute or supervisory request); the authorisation record **MUST** be retained for the stated `retention` (the TS [TS].1; ACCT-1).
@@ -740,7 +744,7 @@ JSON Schemas for BW-MED-v1, BW-ORG-v1, and BW-MEMBER-v1 are included in the comp
 - **Core Registry**: EDD core API surface, uniqueness enforcement, redirect records.
 - **Resolver/Directory**: API surface as in `edd-resolver-openapi.yaml`, including fallback EUID mapping.
 - **Wallet**: UID/MID parsing, MLS client (RFC 9420 compliant), SM-MLS-1.0 profile, MLS credential validation against the EU Trusted Lists, RDP evidence handling. OpenID4VP support is OPTIONAL.
-- **MSP / MLS Delivery Service**: MLS handshake and application message routing, KeyPackage distribution, no plaintext access.
+- **The RDP's Delivery Service**: MLS handshake and application message routing, KeyPackage distribution, no plaintext access.
 - **RDP**: QERDS-qualified, evidence generation, COSE signing, qualified timestamps, retrieval API.
 
 ### 9.2 Testable requirements
@@ -937,7 +941,7 @@ E2EE protects content; it does not hide **that**, **when**, and **between whom**
 - **Directory queries** — EDD resolution is itself a signal: who is about to message whom.
 - **Content inference from an unsalted digest** — `payload_hash`, the envelope `content_digest` and, under Mode C, each part's `digest` are **bare** digests over the plaintext, unlike the grade and mandate commitments, which are salted from the encrypted envelope. So a party that holds an evidence object or an Evidence Package can **confirm a candidate document** against them: the digest does not disclose the content, it tests a guess about it. Where the plaintext has little entropy — correspondence on a known template, an amount within a narrow range, a form with few filled fields — that is a practical disclosure and not a theoretical one. Who can do it is whoever holds the evidence: the parties, both providers, an archive, a verifier, a court. It is **not** an observer of the network, which sees no digest at all. Mode C widens it: the manifest travels in the sealed SE with each part's digest, length, media type and, optionally, file name. The profile provides no mitigation today beyond raising the entropy of the plaintext committed to; whether the content digest should become a salted commitment is open as **A12** on the review agenda, with a construction set out in [SBM-ADR-0014](docs/adr/SBM-ADR-0014.md) and **nothing decided**. The wire-level statement of this is the I-D [I-D] Security Considerations, *Guessable content behind an unsalted digest*.
 
-**Who observes what — and on which path.** The **MSP** may observe UIDs, group ids, sizes, times (the I-D, DS mapping) — never plaintext, and never the `content_class`, which travels only inside the encrypted envelope. On the **four-corner forwarding path** it observes more than routing data: the recipient-side RDP hands it a submission stating the `origin` — the originating provider **and that provider's sealed SE** — which the Delivery Service decodes and verifies in order to prove the origin namespace, so on that path an MSP distinct from the RDP sees the SE's evidence fields, `payload_hash` and `scope_ref` among them. No collusion is assumed and this is not every MSP on every path; it is what this path requires in order to refuse a spoofed origin. The **RDPs** see the evidence fields they seal. The **EDD** sees resolution queries. The **TSA** sees timestamp requests (timing only, over seal hashes). An **EP verifier** sees everything the EP carries — evidence is designed for disclosure, so its fields are the ones minimised.
+**Who observes what — and on which path.** The **RDP's Delivery Service** may observe UIDs, group ids, sizes, times (the I-D, DS mapping) — never plaintext, and never the `content_class`, which travels only inside the encrypted envelope. On the **four-corner forwarding path** it observes more than routing data: the recipient-side RDP hands it a submission stating the `origin` — the originating provider **and that provider's sealed SE** — which the Delivery Service decodes and verifies in order to prove the origin namespace. With one provider role that is the RDP reading its own evidence fields, so nothing is disclosed to a party that did not already hold them; what remains is what the recipient-side RDP learns about the originating one. No collusion is assumed and this is not every path; it is what the forwarding path requires in order to refuse a spoofed origin. The **RDPs** see the evidence fields they seal. The **EDD** sees resolution queries. The **TSA** sees timestamp requests (timing only, over seal hashes). An **EP verifier** sees everything the EP carries — evidence is designed for disclosure, so its fields are the ones minimised.
 
 **Current mitigations (each anchored in the text):** pseudonymous MIDs on the wire, no personal data in evidence (§3.6; the TS clause 6); **opaque MLS group ids** (the I-D, Security Considerations); `content_class` confined to the encrypted envelope (the I-D, Application Envelope); MID rotation **SHOULD** be supported against cross-conversation linkability (§11); records-leaf visibility as transparency, not surveillance (§8.3a roster rule); evidence carries the scope **id**, not the member list.
 
@@ -945,7 +949,7 @@ E2EE protects content; it does not hide **that**, **when**, and **between whom**
 
 The coarser map is not free, and the cost is not a privacy cost: a scope descriptor carries **one** `roles[]`, **one** `recoverability`, **one** `acceptance_policy_ref` and at most one `records_role` and one `human_acceptance` flag (§8.3a), so every content class placed in a scope is thereby given that scope's authorisation set, its recoverability posture and its acceptance eligibility. Classes can share a scope only where they share those boundaries. Where they do not, the coarser map is not available, and the disclosure the finer map carries is the price of the confinement — coarsening a map for metadata reasons would otherwise widen who may read a class and who may legally accept it.
 
-**Residual risks and retention.** Cross-provider correlation (an MSP+RDP operator, or colluding providers, can join their views), long-retention evidence stores (retention duties per the TS make evidence metadata long-lived by design — access to stores, not their existence, is the control point: §8.4 accountability, §13.2 disputes), and traffic analysis below the protocol (IP-level metadata is out of scope; deployments SHOULD front services accordingly).
+**Residual risks and retention.** Cross-provider correlation: the RDP sees routing metadata and evidence fields together **by construction** (SBM-ADR-0015 — it operates the Delivery Service), so the residual is correlation BETWEEN providers, where two colluding RDPs join their views of a four-corner exchange, long-retention evidence stores (retention duties per the TS make evidence metadata long-lived by design — access to stores, not their existence, is the control point: §8.4 accountability, §13.2 disputes), and traffic analysis below the protocol (IP-level metadata is out of scope; deployments SHOULD front services accordingly).
 
 **Roadmap (non-normative):** padding/batching against size-and-cadence analysis; private or oblivious directory resolution; per-pair pseudonymous UIDs were **considered and rejected** — registered delivery requires the identified legal entity (§3.7); the mitigation belongs at the observer layers, not identity.
 
@@ -983,9 +987,8 @@ The specification text and documentation are licensed under CC BY 4.0, and contr
 |---|---|---|
 | EDD Core Registry Operator | UID record management, uniqueness, availability, dispute resolution | European Commission / eu-LISA / mandated body |
 | QTSP (QEAA) | UID issuance, lifecycle events, UID QEAA issuance, MLS Authentication Service | National supervisory authority under Regulation (EU) No 910/2014 |
-| QTSP (QERDS) / RDP | Evidence issuance, EP composition, qualified timestamps | National supervisory authority under Regulation (EU) No 910/2014 |
+| QTSP (QERDS) / RDP | Evidence issuance, EP composition, qualified timestamps; **operates the Delivery Service**: MLS routing, KeyPackage distribution, device queues and transfer, with no plaintext access (SBM-ADR-0015) | National supervisory authority under Regulation (EU) No 910/2014 |
 | Member State Business Register | EUID/BRIS reverse linkage | National authority per Company Law Directive |
-| MSP / MLS Delivery Service | MLS message routing, KeyPackage distribution, no plaintext access | **Admission by the Federation Authority**, on the same terms as any other participant — the MSP is a federation participant, not a subcontractor of the RDP. TEXT ONLY IN THIS EDITION: the register's `role` enumeration is closed to `rdp` and the MSP has no identifier of its own on the wire yet, so nothing verifies this row today. It takes effect on the wire with the MSP identity; until then the operative arrangement remains contractual with entities, and this row records the decision rather than a deployed state |
 | Wallet Provider | EUDI Wallet instance, WIA, MLS client implementation | Certification body per ARF |
 | Federation Authority / Membership Registry | Admission, suspension, and exclusion of providers; maintains the federation membership registry | European Commission framework / mandated body |
 | Design Authority | Owns and versions the profile, schemas, cipher-suite policy, registries (the I-D [I-D]), and the conformance suite; central change control and federation-wide migration windows | Mandated SDO / body under the Commission framework |
@@ -996,7 +999,7 @@ The specification text and documentation are licensed under CC BY 4.0, and contr
 
 ### 13.2 Dispute resolution
 
-Disputes regarding UID records are resolved by the EDD Core Registry Operator, with appeal to the issuing QTSP's national supervisory authority. Evidence disputes follow the QERDS provisions of Regulation (EU) No 910/2014. *[**TODO(legal):** with the MSP a participant rather than a subcontractor, a delivery failure that is a PROTOCOL artefact rather than a recipient's act has two admitted participants behind it and no allocation rule. How liability is allocated between an MSP and an RDP for such a failure is an external-counsel item; the protocol makes the failure attributable and stops there. Open, not answered here.]*
+Disputes regarding UID records are resolved by the EDD Core Registry Operator, with appeal to the issuing QTSP's national supervisory authority. Evidence disputes follow the QERDS provisions of Regulation (EU) No 910/2014. *[**TODO(legal):** a delivery failure that is a PROTOCOL artefact rather than a recipient's act still has no allocation rule. SBM-ADR-0015 removes one half of the question as it was first written — there is no longer a non-qualified transport participant to allocate against, since the RDP operates the Delivery Service under its own liability — and leaves the other: in a four-corner exchange the artefact lies between **two qualified RDPs**, and how liability is allocated between them is an external-counsel item. The protocol makes the failure attributable and stops there. Open, not answered here, and NOT closed by that decision.]*
 
 ### 13.3 Conformance profiles (pilot and production)
 
@@ -1162,7 +1165,7 @@ This annex maps the communication scenarios the profile addresses to their addre
 
 **Global invariants (all rows):**
 
-1. **Providers never decrypt.** No MSP or RDP can read content in any scenario; evidence is built on content digests, never on content.
+1. **Providers never decrypt.** No provider can read content in any scenario; evidence is built on content digests, never on content.
 2. **No invisible access.** Every device that can decrypt is a visible leaf in the MLS roster; a role-scoped message's audience is verified against its scope descriptor before sending (the I-D [I-D], roster transparency).
 
 ---
@@ -1196,7 +1199,7 @@ The directory is the profile's institutional centre of gravity, and it does not 
 | Stage | What it is | Governance weight |
 |---|---|---|
 | **Stage 1 — minimum viable core registry** | A signed registry (a static, sealed registry file or a single resolver instance, §5.3/OpenAPI) operated by the pilot's design authority; UIDs issued under pilot rules (§4.1) | A named design authority and its signing key — no EU institution required |
-| **Stage 2 — production EU-governed EDD** | The hybrid EDD of §5.1: EU-governed core registry + federated, MSP-hosted discovery layer; qualified issuance; supervised lifecycle (§4.3, §5.7) | EU governance decision, supervisory arrangements, qualified issuers |
+| **Stage 2 — production EU-governed EDD** | The hybrid EDD of §5.1: EU-governed core registry + federated, RDP-hosted discovery layer; qualified issuance; supervised lifecycle (§4.3, §5.7) | EU governance decision, supervisory arrangements, qualified issuers |
 | **Stage 3 — register integration (future)** | BRIS/EUID and Member State register integration (§6): forward/reverse linkage served natively by the source registers | Cross-register agreements; out of this profile's control, absorbed via the UID linkage (§3.7) |
 | **Federation Stage 1 — minimum viable membership register** | A signed **membership** register (a static, sealed file or a single service instance, `federation-register-openapi.yaml`) carrying one `MembershipRecord` per participant, sealed by the **Federation Authority** — a role §13.1 keeps SEPARATE from the design authority, so the two rows above and this one are not the same signer. The demo instance is `samples/federation.stage1.demo.json`. This rung runs BESIDE the directory stages, not after them: the directory answers *which entities exist*, the register answers *which providers are admitted*, and §13.1 keeps the four instruments distinct | A named federation authority and its signing key, DISTINCT from the design authority's — no EU institution required for the mechanism; admitting a real participant is an institutional act this rung does not perform |
 
@@ -1212,7 +1215,7 @@ The four profiles are best read as increasing levels of **institutional risk pro
 |---|---|---|---|---|
 | **Institutional risk proven** | The round trip and the evidence model work | Independent providers interoperate | Legal effect and qualification hold | Full organisational capability operates |
 | **Does not prove** | Legal effect or federation interop | QERDS qualification or legal effect | Role-scoped confidentiality at scale | Agentic mandate governance (deployment profile 5 — the agent profile, Annex R) |
-| **Required** | Static signed EDD (a sealed registry file); **one co-located MSP/RDP**; two wallets; default scope only | **2+ independent MSP/RDPs**; an EDD resolver instance; default scope **+ ONE scoped use case**; normatively defined wallet↔RDP and Delivery-Service interfaces (the I-D [I-D], *Deployment-Defined Interfaces* — deployment-defined in profile 1) | **QERDS-qualified RDPs**; Trusted List validation; qualified timestamps; full UID lifecycle (§4.3); fail-closed directory (§5.7); **MWAP-conforming wallets** (`docs/wallet-assurance-profile.md`) | Production baseline **plus** confidentiality scopes (§8.3a), `records` recoverability, registered presentations (the roadmap's third phase, `brief/executive-brief.md` §5) |
+| **Required** | Static signed EDD (a sealed registry file); **one RDP**; two wallets; default scope only | **two or more independent RDPs**; an EDD resolver instance; default scope **+ ONE scoped use case**; normatively defined wallet↔RDP and Delivery-Service interfaces (the I-D [I-D], *Deployment-Defined Interfaces* — deployment-defined in profile 1) | **QERDS-qualified RDPs**; Trusted List validation; qualified timestamps; full UID lifecycle (§4.3); fail-closed directory (§5.7); **MWAP-conforming wallets** (`docs/wallet-assurance-profile.md`) | Production baseline **plus** confidentiality scopes (§8.3a), `records` recoverability, registered presentations (the roadmap's third phase, `brief/executive-brief.md` §5) |
 | **MAY be simulated** | EDD (static file), QTSP issuance (demo keys, §9.4 lint modes), timestamps (mock TSA) | QTSP issuance and TSA (demo trust store, `--trust-store`); register linkage | Nothing on the trust path; register linkage MAY remain stage-1/2 | Nothing |
 | **Evidence status** | **Pilot (non-qualified)** — structurally conformant (`make conformance`), no legal effect | **Pilot (non-qualified)** — plus cross-provider evidence exchange | **Qualified** (Article 44) — statutory presumptions attach | **Qualified** |
 | **EDD stage required** | Stage 1 (static) | Stage 1 (resolver) | Stage 2 | Stage 2 (Stage 3 welcome) |

@@ -216,11 +216,13 @@ def test_a_sender_side_receipt_cannot_become_a_de():
     rec = _accept(m)
     tok = _collect(m, "DEV-3")[0]["collection_token"]
     receipt = _ack(m, DE, "H2J3K4M5N", "DEV-3", tok)      # the SENDER's device
-    med = json.loads((ROOT / "samples" / "sample-BW-MED.json").read_text())["projection"]
+    # SBM-ADR-0015: the receipt key is the issuing RDP's.
+    provider = json.loads(
+        (ROOT / "samples" / "sample-BW-PROVIDER.json").read_text())["projection"]
     addressee = DeliveryContext(message_id=MSG, issuing_rdp_id=RDP, recipient_uid=FR,
                                 mid="H2J3K4M5N", device_id="DEV-3",
                                 session_binding=_session("DEV-3"),
                                 message_digest=rec["envelope_hash"])
     with pytest.raises(m.AckRejected):
-        m.delivered_at_from_receipt(receipt, rec["envelope_hash"], med=med,
+        m.delivered_at_from_receipt(receipt, rec["envelope_hash"], provider=provider,
                                     expect=addressee)

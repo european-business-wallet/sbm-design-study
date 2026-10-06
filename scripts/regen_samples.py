@@ -692,7 +692,7 @@ def emit_stage1_registry():
             "issuer_id": issuer,
             "status": "active",
             "asserted_at": "2026-06-01T08:00:00Z",
-            "med_url": f"https://msp.example.eu/.well-known/bw/med/{uid}",
+            "med_url": f"https://rdp.example.eu/.well-known/bw/med/{uid}",
         }
         payload = mock._dcbor(rec)  # M4: the signed bytes are the dCBOR encoding
         sig_b64 = base64.b64encode(mock.cose_sign(

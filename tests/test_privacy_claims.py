@@ -299,7 +299,11 @@ def test_the_observer_matrix_states_the_forwarding_path():
                    "No collusion is assumed"):
         assert needed in umbrella, needed
     matrix = (ROOT / "docs" / "architecture-identity-trust.md").read_text(encoding="utf-8")
-    row = next(l for l in matrix.splitlines() if l.startswith("| Delivery Service"))
+    # SBM-ADR-0015: the row is "The RDP's Delivery Service" now. Matched on
+    # the words rather than the old leading token, so a rename does not
+    # silently turn this into a test of nothing.
+    row = next(l for l in matrix.splitlines()
+               if l.startswith("|") and "Delivery Service" in l and "never" in l)
     assert "forwarding path" in row and "payload_hash" in row, row
 
 
