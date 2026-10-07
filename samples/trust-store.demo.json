@@ -43,6 +43,16 @@
       "pubkey_b64": "fQIS4oLHUjnCWieqKkICATtSgstIJVJ/delzHSAYsss=",
       "not_before": "2026-01-01T00:00:00Z",
       "not_after": "2027-06-30T23:59:59Z"
+    },
+    "mockeu-002-descriptor": {
+      "role": "discovery-publisher",
+      "_comment": "R37-01: the RECIPIENT-side provider's descriptor key. `sample-BW-PROVIDER-in.json` shipped without an entry here, so the documented trust-store mode refused it (LINT-TRUST-01) while the bar stayed green — conformance runs discovery_lint in --verify-demo mode, which does not consult this file. The same key is pinned to this participant in federation.stage1.demo.json (`authorized_seal_keys`), which is what LINT-TRUST-07 checks. DEMO key, seed 'mockeu-002-descriptor-demo'.",
+      "identities": [
+        "urn:sbm:rdp:mockeu-002"
+      ],
+      "pubkey_b64": "gj10/CzkZaaYkXPm0Q3ZYRget92ZEdhoSo46Oh3fq7o=",
+      "not_before": "2026-01-01T00:00:00Z",
+      "not_after": "2027-06-30T23:59:59Z"
     }
   }
 }

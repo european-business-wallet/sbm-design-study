@@ -466,7 +466,7 @@ seal-digest = { alg: "SHA-256" / "SHA-512", hex: hex-digest }
 ; descriptions cannot describe different documents.
 ; ============================================================================
 
-bw-med-body = { type: "BW-MED-v1", version: "2.2", * tstr => any }
+bw-med-body = { type: "BW-MED-v1", version: "2.3", * tstr => any }
 
 bw-org-body = { type: "BW-ORG-v1", version: "2.7", * tstr => any }
 

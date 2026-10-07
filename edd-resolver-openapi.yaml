@@ -2,12 +2,12 @@
 openapi: "3.1.0"
 info:
   title: EDD Resolver
-  version: "2.0.0"
+  version: "2.1.0"
   description: |
     European Directory of Entities (EDD) resolver API.
 
     This API contract is versioned INDEPENDENTLY (semantic versioning) of the
-    evidence `version` and of the specification edition; contract v2.0.0 (G4: the roster snapshot and the KeyPackage pointer carry the
+    evidence `version` and of the specification edition; contract v2.1.0 (G4: the roster snapshot and the KeyPackage pointer carry the
     authentication the umbrella's normative access table always required).
     (v1.7.0: the core `DirectoryRecord` carries `authorized_seal_keys` — the
     entity's discovery-seal key-set pinned per UID, so a discovery document is
@@ -301,7 +301,7 @@ paths:
       description: |
         POINTER, not a pool: the EDD does not serve KeyPackage bytes and holds
         no KeyPackage pool. The response is a 302 to the entity's RDP Delivery Service pool —
-        the pool the entity's sealed MED already names (`mls.keypackage_url`) —
+        the pool the entity's sealed MED already names (`rdp.keypackage_url`) —
         which owns the KeyPackage pool and ALL single-use pool accounting.
 
         DR-08 (since contract 1.11.0): this description used to say the pool serves

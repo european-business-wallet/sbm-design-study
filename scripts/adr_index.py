@@ -276,7 +276,16 @@ def render_md(records=None):
     L.append("")
     if analysed:
         for fm in analysed:
-            L.append(_rel(_cell(fm["analysed_not_decided"])) + f" ({_link(fm)})")
+            # A SUPERSEDED record's analysis is history, and this section renders
+            # it as today's undecided choice unless it says otherwise. ADR-0004's
+            # "No model is selected" appeared here for three weeks after
+            # SBM-ADR-0015 selected one, under a heading that says nothing is
+            # decided — the generator was promoting a withdrawn record's text
+            # into the current summary with no qualification at all.
+            historical = fm.get("decision_status") == "superseded"
+            mark = (" — **from a superseded record**, kept as the analysis a later "
+                    "decision rests on, not as an open choice" if historical else "")
+            L.append(_rel(_cell(fm["analysed_not_decided"])) + mark + f" ({_link(fm)})")
             L.append("")
     else:
         L.append("No record carries an analysed-but-undecided question.")

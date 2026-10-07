@@ -1,7 +1,7 @@
 {
   "$id": "https://bw.example.eu/schemas/bw-med.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "BW-MED-v1 (v2.2)",
+  "title": "BW-MED-v1 (v2.3)",
   "description": "Messaging Entity Descriptor. Carries MLS capabilities, KeyPackage discovery URL, and the entity's identity credential (x509 chain or UID QEAA). v1.2 adds the optional mls.scopes_supported capability flag (confidentiality scopes, spec §8.3a).",
   "type": "object",
   "required": [
@@ -20,7 +20,7 @@
     },
     "version": {
       "type": "string",
-      "const": "2.2"
+      "const": "2.3"
     },
     "uid": {
       "$ref": "evidence-common.schema.json#/$defs/Uid"
@@ -41,7 +41,9 @@
       "required": [
         "discovery",
         "evidence",
-        "delivery_service"
+        "delivery_service",
+        "ds_url",
+        "keypackage_url"
       ],
       "properties": {
         "discovery": {

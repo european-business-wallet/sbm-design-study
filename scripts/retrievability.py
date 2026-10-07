@@ -155,20 +155,47 @@ def check(data):
     # must not count as a key the loader reads.
     read = set(_re.findall(r'manifest(?:\.get\(|\[)"([a-z_]+)"', loader))
     for row in rows:
-        stated = str(row.get("supplied_as", "")).strip()
-        if not stated:
+        # STRUCTURED, not prose. The first form of this rule read backticked
+        # tokens out of a sentence and only checked one that equalled the
+        # argument's own name — so the single ALIAS in the registry, `reveals`
+        # supplied by the manifest key `grade_reveals`, was never checked, and a
+        # typo in any row was exempt. The column exists to record exactly those
+        # cases, so the check has to cover them.
+        stated = row.get("supplied_as")
+        if not isinstance(stated, dict) or not stated.get("kind"):
             findings.append(
-                f"RETR-04 row {row['input']!r} does not state `supplied_as` — an "
-                "input nobody can supply is documented custody of material the "
-                "verifier never receives")
+                f"RETR-04 row {row['input']!r} does not state `supplied_as` as "
+                "{kind, …} — an input nobody can supply is documented custody of "
+                "material the verifier never receives")
             continue
-        for key in _re.findall(r"`([a-z_]+)`", stated):
-            if key not in read and key == row["input"]:
+        kind = stated["kind"]
+        if kind == "manifest_key":
+            key = stated.get("key")
+            if not key:
+                findings.append(
+                    f"RETR-04 row {row['input']!r} is supplied by a manifest key and "
+                    "does not say which")
+            elif key not in read:
                 findings.append(
                     f"RETR-04 row {row['input']!r} names the bundle manifest key "
                     f"`{key}`, which `lint_bundle` does not read — so the "
                     "published entry point cannot supply this input and every "
                     "rule that needs it is reachable only from a hand-built call")
+        elif kind == "cli":
+            if not str(stated.get("detail", "")).strip():
+                findings.append(
+                    f"RETR-04 row {row['input']!r} is supplied on the command line "
+                    "and does not say how")
+        elif kind == "none":
+            if not str(stated.get("why", "")).strip():
+                findings.append(
+                    f"RETR-04 row {row['input']!r} says nothing supplies it and does "
+                    "not say why — an input with no source is either a gap or a "
+                    "decision, and which one matters")
+        else:
+            findings.append(
+                f"RETR-04 row {row['input']!r} declares supply kind {kind!r}, which "
+                "is not one of manifest_key, cli, none")
 
     for row in rows:
         for field in ("material", "operation", "served_by", "absent"):
@@ -179,6 +206,18 @@ def check(data):
                 f"RETR-01 row {row.get('input')!r} does not say whether it survives a "
                 "provider exit — the question this registry exists to answer")
     return findings
+
+
+def _supply_sentence(s):
+    """How the material reaches a verifier, as one cell of the table."""
+    kind = s.get("kind")
+    if kind == "manifest_key":
+        return f"bundle manifest key `{s['key']}`"
+    if kind == "cli":
+        return s["detail"]
+    if kind == "none":
+        return f"nothing supplies it: {s['why']}"
+    return f"UNKNOWN supply kind {kind!r}"
 
 
 def render_md(data):
@@ -227,7 +266,7 @@ def render_md(data):
     for row in rows:
         mark = "yes" if row["survives_provider_exit"] else "**no**"
         out.append(f"| `{row['input']}` | {row['operation']} | {row['served_by']} | "
-                   f"{row['supplied_as']} | {mark} |")
+                   f"{_supply_sentence(row['supplied_as'])} | {mark} |")
     out += ["", "## What each absence does to the verdict", ""]
     for row in rows:
         out.append(f"**`{row['input']}`** — {row['material']}")

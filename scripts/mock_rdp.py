@@ -991,10 +991,19 @@ def resolve_transferred(issuing_rdp_id, message_id, *, principal,
     return item
 
 
+#: The provider whose Delivery Service this mock operates. Configuration, not a
+#: request value: a DS knows who it is. It equals the default `issuing_rdp_id`
+#: because the fixtures that do not say otherwise are single-provider
+#: deployments (Annex P profile 1), where the origin and the observer are the
+#: same party. Where they are not — the four-corner case — the caller says so,
+#: and `samples/receipt.availability.demo.json` is that case.
+DS_PROVIDER_ID = "urn:sbm:rdp:demo-out"
+
+
 def receipt_ack(message_id, device_id, *, credential,
                 session_binding, octets, server_clock, client_acked_at=None,
                 ds_kid="ds-demo-2026", ds_seed="ds",
-                issuing_rdp_id="urn:sbm:rdp:demo-out",
+                issuing_rdp_id="urn:sbm:rdp:demo-out", observed_by=None,
                 collection_token=_REQUIRED):
     """DR-10 — the Delivery Service's acknowledged handover (DS contract 1.2.0).
 
@@ -1168,7 +1177,16 @@ def receipt_ack(message_id, device_id, *, credential,
     receipt = {
         "message_id": message_id,
         # R6-03: SIGNED, so the namespace cannot be re-labelled afterwards.
+        # This is the message's ORIGIN, proven by its SE — not this DS.
         "issuing_rdp_id": issuing_rdp_id,
+        # R37-01/SBM-ADR-0016: WHO OBSERVED the handover, which is who publishes
+        # the key below. The DS does not learn its own identity from the request:
+        # `observed_by` is signed, and a caller that could choose it would be
+        # choosing whose receipt this is. In a four-corner exchange it is the
+        # RECIPIENT's provider and differs from the origin; `DS_PROVIDER_ID` is
+        # this mock's own, and the deployment where the two coincide is Annex P
+        # profile 1, not the general case.
+        "observed_by": observed_by or DS_PROVIDER_ID,
         "recipient_uid": recipient_uid,
         "mid": mid,
         "device_id": device_id,

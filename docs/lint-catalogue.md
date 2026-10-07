@@ -716,7 +716,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 
 - **Input:** BW-MED document
 - **Precondition:** type == BW-MED-v1
-- **Predicate (PASS iff):** mls.cipher_suites MUST be a non-empty list; mls.keypackage_url and mls.ds_url MUST be https URLs; expires_at MUST be present; mls.scopes_supported, if present, MUST be boolean.
+- **Predicate (PASS iff):** mls.cipher_suites MUST be a non-empty list; rdp.keypackage_url and rdp.ds_url MUST be https URLs; expires_at MUST be present; mls.scopes_supported, if present, MUST be boolean.
 - **Error outcome:** BW-MED mls.cipher_suites must be a non-empty list | BW-MED mls.{url_field} must be an https URL | BW-MED must declare expires_at (freshness bound) | BW-MED mls.scopes_supported must be a boolean when present
 - **Reference implementation:** `lint_med`
 - **Tests:** `test_discovery_lint.py`, `test_uid_toolkit.py`

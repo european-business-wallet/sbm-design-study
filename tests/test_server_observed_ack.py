@@ -138,6 +138,7 @@ def _expect(receipt):
     return DeliveryContext(
         message_id=receipt.get("message_id"),
         issuing_rdp_id=receipt.get("issuing_rdp_id"),
+        observed_by=receipt.get("observed_by"),
         recipient_uid=receipt.get("recipient_uid"),
         mid=receipt.get("mid"),
         device_id=receipt.get("device_id"),

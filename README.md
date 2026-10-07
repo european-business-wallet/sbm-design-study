@@ -236,14 +236,14 @@ what a green bar does and does not mean, and how to send feedback.
 
 | Artefact | Version |
 |---|---|
-| Umbrella profile | 2.1 (edition 2026-10-06) |
+| Umbrella profile | 2.1 (edition 2026-10-07) |
 | Evidence objects (SE/DE/NDE/RE/CE/EP) | **2.12** (octet-authoritative) |
 | Application envelope | 1.4 |
-| BW-MED / BW-ORG / BW-MEMBER | 2.2 / 2.7 / 2.2 |
-| EDD resolver contract (OpenAPI) | 2.0.0 |
+| BW-MED / BW-ORG / BW-MEMBER | 2.3 / 2.7 / 2.2 |
+| EDD resolver contract (OpenAPI) | 2.1.0 |
 | Federation register contract (OpenAPI) | 3.0.0 |
-| Profile-2 companion contracts (wallet-RDP / DS / relay) | 15.0.0 |
-| TS (QERDS binding) | v0.36 |
+| Profile-2 companion contracts (wallet-RDP / DS / relay) | 16.0.0 |
+| TS (QERDS binding) | v0.37 |
 
 Generated-and-checked from [`versions.json`](versions.json), the single source
 of truth: `make versions` fails if any schema `const`, schema title, CDDL body,
@@ -430,7 +430,7 @@ specification does **not** yet answer â€” protocol, production trust and legal â
 with the assumption each one rests on, and what is not yet written, the
 implementer guide, carried as G1 to G4.
 
-- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r37`,
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r38`,
   the git tag of that name; earlier tags of this snapshot stay where they are
   and each names the edition it was cut from. Cite the tag, or the commit you
   hold, so an answer can be matched to the text it answers. The reviewer

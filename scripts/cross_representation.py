@@ -175,6 +175,11 @@ NON_BODY = {
                         "client-supplied instant let a device backdate into a "
                         "window that had closed",
         "ds_kid": "the DS's signing key identifier",
+        "observed_by": "WHICH provider's Delivery Service observed the handover — "
+                       "the DS's own identity, which it does not learn from the "
+                       "request. It is signed and appears on the RESPONSE "
+                       "(`DeliveryReceipt`), because a caller that could assert it "
+                       "would be choosing whose receipt this is (SBM-ADR-0016)",
         "ds_seed": "WHICH of its own keys the mock signs with — server-side key "
                    "material, not a wire value. A receipt is verified against the "
                    "key the ISSUING RDP publishes in its own descriptor "

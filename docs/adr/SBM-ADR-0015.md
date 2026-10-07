@@ -3,9 +3,9 @@ id: SBM-ADR-0015
 title: "One provider: the Delivery Service inside the Registered Delivery Provider"
 label: "MSP folded into the RDP"
 decision_status: proposed
-implementation_status: [not-implemented]
+implementation_status: [specified, in-reference]
 implementation: >-
-  nothing on the wire changes: no Schema, contract or CDDL carries an MSP identity, and the register admits only `rdp`; the change is to the roles, the text, the figures and the agenda
+  specified and in the reference. No EVIDENCE object, companion contract or CDDL rule carries a second provider's identity and the register admits only `rdp` — but two DISCOVERY documents changed shape and version for this decision (BW-MED 2.2 removed `msp` and `ds_receipt_keys`; BW-PROVIDER 1.1 publishes them), and the reference resolves the receipt key accordingly. 'Nothing changes on the wire' was true of the evidence family and not of discovery
 choice: >-
   the Registered Delivery Provider operates the Delivery Service as part of its qualified service; there is one provider role, and the MSP ceases to be a participant, a role or a name on the wire · §7.2, [§13.1](../../Secure-Business-Messaging-Profile.md#131-institutional-roles)
 alternative: >-
@@ -173,8 +173,15 @@ cost is real and is the price of the simplification.
 ## Status
 
 - **Decision:** proposed, for the maintainer.
-- **Implementation:** not implemented. Nothing on the wire changes; the work
-  is an editorial and governance cycle, plus two discovery-document bumps.
+- **Implementation:** specified and in the reference. The evidence family, the
+  CDDL and the register's enumeration are untouched, and no object names a second
+  provider — but this decision moved a published key between two discovery
+  documents, so **BW-MED 2.2** and **BW-PROVIDER 1.1** are wire changes and the
+  reference implements the new resolution. The first form of this bullet said
+  *nothing changes on the wire* and then *plus two discovery-document bumps* in
+  the same sentence; the first half was a claim about evidence objects stated as
+  though it covered everything. [SBM-ADR-0016](SBM-ADR-0016.md) carries the field
+  the move needed and did not have.
 
 ## Supersedes
 

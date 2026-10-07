@@ -2634,22 +2634,24 @@ def check_certificate_binds_key(x5chain, alg, public_key_b64, at=None):
 # changing only the outer selector was accepted while the signed payload named
 # the original.
 DS_RECEIPT_SIGNED_FIELDS = (
-    "message_id", "issuing_rdp_id", "recipient_uid", "mid", "device_id",
-    "server_time", "message_digest", "session_binding", "ds_kid", "ds_alg")
+    "message_id", "issuing_rdp_id", "observed_by", "recipient_uid", "mid",
+    "device_id", "server_time", "message_digest", "session_binding",
+    "ds_kid", "ds_alg")
 # R7-02 requirement 5: `session_binding` is in `DeliveryReceipt.required` on
 # the wire and was NOT here, so a receipt with it removed and re-signed was
 # accepted under a partial context. The contract and the code now agree.
 DS_RECEIPT_MANDATORY_SIGNED = (
-    "message_id", "issuing_rdp_id", "recipient_uid", "mid", "device_id",
-    "server_time", "message_digest", "session_binding", "ds_kid", "ds_alg")
+    "message_id", "issuing_rdp_id", "observed_by", "recipient_uid", "mid",
+    "device_id", "server_time", "message_digest", "session_binding",
+    "ds_kid", "ds_alg")
 
 # R7-02 requirement 4: the EXACT expected-delivery-context type. A dict let a
 # caller pass `{}`, or name every dimension with `None` values, and assert
 # nothing — because verification skipped `None`. Both are now unrepresentable:
 # every member is required and `None` is rejected rather than skipped.
 DELIVERY_CONTEXT_FIELDS = (
-    "message_id", "issuing_rdp_id", "recipient_uid", "mid", "device_id",
-    "session_binding", "message_digest")
+    "message_id", "issuing_rdp_id", "observed_by", "recipient_uid", "mid",
+    "device_id", "session_binding", "message_digest")
 
 
 class DeliveryContext:
@@ -2772,20 +2774,29 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
             "the provider's own descriptor and from nothing else, so the MED "
             "path stays deleted rather than reachable by argument "
             "(SBM-ADR-0015)")
-    issuer, held_by = receipt.get("issuing_rdp_id"), provider.get("participant_id")
-    if not issuer:
+    # WHOSE descriptor must this be? The OBSERVER's — the provider whose Delivery
+    # Service signed the receipt. It is NOT `issuing_rdp_id`: that field is the
+    # message's origin, proven by its SE (the DS contract says so in terms), and
+    # in a four-corner exchange the handover is observed on the other side. This
+    # check first demanded the ORIGIN publish the key, which refused the
+    # legitimate recipient-side signer and passed only because the sample had been
+    # built with the origin rewritten to equal the signer. `observed_by` is the
+    # signed field that answers the question (R37-01/SBM-ADR-0016).
+    observer, held_by = receipt.get("observed_by"), provider.get("participant_id")
+    if not observer:
         raise ReceiptVerificationError(
             "receipt-unverifiable",
-            "the receipt names no issuing_rdp_id, so no descriptor can be shown "
-            "to be its issuer's and the key it publishes authorises nothing "
-            "(SBM-ADR-0015)")
-    if held_by != issuer:
+            "the receipt names no observed_by, so the provider whose Delivery "
+            "Service signed it is unknown and no descriptor can be shown to be "
+            "the right one — `issuing_rdp_id` is the message's ORIGIN and does "
+            "not answer this (SBM-ADR-0016)")
+    if held_by != observer:
         raise ReceiptVerificationError(
             "receipt-unverifiable",
-            f"the descriptor supplied is {held_by!r}'s and the receipt is issued "
-            f"by {issuer!r} — a provider publishes its own receipt keys, so "
-            "another participant's descriptor cannot authorise this one "
-            "(SBM-ADR-0015)")
+            f"the descriptor supplied is {held_by!r}'s and the handover was "
+            f"observed by {observer!r} — a provider publishes its own Delivery "
+            "Service's receipt keys, so another participant's descriptor cannot "
+            "authorise this receipt (SBM-ADR-0016)")
     if not (provider or {}).get("ds_receipt_keys"):
         raise ReceiptVerificationError(
             "receipt-unverifiable",

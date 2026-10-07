@@ -5,7 +5,7 @@
 > **⚠️ Status — exploratory design study, not an official proposal.** This document is an independent technical exploration of how existing EU building blocks — the EUDI Regulation (Regulation (EU) No 910/2014) and its implementing acts, qualified electronic registered delivery (QERDS), IETF MLS, and the EUDI Wallet — *could* be composed into a secure business-messaging profile with registered-delivery legal effect. It is **not** an official proposal, deliverable, or position of the European Commission, any Member State, any supervisory or conformity-assessment body, or any standards organisation, and it confers no legal or regulatory status. RFC 2119 keywords (MUST/SHOULD/…) describe the internal requirements of *this design*, for the purposes of the exploration only. It is shared to invite technical discussion.
 
 **Version:** 2.1 (confidentiality scopes — umbrella)  
-**Date:** 2026-10-06  
+**Date:** 2026-10-07  
 **Supersedes:** v2.0 (2026-07-04)  
 **What this document is for.** It specifies how two businesses exchange messages that are end-to-end encrypted AND carry registered-delivery evidence a qualified provider seals without ever seeing the content: who the parties are and how they are identified (§3–§4), how one finds and verifies the other (§5, §8), how the channel, the providers and the evidence fit together (§7), and who governs what (§13). The wire protocol is in the Internet-Draft and the qualified-service conformance layer is in the TS-shaped profile; the *Document map* below says which document, and which machine-readable artefact, governs which question.
 
@@ -53,7 +53,7 @@ to make. An implementer who finds one should report it rather than pick a side.
 
 ## 0. Scope
 
-**Current versions.** Evidence objects **2.12** (octet-authoritative) · application envelope **1.4** · BW-MED **2.2** / BW-ORG **2.7** / BW-MEMBER **2.2** · status assertion **1.0** · roster snapshot **1.0** · EDD resolver contract **2.0.0** · federation register contract **3.0.0** · profile-2 companion contracts **15.0.0** · TS **v0.36** · umbrella edition **2026-10-06**. *(Every number in this paragraph is BOUND in `versions.json` and checked by `make versions` — it previously drifted six releases behind while the gate stayed green, because the paragraph carried no binding.)* The discovery documents and the EDD contract version independently of the evidence family (§9.3). The **agent profile** (Annex R, deployment profile 5) is OPTIONAL — a network **MAY** run evidence 2.0 without adopting it (it enrols no system member, and the agent-specific fields never appear). The four-corner **relay evidence** (`RelayEvidence-v1`) and the EP `rdp_chain[].evidence` reference are **profile-2** features, absent from a single-provider profile-1 deployment.
+**Current versions.** Evidence objects **2.12** (octet-authoritative) · application envelope **1.4** · BW-MED **2.3** / BW-ORG **2.7** / BW-MEMBER **2.2** · status assertion **1.0** · roster snapshot **1.0** · EDD resolver contract **2.1.0** · federation register contract **3.0.0** · profile-2 companion contracts **16.0.0** · TS **v0.37** · umbrella edition **2026-10-07**. *(Every number in this paragraph is BOUND in `versions.json` and checked by `make versions` — it previously drifted six releases behind while the gate stayed green, because the paragraph carried no binding.)* The discovery documents and the EDD contract version independently of the evidence family (§9.3). The **agent profile** (Annex R, deployment profile 5) is OPTIONAL — a network **MAY** run evidence 2.0 without adopting it (it enrols no system member, and the agent-specific fields never appear). The four-corner **relay evidence** (`RelayEvidence-v1`) and the EP `rdp_chain[].evidence` reference are **profile-2** features, absent from a single-provider profile-1 deployment.
 
 > **Minimum viable profile.** The profile can be understood — and piloted — with the **default scope alone**. Start with the README's [*Where to start*](README.md) path, deployment **profile 1** of Annex P (a static signed EDD, one RDP, two wallets), and the four delivery states S1–S4 (the I-D [I-D], *Delivery State Model*). Everything else — confidentiality scopes, records recoverability, the production trust path — is layered on top and can be ignored on first contact.
 
@@ -560,15 +560,16 @@ The wallet is not merely the MLS endpoint: it is a **trust component of the regi
 
 **Required fields:**
 
-- `type` = "BW-MED-v1", `version` = "2.2"
+- `type` = "BW-MED-v1", `version` = "2.3"
 - `uid` = entity UID (canonical form)
 - `protocols` = array, **MUST** include "SM-MLS-1.0"
 - `rdp.delivery_service` = base URL of the RDP's Delivery Service (HTTPS). This was `msp`, a bare URI naming a second provider, withdrawn in BW-MED 2.2 (SBM-ADR-0015)
-- `rdp` = object: `discovery` URL, `evidence` URL template
-- `mls` = object (NEW):
-  - `cipher_suites` = array of supported MLS cipher suite identifiers (at minimum the REQUIRED baseline)
+- `rdp` = object: `discovery` URL, `evidence` URL template, and the two endpoints the RDP's Delivery Service serves —
   - `keypackage_url` = URL to retrieve KeyPackages (`GET /.well-known/bw/keypackages/{uid}`)
   - `ds_url` = URL for the MLS Delivery Service endpoint (message submission). The **path** is deployment-defined (the Delivery-Service surface is deployment-defined, the I-D [I-D] *Deployment-Defined Interfaces*); the value in the samples is illustrative and not normative.
+  - Both sat under `mls` until BW-MED 2.2. They are the RDP's endpoints, not parameters of the MLS session, and they moved to `rdp` with the Delivery Service itself (SBM-ADR-0015); `mls` admits no additional properties, so the old spelling is rejected rather than ignored.
+- `mls` = object (NEW):
+  - `cipher_suites` = array of supported MLS cipher suite identifiers (at minimum the REQUIRED baseline)
   - `scopes_supported` (OPTIONAL, v1.2) = boolean capability flag: `true` ⇒ the entity supports **confidentiality scopes** (§8.3a). Absent or `false` ⇒ default-scope only.
 - `identity_credential` = object:
   - `type` = "x509" or "bw_uid_qeaa"

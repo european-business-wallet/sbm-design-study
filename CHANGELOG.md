@@ -18,7 +18,97 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-10-06, edition r37
+## Current — 2026-10-07, edition r38
+
+**The receipt names the provider that observed the handover.** An independent
+review of the previous edition found the move of the Delivery-Service receipt key
+half finished, in a way the edition before it had made worse rather than better.
+It was right, and this edition is the other half.
+
+**It was the wrong identity.** A receipt names the message's ORIGIN — the
+published contract says so in terms, and carries a separate field for a provider
+that forwarded. The handover a receipt attests happens on the other side: the
+recipient's Delivery Service issues the collection token, authenticates the
+device, records the acknowledgement, and its provider signs. The previous edition
+required the ORIGIN to publish a key for a handover it did not observe, which
+refuses the party that actually signed; the retained path looked the key up in
+the same wrong document.
+
+**And the example concealed it.** The generator had been passing the delivery
+evidence issuer as the origin, so the receipt claimed one provider for a message
+whose Sending Evidence names another. With both identifiers holding a single
+value, neither the code nor the example could be shown wrong — the example had
+been repaired by rewriting the origin to match the signer, which is the one
+repair that demonstrates nothing.
+
+A receipt now carries **`observed_by`**, signed and REQUIRED: the provider whose
+Delivery Service observed. One implementation resolves and authenticates by it on
+both the live and the retained path, refusing a document of the wrong kind, one
+belonging to another participant, and a receipt that names no observer. The
+generator reads the origin from the Sending Evidence and REFUSES to write an
+example whose two providers coincide, so the shipped receipt is a genuine
+four-corner case verified against the descriptor beside it.
+
+| Artefact | This edition | Previous |
+|---|---|---|
+| Umbrella profile | **2.1, edition 2026-10-07** | 2.1, edition 2026-10-06 |
+| TS-shaped QERDS binding | **v0.37** | v0.36 |
+| Profile-2 companion contracts (wallet–RDP, delivery service, relay) | **16.0.0** | 15.0.0 |
+| BW-MED discovery document | **2.3** | 2.2 |
+| EDD resolver contract (OpenAPI) | **2.1.0** | 2.0.0 |
+| BW-ORG / BW-MEMBER | 2.7 / 2.2 | 2.7 / 2.2 |
+| BW-PROVIDER provider descriptor | **1.1** | 1.1 |
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.12** | 2.12 |
+
+[A new decision record](docs/adr/SBM-ADR-0016.md) carries this, because the field
+is one the one-provider decision had withdrawn. It returns for a different reason
+than it was withdrawn with: not to attribute a false observation to a party
+outside the provider, but to say which of two qualified providers observed, so
+that the right key can be found. **One provider role does not mean one provider
+per message** — the sentence the previous two editions needed and did not have.
+
+**Three normative surfaces still sent a reader to the deleted location.** The
+Internet-Draft required the keys in the customer's signed discovery document, the
+Delivery-Service contract gave that lookup, and the production-verifier
+explanation named it as the key source — while the reference, correctly, refuses
+that document. A reader following the published instructions arrived at a
+rejection. All three now name the provider's own descriptor, and which
+provider's.
+
+**And the endpoints.** The umbrella's own required-field list still placed the
+KeyPackage and Delivery-Service URLs under the MLS parameters, contradicting its
+own example thirty lines below; so did the Internet-Draft, the resolver contract
+and the lint catalogue's predicate text. The schema accepted a discovery document
+with neither endpoint while the semantic linter required both, so a schema-only
+consumer accepted an incomplete document. Both are required now, which is what
+moves the discovery document to **2.3** and the resolver contract to **2.1.0**: a
+document that validated yesterday does not today, and that is what a version
+says.
+
+**The reading path contradicted itself in three places, two of them written by
+the sweep meant to fix it.** The architecture note called the S2-observer
+question resolved and said none of the three models is selected, in one sentence;
+its minimal-deployment line still described one operator running two providers
+where the deployment annex requires one; and the reviewer guide cited the
+superseded record under a label a blanket replacement had mangled. The decisions
+index promoted a superseded record's analysis into *Analysed is not decided*
+without saying it was history; the generator marks it now.
+
+**Two of the previous edition's own additions were defective.** The provider
+descriptor added for the recipient side shipped with no entry in the demonstration
+trust store, so the documented verification mode refused it while the bar stayed
+green — the bar ran only the demo-signature mode, which never reads the store.
+The entry is there and the bar now runs the documented mode. And the rule added
+to make an unsupplied verification input a finding checked a key only when it
+matched the argument's own name, exempting every alias and every typo — of a
+field added to record exactly those cases. It is structured now, and the one alias
+in the registry is checked.
+
+[`OPEN-ITEMS.md`](OPEN-ITEMS.md) §2 described the withdrawn participant kind's
+admission as decided and awaiting implementation. The register's single provider
+kind is a decision, not a stage, and the agenda item closed with it.
+
+## Edition r37 — 2026-10-06
 
 **The receipt key must be reachable, and checked. No artefact version moves.**
 The previous edition moved the Delivery-Service receipt key from the customer's

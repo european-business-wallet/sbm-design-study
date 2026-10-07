@@ -775,7 +775,7 @@
       "id": "LINT-DISC-05",
       "input": "BW-MED document",
       "precondition": "type == BW-MED-v1",
-      "predicate": "mls.cipher_suites MUST be a non-empty list; mls.keypackage_url and mls.ds_url MUST be https URLs; expires_at MUST be present; mls.scopes_supported, if present, MUST be boolean.",
+      "predicate": "mls.cipher_suites MUST be a non-empty list; rdp.keypackage_url and rdp.ds_url MUST be https URLs; expires_at MUST be present; mls.scopes_supported, if present, MUST be boolean.",
       "error": "BW-MED mls.cipher_suites must be a non-empty list | BW-MED mls.{url_field} must be an https URL | BW-MED must declare expires_at (freshness bound) | BW-MED mls.scopes_supported must be a boolean when present",
       "profile": "core",
       "owner_fn": "lint_med"

@@ -787,6 +787,31 @@ def emit_stage1_registry():
         json.dumps(out, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def _se_for(message_id):
+    """The SE that proves a message's ORIGIN, wherever it is retained.
+
+    No bundle in this repository carries a standalone SE for the
+    availability-grade message; its SE travels inside the dispute package. The
+    origin is a signed fact about the message, so it is read from that SE rather
+    than taken from whichever object happens to be at hand.
+    """
+    for path in sorted((ROOT / "samples").glob("*.json")):
+        found = []
+        def walk(node):
+            if isinstance(node, dict):
+                if node.get("type") == "SE-v1" and node.get("message_id") == message_id:
+                    found.append(node)
+                for v in node.values():
+                    walk(v)
+            elif isinstance(node, list):
+                for v in node:
+                    walk(v)
+        walk(_content(json.loads(path.read_text(encoding="utf-8"))))
+        if found:
+            return found[0]
+    raise SystemExit(f"no SE in the samples proves the origin of {message_id!r}")
+
+
 def emit_retained_receipt():
     """SBM-ADR-0015: the retained DS receipt the bundle verifier's receipt path
     needs in order to be EXERCISED rather than reported absent.
@@ -824,6 +849,18 @@ def emit_retained_receipt():
             "the generated octets do not hash to the envelope_hash the "
             "availability DE pins — a receipt over other octets substantiates "
             "another delivery")
+    # The ORIGIN is the SE's, not the DE issuer's. Substituting the DE's
+    # `rdp_id` here is what made the first version of this sample agree with a
+    # verifier that resolved the key in the origin's descriptor: the receipt
+    # claimed origin mockeu-002 for a message whose SE says mockeu-001, so the
+    # sample tested selection among candidates and not the thing that matters.
+    se = _se_for(de["message_id"])
+    origin = se["rdp_id"]
+    if origin == de["rdp_id"]:
+        raise SystemExit(
+            "this sample exists to exercise an origin that DIFFERS from the "
+            f"observer; both are {origin} — a receipt whose two providers "
+            "coincide is the profile-1 case and proves nothing here")
     mid, device_id = member["mid"], member["devices"][0]["device_id"]
     session = {"kind": "token-digest", "digest": "b" * 64}
     cred = {"kind": "device", "uid": de["recipient_uid"], "mid": mid,
@@ -836,8 +873,8 @@ def emit_retained_receipt():
     mock._ACK_LEDGER.clear()
     mock.ds_accept_message(de["message_id"], "demo-group",
                            base64.b64encode(octets).decode(),
-                           principal=de["rdp_id"])
-    mock.queue_delivery(de["rdp_id"], de["message_id"],
+                           principal=origin)
+    mock.queue_delivery(origin, de["message_id"],
                         recipient_uid=de["recipient_uid"], mid=mid,
                         device_id=device_id)
     got = mock.collect_messages(credential=cred, session_binding=session)
@@ -849,7 +886,9 @@ def emit_retained_receipt():
         # At the availability grade the DE is DATED BY this receipt, so the
         # instant the DS signs is the instant the DE published.
         server_clock=de["delivered_at"],
-        ds_kid=ds_key["kid"], ds_seed="ds-in", issuing_rdp_id=de["rdp_id"],
+        ds_kid=ds_key["kid"], ds_seed="ds-in",
+        # the message's origin, and the provider that observed the handover
+        issuing_rdp_id=origin, observed_by=de["rdp_id"],
         collection_token=token)
     if receipt["server_time"] != de["delivered_at"]:
         raise SystemExit("the receipt's instant is not the one the DE published")

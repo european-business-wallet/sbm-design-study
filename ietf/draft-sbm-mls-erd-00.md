@@ -74,10 +74,12 @@ is built over a cryptographic digest of the content and over the MLS session
 state, never over the content itself.
 
 SM-MLS binds MLS {{RFC9420}} to a registered-delivery context. Application
-messages are MLS PrivateMessages; the routing provider (a Messaging Service
-Provider) fulfils the MLS Delivery Service role and sees only ciphertext
-and metadata; a Registered Delivery Provider (RDP) observes evidenced events
-and issues COSE_Sign1 {{RFC9052}} evidence objects.
+messages are MLS PrivateMessages; a Registered Delivery Provider (RDP)
+fulfils the MLS Delivery Service role for its own entities — seeing only
+ciphertext and metadata there — and observes evidenced events and issues
+COSE_Sign1 {{RFC9052}} evidence objects. There is one provider role
+(SBM-ADR-0015): the Delivery Service is a function of the RDP, not a routing
+provider of its own.
 
 The legal and conformance framing (qualified electronic registered delivery,
 identity proofing, the ETSI EN 319 522 event model) is out of scope here and is
@@ -1280,10 +1282,16 @@ Normative rules:
   had no referent: no field, endpoint, identifier, history or rollover was
   defined anywhere, so the signature was unverifiable, pinned by private
   configuration, or open to ambiguous substitution. The receipt therefore
-  carries `ds_kid` and `ds_alg`, and the DS operator publishes
-  `ds_receipt_keys` in its **signed BW-MED** — an object already retained for
-  the evidence period, so no new rotation, history or retention machinery is
-  introduced for one key. RDP(out) resolves `ds_kid` there and MUST reject an
+  carries `ds_kid`, `ds_alg` and **`observed_by`** — the provider whose
+  Delivery Service observed the handover — and that provider publishes
+  `ds_receipt_keys` in its **signed BW-PROVIDER descriptor**, whose seal the
+  membership register pins to it. The keys were published in the entity's
+  BW-MED until BW-MED 2.2 removed the field: a provider's key belongs in the
+  provider's own document, and the customer's document is not where a verifier
+  should look for it (SBM-ADR-0015). `observed_by` is what says WHICH provider:
+  `issuing_rdp_id` is the message's origin, and in a four-corner exchange the
+  handover is observed on the other side (SBM-ADR-0016). A verifier resolves
+  `ds_kid` in that descriptor and MUST reject an
   unknown identifier, a **duplicated** identifier (the ambiguity the
   identifier exists to remove), or an algorithm that disagrees with the
   published key's. **Validity is evaluated at the receipt's own
@@ -1810,7 +1818,7 @@ exchange rests on private agreements:
   within an authenticated recipient session (the binding requirements are in
   {{TS-SBM-QERDS}}, clause 6), and the retrieval of evidence objects and
   Evidence Packages by the parties.
-- **Delivery Service surface.** The API at `BW-MED.mls.ds_url`: KeyPackage
+- **Delivery Service surface.** The API at `BW-MED.rdp.ds_url`: KeyPackage
   publication and replenishment, Welcome deposit and collection, handshake
   message submission and ordering, and its error model. (KeyPackage
   *retrieval* is resolvable through the directory: the EDD resolver contract

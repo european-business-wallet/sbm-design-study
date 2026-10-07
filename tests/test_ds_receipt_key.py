@@ -82,7 +82,10 @@ DS = yaml.safe_load((ROOT / "delivery-service-openapi.yaml").read_text())
 #: issued by `urn:sbm:rdp:demo-out`; SBM-ADR-0015 makes a descriptor authorise
 #: its OWN participant's receipts and nobody else's, so the two must agree. The
 #: mismatch was harmless until this round only because nothing compared them.
-ISSUER = "urn:sbm:rdp:demo-out"
+#: Whose descriptor the fixtures below supply: the OBSERVER's. The receipt
+#: names it in `observed_by`, and that is the provider whose Delivery Service
+#: signed — not `issuing_rdp_id`, which is the message's origin.
+ISSUER = mock.DS_PROVIDER_ID
 SHIPPED_PROVIDER = json.loads(
     (ROOT / "samples" / "sample-BW-PROVIDER.json").read_text())["projection"]
 PROVIDER = dict(SHIPPED_PROVIDER, participant_id=ISSUER)
@@ -148,6 +151,7 @@ def _expect(receipt):
     return DeliveryContext(
         message_id=receipt.get("message_id"),
         issuing_rdp_id=receipt.get("issuing_rdp_id"),
+        observed_by=receipt.get("observed_by"),
         recipient_uid=receipt.get("recipient_uid"),
         mid=receipt.get("mid"),
         device_id=receipt.get("device_id"),
@@ -345,3 +349,85 @@ def test_a_descriptor_with_no_participant_is_refused():
         mock.delivered_at_from_receipt(receipt, _digest(), provider=anonymous,
                                        expect=_expect(receipt))
     assert caught.value.reason == "receipt-unverifiable"
+
+
+# ---------------------------------------------------------------------------
+# SBM-ADR-0016 — the observer, named and checked
+#
+# `issuing_rdp_id` is the message's ORIGIN, proven by its SE; the Delivery
+# Service that collects the acknowledgement belongs to the RECIPIENT's provider.
+# The check demanded the origin publish the key, which refuses the legitimate
+# signer, and the sample it was written against had been generated with the
+# origin rewritten to equal the signer — so both identifiers held one value and
+# neither the code nor the fixture could be shown wrong.
+# ---------------------------------------------------------------------------
+
+FOUR_CORNER = "urn:sbm:rdp:origin-elsewhere"
+
+
+def _four_corner_receipt(**over):
+    """A receipt whose origin and observer DIFFER, as they do whenever the two
+    entities are on different providers."""
+    return _ack(issuing_rdp_id=FOUR_CORNER, **over)
+
+
+def test_a_four_corner_receipt_verifies_against_the_OBSERVERS_descriptor():
+    receipt = _four_corner_receipt()
+    assert receipt["issuing_rdp_id"] == FOUR_CORNER
+    assert receipt["observed_by"] == mock.DS_PROVIDER_ID != FOUR_CORNER
+    assert mock.delivered_at_from_receipt(
+        receipt, _digest(), provider=_provider(DEMO_KEY),
+        expect=_expect(receipt)) == EVENT
+
+
+def test_the_origins_descriptor_does_not_verify_a_four_corner_receipt():
+    """The regression this record exists for: the descriptor of the party that
+    ORIGINATED the message publishes no key for a handover it did not observe."""
+    receipt = _four_corner_receipt()
+    origin_descriptor = _provider(DEMO_KEY, participant_id=FOUR_CORNER)
+    with pytest.raises(mock.AckRejected) as caught:
+        mock.delivered_at_from_receipt(receipt, _digest(), provider=origin_descriptor,
+                                       expect=_expect(receipt))
+    assert caught.value.reason == "receipt-unverifiable"
+    assert "observed by" in caught.value.detail, caught.value.detail
+
+
+def test_an_unrelated_provider_cannot_claim_the_observation():
+    """A third participant, admitted and genuine, publishing the very key the
+    receipt names. Being able to resolve the `kid` is not being the observer."""
+    receipt = _four_corner_receipt()
+    stranger = _provider(DEMO_KEY, participant_id="urn:sbm:rdp:unrelated")
+    with pytest.raises(mock.AckRejected) as caught:
+        mock.delivered_at_from_receipt(receipt, _digest(), provider=stranger,
+                                       expect=_expect(receipt))
+    assert caught.value.reason == "receipt-unverifiable"
+
+
+def test_the_observer_cannot_be_relabelled_after_signing():
+    """`observed_by` is inside the signed object, so re-attributing the
+    observation breaks the signature rather than succeeding quietly."""
+    receipt = _four_corner_receipt()
+    moved = copy.deepcopy(receipt)
+    moved["observed_by"] = "urn:sbm:rdp:someone-else"
+    with pytest.raises(mock.AckRejected) as caught:
+        mock.delivered_at_from_receipt(
+            moved, _digest(), provider=_provider(DEMO_KEY, participant_id=moved["observed_by"]),
+            expect=_expect(moved))
+    assert caught.value.reason in ("receipt-unverifiable", "receipt-context-invalid")
+
+
+def test_a_receipt_bound_to_another_message_is_refused():
+    """The context binding, with the observer in it: a receipt that verifies
+    cryptographically still has to be about the act in hand."""
+    mine, other = _four_corner_receipt(), _four_corner_receipt(
+        message_id="01HZ3KEY00000000000000009")
+    with pytest.raises(mock.AckRejected):
+        mock.delivered_at_from_receipt(other, _digest(), provider=_provider(DEMO_KEY),
+                                       expect=_expect(mine))
+
+
+def test_observed_by_is_in_the_bound_context():
+    from lint_cli import DELIVERY_CONTEXT_FIELDS
+    assert "observed_by" in DELIVERY_CONTEXT_FIELDS
+    assert "issuing_rdp_id" in DELIVERY_CONTEXT_FIELDS, \
+        "the origin stays bound too — the receipt attests both"

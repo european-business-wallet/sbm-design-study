@@ -52,6 +52,13 @@ lint:
 lint-demo:
 	$(PY) scripts/evidence_lint.py --verify-demo samples/sample-*.json
 	$(PY) scripts/discovery_lint.py --verify-demo samples/sample-BW-*.json
+# R37-01: and the DOCUMENTED trust-store mode, which no gate ran. A provider
+# descriptor shipped with no entry in trust-store.demo.json, so the mode the
+# README tells a reader to use refused it (LINT-TRUST-01) while the bar stayed
+# green: --verify-demo resolves demo keys by seed and never consults the store.
+	$(PY) scripts/discovery_lint.py --trust-store samples/trust-store.demo.json \
+		--federation-register samples/federation.stage1.demo.json \
+		samples/sample-BW-PROVIDER.json samples/sample-BW-PROVIDER-in.json
 	$(PY) scripts/bundle_lint.py --allow-incomplete --trust-store samples/trust-store.demo.json samples/bundle.default.manifest.json samples/bundle.scoped.manifest.json samples/bundle.federated.manifest.json samples/bundle.walletsig.manifest.json
 
 # THE conformance bar (ninth review, P3): everything the repo can check.

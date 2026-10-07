@@ -273,7 +273,7 @@ def scan():
 #: outward-facing README spelled it out in plain language — "a messaging service
 #: provider, which need not be qualified" — and the sweep that reported 113
 #: occurrences closed reported it clean.
-STALE_ROLE = re.compile(r"\bMSPs?\b|messaging service provider", re.IGNORECASE)
+STALE_ROLE = re.compile(r"\bMSPs?\b|messaging\s+service\s+provider", re.IGNORECASE)
 #: A path or URL that merely CONTAINS the word is not a role name: the
 #: historical `docs/rdp-msp-trust-analysis/` folder keeps its name, and a
 #: reading path is allowed to link to it. A path is what this matches: a
@@ -333,13 +333,25 @@ def scan_stale_roles():
                     rel.startswith(d) for d in STALE_ROLE_EXEMPT_DIRS):
                 continue
             seen.add(rel)
-            for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            text = path.read_text(encoding="utf-8")
+            # Prose WRAPS. Scanning line by line meant a role name split across a
+            # newline was invisible: "…A6 (the messaging service" / "provider's own
+            # admission…" sat in a published open-items list, and in the I-D's own
+            # introduction, while this scan reported the tree clean. Each line is
+            # now scanned together with the one after it, joined as a reader reads
+            # them, and the hit is reported at the line the name STARTS on.
+            lines = text.splitlines()
+            for n, line in enumerate(lines, 1):
+                joined = line if n == len(lines) else line + " " + lines[n]
                 # Blank out path-like tokens first, so a link to a historical
                 # folder whose NAME carries the word is not read as a role.
-                scrubbed = re.sub(r"\]\([^)]*\)", "]()", line)
+                scrubbed = re.sub(r"\]\([^)]*\)", "]()", joined)
                 scrubbed = re.sub(r"`[\w./-]*[Mm][Ss][Pp][\w./-]*`", "``", scrubbed)
                 scrubbed = STALE_ROLE_PATH.sub(" ", scrubbed)
-                if STALE_ROLE.search(scrubbed):
+                hit = STALE_ROLE.search(scrubbed)
+                # Only report it HERE if it starts on this line: a name wholly
+                # inside the next line is that line's finding, not this one's.
+                if hit and hit.start() < len(line) + 1:
                     out.append((rel, n, line.strip()))
     for rel in STALE_ROLE_JSON_PROSE:
         path = ROOT / rel

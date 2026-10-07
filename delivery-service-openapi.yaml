@@ -3,10 +3,10 @@
 openapi: "3.1.0"
 info:
   title: SM-MLS Delivery Service companion contract (profile 2)
-  version: "15.0.0"
+  version: "16.0.0"
   description: |
     F-15: the normative MLS Delivery Service surface at
-    `BW-MED.mls.ds_url` — the COMPLETE KeyPackage reservation lifecycle
+    `BW-MED.rdp.ds_url` — the COMPLETE KeyPackage reservation lifecycle
     (R7/N-03), ciphertext handoff, the F-09 receipt acknowledgement, Welcome
     queues and the F-03 retained-material reads. Profile 2 REQUIRES this
     contract; profile-1 single-provider deployments MAY realise the surface
@@ -502,7 +502,7 @@ paths:
         that clock skew is measurable, and it never determines `delivered_at`.
 
         The DS returns a **signed receipt** (DeliveryReceipt) binding
-        (issuing_rdp_id, message_id, recipient_uid, mid, device_id,
+        (issuing_rdp_id, observed_by, message_id, recipient_uid, mid, device_id,
         session_binding, server_time, message_digest). R9-01 requirement 4:
         this sentence listed seven fields and omitted `issuing_rdp_id`, which
         R6-03 added to the signed object and R7-02 made mandatory-signed — a
@@ -1673,9 +1673,9 @@ components:
         `delivered_at` at the availability grade only (R11-04). The receipt is
         retained for the evidence-retention period as the protocol proof of
         authenticated S2.
-      required: [message_id, issuing_rdp_id, recipient_uid, mid, device_id,
-                 session_binding, server_time, message_digest, ds_kid, ds_alg,
-                 ds_signature]
+      required: [message_id, issuing_rdp_id, observed_by, recipient_uid, mid,
+                 device_id, session_binding, server_time, message_digest,
+                 ds_kid, ds_alg, ds_signature]
       unevaluatedProperties: false
       properties:
         issuing_rdp_id:
@@ -1686,6 +1686,26 @@ components:
             wire contract described a receipt the implementation does not
             produce — and a conforming client had no field to read the
             namespace from.
+        observed_by:
+          $ref: 'https://bw.example.eu/schemas/evidence-common.schema.json#/$defs/RdpId'
+          description: >-
+            R37-01 — the provider whose Delivery Service OBSERVED this handover
+            and signed this receipt, which is the provider that publishes the
+            `ds_receipt_keys` the signature resolves in (SBM-ADR-0016).
+
+            NOT `issuing_rdp_id`. That field is the message's ORIGIN, proven by
+            its SE, and in a four-corner exchange the handover is observed on the
+            OTHER side: the recipient's Delivery Service collects the
+            acknowledgement. Nothing on the receipt named the observer, so a
+            verifier had no way to know whose descriptor resolves `ds_kid` — and
+            the reference resolved it in the origin's, which is correct only in
+            the single-provider deployment where the two coincide.
+
+            SBM-ADR-0015 withdrew this field with the separate transport
+            participant it belonged to. Folding the Delivery Service into the RDP
+            removes the second provider ROLE; it does not make a message's origin
+            and its recipient's provider the same party. SBM-ADR-0016 restores
+            the field for that reason.
         message_id: { type: string }
         recipient_uid: { type: string }
         mid: { type: string, description: 'The acknowledging member.' }
@@ -1734,9 +1754,13 @@ components:
             verify against "the DS's published key" existed with no way to
             discover the key, so the signature was unverifiable, pinned by
             private configuration, or open to ambiguous substitution. The
-            `kid` resolves in the DS operator's signed BW-MED
-            (`ds_receipt_keys`), and its validity is judged AT `server_time`,
-            so a receipt stays verifiable after the key is rotated out.
+            `kid` resolves in the signed BW-PROVIDER descriptor of the
+            provider named by `observed_by` (`ds_receipt_keys`), whose seal the
+            membership register pins to that participant; its validity is judged
+            AT `server_time`, so a receipt stays verifiable after the key is
+            rotated out. It resolved in the entity's BW-MED until BW-MED 2.2
+            removed the field: a provider's key belongs in the provider's own
+            descriptor (SBM-ADR-0015/0016).
         ds_alg:
           type: string
           enum: [EdDSA, ES256, ES384]

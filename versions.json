@@ -14,7 +14,7 @@
       ]
     },
     "umbrella_edition": {
-      "value": "2026-10-06",
+      "value": "2026-10-07",
       "note": "The umbrella's edition date. Bound in every place that states it — the umbrella's front matter, its opening section and the README row — so the three cannot drift apart.",
       "bindings": [
         {
@@ -230,7 +230,7 @@
       ]
     },
     "discovery_bw_med": {
-      "value": "2.2",
+      "value": "2.3",
       "bindings": [
         {
           "kind": "json",
@@ -394,7 +394,7 @@
       ]
     },
     "edd_openapi": {
-      "value": "2.0.0",
+      "value": "2.1.0",
       "note": "EDD resolver OpenAPI contract; versions independently of the evidence family (umbrella §9.3). 2.0.0 is a MAJOR bump because it NARROWS access: the roster snapshot and the KeyPackage pointer now declare the authentication the umbrella's normative access table always required, so a client that relied on anonymous access to either is broken by it — deliberately.",
       "bindings": [
         {
@@ -446,7 +446,7 @@
       ]
     },
     "ts": {
-      "value": "v0.36",
+      "value": "v0.37",
       "note": "TS-shaped QERDS-binding revision. In the source repository the TS's change history (formerly its Annex B) is bound in CHANGELOG.md; that table does not travel into this export, so the binding was removed here deliberately and the TS front matter, the README table and the umbrella carry the value.",
       "bindings": [
         {
@@ -531,7 +531,7 @@
       ]
     },
     "companion_contracts": {
-      "value": "15.0.0",
+      "value": "16.0.0",
       "note": "The profile-2 companion contracts — wallet-RDP, Delivery Service, RDP relay — versioned together as one stream; versions independently of the evidence family (umbrella §9.3). 15.0.0 narrows the same field again: the queue and the proof constrained `refusal_nonce` differently (minLength 1 against 8), so a response its own validator accepted could carry a value the request validator forbade the client to echo. One shared definition now, and the response is the tighter of the two — which a server emitting a short value is broken by, deliberately (R32-OBS-01).",
       "bindings": [
         {

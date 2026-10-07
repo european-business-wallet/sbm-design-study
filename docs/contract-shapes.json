@@ -2,7 +2,7 @@
   "$comment": "R5-07: the client-visible SURFACE of each published contract, fingerprinted so it cannot change without its version. schema_shapes.py closed this for the discovery schemas after R3-09; the same hole stayed open one artefact over, and round 5 changed three of these four — including rebinding POST /messages from memberAuth to rdpAuth, which is BREAKING — with `make versions` green throughout. Seeded from the PRE-ROUND contracts on purpose, so the gate had to catch this round's own change rather than bless it. Regenerate deliberately with `python3 scripts/contract_shapes.py --write`.",
   "contracts": {
     "delivery-service-openapi.yaml": {
-      "version": "15.0.0",
+      "version": "16.0.0",
       "operations": {
         "DELETE /group-establishment/outcomes/{outcome_id}": [
           "memberAuth",
@@ -166,6 +166,7 @@
             "message_digest",
             "message_id",
             "mid",
+            "observed_by",
             "recipient_uid",
             "server_time",
             "session_binding"
@@ -220,6 +221,9 @@
             },
             "mid": {
               "type": "string"
+            },
+            "observed_by": {
+              "$ref": "https://bw.example.eu/schemas/evidence-common.schema.json#/$defs/RdpId"
             },
             "recipient_uid": {
               "type": "string"
@@ -690,7 +694,7 @@
       }
     },
     "wallet-rdp-openapi.yaml": {
-      "version": "15.0.0",
+      "version": "16.0.0",
       "operations": {
         "GET /evidence/{message_id}": [
           "walletAuth",
@@ -871,7 +875,7 @@
       }
     },
     "rdp-relay-openapi.yaml": {
-      "version": "15.0.0",
+      "version": "16.0.0",
       "operations": {
         "GET /relay/evidence/{message_id}": [
           "peerRdpAuth"

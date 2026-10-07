@@ -1002,8 +1002,11 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
     def _descriptor_for(rdp_id):
         """The BW-PROVIDER descriptor of one provider, by `participant_id`.
 
-        `issuing_rdp_id` and `participant_id` are the same value space
-        (`urn:sbm:rdp:…`), so the receipt names its own key's publisher.
+        Called with the receipt's `observed_by` — the provider whose Delivery
+        Service signed it. `observed_by` and `participant_id` are the same value
+        space (`urn:sbm:rdp:…`). It used to be called with `issuing_rdp_id`, which
+        is the message's ORIGIN: the same party only in a single-provider
+        deployment (SBM-ADR-0016).
         """
         for descriptor in (provider_descriptors or []):
             if isinstance(descriptor, dict) and descriptor.get("participant_id") == rdp_id:
@@ -1931,27 +1934,34 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
             expect = DeliveryContext(
                 message_id=message_id,
                 issuing_rdp_id=receipt["issuing_rdp_id"],
+                observed_by=receipt["observed_by"],
                 recipient_uid=(se or {}).get("recipient_uid")
                 or receipt["recipient_uid"],
                 mid=receipt["mid"], device_id=receipt["device_id"],
                 session_binding=receipt["session_binding"],
                 message_digest=receipt["message_digest"])
-            # SBM-ADR-0015: the receipt key is the ISSUING RDP's, published in
-            # its BW-PROVIDER descriptor and pinned by its membership record.
-            # It used to be read from the entity's BW-MED, because the Delivery
-            # Service was a second provider and the customer's signed document
-            # was the only thing already retained for the evidence period. With
-            # one provider role the key is the RDP's own, and the MED path is
-            # DELETED rather than kept as a fallback — a `kid` published only in
-            # a BW-MED does not resolve.
-            descriptor = _descriptor_for(receipt.get("issuing_rdp_id"))
+            # SBM-ADR-0015/0016: the receipt key is the OBSERVING provider's,
+            # published in its own BW-PROVIDER descriptor and pinned to it by its
+            # membership record. It used to be read from the entity's BW-MED,
+            # because the Delivery Service was a second provider and the
+            # customer's signed document was the only thing already retained for
+            # the evidence period; the MED path is DELETED rather than kept as a
+            # fallback, so a `kid` published only in a BW-MED does not resolve.
+            #
+            # This selected by `issuing_rdp_id` — the message's ORIGIN — which is
+            # the right descriptor only where origin and observer coincide, the
+            # single-provider deployment. In a four-corner exchange the handover
+            # is observed by the RECIPIENT's provider, so it resolved the key in
+            # the wrong descriptor and reported LINT-BND-38 against a receipt that
+            # verifies. `observed_by` is the signed field that says whose it is.
+            observer = receipt.get("observed_by")
+            descriptor = _descriptor_for(observer)
             if descriptor is None:
                 add("LINT-BND-I8",
                     f"DS receipt for {message_id!r}: no BW-PROVIDER descriptor "
-                    f"for the issuing RDP {receipt.get('issuing_rdp_id')!r} was "
-                    "supplied, so the key that signed it cannot be resolved and "
-                    "the handover rests on the DE's assertion alone "
-                    "(SBM-ADR-0015)")
+                    f"for the observing provider {observer!r} was supplied, so "
+                    "the key that signed it cannot be resolved and the handover "
+                    "rests on the DE's assertion alone (SBM-ADR-0016)")
                 continue
             try:
                 verify_ds_receipt(receipt, descriptor, expect=expect)

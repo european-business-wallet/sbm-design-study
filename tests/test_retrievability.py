@@ -18,6 +18,7 @@ settled and only the custody after an exit is not.
 import copy
 import inspect
 import pathlib
+import re
 import sys
 
 import pytest
@@ -167,6 +168,50 @@ def test_a_row_that_does_not_say_how_it_is_supplied_is_caught(data):
     assert any(f.startswith("RETR-04") and "receipts" in f for f in findings), findings
 
 
+def test_a_TYPO_in_a_manifest_key_is_caught(data):
+    """The hole the first form of this rule had. It read backticked tokens out of
+    a sentence and only checked one that equalled the argument's own name, so any
+    misspelling was exempt — of a field whose whole purpose is to name the key."""
+    broken = copy.deepcopy(data)
+    row = next(r for r in broken["inputs"] if r["input"] == "provider_descriptors")
+    row["supplied_as"] = {"kind": "manifest_key", "key": "provider_descriptor_typo"}
+    findings = [f for f in retr.check(broken) if f.startswith("RETR-04")]
+    assert any("provider_descriptor_typo" in f for f in findings), findings
+
+
+def test_an_ALIAS_the_loader_stops_reading_is_caught(data, monkeypatch):
+    """And the alias, which the first form could not check at all: `reveals` is
+    supplied by the manifest key `grade_reveals`, and the names differ. That is
+    the case the column was added to record, and it was the one case exempt."""
+    import bundle_lint
+    real = inspect.getsource(bundle_lint.lint_bundle)
+    # BOTH read forms: the loader tests the key with `.get` and then indexes it,
+    # and removing only one left it still read — which the gate correctly said.
+    without = (real.replace('manifest.get("grade_reveals")', 'manifest.get("gone")')
+                   .replace('manifest["grade_reveals"]', 'manifest["gone"]'))
+    assert not re.search(r'manifest(?:\.get\(|\[)"grade_reveals"', without), \
+        "the loader must no longer read the alias, or this probe is vacuous"
+    monkeypatch.setattr(inspect, "getsource",
+                        lambda obj: without if obj is bundle_lint.lint_bundle else real)
+    findings = [f for f in retr.check(data) if f.startswith("RETR-04")]
+    assert any("grade_reveals" in f and "reveals" in f for f in findings), findings
+
+
+def test_an_unknown_supply_kind_is_caught(data):
+    broken = copy.deepcopy(data)
+    next(r for r in broken["inputs"] if r["input"] == "med")["supplied_as"] = {"kind": "magic"}
+    assert any("not one of manifest_key" in f for f in retr.check(broken))
+
+
+def test_the_reference_is_HANDED_the_directory_record(data):
+    """The row said the verifier reads it live from the EDD core registry. Nothing
+    in this repository dereferences a URL — `discovery_lint --directory` takes a
+    path — so the column answered the ecosystem's question, not the verifier's."""
+    row = next(r for r in data["inputs"] if r["input"] == "directory_record")
+    assert row["supplied_as"]["kind"] == "cli"
+    assert "--directory" in row["supplied_as"]["detail"]
+
+
 def test_a_manifest_key_the_loader_does_not_read_is_caught(data, monkeypatch):
     """The defect itself, in the shape it shipped in: the registry names the key
     and `lint_bundle` reads nothing. Driven by replacing the loader's source
@@ -185,11 +230,11 @@ def test_a_manifest_key_the_loader_does_not_read_is_caught(data, monkeypatch):
 
 
 def test_a_differently_spelled_key_is_not_a_finding(data):
-    """`reveals` is supplied by the manifest key `grade_reveals`. The rule must
-    read the key the row NAMES, not assume the argument's own spelling — the
-    registry says which, which is half of why the column is worth having."""
+    """`reveals` is supplied by the manifest key `grade_reveals`. The rule reads
+    the key the row NAMES rather than assuming the argument's spelling — and now
+    CHECKS it, which is the whole point of the column."""
     row = next(r for r in data["inputs"] if r["input"] == "reveals")
-    assert "grade_reveals" in row["supplied_as"]
+    assert row["supplied_as"] == {"kind": "manifest_key", "key": "grade_reveals"}
     assert [f for f in retr.check(data) if f.startswith("RETR-04")] == []
 
 
@@ -197,5 +242,5 @@ def test_an_input_nothing_supplies_may_say_so(data):
     """`transformation_traces` has no manifest key because no operation produces
     the material. Stating that is an answer; leaving the field empty is not."""
     row = next(r for r in data["inputs"] if r["input"] == "transformation_traces")
-    assert "nothing supplies it" in row["supplied_as"]
+    assert row["supplied_as"]["kind"] == "none" and row["supplied_as"]["why"]
     assert [f for f in retr.check(data) if f.startswith("RETR-04")] == []

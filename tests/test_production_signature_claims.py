@@ -88,7 +88,10 @@ MED = json.loads((ROOT / "samples" / "sample-BW-MED.json").read_text())["project
 #: are issued by `urn:sbm:rdp:demo-out`. SBM-ADR-0015 makes a descriptor
 #: authorise its own participant's receipts and nobody else's, so the fixture
 #: states whose descriptor it is.
-ISSUER = "urn:sbm:rdp:demo-out"
+#: Whose descriptor the fixtures below supply: the OBSERVER's. The receipt
+#: names it in `observed_by`, and that is the provider whose Delivery Service
+#: signed — not `issuing_rdp_id`, which is the message's origin.
+ISSUER = mock.DS_PROVIDER_ID
 SHIPPED_PROVIDER = json.loads(
     (ROOT / "samples" / "sample-BW-PROVIDER.json").read_text())["projection"]
 PROVIDER = dict(SHIPPED_PROVIDER, participant_id=ISSUER)
@@ -140,6 +143,7 @@ def _expect(**over):
     from lint_cli import DeliveryContext
     e = {"message_id": SE["message_id"],
          "issuing_rdp_id": "urn:sbm:rdp:demo-out",
+         "observed_by": mock.DS_PROVIDER_ID,
          "recipient_uid": SE["recipient_uid"], "mid": "F1N2C3D4P",
          "device_id": "DEV-1", "session_binding": SESSION,
          "message_digest": _digest()}
@@ -554,8 +558,13 @@ def test_the_signed_field_sets_are_exact_not_approximate():
     field at a time."""
     from lint_cli import DS_RECEIPT_SIGNED_FIELDS, DS_RECEIPT_MANDATORY_SIGNED
     assert set(DS_RECEIPT_SIGNED_FIELDS) == {
-        "message_id", "issuing_rdp_id", "recipient_uid", "mid", "device_id",
-        "server_time", "message_digest", "session_binding", "ds_kid", "ds_alg"}
+        "message_id", "issuing_rdp_id", "observed_by", "recipient_uid", "mid",
+        "device_id", "server_time", "message_digest", "session_binding",
+        "ds_kid", "ds_alg"}
+    # SBM-ADR-0016: `observed_by` joined both sets. It names the provider whose
+    # Delivery Service signed, which `issuing_rdp_id` — the message's origin —
+    # never did; a receipt that did not bind it could be re-attributed to another
+    # provider's Delivery Service by supplying that provider's descriptor.
     # everything except the optional session binding is mandatory
     # R7-02: session_binding joined the mandatory set — it is in
     # DeliveryReceipt.required on the wire and was absent here, so a receipt
@@ -1464,16 +1473,42 @@ def test_without_the_descriptor_entry_the_receipt_is_reported_incomplete():
         "an unresolvable key is an unproven property, not a falsified one"
 
 
-def test_another_providers_descriptor_does_not_resolve_the_receipt():
-    """The selection, exercised: supply only the OTHER RDP's descriptor — a
-    genuine sealed BW-PROVIDER, published by an admitted participant, that
-    simply is not the receipt's issuer."""
+def test_the_shipped_receipt_has_a_different_origin_and_observer():
+    """The property the first version of this sample did not have.
+
+    A receipt names TWO providers: `issuing_rdp_id`, the message's origin proven
+    by its SE, and `observed_by`, the provider whose Delivery Service collected
+    the acknowledgement and signed. In a four-corner exchange they differ. The
+    generator used to pass the DE's issuer as the ORIGIN, so the sample agreed
+    with a verifier that resolved the key in the origin's descriptor — the two
+    were the same value and neither the code nor the fixture could be wrong.
+    """
     import bundle_lint as bl
-    other = "sample-BW-PROVIDER.json"
-    descriptor = bl._load(str(ROOT / "samples" / other))
     receipt = bl._load(str(ROOT / "samples" / json.loads(
         MANIFEST.read_text(encoding="utf-8"))["receipts"]["01HZ3AVLBCDEFGH9JKMN0PQRST"]))
-    assert descriptor["participant_id"] != receipt["issuing_rdp_id"], \
-        "this probe needs a descriptor that is NOT the issuer's"
-    found = _through_the_loader(provider_descriptors=[other])
+    assert receipt["issuing_rdp_id"] != receipt["observed_by"], \
+        "a receipt whose origin and observer coincide is the profile-1 case"
+    # and the origin is the SE's, not something convenient
+    se = next(e for e in json.loads((ROOT / "samples" / "sample-EP-dispute.json")
+                                    .read_text())["projection"].values()
+              if isinstance(e, dict) and e.get("type") == "SE-v1"
+              and e.get("message_id") == receipt["message_id"])
+    assert receipt["issuing_rdp_id"] == se["rdp_id"], \
+        "the receipt's origin must be the one the SE proves"
+
+
+def test_the_origins_descriptor_does_not_resolve_the_receipt():
+    """The regression, as a probe: supply only the ORIGIN's descriptor — genuine,
+    sealed, published by an admitted participant, and not the observer's. The
+    verifier selected by the origin, so this case used to be the one that
+    'worked' while the observer's descriptor was the one that failed."""
+    import bundle_lint as bl
+    origin_descriptor = "sample-BW-PROVIDER.json"
+    descriptor = bl._load(str(ROOT / "samples" / origin_descriptor))
+    receipt = bl._load(str(ROOT / "samples" / json.loads(
+        MANIFEST.read_text(encoding="utf-8"))["receipts"]["01HZ3AVLBCDEFGH9JKMN0PQRST"]))
+    assert descriptor["participant_id"] == receipt["issuing_rdp_id"], \
+        "this probe needs the ORIGIN's descriptor specifically"
+    found = _through_the_loader(provider_descriptors=[origin_descriptor])
     assert [r for r, _ in found] == ["LINT-BND-I8"], found
+    assert receipt["observed_by"] in found[0][1], found[0][1]

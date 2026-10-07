@@ -190,12 +190,11 @@ alt: Entity A's wallet submits the MLS ciphertext and its metadata to RDP(out), 
     <text x="798" y="604">end-to-end keys</text>
     <line x1="30" y1="622" x2="62" y2="622" stroke="#b45309" stroke-width="1.4" stroke-dasharray="7 4"/>
     <text x="68" y="626">OPEN — no published operation or decision yet (review agenda reference)</text>
-    <text x="520" y="626">PLANNED — decided, not implemented (Batch B)</text>
   </g>
 
   <!-- Notes -->
   <g font-size="10.5" fill="#64748b">
-    <text x="30" y="660">Profile 2 (four-corner). In profile 1 one operator runs both RDPs and no relay occurs. The Delivery Service may carry confirmation objects to RDP(in)</text>
+    <text x="30" y="660">Profile 2 (four-corner). In profile 1 a single RDP serves both entities (Annex P) and no relay occurs. The Delivery Service may carry confirmation objects to RDP(in)</text>
     <text x="30" y="675">verbatim; it validates, counts and decides nothing (TS clause 6). Who observes S2 is settled (A9, SBM-ADR-0015): the RDP, which operates the Delivery Service.</text>
     <text x="30" y="690">Informative. Normative flow: the I-D (Message Flows and Delivery States) and the TS (clauses 4.1, 6). Step by step: docs/federated-flow-explainer.md.</text>
   </g>

@@ -53,8 +53,10 @@ register — and admit nobody. Not established: the operation of a production
 register, the admission of any real participant, and the standing of the
 demonstration store, one file of demonstration keys for both the
 qualification-side signers and the federation authority. Agenda: A2 (the
-maximum age of a live admission decision) and A6 (the messaging service
-provider's own admission, decided and not implemented).
+maximum age of a live admission decision). The register's `role` enumeration
+being closed to one provider kind is now a decision rather than a stage on the
+way to another: a second participant kind, with its own admission, was withdrawn
+on 6 October 2026, and agenda item A6 closed with it.
 
 ## 3. Completeness of the policy history (transparency)
 

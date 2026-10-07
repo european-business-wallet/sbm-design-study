@@ -192,3 +192,32 @@ def test_a_stale_field_name_in_a_published_example_is_caught(tmp_path):
            '```json\n{\n  "msp": "https://msp.example.eu",\n}\n```\n')
     hits = _dl(tmp_path).scan_stale_roles()
     assert len(hits) == 1 and '"msp"' in hits[0][2], hits
+
+
+def test_a_role_name_split_across_a_line_break_is_caught(tmp_path):
+    """Prose WRAPS, and the scan read one line at a time.
+
+    A published open-items list said *A6 (the messaging service / provider's own
+    admission, decided and not implemented)* with the name split over a newline,
+    and the I-D's own introduction called the routing provider *a Messaging
+    Service / Provider*. Both sat in the tree while this scan reported it clean,
+    because neither line contains the name.
+    """
+    wrapped = ("A6 (the messaging service\n"
+               "provider's own admission, decided and not implemented).\n")
+    _write(tmp_path, "OPEN-ITEMS.md", wrapped)
+    hits = _dl(tmp_path).scan_stale_roles()
+    assert [(h[0], h[1]) for h in hits] == [("OPEN-ITEMS.md", 1)], hits
+    # the shape of the regression: no single line holds the name
+    assert not any(re.search(r"messaging service provider", l, re.I)
+                   for l in wrapped.splitlines()), \
+        "this fixture must wrap the name, or it proves nothing"
+
+
+def test_a_wrapped_name_is_reported_once_at_the_line_it_starts_on(tmp_path):
+    """Reading each line with the next one risks reporting the same occurrence
+    twice — once where it starts and once from the line before. It is the line
+    the name STARTS on."""
+    _write(tmp_path, "README.md", "filler line\nthe messaging service\nprovider is withdrawn\n")
+    hits = _dl(tmp_path).scan_stale_roles()
+    assert [h[1] for h in hits] == [2], hits

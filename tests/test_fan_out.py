@@ -220,6 +220,7 @@ def test_a_sender_side_receipt_cannot_become_a_de():
     provider = json.loads(
         (ROOT / "samples" / "sample-BW-PROVIDER.json").read_text())["projection"]
     addressee = DeliveryContext(message_id=MSG, issuing_rdp_id=RDP, recipient_uid=FR,
+                                observed_by=m.DS_PROVIDER_ID,
                                 mid="H2J3K4M5N", device_id="DEV-3",
                                 session_binding=_session("DEV-3"),
                                 message_digest=rec["envelope_hash"])
