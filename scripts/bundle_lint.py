@@ -514,8 +514,14 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
     proves the bytes were retained, not that the decision they encode was
     valid.
 
-    `receipts` (R4-03, optional): retained DS delivery receipts, {message_id:
-    receipt}. Where supplied, each is resolved against the DS operator's
+    `receipts` (R4-03, optional): retained DS delivery receipts, keyed by the
+    delivery they substantiate. The key is either the bare `message_id` or, where
+    one identifier is evidenced under more than one origin, the ORIGIN-QUALIFIED
+    handle `<origin>/<message_id>` — the pair the I-D makes the evidence handle.
+    A bare key resolves only where exactly one evidenced origin carries that
+    identifier; where several do, which delivery is meant is AMBIGUOUS and is
+    reported (LINT-BND-I9) rather than settled by the order the evidence was
+    listed in, which is what this used to do (R39-01). Where supplied, each is resolved against the DS operator's
     published `ds_receipt_keys` and VERIFIED against the resolved key — the
     verifier reaches its own verdict instead of taking RDP(out)'s word that it
     checked at issuance. Before R4-03 nothing outside the mock consumed the
@@ -1919,10 +1925,57 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
         by_message = {}
         for ev in evidence:
             _supporting(ev, by_message)
-        for message_id, receipt in receipts.items():
+
+        # R39-01: the evidence handle is the PAIR (origin, message_id) — the I-D
+        # says so — and only an SE names an origin. A bare identifier can occur in
+        # more than one origin's namespace, and this used to resolve by bare id and
+        # take the FIRST SE in the list: two SEs sharing an identifier under
+        # different origins gave opposite verdicts when the same two files were
+        # listed in the other order. Order is not evidence.
+        #
+        # A DE cannot be placed in this index by its own fields: its `rdp_id` is
+        # the OUTCOME ISSUER, not the origin. So a DE associates with a handle only
+        # when the bundle leaves no doubt which one — exactly one evidenced origin
+        # for that identifier.
+        origins_of = {}
+        for mid, group in by_message.items():
+            origins_of[mid] = sorted({e["rdp_id"] for e in group
+                                      if e.get("type") == "SE-v1" and e.get("rdp_id")})
+
+        def _handle(key, receipt):
+            """The (origin, message_id) a receipt entry is filed under.
+
+            A manifest key may be namespaced — `urn:sbm:rdp:…/01HZ…` — or bare. A
+            bare key resolves only where ONE evidenced origin carries that
+            identifier; where several do, which delivery it means is ambiguous and
+            no list position decides it.
+            """
+            if "/" in key and key.startswith("urn:"):
+                origin, _, mid = key.rpartition("/")
+                return origin, mid, None
+            mid = key
+            found = origins_of.get(mid) or []
+            if len(found) > 1:
+                return None, mid, found
+            return (found[0] if found else receipt.get("issuing_rdp_id")), mid, None
+
+        for key, receipt in receipts.items():
             if not isinstance(receipt, dict):
                 continue      # not a receipt object; nothing to resolve
-            supported = by_message.get(message_id) or []
+            origin_key, message_id, ambiguous = _handle(key, receipt)
+            if ambiguous:
+                add("LINT-BND-I9",
+                    f"DS receipt filed under the bare identifier {message_id!r}, which "
+                    f"this bundle evidences under {len(ambiguous)} origins "
+                    f"({', '.join(ambiguous)}): which delivery it substantiates is "
+                    "AMBIGUOUS, and the order the evidence was listed in does not "
+                    "decide it. File it under `<origin>/<message_id>` (R39-01)")
+                continue
+            supported = [e for e in (by_message.get(message_id) or [])
+                         if e.get("type") != "SE-v1" or e.get("rdp_id") == origin_key]
+            # A DE is kept only where the identifier is unambiguous in this bundle.
+            if len(origins_of.get(message_id) or []) > 1:
+                supported = [e for e in supported if e.get("type") != "DE-v1"]
             if not supported:
                 add("LINT-BND-38",
                     f"a DS receipt is filed under {message_id!r}, which no "
@@ -1938,6 +1991,12 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
             # about everything else.
             se = next((e for e in supported if e.get("type") == "SE-v1"), None)
             de = next((e for e in supported if e.get("type") == "DE-v1"), None)
+            if origin_key and receipt.get("issuing_rdp_id") not in (None, origin_key):
+                add("LINT-BND-38",
+                    f"DS receipt filed under origin {origin_key!r} attests "
+                    f"{receipt['issuing_rdp_id']!r} — the entry and the signed origin "
+                    "name different deliveries (R39-01)")
+                continue
             missing = [f for f in DELIVERY_CONTEXT_FIELDS
                        if receipt.get(f) is None]
             if missing:
@@ -2030,12 +2089,31 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
             # confirmation's instant and the receipt dates nothing.
             if de is not None and de.get("delivery_grade") == "availability":
                 at = signed.get("server_time") if isinstance(signed, dict) else None
-                if at and de.get("delivered_at") and at != de["delivered_at"]:
-                    add("LINT-BND-38",
-                        f"DS receipt for {message_id!r} is signed at {at!r} and the "
-                        f"availability-grade DE is dated {de['delivered_at']!r} — at "
-                        "that grade the receipt IS the date, so a receipt from "
-                        "another moment substantiates another delivery (R38-01)")
+                dated = de.get("delivered_at")
+                # R39-02: compare INSTANTS, not spellings. `!=` on the raw strings
+                # rejected '…09:58:41.000Z' against '…09:58:41Z' — the same moment,
+                # written two ways, both admitted by the schema's own pattern. This
+                # module has one timestamp primitive for exactly this reason:
+                # `instant()` exists because '.' sorts before 'Z', so bytewise
+                # comparison is wrong at fractional boundaries. The receipt's
+                # `server_time` is RFC 3339 on the DS contract and may carry an
+                # offset, while evidence timestamps are Zulu — two representations
+                # of one instant, which is the comparison this is.
+                if at and dated:
+                    try:
+                        differs = instant(at, field="receipt server_time") != \
+                            instant(dated, field="DE delivered_at")
+                    except TimestampError as e:
+                        add("LINT-BND-38",
+                            f"DS receipt for {message_id!r}: its instant or the DE's "
+                            f"cannot be parsed, so the two cannot be compared: {e}")
+                        continue
+                    if differs:
+                        add("LINT-BND-38",
+                            f"DS receipt for {message_id!r} is signed at {at!r} and the "
+                            f"availability-grade DE is dated {dated!r} — at that grade "
+                            "the receipt IS the date, so a receipt from another moment "
+                            "substantiates another delivery (R38-01)")
 
     _bnd38()
 

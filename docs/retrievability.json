@@ -176,7 +176,8 @@
       "served_by": "the issuing RDP; the collecting party's own copy",
       "supplied_as": {
         "kind": "manifest_key",
-        "key": "receipts"
+        "key": "receipts",
+        "detail": "keyed by the delivery it substantiates: the bare `message_id`, or `<origin>/<message_id>` where one identifier is evidenced under more than one origin (R39-01)"
       },
       "absent": "the S2 event rests on the DE's assertion rather than on the DS's signature.",
       "survives_provider_exit": false

@@ -1427,16 +1427,22 @@ def test_a_receipt_with_no_descriptor_for_its_issuer_is_reported_as_incomplete()
     rather than passing over it. The entity's BW-MED is not consulted: that path
     is deleted, so a receipt cannot be rescued by a key published there.
     """
+    # R39-01: the receipt must be about the delivery this bundle evidences, or the
+    # handle check reports THAT instead — correctly, and before any descriptor is
+    # looked for. This fixture is about a missing descriptor, so its receipt names
+    # the origin the supplied SE proves.
     issues = [m for r, m in bl.check_bundle(
         SE["recipient_uid"], MED, {}, [], [copy.deepcopy(SE)],
-        receipts={SE["message_id"]: _receipt()}, provider_descriptors=[])
+        receipts={SE["message_id"]: _receipt(issuing_rdp_id=SE["rdp_id"])},
+        provider_descriptors=[])
         if r == "LINT-BND-I8"]
     assert issues, "no descriptor for the issuing RDP must be reported, not ignored"
     assert "cannot be resolved" in issues[0]
     # And it is a RESIDUAL, not a failure of the receipt: LINT-BND-38 stays quiet.
     fatal = [r for r, _ in bl.check_bundle(
         SE["recipient_uid"], MED, {}, [], [copy.deepcopy(SE)],
-        receipts={SE["message_id"]: _receipt()}, provider_descriptors=[])
+        receipts={SE["message_id"]: _receipt(issuing_rdp_id=SE["rdp_id"])},
+        provider_descriptors=[])
         if r == "LINT-BND-38"]
     assert not fatal, "absent material must not be reported as a bad receipt"
 
@@ -1605,7 +1611,11 @@ def test_a_receipt_for_another_origin_is_reported(tmp_path):
     is scoped by its origin, and only the SE proves one."""
     found = _with_receipt(_other_receipt(issuing_rdp_id="urn:sbm:rdp:mockeu-002"), tmp_path)
     assert [r for r, _ in found] == ["LINT-BND-38"], found
-    assert "issuing_rdp_id" in found[0][1], found[0][1]
+    # R39-01 sharpened this: a bare entry resolves to the origin the bundle
+    # evidences, so the receipt's own claim is compared with THAT and the finding
+    # names both deliveries rather than only the field that differed.
+    assert "urn:sbm:rdp:mockeu-002" in found[0][1] and "urn:sbm:rdp:mockeu-001" in found[0][1], \
+        found[0][1]
 
 
 def test_a_receipt_over_other_octets_is_reported(tmp_path):
@@ -1630,7 +1640,8 @@ def test_a_receipt_signed_at_another_instant_is_reported(tmp_path):
     about this receipt agrees with the evidence."""
     found = _with_receipt(_other_receipt(server_clock="2026-04-04T10:05:00Z"), tmp_path)
     assert [r for r, _ in found] == ["LINT-BND-38"], found
-    assert "10:05:00Z" in found[0][1] and "09:58:41Z" in found[0][1], found[0][1]
+    de = json.loads((ROOT / "samples" / "sample-DE-availability.json").read_text())["projection"]
+    assert "10:05:00Z" in found[0][1] and de["delivered_at"] in found[0][1], found[0][1]
 
 
 def test_without_the_SE_the_relationship_is_reported_unproven(tmp_path):
@@ -1674,3 +1685,120 @@ def test_an_embedded_SE_counts_as_supporting_evidence():
     # origin, with the SE reachable ONLY inside the package, is reported.
     assert through_the_EP(_other_receipt(issuing_rdp_id="urn:sbm:rdp:mockeu-002")) \
         == ["LINT-BND-38"], "the nested SE must be COMPARED, not merely found"
+
+
+# ---------------------------------------------------------------------------
+# R39-01 — the evidence handle is (origin, message_id), and order is not evidence
+# ---------------------------------------------------------------------------
+
+def _second_origin_se(origin="urn:sbm:rdp:mockeu-002"):
+    """A genuinely sealed SE for the SAME bare identifier under another origin."""
+    se = copy.deepcopy(_avail_se())
+    se["rdp_id"] = origin
+    return mock.evidence_artifact(se)
+
+
+def _mixed_origin_bundle(order, receipt_key, receipt, tmp_path):
+    """The default bundle plus a second-origin SE, listed in the given order."""
+    import bundle_lint as bl
+    (tmp_path / "other-se.json").write_text(json.dumps(_second_origin_se()), encoding="utf-8")
+    (tmp_path / "r.json").write_text(json.dumps(receipt), encoding="utf-8")
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    ev = [e for e in manifest["evidence"] if e != "sample-SE-availability.json"]
+    i = ev.index("sample-DE-availability.json")
+    named = {"matching": str(tmp_path / "other-se.json"),
+             "other": str(ROOT / "samples" / "sample-SE-availability.json")}
+    manifest["evidence"] = ev[:i] + [named[o] for o in order] + ev[i:]
+    manifest["receipts"] = {receipt_key: str(tmp_path / "r.json")}
+    return [(r, m) for r, m in bl.lint_bundle(manifest, str(ROOT / "samples"))
+            if r in ("LINT-BND-38", "LINT-BND-I9")]
+
+
+def test_reordering_the_same_evidence_cannot_change_the_verdict(tmp_path):
+    """The reproduction. Two separately sealed SEs share a bare identifier under
+    different origins; only the order they are listed in differs. This resolved by
+    bare identifier and took the FIRST SE, so the same documents gave opposite
+    answers — a clean pass one way, a definite mismatch the other. Order is not
+    evidence."""
+    receipt = _other_receipt(issuing_rdp_id="urn:sbm:rdp:mockeu-002")
+    a = _mixed_origin_bundle(["matching", "other"], AVAIL, receipt, tmp_path)
+    b = _mixed_origin_bundle(["other", "matching"], AVAIL, receipt, tmp_path)
+    assert [r for r, _ in a] == [r for r, _ in b], {"matching first": a, "other first": b}
+    assert [r for r, _ in a] == ["LINT-BND-I9"], a
+    assert "AMBIGUOUS" in a[0][1], a[0][1]
+
+
+def test_a_namespaced_entry_resolves_the_delivery_it_names(tmp_path):
+    """And the way to say which: the entry carries the origin. Same two SEs, both
+    orders, one answer — this time a clean one."""
+    receipt = _other_receipt(issuing_rdp_id="urn:sbm:rdp:mockeu-002")
+    key = f"urn:sbm:rdp:mockeu-002/{AVAIL}"
+    for order in (["matching", "other"], ["other", "matching"]):
+        assert _mixed_origin_bundle(order, key, receipt, tmp_path) == [], order
+
+
+def test_a_namespaced_entry_filed_under_the_wrong_origin_is_reported(tmp_path):
+    """The claimant states the association and it is still CHECKED: an entry filed
+    under one origin whose receipt attests another is a mismatch, not a relabelling
+    the verifier accepts."""
+    receipt = _other_receipt(issuing_rdp_id="urn:sbm:rdp:mockeu-002")
+    se = _avail_se()
+    found = _mixed_origin_bundle(["matching", "other"], f"{se['rdp_id']}/{AVAIL}",
+                                 receipt, tmp_path)
+    assert [r for r, _ in found] == ["LINT-BND-38"], found
+    assert se["rdp_id"] in found[0][1] and "urn:sbm:rdp:mockeu-002" in found[0][1]
+
+
+# ---------------------------------------------------------------------------
+# R39-02 — one instant, two spellings
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("spelling", ["2026-04-04T10:16:23Z", "2026-04-04T10:16:23.000Z",
+                                      "2026-04-04T10:16:23.0Z"])
+def test_an_equivalent_instant_is_the_same_instant(tmp_path, spelling):
+    """The availability comparison was `!=` on raw strings, so a receipt signed at
+    the DE's own moment in a different spelling was reported as being from another
+    moment. The schema's pattern admits fractional seconds and this module has one
+    primitive for the comparison, which exists because '.' sorts before 'Z'."""
+    de = json.loads((ROOT / "samples" / "sample-DE-availability.json").read_text())["projection"]
+    from lint_cli import instant
+    assert instant(spelling) == instant(de["delivered_at"]), "the fixture must be the same instant"
+    assert _with_receipt(_other_receipt(server_clock=spelling), tmp_path) == []
+
+
+def test_a_genuinely_different_instant_is_still_reported(tmp_path):
+    """And the negative half stays: parsing instants is not loosening the check."""
+    found = _with_receipt(_other_receipt(server_clock="2026-04-04T11:00:00Z"), tmp_path)
+    assert [r for r, _ in found] == ["LINT-BND-38"], found
+
+
+def test_the_schema_no_longer_claims_bytewise_ordering_is_chronological():
+    """The root cause, not just the symptom: `IsoTimestamp` told an implementer to
+    compare Zulu strings byte-wise, while its own pattern admits fractional
+    seconds and `lint_cli.instant()` documents why that is wrong."""
+    d = json.loads((ROOT / "schemas" / "evidence-common.schema.json").read_text())
+    desc = d["$defs"]["IsoTimestamp"]["description"]
+    assert "byte-wise on Zulu strings, which sort chronologically" not in desc
+    assert "PARSED INSTANT" in desc and "instant()" in desc
+    assert r"(\.\d+)?" in d["$defs"]["IsoTimestamp"]["pattern"], \
+        "the pattern admitting fractional seconds is why this matters"
+
+
+# ---------------------------------------------------------------------------
+# R39-03 — the demonstration's own chronology
+# ---------------------------------------------------------------------------
+
+def test_the_availability_demonstration_has_an_intelligible_timeline():
+    """Handover recorded 16m19s BEFORE submission, inherited from the dispute
+    package. Every gate accepted it — the profile bounds no skew between two
+    providers — but no reader could follow it."""
+    from lint_cli import instant
+    se = _avail_se()
+    de = json.loads((ROOT / "samples" / "sample-DE-availability.json").read_text())["projection"]
+    receipt = json.loads((ROOT / "samples" / "receipt.availability.demo.json").read_text())
+    ep = json.loads((ROOT / "samples" / "sample-EP-dispute.json").read_text())["projection"]
+    states = {s["state"]: s["at"] for s in ep["states"]}
+    assert instant(se["sent_at"]) < instant(states["S1"]) < instant(states["S2"]), states
+    assert instant(states["S2"]) == instant(de["delivered_at"]) == instant(receipt["server_time"])
+    assert instant(se["sent_at"]) < instant(de["delivered_at"]), \
+        "a message cannot be handed over before it is submitted"

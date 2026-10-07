@@ -194,7 +194,7 @@
       "type": "string",
       "format": "date-time",
       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$",
-      "description": "RFC 3339 timestamp in Zulu (UTC, trailing Z) form (X-35). The Zulu form is normative: instant comparison (trust-store windows, as-of resolution, expiry ordering) is byte-wise on Zulu strings, which sort chronologically. format is asserted (FormatChecker) wherever schemas are validated."
+      "description": "RFC 3339 timestamp in Zulu (UTC, trailing Z) form (X-35). The Zulu form is normative, and comparison is by PARSED INSTANT, never byte-wise: this pattern admits optional fractional seconds, and '.' sorts before 'Z', so '…T10:16:23.1Z' < '…T10:16:23Z' bytewise while the first instant is LATER. `lint_cli.instant()` is the one comparison primitive (DR-05). This description used to claim byte-wise ordering was chronological, which the reference's own parser documents as false — and a check written to that claim rejected a receipt whose instant matched the evidence in a different spelling (R39-02). format is asserted (FormatChecker) wherever schemas are validated."
     },
     "MlsGroupId": {
       "type": "string",

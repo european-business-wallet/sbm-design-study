@@ -18,7 +18,80 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-10-07, edition r39
+## Current — 2026-10-07, edition r40
+
+**Order is not evidence, and one instant has more than one spelling. No artefact
+version moves.** An independent verification confirmed the previous edition's
+receipt-binding correction and found two further defects inside it. Both are fixed
+here.
+
+**A bare message identifier does not name a delivery.** The wire protocol makes a
+delivery's handle the pair of its origin and its identifier, so one identifier can
+occur in more than one provider's namespace. The new comparison grouped retained
+evidence by the bare identifier and took the **first** Sending Evidence it found —
+so two separately sealed Sending Evidences for the same identifier under different
+origins produced opposite verdicts depending which was listed first: a clean result
+one way, a definite "this receipt is about a different delivery" the other. The same
+documents, the same receipt, and no signed value different between the two runs.
+
+The delivery evidence cannot settle it either: the provider it names is the one
+that **issued** that outcome, not the one the message came from, and reading it as
+the origin would repeat the confusion the previous edition removed.
+
+A retained receipt may now be filed under its full handle rather than the bare
+identifier. A bare entry still resolves where exactly one evidenced origin carries
+that identifier; where several do, which delivery is meant is **ambiguous** and
+reported as such — identically in either order. The party assembling the package
+states the association, and it is still checked: an entry filed under one origin
+whose receipt attests another is a mismatch, not a relabelling the verifier
+accepts.
+
+**And a comparison of instants compared their spelling.** A receipt signed at the
+delivery's own moment, written with fractional seconds, was reported as being from
+another moment. The repository has one timestamp primitive for exactly this, and it
+exists because a decimal point sorts before the trailing Z, which makes byte-wise
+comparison wrong at fractional boundaries.
+
+The cause was a document rather than an oversight: the timestamp definition's own
+description told an implementer that byte-wise comparison of these strings is
+chronological, while the pattern beside it admits fractional seconds and the
+reference's parser documents why that claim is false. The check had been written to
+the claim. The description now says what is true and names the primitive; the
+comparison parses both sides and reports a timestamp it cannot read rather than
+guessing.
+
+| Artefact | This edition | Previous |
+|---|---|---|
+| Umbrella profile | **2.1, edition 2026-10-07** | 2.1, edition 2026-10-07 |
+| TS-shaped QERDS binding | **v0.37** | v0.37 |
+| Profile-2 companion contracts | **16.0.0** | 16.0.0 |
+| BW-MED / BW-ORG / BW-MEMBER | **2.3** / 2.7 / 2.2 | 2.3 / 2.7 / 2.2 |
+| EDD resolver contract (OpenAPI) | **2.1.0** | 2.1.0 |
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.12** | 2.12 |
+
+**The demonstration recorded a handover before its submission.** The
+availability-grade example put submission at the instant every sample shares, and
+its delivery evidence, its receipt and the dispute package's own state records put
+the relay acceptance and the handover seventeen minutes **earlier**. No check
+objected: the profile sets no bound on clock skew between two providers, and the
+chronology was inherited rather than introduced. The later instants now follow the
+submission they belong to. Every affected sealed artefact was regenerated and
+compared field by field against its previous state: nothing changed but those
+instants and the signatures and digests derived from them.
+
+Four diagnostics in the receipt path, the architecture note's signing-key table and
+the provider descriptor's own schema still named the originating provider as the
+holder of the receipt key. They name the observing provider. A historical aside
+left in the onboarding prose is removed; this changelog is where that belongs.
+
+**A new agenda item records what no evidence can corroborate.** A receipt names the
+provider that observed, the device that acknowledged and the session it
+acknowledged in — and no published evidence object names any of the three, so the
+verifier cannot check them against anything. The code marks them as the receipt's
+own word rather than treating them as confirmed, and the agenda now carries the
+question instead of leaving it to be inferred from two adjacent entries.
+
+## Edition r39 — 2026-10-07
 
 **A receipt now has to be about the delivery the evidence names. No artefact
 version moves.** An independent verification of the previous edition confirmed

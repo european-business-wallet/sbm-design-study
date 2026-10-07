@@ -2712,7 +2712,9 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
 
     `expect` (R6-03) is the DELIVERY CONTEXT the caller is processing —
     `message_id`, `recipient_uid`, `mid`, `device_id`, `session_binding`,
-    `message_digest`, and the issuing RDP where the deployment carries one.
+    `message_digest`, the message's ORIGIN (`issuing_rdp_id`) and the provider that
+    OBSERVED the handover (`observed_by`) — two different parties in a four-corner
+    exchange, and the second is whose key verifies this (SBM-ADR-0016).
     Every stated field must equal the SIGNED payload. Without it a receipt
     proved that SOME delivery happened and was accepted for whichever act the
     caller had in hand.
@@ -2754,7 +2756,7 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
             "receipt-unverifiable",
             "the receipt names no ds_kid, so 'the DS's published key' has no "
             "referent and the verifying key cannot be resolved (R3-04)")
-    # SBM-ADR-0015: the key is the issuing RDP's OWN, published in its
+    # SBM-ADR-0015/0016: the key is the OBSERVING provider's OWN, published in its
     # BW-PROVIDER descriptor. Both arms below are the sentence this function's
     # docstring already made — "a kid published only in a BW-MED does not
     # resolve" — and neither was enforced. The resolver read `ds_receipt_keys`
@@ -2769,7 +2771,7 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
     if kind != "BW-PROVIDER-v1":
         raise ReceiptVerificationError(
             "receipt-unverifiable",
-            f"the document supplied as the issuing RDP's descriptor is of type "
+            f"the document supplied as the observing provider's descriptor is of type "
             f"{kind!r}, not 'BW-PROVIDER-v1' — a receipt key is resolved from "
             "the provider's own descriptor and from nothing else, so the MED "
             "path stays deleted rather than reachable by argument "
@@ -2800,7 +2802,7 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
     if not (provider or {}).get("ds_receipt_keys"):
         raise ReceiptVerificationError(
             "receipt-unverifiable",
-            f"the receipt names key {kid!r} but the issuing RDP's BW-PROVIDER "
+            f"the receipt names key {kid!r} but the observing provider's BW-PROVIDER "
             "publishes no ds_receipt_keys — the obligation to verify against "
             "'the published key' has no referent (R3-04/SBM-ADR-0015). The "
             "entity's BW-MED is NOT consulted: that path is deleted, so a kid "
@@ -2922,7 +2924,7 @@ def resolve_ds_receipt_key(provider, kid, at):
             if k.get("kid") == kid]
     if not keys:
         raise ReceiptKeyError(
-            f"no ds_receipt_keys entry with kid {kid!r} in the issuing RDP's "
+            f"no ds_receipt_keys entry with kid {kid!r} in the observing provider's "
             "BW-PROVIDER descriptor — the receipt names a key nobody published")
     if len(keys) > 1:
         raise ReceiptKeyError(
