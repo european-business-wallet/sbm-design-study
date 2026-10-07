@@ -521,10 +521,19 @@
     },
     {
       "id": "LINT-BND-I8",
-      "input": "a retained DS receipt with no BW-PROVIDER descriptor for its issuing RDP",
-      "precondition": "the bundle carries a receipt whose `issuing_rdp_id` matches no supplied descriptor",
-      "predicate": "SBM-ADR-0015. The key that verifies a Delivery-Service receipt is the ISSUING RDP's, published in its BW-PROVIDER descriptor and pinned to the participant by the membership register (LINT-TRUST-07). Without that descriptor the signature cannot be resolved, so the acknowledged handover rests on the DE's own assertion and the verification is INCOMPLETE rather than passed. The key used to be read from the entity's BW-MED, because the Delivery Service was a second provider and the customer's signed document was the only thing already retained for the evidence period; that path is DELETED, not kept as a fallback, because a fallback would let a provider go on publishing its key on its customers' documents and make the move a rename. Fail-open is not an option here and silence is not either: the verdict says which material is missing.",
-      "error": "that the acknowledged handover is attested by the key the issuing RDP published — NOT ESTABLISHED: no BW-PROVIDER descriptor for that RDP was supplied (SBM-ADR-0015)",
+      "input": "a retained DS receipt with no BW-PROVIDER descriptor for its OBSERVING provider",
+      "precondition": "the bundle carries a receipt whose `observed_by` matches no supplied descriptor",
+      "predicate": "SBM-ADR-0015/0016. The key that verifies a Delivery-Service receipt is the OBSERVING provider's — the one the receipt names in `observed_by`, whose Delivery Service collected the acknowledgement — published in its own BW-PROVIDER descriptor and pinned to that participant by the membership register (LINT-TRUST-07). It is NOT the issuing RDP's: `issuing_rdp_id` is the message's origin, and in a four-corner exchange the handover is observed on the other side. Without that descriptor the signature cannot be resolved, so the acknowledged handover rests on the DE's own assertion and the verification is INCOMPLETE rather than passed. The key used to be read from the entity's BW-MED, because the Delivery Service was a second provider and the customer's signed document was the only thing already retained for the evidence period; that path is DELETED, not kept as a fallback, because a fallback would let a provider go on publishing its key on its customers' documents and make the move a rename. Fail-open is not an option here and silence is not either: the verdict says which material is missing.",
+      "error": "that the acknowledged handover is attested by the key the OBSERVING provider published — NOT ESTABLISHED: no BW-PROVIDER descriptor for that provider was supplied (SBM-ADR-0016)",
+      "profile": "core",
+      "owner_fn": "check_bundle"
+    },
+    {
+      "id": "LINT-BND-I9",
+      "input": "a retained DS receipt the bundle cannot relate to the delivery it evidences",
+      "precondition": "the bundle carries a receipt and does not retain the material to compare it with the evidenced delivery — no SE for that message (the only object that proves an origin), no object committing to the octets, or no evidenced recipient",
+      "predicate": "R38-01. A signature that verifies says the named Delivery Service signed THIS receipt; it does not say the receipt is about THIS delivery. The expected delivery context must therefore be derived from the retained evidence — the SE's origin and `envelope_hash`, the evidenced `recipient_uid`, and at the availability grade the DE's `delivered_at` — and not copied from the receipt under examination, which makes the comparison a self-consistency check. A bare `message_id` does not identify a delivery: it is scoped by the origin, so a correctly signed receipt for another origin over other octets can carry the same identifier. Where the material to compare is absent the relationship is UNPROVEN and the verification INCOMPLETE — never a pass on the strength of the signature alone.",
+      "error": "that this receipt substantiates the delivery this bundle evidences — NOT ESTABLISHED: the material to compare them is not retained (R38-01)",
       "profile": "core",
       "owner_fn": "check_bundle"
     },

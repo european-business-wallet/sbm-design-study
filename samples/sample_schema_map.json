@@ -42,6 +42,7 @@
     "sample-SE-multipart.json": "evidence-se.schema.json",
     "sample-SE-scoped.json": "evidence-se.schema.json",
     "sample-SE.json": "evidence-se.schema.json",
+    "sample-SE-availability.json": "evidence-se.schema.json",
     "sample-STATUS.json": "status-assertion.schema.json"
   }
 }

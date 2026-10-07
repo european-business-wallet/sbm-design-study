@@ -10,6 +10,7 @@
   "evidence": [
     "sample-SE.json",
     "sample-DE.json",
+    "sample-SE-availability.json",
     "sample-DE-availability.json"
   ],
   "grade_reveals": "grade-reveal.demo.json",

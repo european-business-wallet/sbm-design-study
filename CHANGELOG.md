@@ -18,7 +18,78 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-10-07, edition r38
+## Current — 2026-10-07, edition r39
+
+**A receipt now has to be about the delivery the evidence names. No artefact
+version moves.** An independent verification of the previous edition confirmed
+every earlier finding closed and raised one more, in the part the previous edition
+had just rewritten. It was right.
+
+**The expected delivery was copied from the receipt being checked.** The shared
+check compares what a receipt says against what the caller expects it to say — and
+the retained verifier assembled that expectation out of the receipt's own fields.
+So it proved the receipt agreed with itself, and nothing about the delivery the
+package evidences. A correctly signed receipt, for a message that **originated at a
+different provider**, over **different ciphertext**, at a **different instant**,
+filed under the same bare message identifier, passed through the published command
+with no finding at all.
+
+Nothing had to be forged and no provider had to misbehave: the receipt is simply
+true about another delivery. A bare message identifier does not name one — it is
+scoped by the message's origin, and the only object that proves an origin is the
+Sending Evidence. The delivery evidence names its own issuer, which is a different
+party, and reading the origin from it would have repeated the confusion the
+previous edition removed.
+
+The expectation is now taken from the retained evidence: the Sending Evidence's
+origin and its commitment to the ciphertext, the recipient the evidence names,
+and — at the **availability grade** only, where the receipt is what dates the
+delivery — the delivery evidence's own instant. Not at the other grades, where the
+recipient's completing confirmation dates it and the receipt dates nothing. Three
+details still come from the receipt and the code says so plainly: no published
+evidence object names the observing provider, the acknowledging device, or the
+session it acknowledged in. That is a known open question, not a comparison
+quietly skipped.
+
+Where the material to compare is missing, the relationship is reported
+**unproven** rather than passed on the strength of the signature, and the registry
+of what must stay retrievable records whose material it is.
+
+| Artefact | This edition | Previous |
+|---|---|---|
+| Umbrella profile | **2.1, edition 2026-10-07** | 2.1, edition 2026-10-07 |
+| TS-shaped QERDS binding | **v0.37** | v0.37 |
+| Profile-2 companion contracts | **16.0.0** | 16.0.0 |
+| BW-MED / BW-ORG / BW-MEMBER | **2.3** / 2.7 / 2.2 | 2.3 / 2.7 / 2.2 |
+| EDD resolver contract (OpenAPI) | **2.1.0** | 2.1.0 |
+| Evidence objects (SE / DE / NDE / RE / CE / EP / Relay / GCM) | **2.12** | 2.12 |
+
+**An Evidence Package carries evidence, and only its outside was being read.** The
+Sending Evidence that proves the availability message's origin travels inside the
+dispute package, so it was invisible to the comparison. The verifier now looks
+inside a package as well, and the demonstration bundle carries that Sending
+Evidence directly — byte for byte the same object — so the shipped conformance run
+demonstrates a complete receipt-to-delivery check rather than reporting it
+unproven.
+
+**Two demonstration fixtures turned out never to have agreed with themselves.**
+Receipt tests paired a receipt issued by one provider with Sending Evidence
+originating at another, and acknowledged their own test bytes while that evidence
+committed to different ones. Neither disagreement could be seen while the
+expectation was copied from the receipt — the defect was concealing its own
+fixtures.
+
+**And the published rule text would have rebuilt it.** The catalogue entry for an
+unresolvable receipt key still described that key as the issuing provider's, and
+the provider descriptor's own schema said the same. The running code had been
+corrected an edition earlier; the text an independent implementer would follow had
+not. Two smaller residues went with them: the umbrella's abbreviated discovery
+example still declared the previous document version thirty lines below the
+required-field list that had moved on, and the architecture note still ended its
+opening with a sentence denying the provider-to-provider relay it had just
+described.
+
+## Edition r38 — 2026-10-07
 
 **The receipt names the provider that observed the handover.** An independent
 review of the previous edition found the move of the Delivery-Service receipt key

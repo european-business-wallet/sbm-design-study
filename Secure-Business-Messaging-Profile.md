@@ -593,7 +593,7 @@ The wallet is not merely the MLS endpoint: it is a **trust component of the regi
   "sm_artifact_b64": "...",
   "projection": {
     "type": "BW-MED-v1",
-    "version": "2.2",
+    "version": "2.3",
     "uid": "EU-DE-EOID-7K3D9W0Q2M5FW0",
     "protocols": ["SM-MLS-1.0"],
     "rdp": {

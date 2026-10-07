@@ -220,14 +220,33 @@ def _bnd38(receipts, descriptors=None):
     case `test_a_receipt_with_no_descriptor_is_reported` exercises.
     """
     if descriptors is None:
-        # The descriptor has to be the ISSUING RDP's — that is the whole point
-        # of the move — so it is keyed to the issuer these receipts name rather
-        # than to the shipped sample's own participant_id.
-        issuer = next((r.get("issuing_rdp_id") for r in receipts.values()
-                       if isinstance(r, dict)), None)
-        descriptors = [dict(copy.deepcopy(PROVIDER), participant_id=issuer)]
+        # The descriptor has to be the OBSERVING provider's (SBM-ADR-0016), so it
+        # is keyed to what the receipts name in `observed_by` rather than to the
+        # shipped sample's own participant_id.
+        observer = next((r.get("observed_by") for r in receipts.values()
+                         if isinstance(r, dict)), None)
+        descriptors = [dict(copy.deepcopy(PROVIDER), participant_id=observer)]
+    # R38-01: the SE supplied here is the one the receipt is compared AGAINST, so
+    # its origin has to be the receipt's. These fixtures paired a receipt from
+    # `demo-out` with the shipped SE, whose origin is `mockeu-001`, and nothing
+    # noticed — the expected context was copied from the receipt. The SE is now
+    # re-published under the origin the receipt names, which is what the bundle
+    # would really retain.
+    origin = next((r.get("issuing_rdp_id") for r in receipts.values()
+                   if isinstance(r, dict)), None)
+    se = copy.deepcopy(SE)
+    if origin:
+        se["rdp_id"] = origin
+    # ...and its octet commitment likewise. These fixtures acknowledge their own
+    # OCTETS constant while the shipped SE commits to the demo MLS message, so the
+    # two never agreed about what was delivered either. This helper's job is a
+    # COHERENT world in which one receipt is checked; the probes that test
+    # mismatch detection build incoherent ones on purpose.
+    first = next((r for r in receipts.values() if isinstance(r, dict)), None)
+    if first and first.get("message_digest"):
+        se["envelope_hash"] = first["message_digest"]
     return [m for r, m in bl.check_bundle(
-        SE["recipient_uid"], MED, {}, [], [copy.deepcopy(SE)], receipts=receipts,
+        SE["recipient_uid"], MED, {}, [], [se], receipts=receipts,
         provider_descriptors=descriptors)
         if r == "LINT-BND-38"]
 
@@ -1512,3 +1531,146 @@ def test_the_origins_descriptor_does_not_resolve_the_receipt():
     found = _through_the_loader(provider_descriptors=[origin_descriptor])
     assert [r for r, _ in found] == ["LINT-BND-I8"], found
     assert receipt["observed_by"] in found[0][1], found[0][1]
+
+
+# ---------------------------------------------------------------------------
+# R38-01 — a receipt that verifies may be true about ANOTHER delivery
+#
+# The retained caller built its expected context by copying the receipt's own
+# fields into it, so `verify_ds_receipt`'s comparison proved the outer fields
+# equalled the signed ones and nothing about the delivery the bundle evidences.
+# A correctly signed receipt for another origin, over other octets, at another
+# instant, filed under the same bare `message_id`, was reported as nothing.
+#
+# Every probe below keeps a VALID signature and the right observer descriptor, so
+# each fails for the mismatch it names and not for a broken seal.
+# ---------------------------------------------------------------------------
+
+AVAIL = "01HZ3AVLBCDEFGH9JKMN0PQRST"
+
+
+def _avail_se():
+    return json.loads((ROOT / "samples" / "sample-SE-availability.json").read_text())["projection"]
+
+
+def _other_receipt(**over):
+    """A receipt the observing provider really signed, about a different delivery."""
+    import base64
+    import mls_wire as w
+    se = _avail_se()
+    shipped = json.loads((ROOT / "samples" / "receipt.availability.demo.json").read_text())
+    octets = over.pop("octets", w.demo_mls_message(AVAIL, se["mls_group_id"], se["mls_epoch"]))
+    mock._DELIVERY_ITEMS.clear(); mock._DS_LEDGER.clear(); mock._ACK_LEDGER.clear()
+    origin = over.pop("issuing_rdp_id", se["rdp_id"])
+    uid = over.pop("recipient_uid", shipped["recipient_uid"])
+    session = {"kind": "token-digest", "digest": "c" * 64}
+    cred = {"kind": "device", "uid": uid, "mid": shipped["mid"],
+            "device_id": shipped["device_id"], "session": session["digest"]}
+    mock.ds_accept_message(AVAIL, "demo-group", base64.b64encode(octets).decode(),
+                           principal=origin)
+    mock.queue_delivery(origin, AVAIL, recipient_uid=uid, mid=shipped["mid"],
+                        device_id=shipped["device_id"])
+    got = mock.collect_messages(credential=cred, session_binding=session)
+    token = next(i["collection_token"] for i in got["items"] if i["message_id"] == AVAIL)
+    return mock.receipt_ack(
+        message_id=AVAIL, device_id=shipped["device_id"], credential=cred,
+        session_binding=session, octets=octets,
+        server_clock=over.pop("server_clock", shipped["server_time"]),
+        ds_kid=shipped["ds_kid"], ds_seed="ds-in", issuing_rdp_id=origin,
+        observed_by=shipped["observed_by"], collection_token=token, **over)
+
+
+def _with_receipt(receipt, tmp_path):
+    """Through the manifest loader, with only the receipt file replaced."""
+    import bundle_lint as bl
+    (tmp_path / "other-receipt.json").write_text(json.dumps(receipt), encoding="utf-8")
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    manifest["receipts"] = {AVAIL: str(tmp_path / "other-receipt.json")}
+    issues = bl.lint_bundle(manifest, str(ROOT / "samples"))
+    return [(r, m) for r, m in issues if r in ("LINT-BND-38", "LINT-BND-I8", "LINT-BND-I9")]
+
+
+def test_the_shipped_receipt_still_binds_to_its_evidence(tmp_path):
+    """The positive case, through the loader: origin, octets, recipient and the
+    availability instant all agree with the retained evidence."""
+    shipped = json.loads((ROOT / "samples" / "receipt.availability.demo.json").read_text())
+    assert _with_receipt(shipped, tmp_path) == []
+    se = _avail_se()
+    assert shipped["issuing_rdp_id"] == se["rdp_id"]
+    assert shipped["message_digest"] == se["envelope_hash"]
+
+
+def test_a_receipt_for_another_origin_is_reported(tmp_path):
+    """The reproduction: same bare `message_id`, a different origin. A message id
+    is scoped by its origin, and only the SE proves one."""
+    found = _with_receipt(_other_receipt(issuing_rdp_id="urn:sbm:rdp:mockeu-002"), tmp_path)
+    assert [r for r, _ in found] == ["LINT-BND-38"], found
+    assert "issuing_rdp_id" in found[0][1], found[0][1]
+
+
+def test_a_receipt_over_other_octets_is_reported(tmp_path):
+    """The same delivery identifier, a different ciphertext commitment."""
+    import mls_wire as w
+    se = _avail_se()
+    other = w.demo_mls_message(AVAIL, se["mls_group_id"], str(int(se["mls_epoch"]) + 1))
+    found = _with_receipt(_other_receipt(octets=other), tmp_path)
+    assert [r for r, _ in found] == ["LINT-BND-38"], found
+    assert "message_digest" in found[0][1], found[0][1]
+
+
+def test_a_receipt_naming_another_recipient_is_reported(tmp_path):
+    found = _with_receipt(_other_receipt(recipient_uid="EU-DE-EOID-7K3D9W0Q2M5FW0"), tmp_path)
+    assert [r for r, _ in found] == ["LINT-BND-38"], found
+    assert "recipient_uid" in found[0][1], found[0][1]
+
+
+def test_a_receipt_signed_at_another_instant_is_reported(tmp_path):
+    """At the AVAILABILITY grade the receipt's instant IS the delivery date, so a
+    receipt from another moment substantiates another delivery. Everything else
+    about this receipt agrees with the evidence."""
+    found = _with_receipt(_other_receipt(server_clock="2026-04-04T10:05:00Z"), tmp_path)
+    assert [r for r, _ in found] == ["LINT-BND-38"], found
+    assert "10:05:00Z" in found[0][1] and "09:58:41Z" in found[0][1], found[0][1]
+
+
+def test_without_the_SE_the_relationship_is_reported_unproven(tmp_path):
+    """And the honest answer when the material is absent: the origin cannot be
+    compared, so the relationship is UNPROVEN rather than passed on the strength
+    of the signature. Declared as LINT-BND-I9, not a violation."""
+    import bundle_lint as bl
+    shipped = json.loads((ROOT / "samples" / "receipt.availability.demo.json").read_text())
+    (tmp_path / "r.json").write_text(json.dumps(shipped), encoding="utf-8")
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    manifest["evidence"] = [e for e in manifest["evidence"] if e != "sample-SE-availability.json"]
+    manifest["receipts"] = {AVAIL: str(tmp_path / "r.json")}
+    issues = bl.lint_bundle(manifest, str(ROOT / "samples"))
+    found = [(r, m) for r, m in issues if r in ("LINT-BND-38", "LINT-BND-I9")]
+    assert [r for r, _ in found] == ["LINT-BND-I9"], found
+    assert bl.is_incomplete("LINT-BND-I9"), "an unprovable relation is not a violation"
+    assert "origin" in found[0][1]
+
+
+def test_an_embedded_SE_counts_as_supporting_evidence():
+    """An Evidence Package CARRIES evidence. Only the top level was read, so the
+    SE that proves this message's origin was invisible when it travelled inside
+    one — which is where this message's SE is retained."""
+    import bundle_lint as bl
+    ep = json.loads((ROOT / "samples" / "sample-EP-dispute.json").read_text())["projection"]
+    assert ep["se"]["message_id"] == AVAIL, "the EP must carry that message's SE"
+    def through_the_EP(receipt):
+        return [r for r, _ in bl.check_bundle(
+            ep["se"]["recipient_uid"],
+            bl._load(str(ROOT / "samples" / "sample-BW-MED.json")),
+            bl._load(str(ROOT / "samples" / "sample-BW-ORG.json")),
+            [], [ep], receipts={AVAIL: receipt},
+            provider_descriptors=[
+                bl._load(str(ROOT / "samples" / "sample-BW-PROVIDER-in.json"))])
+            if r in ("LINT-BND-38", "LINT-BND-I9")]
+
+    shipped = json.loads((ROOT / "samples" / "receipt.availability.demo.json").read_text())
+    assert through_the_EP(shipped) == [], \
+        "the EP's nested SE must satisfy the origin comparison"
+    # ...and the comparison must really have run against it: a receipt for another
+    # origin, with the SE reachable ONLY inside the package, is reported.
+    assert through_the_EP(_other_receipt(issuing_rdp_id="urn:sbm:rdp:mockeu-002")) \
+        == ["LINT-BND-38"], "the nested SE must be COMPARED, not merely found"

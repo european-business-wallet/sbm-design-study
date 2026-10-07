@@ -7,7 +7,7 @@
 
 This catalogue is the **normative definition** of every `LINT-*` conformance rule referenced by the umbrella (§9.4) and the TS (Annex A ICS pro forma). It exists so an assessor can build an independent checker that reproduces every verdict from this document and the sample vectors **without reading the reference Python**. The scripts under `scripts/` (`evidence_lint.py`, `discovery_lint.py`, `bundle_lint.py`, `lint_cli.py`) are the **versioned reference implementation** of this catalogue, not its definition: a change to a rule's behaviour MUST be accompanied by a change to this catalogue and its tests (enforced by `tests/test_lint_catalogue.py`).
 
-**Rules:** 161 · **with a naming test:** 151/161 · **catalogue version:** 1.
+**Rules:** 162 · **with a naming test:** 152/162 · **catalogue version:** 1.
 
 **Profile applicability.** `core` rules apply to every deployment; `production` rules apply only under `--profile production`; `agent` rules apply only where a system member (Annex R) is enrolled; `four-corner` rules apply only to relay/federated (profile-2) evidence.
 
@@ -1429,12 +1429,21 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 
 ### LINT-BND-I8 · `core`
 
-- **Input:** a retained DS receipt with no BW-PROVIDER descriptor for its issuing RDP
-- **Precondition:** the bundle carries a receipt whose `issuing_rdp_id` matches no supplied descriptor
-- **Predicate (PASS iff):** SBM-ADR-0015. The key that verifies a Delivery-Service receipt is the ISSUING RDP's, published in its BW-PROVIDER descriptor and pinned to the participant by the membership register (LINT-TRUST-07). Without that descriptor the signature cannot be resolved, so the acknowledged handover rests on the DE's own assertion and the verification is INCOMPLETE rather than passed. The key used to be read from the entity's BW-MED, because the Delivery Service was a second provider and the customer's signed document was the only thing already retained for the evidence period; that path is DELETED, not kept as a fallback, because a fallback would let a provider go on publishing its key on its customers' documents and make the move a rename. Fail-open is not an option here and silence is not either: the verdict says which material is missing.
-- **Error outcome:** that the acknowledged handover is attested by the key the issuing RDP published — NOT ESTABLISHED: no BW-PROVIDER descriptor for that RDP was supplied (SBM-ADR-0015)
+- **Input:** a retained DS receipt with no BW-PROVIDER descriptor for its OBSERVING provider
+- **Precondition:** the bundle carries a receipt whose `observed_by` matches no supplied descriptor
+- **Predicate (PASS iff):** SBM-ADR-0015/0016. The key that verifies a Delivery-Service receipt is the OBSERVING provider's — the one the receipt names in `observed_by`, whose Delivery Service collected the acknowledgement — published in its own BW-PROVIDER descriptor and pinned to that participant by the membership register (LINT-TRUST-07). It is NOT the issuing RDP's: `issuing_rdp_id` is the message's origin, and in a four-corner exchange the handover is observed on the other side. Without that descriptor the signature cannot be resolved, so the acknowledged handover rests on the DE's own assertion and the verification is INCOMPLETE rather than passed. The key used to be read from the entity's BW-MED, because the Delivery Service was a second provider and the customer's signed document was the only thing already retained for the evidence period; that path is DELETED, not kept as a fallback, because a fallback would let a provider go on publishing its key on its customers' documents and make the move a rename. Fail-open is not an option here and silence is not either: the verdict says which material is missing.
+- **Error outcome:** that the acknowledged handover is attested by the key the OBSERVING provider published — NOT ESTABLISHED: no BW-PROVIDER descriptor for that provider was supplied (SBM-ADR-0016)
 - **Reference implementation:** `check_bundle`
 - **Tests:** `test_production_signature_claims.py`
+
+### LINT-BND-I9 · `core`
+
+- **Input:** a retained DS receipt the bundle cannot relate to the delivery it evidences
+- **Precondition:** the bundle carries a receipt and does not retain the material to compare it with the evidenced delivery — no SE for that message (the only object that proves an origin), no object committing to the octets, or no evidenced recipient
+- **Predicate (PASS iff):** R38-01. A signature that verifies says the named Delivery Service signed THIS receipt; it does not say the receipt is about THIS delivery. The expected delivery context must therefore be derived from the retained evidence — the SE's origin and `envelope_hash`, the evidenced `recipient_uid`, and at the availability grade the DE's `delivered_at` — and not copied from the receipt under examination, which makes the comparison a self-consistency check. A bare `message_id` does not identify a delivery: it is scoped by the origin, so a correctly signed receipt for another origin over other octets can carry the same identifier. Where the material to compare is absent the relationship is UNPROVEN and the verification INCOMPLETE — never a pass on the strength of the signature alone.
+- **Error outcome:** that this receipt substantiates the delivery this bundle evidences — NOT ESTABLISHED: the material to compare them is not retained (R38-01)
+- **Reference implementation:** `check_bundle`
+- **Tests:** `test_production_signature_claims.py`, `test_retrievability.py`
 
 ### LINT-BND-W1 · `production`
 

@@ -123,7 +123,8 @@ entry point cannot be handed is a finding rather than a documented input.
 
 **`evidence`** — The sealed evidence objects and packages themselves.
 
-- *Absent:* there is nothing to verify.
+- *Absent:* there is nothing to verify. R38-01: a retained DS receipt is related to the delivery it substantiates only through this material — the SE's origin and octet commitment, the evidenced recipient, and at the availability grade the DE's instant. Without them a receipt whose signature verifies may be true about a different delivery, so the relationship is reported UNPROVEN (LINT-BND-I9) rather than passed.
+- *Declared residual:* LINT-BND-I9
 - The only material with a SECOND independent holder by design: each party keeps its own copy, so a provider exit does not destroy it. Why the evidence itself is the durable part and the material needed to CHECK it is the fragile part.
 
 **`reveals`** — The (salt, content_class) opening of an availability-grade commitment.
