@@ -145,9 +145,18 @@ def test_the_boundary_is_drawn_per_field_not_by_retiring_a_mode():
     text = " ".join(adr().split())
     assert "drawn **per semantic field**, not by retiring a mode globally" in text
     assert "the two were done together" in text
-    assert "retiring `raw-*` and `manifest-*` \"for content by name\", as `jcs-*` was, " \
-           "is not the mechanism any more" in text.replace("**", "")
-    assert "narrowing `ContentHash`'s enum is" in text
+    # The two CLAIMS, each asserted on its own. This was one verbatim sentence,
+    # which froze the phrasing rather than the claim and failed on a rewording
+    # that changed neither — and a gate that cannot tell those apart teaches an
+    # editor to leave prose alone instead of keeping it readable.
+    plain = text.replace("**", "")
+    assert "`raw-*` and `manifest-*`" in plain and "`jcs-*`" in plain, \
+        "the record must still name the mechanism it is NOT using"
+    assert "is no longer the mechanism" in plain or "is not the mechanism any more" in plain, \
+        "and must say that a global retirement is not it"
+    assert ("Narrowing `ContentHash`'s own set of values is" in text
+            or "narrowing `ContentHash`'s enum is" in text), \
+        "and must say what the mechanism IS: narrowing the content type"
     for domain_type in ("`ContentHash`", "`RawHash`", "`RawSha256Hash`"):
         assert domain_type in text, domain_type
 

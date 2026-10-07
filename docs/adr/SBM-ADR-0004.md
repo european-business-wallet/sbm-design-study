@@ -1,22 +1,19 @@
 ---
 id: SBM-ADR-0004
 title: "The MSP separated from the RDP, with the relay left RDP-to-RDP"
-label: "MSP and RDP separated"
+label: "The messaging provider as a separate participant"
 decision_status: superseded
 implementation_status: [specified, in-reference]
 implementation: >-
-  relay: in force, and the only part ever built. The participant model, `observed_by`,
-  `receipt_digest` and the composition axis were never implemented, and SBM-ADR-0015
-  withdrew them rather than leaving them to be built
+  The relay is in force, and it is the only part of this record that was ever built. The participant model, `observed_by`, `receipt_digest` and the composition axis were never implemented, and SBM-ADR-0015 withdrew them rather than leave them to be built later
 choice: >-
-  the MSP is each side's local delivery service and a participant in its own right; the relay stays RDP-to-RDP;
-  a DE should bind the observation it rests on; provider composition is a deployment axis, not a rung · §7.2, [§13.1](../../Secure-Business-Messaging-Profile.md#131-institutional-roles)
+  The Messaging Service Provider is each side's local delivery service and a participant in its own right. The relay stays between the two Registered Delivery Providers. Delivery Evidence should bind the observation it rests on. Whether one company plays both roles is a deployment choice, not a maturity rung · §7.2, [§13.1](../../Secure-Business-Messaging-Profile.md#131-institutional-roles)
 alternative: >-
-  a relay between the two MSPs with RDPs as observers — rejected; the MSP as the RDP's subcontractor — rejected
+  Two, both rejected: a relay running between the two Messaging Service Providers with the Registered Delivery Providers as observers; or the Messaging Service Provider as the Registered Delivery Provider's subcontractor rather than a participant
 benefit: >-
-  evidence authorship stays with qualified parties; transport and evidence become separable markets
+  Evidence is authored only by qualified parties, and transport and evidence can be bought from different suppliers
 cost: >-
-  one more interface, and a trusted observer: separation makes a false S2 *attributable*, not impossible ([A9](../REVIEW_AGENDA.md))
+  One more interface to specify, and a trusted observer to rely on. Separating the two roles makes a false delivery claim *attributable* to whoever made it — not impossible ([A9](../REVIEW_AGENDA.md))
 open_questions: []
 author_questions: []
 supersedes: []
@@ -33,6 +30,11 @@ analysed_not_decided: >-
 # SBM-ADR-0004 — The MSP separated from the RDP, with the relay left RDP-to-RDP
 
 ## Context
+
+Two terms this record is about. A **Registered Delivery Provider** (RDP) is the
+qualified provider that issues a message's evidence. A **Messaging Service
+Provider** (MSP) would be the party that actually moves messages — queueing
+them, handing them over, collecting the acknowledgement.
 
 Two providers serve each entity: a messaging service provider (MSP) that
 operates MLS delivery, and a registered delivery provider (RDP) that issues
@@ -54,7 +56,7 @@ launder a non-qualified statement into a qualified one.
 The MSP is each side's local delivery service and a federation participant in
 its own right, with its own identifier, its own admission record and its own
 signed descriptor; it is not a subcontractor of the RDP. The relay between
-providers stays RDP-to-RDP. A DE issued on the strength of another
+providers stays provider-to-provider. Delivery Evidence (a DE) issued on the strength of another
 participant's observation carries `observed_by` and the digest of the
 receipt it rests on, and the receipt is a retained artefact. Provider
 composition (who operates transport, who operates evidence) is a deployment
@@ -68,10 +70,10 @@ axis orthogonal to the deployment ladder, not a new rung on it.
 - **The MSP as the RDP's subcontractor, with no identity of its own.**
   Rejected: a participant with no identifier cannot be admitted, cannot be
   pinned and cannot be named in the evidence that rests on its observations.
-- **Composition as a fifth rung of the deployment ladder.** Rejected: the
+- **Composition as a fifth rung of the deployment ladder.** Rejected. The
   ladder counts pairs of independent providers that have proven they
-  interoperate; composition varies what a pair is made of, and a rung that
-  measured both would let a deployment climb by reorganising its contracts
+  interoperate, whereas composition varies what a pair is made *of*. A rung
+  that measured both would let a deployment climb by reorganising its contracts
   rather than by proving anything new.
 
 **The S2 observer — three models analysed, none selected ([A9](../REVIEW_AGENDA.md)).**
@@ -92,11 +94,13 @@ measurements:
    retries and reconciliation. Remaining assumption: the MSP's honesty for
    the decisive fact; the gain is verifiable accountability, not new
    independent proof.
-2. **An independent endpoint proof.** The MSP stays the transport provider;
-   the recipient's wallet adds an application-level acknowledgement, signed
-   with its own key over the bytes it received, the message and device
-   identity, the RDP it is for and a freshness context, and sends it to the
-   RDP over an end-to-end authenticated path — directly, not through the MSP.
+2. **An independent endpoint proof.** The Messaging Service Provider stays the
+   transport provider. On top of that, the recipient's wallet adds an
+   acknowledgement of its own, signed with its own key. What that signature
+   covers is the bytes received, the message and device identity, which
+   provider it is for, and a freshness context. The wallet sends it to the
+   Registered Delivery Provider over an end-to-end authenticated path —
+   directly, not through the transport provider.
    What a malicious MSP could still cause: withholding or delaying the bytes,
    but not inventing the decisive input. Event clock: the RDP's, which
    changes what "timely" means — an acknowledgement the RDP receives and
@@ -169,7 +173,7 @@ Nothing.
 ## Normative owner
 
 The umbrella, §7.2 and [§13.1](../../Secure-Business-Messaging-Profile.md#131-institutional-roles); the relay
-contract, `rdp-relay-openapi.yaml`; the TS, clause 4.1, for the four-corner
+contract, `rdp-relay-openapi.yaml`; the technical specification, clause 4.1, for the four-corner
 requirements.
 
 ## Open questions

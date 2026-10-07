@@ -5,17 +5,15 @@ label: "The wallet as evidence participant"
 decision_status: accepted
 implementation_status: [specified, in-reference]
 implementation: >-
-  specified; in the reference; the legal weight of each combination open ([L4](../REVIEW_AGENDA.md))
+  Specified, and in the reference. What legal weight each combination carries is open ([L4](../REVIEW_AGENDA.md))
 choice: >-
-  the recipient confirms, wallet-signed or session-bound; the sender signs its submission by default ·
-  TS clause 6; [§7.5](../../Secure-Business-Messaging-Profile.md#75-the-wallet-as-evidence-participant-informative)
+  The recipient's own act is part of the evidence: a confirmation signed by the recipient's wallet, or bound to the authenticated session. By default the sender signs its submission too · TS clause 6; [§7.5](../../Secure-Business-Messaging-Profile.md#75-the-wallet-as-evidence-participant-informative)
 alternative: >-
-  provider-attested acts only — kept as an explicitly narrowed fallback
+  Evidence attested only by the providers, with no act of the parties in it — kept, but as an explicitly narrowed fallback rather than the default
 benefit: >-
-  both sides' acts attributable to a device key, independently of the providers, in the wallet-signed modes
+  In the wallet-signed modes, each side's act is attributable to a key held on that side's device, so it does not rest on the providers' word
 cost: >-
-  key custody, an assurance floor and compromise handling join the evidence story — wallet providers, entities
-  ([MWAP](../wallet-assurance-profile.md))
+  Key custody, a minimum assurance level and a story for handling a compromised device all become part of the evidence model — for wallet providers and for entities ([MWAP](../wallet-assurance-profile.md))
 open_questions: [L4]
 author_questions: []
 supersedes: []
@@ -28,7 +26,8 @@ supersedes: []
 ## Context
 
 The recipient's confirmation that a message was verified or accepted is
-produced by the wallet, in an authenticated session, and is what the RDP
+produced by the wallet, in an authenticated session, and is what the Registered
+Delivery Provider (RDP)
 relies on to issue delivery evidence. The sender's act, by contrast, was
 attested only by the sender's provider, so the recipient's act was
 attributable to its device in the wallet-signed mode while the sender's was
@@ -51,12 +50,17 @@ submission by default: a wallet-signed sender confirmation over the full
 submission tuple, required for opposable acts, keyed and verified like the
 recipient's. Provider-attested acts remain an explicitly narrowed fallback
 for constrained senders, and where it is used the attribution claim is
-narrowed accordingly. Two limits are part of the decision: a session-bound
-confirmation attributes the act only through RDP(in)'s record and a
-provider-attested submission only through RDP(out)'s, and the TS narrows the
-claim for both; and a signature in any mode attributes a statement to a device
-without showing that the endpoint behaved honestly — that assumption lives in
-the wallet assurance profile, not in the signature.
+narrowed accordingly. Two limits are part of the decision, and both are stated rather than left
+implicit.
+
+First, the weaker modes attribute an act only through a provider's own record: a
+session-bound confirmation through the recipient-side provider's, and a
+provider-attested submission through the sender-side provider's. The technical
+specification narrows the claim accordingly for both.
+
+Second, a signature in *any* mode attributes a statement to a device. It does
+not show that the device behaved honestly. That assumption lives in the wallet
+assurance profile, not in the signature.
 
 ## Alternatives considered
 
@@ -73,19 +77,22 @@ of the evidence story, and with the endpoint's honesty still assumed.
 
 ## Consequences and residual limit
 
-Wallet providers and entities carry key custody and the assurance floor of
-the wallet assurance profile; suspension and revocation of a member binding
-fail the member closed at the directory and trigger MLS removal, and a
-confirmation made before a credential's suspension keeps its standing under
-the TS's credential-validity baseline whenever the evidence was sealed. The legal weight of each authentication
-combination, and whether a mandatory sender signature sits well beside the
-provider-attestation model of the regulation, are questions for counsel and
-stay flagged.
+Wallet providers and entities carry key custody, and the minimum assurance level
+the wallet assurance profile sets.
+
+Suspending or revoking a member binding fails that member closed at the
+directory and triggers removal from the MLS group. A confirmation made *before*
+a credential was suspended keeps its standing, under the credential-validity
+baseline the technical specification sets, whenever the evidence was sealed.
+
+Two questions are for counsel and stay flagged: what legal weight each
+authentication combination carries, and whether a mandatory sender signature
+sits well beside the provider-attestation model the regulation uses.
 
 ## Status
 
 - **Decision:** accepted; the normative clause's legal standing awaits
-  counsel, and the TS says so where it applies.
+  counsel, and the technical specification says so where it applies.
 - **Implementation:** specified; in the reference.
 
 ## Supersedes

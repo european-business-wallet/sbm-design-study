@@ -5,18 +5,15 @@ label: "Historical state governs, never today's"
 decision_status: accepted
 implementation_status: [specified, in-reference]
 implementation: >-
-  specified; in the reference; maximality undecided
+  Specified, and in the reference. One part is still undecided: proving that the policy a message pinned was the LATEST one then in force, rather than merely one that was in force
 choice: >-
-  a published policy is never modified — its window ends at its signed successor; admission is evaluated as of the act;
-  a group decodes under its pinned registry revision; a suite decision recomputes only from its committed inputs ·
-  the umbrella §8.3; the I-D; TS clause 6
+  A verifier judges an act by the state that was signed and published at the time of the act, never by the state as it stands today. A published policy is never edited — its window ends where its signed successor begins. Admission is evaluated as of the act. A group is decoded under the registry revision it pinned. A cipher-suite decision is recomputed only from the inputs committed at formation · the umbrella §8.3; the I-D; TS clause 6
 alternative: >-
-  a mutable stored `valid_until`, and a verdict that depends on a live history endpoint — superseded (as-of retrieval itself is compatible); a signed head assertion — rejected
+  Three. A stored `valid_until` that can be edited, with the verdict depending on a live history service — superseded, though retrieving history as of an instant remains compatible with this record. And a single signed assertion of the current head of the chain — rejected
 benefit: >-
-  a correct historical verdict survives later change
+  A verdict that was correct about the past stays correct, whatever changes afterwards
 cost: >-
-  retention of chains, registries, formation inputs and assertions; missing material is INCOMPLETE;
-  that no later policy existed stays unproven ([A3](../REVIEW_AGENDA.md))
+  The chains, registries, formation inputs and assertions all have to be retained, and where the material is missing the verification is reported INCOMPLETE rather than passed. One thing stays unproven: that no later policy version existed ([A3](../REVIEW_AGENDA.md))
 open_questions: [A3, A5]
 author_questions: []
 supersedes:
@@ -37,11 +34,15 @@ happened under yesterday's.
 
 ## Requirement and constraint
 
-A correct historical verdict must survive later change, from retained
-material alone, without assuming a service is still online or still honest;
-a published artefact that evidence has pinned by digest must never be
-modified; and what the retained material cannot establish must be reported
-as not established rather than assumed.
+Three requirements:
+
+- a verdict that was correct about the past must survive later change, and must
+  be reachable from the retained material alone — without assuming any service
+  is still online, or still honest;
+- a published artefact that evidence has pinned by digest must never be
+  modified, because modifying it breaks the pin;
+- and what the retained material cannot establish must be *reported* as not
+  established, rather than assumed.
 
 ## Decision
 
@@ -62,15 +63,17 @@ existed.
 
 ## Alternatives considered
 
-- **A stored `valid_until` with an `as_of` retrieval endpoint.** Superseded:
-  writing an end date into a published document changed the digest that
-  evidence had already pinned, so the two rules were mutually unsatisfiable
-  for the ordinary publication; and a verdict that depends on an endpoint
-  answering makes a 2033 verification of a 2026 act depend on that service
-  being online and honest. What is rejected is the mutable end date and the
-  dependence, not as-of retrieval: obtaining an authenticated historical
-  object through a live service is compatible with this decision, and the
-  umbrella requires the directory to serve as-of reads.
+- **A stored `valid_until` with an `as_of` retrieval endpoint.** Superseded,
+  for two reasons. Writing an end date into a published document changes the
+  digest that evidence had already pinned, so for an ordinary publication the
+  two rules could not both be satisfied. And a verdict that depends on an
+  endpoint answering makes a verification performed in 2033, of an act from
+  2026, depend on that service still being online and still honest.
+
+  What is rejected is the mutable end date and the dependence — not as-of
+  retrieval itself. Obtaining an authenticated historical object through a live
+  service is compatible with this decision, and the umbrella requires the
+  directory to serve as-of reads.
 - **A separate signed history manifest.** Rejected: two artefacts that can
   disagree about the same truth.
 - **A signed head assertion to make maximality locally checkable.**
@@ -113,7 +116,7 @@ shipped it.
 
 The umbrella, §8.3 for the policy chain and §13.1 for admission at the act;
 the Internet-Draft for the pinned registry revision and the committed
-formation inputs; the TS, clause 6, for admission and for what a
+formation inputs; the technical specification (the TS), clause 6, for admission and for what a
 verification establishes.
 
 ## Open questions

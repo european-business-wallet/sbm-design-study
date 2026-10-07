@@ -1,20 +1,19 @@
 ---
 id: SBM-ADR-0003
 title: "MLS, bilateral, per device"
-label: "MLS, bilateral, per device"
+label: "MLS, one pair of entities, every device"
 decision_status: accepted
 implementation_status: [specified, in-reference]
 implementation: >-
   specified; in the reference
 choice: >-
-  one MLS group per entity pair (and scope); every device of both entities is a leaf · the I-D, *Group Topology*
+  One MLS group per pair of entities, per confidentiality scope. Every device belonging to either entity is a leaf of that group · the I-D, *Group Topology*
 alternative: >-
-  multiparty groups — prohibited, recorded as future study
+  Multiparty groups — prohibited here, and recorded as future study rather than as a closed question
 benefit: >-
-  one sender, one addressee: the evidence and policy model stays singular
+  One sender and one addressee, so the evidence and the policy model each describe a single relationship instead of a set of them
 cost: >-
-  per-device membership and group lifecycle; multiparty use excluded;
-  who routes a group after formation is open ([A10](../REVIEW_AGENDA.md))
+  Membership is per device, and the group has a lifecycle to manage. Multiparty use is excluded. Who routes a group once it has been formed is still open ([A10](../REVIEW_AGENDA.md))
 open_questions: [A10]
 author_questions:
   - "Why MLS, against named alternatives? *Why this choice* states the requirements the choice was made from, what MLS supplies natively and what a pairwise composition would have to be given — as assurance and complexity, not impossibility. No specific competing protocol or product is assessed, and no such comparison is written down."
@@ -81,11 +80,14 @@ multi-device session management is a solved problem in that family (Sesame).
 What such a design does not carry is a **group object**: a membership that both
 parties hold as cryptographic state, changes by a signed operation, and advances
 a counter a third party can be shown. This profile's evidence names
-`mls_group_id`, `mls_epoch` and `mls_state` because those are exactly that
-state; on a pairwise base they would have to be **specified, implemented and
-proven by this profile** — a signed roster with its own versioning and conflict
-rules, a membership-change operation, an epoch equivalent, and a story for how a
-verifier years later checks that the devices it names were the members then.
+`mls_group_id`, `mls_epoch` and `mls_state` because those *are* exactly that
+state.
+
+On a pairwise base, all of it would have to be **specified, implemented and
+proven by this profile**: a signed roster with its own versioning and conflict
+rules, an operation for changing membership, something equivalent to an epoch,
+and an account of how a verifier years later checks that the devices the roster
+names were the members at the time.
 
 A server-side group gives the group object and breaks the requirement that the
 provider never holds content keys, which is not a matter of composition: it is
@@ -110,14 +112,16 @@ real enough to have their own reason codes. And coordination with a delivery
 service that neither party controls, which is where the open questions about
 routing and post-formation membership live ([A10](../REVIEW_AGENDA.md)).
 
-**What MLS does not give the profile**, so that nothing is assumed to follow
-from the choice: it does not make delivery evidential — the S1–S4 model, the
-confirmations and the evidence objects are this profile's, not MLS's; it does
-not identify a legal entity — that is the UID attestation and the discovery
-documents; it does not order or timestamp anything a court would accept — the
-qualified timestamps do; and it does not decide who may accept a message, which
-is the acceptance policy. MLS supplies the confidential channel and the
-inspectable group; everything the evidence asserts is built on top and is this
+**What MLS does not give the profile**, set out so that nothing is assumed to
+follow from the choice. It does not make delivery evidential: the S1–S4 delivery
+states, the confirmations and the evidence objects are this profile's, not MLS's.
+It does not identify a legal entity: that is the identifier attestation and the
+discovery documents. It does not order or timestamp anything a court would
+accept: the qualified timestamps do that. And it does not decide who may accept
+a message: that is the acceptance policy.
+
+What MLS does supply is the confidential channel and the inspectable group.
+Everything the evidence asserts is built on top of those, and is this
 specification's own responsibility.
 
 ## Alternatives considered

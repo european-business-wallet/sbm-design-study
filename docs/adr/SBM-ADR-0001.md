@@ -5,17 +5,15 @@ label: "A new identifier"
 decision_status: accepted
 implementation_status: [specified, in-reference]
 implementation: >-
-  specified; a stage-1 demonstration registry in the reference; an operated EDD not established
+  Specified. The reference ships a stage-1 demonstration registry — a signed file, not a service. No operated European Directory of Entities exists, so that part is not established
 choice: >-
-  UID issued as a qualified attestation, resolved through the EDD, *linked* to EUID and LEI ·
-  [§3.7](../../Secure-Business-Messaging-Profile.md#37-why-a-new-identifier-informative), §5.2, §6
+  Every entity gets a new identifier of its own, a UID. It is issued to the entity as a qualified attestation, resolved through the European Directory of Entities, and *linked* to the identifiers that already exist — the Business Registers Interconnection System identifier (EUID) and the Legal Entity Identifier (LEI) — rather than derived from either · [§3.7](../../Secure-Business-Messaging-Profile.md#37-why-a-new-identifier-informative), §5.2, §6
 alternative: >-
-  reusing EUID, LEI, VAT or national numbers — none is universal, entity-faithful and cross-border resolvable;
-  deriving the UID's payload from the EUID — rejected, the link stays an explicit sealed attribute
+  Two. Reuse a number that already exists — EUID, LEI, a VAT number, a national register number — rejected, because no single one of them is at once universal, faithful to the entity itself, and resolvable across borders. Or derive the new identifier's content from the EUID — rejected: the link between the two stays an explicit, sealed attribute rather than something a reader is expected to compute
 benefit: >-
-  one routing and trust anchor, stable across provider changes
+  One anchor serves both routing and trust, and it does not change when the entity changes provider
 cost: >-
-  issuance, governance and resolution infrastructure, and a duty to keep the linkage current — issuers, the EDD operator
+  Somebody must issue these identifiers, govern them, operate the service that resolves them, and keep the link to the existing registers current. That falls on the issuers and the directory's operator
 open_questions: []
 author_questions:
   - "What does a UID cost an entity? The record names who operates the infrastructure; who pays for issuance, and on what terms, is not recorded."
@@ -46,12 +44,12 @@ registers.
 
 ## Decision
 
-A new identifier, the UID: uniform, checksummed, issued as a qualified
-attestation, bound to the entity's trust material and resolvable through the
-entity discovery directory (EDD). The directory record *links* the UID to the
-EUID and the LEI rather than replacing them, so the source registers remain
-authoritative and a future register integration is absorbed by the linkage
-without re-addressing the network.
+A new identifier of the entity's own, the UID: uniform, checksummed, issued as
+a qualified attestation, bound to the entity's trust material and resolvable
+through the **European Directory of Entities** (EDD). The directory record
+*links* the UID to the EUID and the LEI rather than replacing them, so the
+source registers remain authoritative, and a future register integration is
+absorbed by the linkage without re-addressing the network.
 
 ## Alternatives considered
 

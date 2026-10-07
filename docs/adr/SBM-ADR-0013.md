@@ -5,17 +5,15 @@ label: "Pilot evidence apart; agents optional"
 decision_status: accepted
 implementation_status: [specified, not-implemented]
 implementation: >-
-  specified; production qualification not established
+  Specified. Qualification for production use is not established, and nothing in this repository can establish it
 choice: >-
-  pilot evidence is structurally identical and makes no claim under the regulation; agents are the optional deployment profile 5 ·
-  [§13.3](../../Secure-Business-Messaging-Profile.md#133-conformance-profiles-pilot-and-production); TS clause 9; Annex R
+  Evidence produced in a pilot has exactly the same structure as production evidence but makes no claim to legal effect. Agents acting on an entity's behalf are an optional deployment profile, the fifth, rather than part of the baseline · [§13.3](../../Secure-Business-Messaging-Profile.md#133-conformance-profiles-pilot-and-production); TS clause 9; Annex R
 alternative: >-
-  qualification as a property of the protocol — rejected
+  Treat qualification as a property of the protocol, so that conforming to it would itself amount to a claim — rejected
 benefit: >-
-  no claim beyond what is established
+  Nothing claims more than has actually been established
 cost: >-
-  qualification, conformity assessment and a cross-deployment agent contract lie outside the repository
-  ([A7](../REVIEW_AGENDA.md), [P1](../REVIEW_AGENDA.md))
+  Qualification, conformity assessment and an agent contract that works across deployments all lie outside this repository ([A7](../REVIEW_AGENDA.md), [P1](../REVIEW_AGENDA.md))
 open_questions: [A7, P1]
 author_questions: []
 supersedes: []
@@ -43,12 +41,12 @@ without them is complete.
 
 A pilot produces evidence that is structurally identical to qualified
 evidence and makes no claim under the regulation; the conformance profiles
-keep pilot and production apart, and the TS's compliance clause states what
+keep pilot and production apart, and the technical specification's compliance clause states what
 each establishes. Agents are the optional deployment profile 5: the agent's
 evidence and mandate rules are specified, and the profile is complete without
 them. The deployment ladder counts pairs of independent providers that have
 proven interoperation; why provider composition is kept off it is recorded
-with the MSP's separation ([SBM-ADR-0004](SBM-ADR-0004.md)).
+with the Messaging Service Provider's separation ([SBM-ADR-0004](SBM-ADR-0004.md)).
 
 ## Alternatives considered
 

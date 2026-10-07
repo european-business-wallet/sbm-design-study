@@ -251,7 +251,11 @@ def render_md(records=None):
         L.append("| " + " | ".join([
             _link(fm),
             f"**{_cell(fm['label'])}**",
-            f"{_rel(_cell(fm['benefit']))} — at the cost of {_rel(_cell(fm['cost']))}",
+            # The two halves are LABELLED rather than welded with "— at the cost
+            # of". Joining them made one sentence out of two lists of noun
+            # phrases, and the reader had to find the hinge before knowing which
+            # half they were in.
+            f"**Buys:** {_rel(_cell(fm['benefit']))} **Costs:** {_rel(_cell(fm['cost']))}",
             _cell(fm["decision_status"]),
             _rel(_cell(fm["implementation"])),
             _open_cell(fm),

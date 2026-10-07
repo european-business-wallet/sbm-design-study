@@ -1,22 +1,19 @@
 ---
 id: SBM-ADR-0008
 title: "Octet-authoritative encoding, JSON as a projection"
-label: "Octet-authoritative encoding"
+label: "The signed bytes are authoritative; JSON is a view"
 decision_status: accepted
 implementation_status: [specified, in-reference]
 implementation: >-
   specified; in the reference
 choice: >-
-  the deterministic-CBOR payload is what is signed; JSON is a projection; the qualified timestamp attests the seal from outside ·
-  the I-D
+  What gets signed is one canonical binary encoding of the object — deterministic CBOR. The JSON everyone reads is a projection of those bytes, not the thing itself. The qualified timestamp attests the seal from outside it rather than sitting within it · the I-D
 alternative: >-
-  signing JSON canonicalised with the JSON Canonicalization Scheme — the model the profile left; keeping it with a tighter
-  number domain; length-prefixed concatenation for the constructed inputs; the timestamp inside the COSE header; hashing
-  transmitted commitment JSON — each rejected below
+  Five, each rejected below: sign the JSON, canonicalised with the JSON Canonicalization Scheme — the model this profile moved away from; keep that scheme but narrow which numbers may appear; build the constructed inputs by length-prefixed concatenation; put the timestamp inside the COSE header; hash the transmitted commitment JSON rather than the canonical bytes
 benefit: >-
-  the same bytes verify everywhere; nothing is re-canonicalised at verification
+  The same bytes verify the same way everywhere, and nothing has to be re-canonicalised at verification time — which is where canonicalisation schemes go wrong
 cost: >-
-  byte retention, binary tooling, debugging through projections — implementers, archivists
+  The bytes themselves must be retained, tooling has to handle binary, and debugging happens through a projection rather than the real object — for implementers and archivists
 open_questions: []
 author_questions: []
 supersedes: []
@@ -31,13 +28,15 @@ supersedes: []
 The profile began by signing JSON documents canonicalised with the JSON
 Canonicalization Scheme (RFC 8785) at signing and again at verification. A
 canonicalisation step at verification is a place where two conforming
-implementations can disagree about the bytes a signature covers, and external
-review found a number-domain defect in that model: the scheme's number
-representation is IEEE 754 binary64, in which not every integer above
-2^53 − 1 is exactly representable, so a legal MLS epoch (a `uint64`) could not
-round-trip exactly through the canonical form, and forbidding decimals does
-not close the gap. Three further
-facts weighed. RFC 8785 is an Informational Independent Submission, not a
+implementations can disagree about which bytes a signature covers.
+
+External review then found a concrete defect of that kind in the model. The
+scheme represents numbers as IEEE 754 binary64, in which not every integer above
+2^53 − 1 is exactly representable. So a legal MLS epoch — a `uint64` — could not
+round-trip exactly through the canonical form. Forbidding decimals does not
+close that gap.
+
+Three further facts weighed. RFC 8785 is an Informational Independent Submission, not a
 standards-track specification with IETF consensus, and its implementations
 are thin wrappers over library serialisers that drift between versions. COSE
 already signs an exact byte-string payload, so keeping a second,

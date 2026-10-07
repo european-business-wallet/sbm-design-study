@@ -1,20 +1,19 @@
 ---
 id: SBM-ADR-0012
 title: "A mandatory suite floor and a committed formation"
-label: "Suite floor, committed formation"
+label: "A mandatory cipher-suite minimum"
 decision_status: accepted
 implementation_status: [specified, in-reference]
 implementation: >-
   specified; in the reference
 choice: >-
-  a mandatory floor at the baseline, raisable per device; the decision pinned in the GroupContext with its inputs ·
-  the I-D, *Cipher Suites* and the `sbm_group_params` extension
+  There is a mandatory minimum cipher suite that every deployment must support, set at the baseline, and a device may insist on more than the minimum. Which suite a group settled on is pinned in the group's own context, together with the inputs the decision was made from · the I-D, *Cipher Suites* and the `sbm_group_params` extension
 alternative: >-
-  a floor per entity or per device alone; a higher mandatory floor (P-256); a separate signed artefact; committing the instant only
+  Four. A minimum set per entity, or per device, instead of one for the whole profile. A higher mandatory minimum (P-256). Recording the decision in a separate signed object. Or committing only to the instant the decision was taken, not to its inputs
 benefit: >-
-  uniform enforcement, checkable by a third party
+  The minimum is enforced uniformly, and a third party can check for itself that it was honoured
 cost: >-
-  device constraints narrow the selection; formation inputs must be retained; post-quantum interoperability untested ([A4](../REVIEW_AGENDA.md))
+  What a device can support narrows what may be selected, the formation inputs have to be retained, and post-quantum interoperability is untested ([A4](../REVIEW_AGENDA.md))
 open_questions: [A4]
 author_questions: []
 supersedes: []
@@ -34,22 +33,30 @@ published capabilities.
 
 ## Requirement and constraint
 
-The security claim must be verifiable, not optional and local; a member that
-publishes nothing must be protected as much as one that does; the baseline
-suite must stay in every intersection so that a selection always exists; and
-raising the floor later must be a governance action, not a redesign.
+Four requirements:
+
+- the security claim must be verifiable by a third party, not merely a local
+  option each deployment sets for itself;
+- a member that publishes nothing must be protected as well as one that does;
+- the baseline suite must remain in every intersection, so that a usable
+  selection always exists;
+- and raising the minimum later must be a governance action rather than a
+  redesign.
 
 ## Decision
 
 A mandatory floor, `mls-suite-floor/v1`, set at the baseline suite as a
 versioned constant of the profile, binding on every conforming deployment;
 a group below it must not form and is refused with a typed reason. An
-optional per-device declaration may only raise it. The selected vector, the
-floor in force, the selection, the device raises that produced it, the
-formation instant and a digest of the exact inputs the decision was taken on
-are pinned in the `sbm_group_params` GroupContext extension, so that the
-group state the evidence commits to carries the decision and a verifier
-recomputes it only from retained inputs that match the digest.
+optional per-device declaration may only raise it.
+
+Six things are pinned in the `sbm_group_params` extension of the group's own
+context: the selected vector, the minimum in force, the selection itself, the
+device raises that produced it, the instant of formation, and a digest of the
+exact inputs the decision was taken on. Two consequences follow. The group state
+that the evidence commits to carries the decision with it. And a verifier can
+recompute that decision only from retained inputs whose digest matches — not
+from whatever inputs it happens to have.
 
 ## Alternatives considered
 

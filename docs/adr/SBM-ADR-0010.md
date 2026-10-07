@@ -1,21 +1,19 @@
 ---
 id: SBM-ADR-0010
 title: "Optional confidentiality scopes and a visible records leaf"
-label: "Optional scopes, a visible records leaf"
+label: "Scopes optional; archival access visible"
 decision_status: accepted
 implementation_status: [specified, in-reference]
 implementation: >-
   specified; in the reference
 choice: >-
-  scopes are optional; a records function is a visible roster member ·
-  [§8.3a](../../Secure-Business-Messaging-Profile.md#83a-confidentiality-scope-descriptor-normative-where-present)
+  Confidentiality scopes are optional, so a deployment can start without them. Where an organisation gives a records or archival function access to messages, that function is a visible member of the roster, not a silent capability · [§8.3a](../../Secure-Business-Messaging-Profile.md#83a-confidentiality-scope-descriptor-normative-where-present)
 alternative: >-
-  mandatory scoping; invisible archival access
+  Two. Scoping made mandatory for every deployment. Or archival access granted invisibly, without appearing in the roster
 benefit: >-
-  a small minimum deployment; no silent decryption capability
+  The minimum viable deployment stays small, and nothing holds a decryption capability that the other side cannot see
 cost: >-
-  extra groups and administration where adopted; a larger visible audience than strict confidentiality;
-  the address is not the encryption boundary
+  Where scopes are adopted there are more groups to run and administer, and the audience that can read a message is visibly larger than strict confidentiality would allow. The consequence to keep in mind: the address a message is sent to is not the boundary of who can decrypt it
 open_questions: []
 author_questions: []
 supersedes: []

@@ -1,21 +1,19 @@
 ---
 id: SBM-ADR-0005
 title: "Composition across providers: the origin's sealed SE, the founder registration"
-label: "Composition across providers"
+label: "Crossing from one provider to another"
 decision_status: accepted
 implementation_status: [specified, in-reference]
 implementation: >-
   specified; in the reference
 choice: >-
-  the origin's sealed SE proves its namespace through RDP(in); the creating device registers as the group's founder ·
-  the I-D, *Delivery Service* and *Group Establishment*; the delivery-service contract
+  When a message crosses from one provider to another, the receiving provider proves where it came from by reading the origin's own sealed Sending Evidence, rather than taking the sender's word for it. And the device that creates an MLS group registers as that group's founder · the I-D, *Delivery Service* and *Group Establishment*; the delivery-service contract
 alternative: >-
-  an origin-signed forwarding token; a founder implied by the first deposit
+  Two. A forwarding token signed by the origin, instead of its Sending Evidence. Or a founder inferred from whoever deposited into the group first, instead of a registration
 benefit: >-
-  equal local ids from two origins stay two messages; no self-Welcome
+  Two messages that happen to carry the same local identifier under two different origins stay two messages. And no device has to welcome itself into its own group
 cost: >-
-  the DS holds the origins' evidence keys and a forwarder list; the receipt's path to the DE issuer ([A1](../REVIEW_AGENDA.md))
-  and post-formation routing ([A10](../REVIEW_AGENDA.md)) are open
+  The Delivery Service has to hold the origins' evidence-verification keys and a list of who may forward. Two things stay open: how a receipt reaches the party that issues the Delivery Evidence ([A1](../REVIEW_AGENDA.md)), and who routes a group after it has been formed ([A10](../REVIEW_AGENDA.md))
 open_questions: [A1, A10]
 author_questions: []
 supersedes: []
@@ -27,8 +25,14 @@ supersedes: []
 
 ## Context
 
+Two terms. A **Registered Delivery Provider** (RDP) is the qualified provider
+that issues a message's evidence. **Sending Evidence** (an SE) is the sealed
+object the sender's provider issues when it accepts a message; it is what proves
+which provider a message came from.
+
 When sender and recipient use different providers, a message is submitted at
-the origin's RDP, relayed RDP-to-RDP, and handed by the recipient-side RDP to
+the origin's Registered Delivery Provider (RDP), relayed provider-to-provider,
+and handed by the recipient-side provider to
 its own delivery service. Message identifiers are unique only within the
 issuing provider's namespace, and a group's creating device joins no group
 through a Welcome, because MLS begins a group with its creator.
@@ -42,17 +46,21 @@ like every other member without inventing a protocol step MLS does not have.
 
 ## Decision
 
-A forwarding submission to a delivery service names the originating provider
-and carries that provider's sealed SE; the delivery service verifies the seal
-against the origin's published evidence key, checks that it names this
-provider, this message identifier and the digest of these octets, and that
-the submitter is a forwarder it serves. Acceptance, delivery items and
-receipts carry the origin namespace, with the forwarder recorded beside it;
-an origin claim without a verifying SE is refused. The device that created a
-group registers itself as the group's founding member through a
-device-authenticated operation, once per group, bound to the creator
-principal that deposits the group's invitations; it is idempotent and routes
-as a joined invitation does.
+A forwarding submission to a delivery service names the originating provider and
+carries that provider's own sealed Sending Evidence. The receiving delivery
+service then checks four things: that the seal verifies against the origin's
+published evidence key; that the evidence names *this* provider, *this* message
+identifier and the digest of *these* octets; and that whoever submitted it is a
+forwarder it actually serves.
+
+Acceptance, delivery items and receipts all carry the origin's namespace, with
+the forwarder recorded beside it. An origin claim arriving without Sending
+Evidence that verifies is refused.
+
+Separately: the device that created a group registers itself as that group's
+founding member, through a device-authenticated operation, once per group, bound
+to the principal that deposits the group's invitations. The operation is
+idempotent, and it routes exactly as a joined invitation does.
 
 ## Alternatives considered
 
@@ -76,9 +84,9 @@ forwarders it serves.
 ## Consequences and residual limit
 
 The delivery service keys idempotency on the origin namespace and holds
-material to verify it. How the RDP that issues a DE obtains the delivery
-service's receipt, and which RDP issues the DE in the four-corner case, is
-not published; later membership changes after formation have no decided
+material to verify it. How the provider that issues the Delivery
+Evidence obtains the delivery service's receipt, and which provider issues that
+evidence in the four-corner case, is not published; later membership changes after formation have no decided
 owner.
 
 ## Status
@@ -93,7 +101,7 @@ Nothing.
 ## Normative owner
 
 The Internet-Draft, *Delivery Service* and *Group Establishment*; the
-delivery-service contract, `delivery-service-openapi.yaml`; the TS, clause 6,
+delivery-service contract, `delivery-service-openapi.yaml`; the technical specification, clause 6,
 for the issuing identity.
 
 ## Open questions

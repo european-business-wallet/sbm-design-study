@@ -1,24 +1,19 @@
 ---
 id: SBM-ADR-0014
 title: "The content digest as a salted commitment"
-label: "Salted content digest"
+label: "The content digest becomes a salted commitment"
 decision_status: proposed
 implementation_status: [not-implemented]
 implementation: >-
-  not implemented; proposed on 26 September 2026, pending [A12](../REVIEW_AGENDA.md) — nothing on the wire, in a schema or in a sample changes until the question is decided
+  Not implemented. Proposed on 26 September 2026 and pending [A12](../REVIEW_AGENDA.md); nothing on the wire, in a schema or in a sample changes until that question is decided
 choice: >-
-  `payload_hash` and the envelope `content_digest` become a salted commitment — a per-message salt carried only in the encrypted
-  envelope, revealed with the content — in modes named for the content; `doc_digest` stays a bare digest of a published document ·
-  no owner yet; the I-D, *Canonicalisation and Payload Hashing* and *Application Envelope*, would own it
+  The digest that binds a message to its content becomes a salted commitment rather than a bare hash. The salt is per message, travels only inside the encrypted envelope, and is disclosed with the content. This applies in the modes that are named for the content being sent. The digest of a *published* document (`doc_digest`) stays a bare digest, because the document it commits to is published anyway · no owner yet; the I-D, *Canonicalisation and Payload Hashing* and *Application Envelope*, would own it
 alternative: >-
-  leave the digest unsalted and state the assumption it rests on; derive the salt from the MLS exporter secret; reuse the grade
-  commitment's salt — the first two weighed below, the third rejected
+  Three. Leave the digest unsalted and write down the assumption that choice rests on. Derive the salt from the MLS exporter secret rather than generating it. Or reuse the salt the grade commitment already carries. The first two are weighed in the record; the third is rejected
 benefit: >-
-  a guess about the content cannot be confirmed from the evidence alone: the salt, not the content's entropy, stands between
-  the digest and a dictionary
+  A guess at the content cannot be confirmed from the evidence alone. What stands between the digest and a dictionary attack becomes the salt, rather than however much entropy the content happens to have
 cost: >-
-  both wallets retain the salt with the content, or a package can no longer be tied to a document; an evidence bump with every
-  sample re-sealed — the parties, the implementers, and whoever holds a package without the parties
+  Both wallets must keep the salt alongside the content, or an evidence package can no longer be tied to the document it is about. And the evidence version moves, so every sample is re-sealed. That falls on the parties, on implementers, and on anyone holding a package without being able to ask the parties
 open_questions: [A12]
 author_questions: []
 supersedes: []
@@ -38,11 +33,11 @@ schema, sample or test changes on the strength of this record.
 
 ## Context
 
-Evidence carries `payload_hash`, a digest of the plaintext declared by the
-sender and echoed by the registered delivery provider into every evidence
-object and, transitively, every Evidence Package; the application envelope
-carries the same value as `content_digest`, and the recipient wallet
-recomputes it before acknowledging. The digest is unsalted. The profile's
+Evidence carries `payload_hash`: a digest of the plaintext, declared by the
+sender and echoed by the Registered Delivery Provider into every evidence object
+— and so into every Evidence Package built from them. The application envelope
+carries the same value as `content_digest`, and the recipient's wallet recomputes
+it before acknowledging. The digest is unsalted. The profile's
 other bindings to things it must not disclose — the availability grade's
 content class and an agent act's mandate — are salted commitments, with
 sixteen bytes of fresh salt per message that travel only in the encrypted
@@ -55,7 +50,8 @@ high-entropy content that is idle; for guessable content — an invoice on a
 known template, an order confirmation whose only variable is an amount in a
 narrow range, a standard notice — the digest is an oracle. The traffic this
 profile is written for is largely of the second kind. Under Mode C the
-disclosure is wider still: the multipart manifest travels in the sealed SE
+disclosure is wider still: the multipart manifest travels in the sealed Sending
+Evidence (the SE)
 with each part's unsalted digest, length, media type and, optionally, file
 name.
 
@@ -91,13 +87,13 @@ Proposed, pending A12:
   envelope except by deliberate reveal. It is a salt of its own, not the
   grade commitment's, because a grade dispute reveals that salt and must not
   hand back the content oracle with it.
-- **Mode C.** Each part digest is the same construction with the part's
-  identity in the domain — `[ "sm-mls:content-part-digest:v1", salt,
-  part_id, part_octets ]` — so equal parts in different positions differ and
-  a guessed part cannot be confirmed across messages; the manifest digest
-  needs no salt of its own once its inputs are salted, and it stays
-  recomputable by anyone holding the artefact, which is what `LINT-MAN-04`
-  checks. **There is no chunk layer to decide about.** An earlier draft of
+- **Mode C.** Each part's digest uses the same construction, with the part's
+  own identity inside the domain separator — `[ "sm-mls:content-part-digest:v1",
+  salt, part_id, part_octets ]`. Two things follow: identical parts in different
+  positions produce different digests, and a guessed part cannot be confirmed
+  across messages. The manifest digest then needs no salt of its own, because
+  its inputs are already salted — and it stays recomputable by anyone holding
+  the artefact, which is what `LINT-MAN-04` checks. **There is no chunk layer to decide about.** An earlier draft of
   this record asked the group whether a chunked part's Merkle root should be
   salted with the chunk index in the domain; that construction was withdrawn
   on 27 September 2026 and none is profiled ([A13](../REVIEW_AGENDA.md)). A
@@ -118,16 +114,18 @@ Proposed, pending A12:
   and in other positions, which is what it is for, and it cannot help once the
   salt itself is known. A dispute about one invoice therefore opens the
   multipart message it travelled in. This record does not promise selective
-  opening, so this is a trade-off to decide with A12 and not a defect in the
-  construction: **whole-message opening**, which is what is proposed and is
-  simpler to implement and to reason about, or **an opening secret per part** —
-  sixteen bytes each, carried in the envelope beside the manifest, at the cost of
-  a larger envelope and a reveal procedure that has to say which parts it opens.
-- **The manifest's cleartext** — attachment names, sizes and types in the
-  sealed SE — is decided with A12 and not after it: either it stays and the
-  metadata threat model says the providers see it, or the manifest moves
-  into the envelope and the SE keeps only the manifest digest and the part
-  count, at the price of the provider-side structural checks on it. **Those
+  opening, so the choice is a trade-off to settle with A12 rather than a defect
+  in the construction. Either **whole-message opening**, which is what is
+  proposed here and is simpler both to implement and to reason about; or **an
+  opening secret per part**, sixteen bytes each, carried in the envelope beside
+  the manifest. The second costs a larger envelope and a reveal procedure that
+  has to say which parts it opens.
+- **The manifest's cleartext** — attachment names, sizes and types, carried in
+  the sealed Sending Evidence — is to be settled with A12, not afterwards. Two
+  ways. Leave it where it is, and have the metadata threat model say plainly
+  that the providers see it. Or move the manifest into the encrypted envelope,
+  leaving the Sending Evidence only the manifest's digest and the number of
+  parts — at the price of the structural checks the provider performs on it. **Those
   checks are three named rules, not a hypothetical**: `LINT-MAN-01` (part-id
   uniqueness), `LINT-MAN-02` (canonical byte-wise ascending order) and
   `LINT-MAN-04` (`payload_hash` is the digest of the manifest the artefact
@@ -157,14 +155,17 @@ Proposed, pending A12:
   construction under a `raw-*` label and changed what that label means. **Two
   domains move, not one**: the content fields, and the part digest, each with
   modes of its own; `doc_digest` and `submission_hash` stay bare for the reasons
-  set out below. Naming the content modes for the content (`content-sha256`,
-  `content-sha512`, `content-manifest-sha256`, `content-manifest-sha512`)
-  remains the proposal, because a mode's name is what an artefact carries and
-  a reader should not have to know the field's type to know whether a salt is
-  in the construction; **retiring `raw-*` and `manifest-*` "for content by
-  name", as `jcs-*` was, is not the mechanism any more** — narrowing
-  `ContentHash`'s enum is, and the resolved-shapes gate will name every
-  version dimension that narrowing reaches. Either way the set is closed
+  set out below. Naming the content modes after the content
+  (`content-sha256`, `content-sha512`, `content-manifest-sha256`,
+  `content-manifest-sha512`) remains the proposal. The reason is that a mode's
+  name is what an artefact actually carries, and a reader should not have to
+  know a field's type in order to know whether a salt is part of the
+  construction.
+
+  **Retiring `raw-*` and `manifest-*` "for content by name", the way `jcs-*` was
+  retired, is no longer the mechanism.** Narrowing `ContentHash`'s own set of
+  values is — and the resolved-shapes gate will name every version dimension
+  that narrowing reaches. Either way the set is closed
   again at the bump and every member is mandatory to implement, which is the
   condition on which A11 was closed.
 
@@ -206,10 +207,10 @@ Proposed, pending A12:
   for salting digests should take these five as the boundary of it — and
   should notice that the boundary is drawn **per semantic field**, not by
   retiring a mode globally. That was the same inventory the generic `Hash`
-  type needed, and the two were done together: the domains were separated on
-  27 September 2026, so this list is no longer a list this record has to
-  keep — each field's type states its domain, and this boundary is readable
-  from the schemas rather than from a paragraph.
+  type needed, so the two were done together. The domains were separated on
+  27 September 2026, which means this is no longer a list the record has to
+  maintain: each field's type states its own domain, and the boundary is
+  readable from the schemas rather than from a paragraph.
 - **Re-verification.** Unchanged in shape *where a salt is present*: the
   recipient recomputes with the salt it decrypted, the `mismatch`
   confirmation carries that recomputation, the sender declares and the
@@ -251,12 +252,12 @@ Proposed, pending A12:
 ## Alternatives considered
 
 - **Leave the digest unsalted and state the assumption.** **This alternative
-  has been executed**, which changes what A12 now asks. The Internet-Draft
-  carries the paragraph since 27 September 2026 — *Guessable content behind an
-  unsalted digest*: who can test a guess (the parties, both providers, an
-  archive, a verifier, a court — whoever holds an evidence object or a
-  package), who cannot (an observer of the network, which sees no digest), and
-  what an implementation handling low-entropy content should do about it. The
+  has been executed**, which changes what A12 now asks. The Internet-Draft has carried the paragraph
+  since 27 September 2026, under *Guessable content behind an unsalted digest*.
+  It says three things: who can test a guess — the parties, both providers, an
+  archive, a verifier, a court, anyone holding an evidence object or a package;
+  who cannot — an observer of the network, which never sees a digest; and what
+  an implementation handling low-entropy content should do about it. The
   umbrella's consolidated threat model, which that paragraph defers to for the
   residual risks, omitted it and now carries it. No wire change, nothing
   re-sealed.
@@ -296,7 +297,7 @@ digests from fixture content rather than carry them as constants.
 
 Both wallets would retain `content_digest_salt` with the message for as long
 as they retain the content: a retention duty to be written into the
-Internet-Draft, the TS's retention clause and the custody note. A lost salt
+Internet-Draft, the technical specification's retention clause and the custody note. A lost salt
 leaves a package that still proves who sent which commitment to whom and
 when, and no longer lets its holder tie it to a document. What the documents
 may say moves one notch, from "carries a digest of the content" to "carries a
@@ -310,17 +311,18 @@ editions and do not break; their re-pin grows by this.
 
 **No reinterpretation of already-issued evidence.** If this is accepted, an
 artefact sealed under an earlier edition keeps the meaning it had when it was
-sealed:
-its `payload_hash` is a bare digest, it is verified by the rules of the
-edition it was sealed under, and
-acceptance neither invalidates it nor makes it verifiable under the new
-construction. A later edition does not reach backwards. Nothing is re-sealed
+sealed. Its `payload_hash` stays a bare digest, and it is verified by the rules
+of the edition it was sealed under. Acceptance neither invalidates such an
+artefact nor makes it verifiable under the new construction. A later edition does not reach backwards. Nothing is re-sealed
 except this repository's own samples, which are illustrations and not
-evidence anyone holds. This is the rule the umbrella §13.4 already writes for
-registry actions — they *"MUST NOT change the meaning of already-issued
-evidence or already-sealed discovery documents"*, and what would is a
-versioned change instead — applied to the versioned change itself: the route
-§13.4 points at is prospective, or the distinction it draws would be empty.
+evidence anyone holds. This is a rule the umbrella already writes for registry actions at §13.4: they
+*"MUST NOT change the meaning of already-issued evidence or already-sealed
+discovery documents"*, and anything that would change such a meaning has to be a
+versioned change instead.
+
+What this paragraph does is apply that rule to the versioned change itself. The
+route §13.4 points at has to be prospective — otherwise the distinction it draws
+between the two kinds of change would be empty.
 A record that proposes changing what a digest *is* is where that has to be
 said.
 

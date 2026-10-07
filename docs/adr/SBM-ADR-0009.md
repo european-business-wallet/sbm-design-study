@@ -5,16 +5,15 @@ label: "Commitments before reveals"
 decision_status: accepted
 implementation_status: [specified, in-reference]
 implementation: >-
-  specified; in the reference; the effect of a proven mismatch open ([L5](../REVIEW_AGENDA.md), [L7](../REVIEW_AGENDA.md))
+  Specified, and in the reference. What a proven mismatch should legally imply is open ([L5](../REVIEW_AGENDA.md), [L7](../REVIEW_AGENDA.md))
 choice: >-
-  evidence binds the content digest, the ciphertext digest and the group state; availability and opposable agent acts carry
-  salted commitments opened only by a reveal · the I-D, *Grade Commitment* and *Mandate Commitment*
+  Evidence binds three things: the digest of the content, the digest of the transmitted ciphertext and the MLS group state. Where an act is sensitive — availability-grade delivery, and an agent acting under a mandate — the evidence carries a salted commitment, and what it commits to is disclosed only later, by an explicit reveal · the I-D, *Grade Commitment* and *Mandate Commitment*
 alternative: >-
-  a cryptographic ciphertext-to-reveal proof — future work; commitment inequality alone as a rebuttal — rejected
+  Two. A cryptographic proof tying the ciphertext to the reveal — left as future work. And treating a commitment that does not match as a rebuttal on its own — rejected
 benefit: >-
-  claims checkable without the commitment disclosing content or class before a dispute — the echoed scope reference still narrows the class to its scope's set
+  A claim can be checked without the evidence having disclosed the content, or even the class of content, before a dispute arises. The scope reference echoed in the evidence still narrows the class to the set its scope allows
 cost: >-
-  a reveal discloses the class to the dispute's parties; a failing reveal proves nothing alone
+  Performing a reveal discloses the content class to the parties to the dispute. And a reveal that fails proves nothing by itself
 open_questions: [L5, L7, A12]
 author_questions: []
 supersedes: []
@@ -35,10 +34,14 @@ resolves against a published scope map to the set of classes that scope covers.
 
 ## Requirement and constraint
 
-Every claim in the evidence must be checkable against something committed at
-the time of the act; a later dispute must be able to open a commitment
-without the evidence having disclosed it; and a rebuttal must be an act a
-party can be held to, not a value anyone can manufacture.
+Three requirements, which pull against each other:
+
+- every claim in the evidence must be checkable against something that was
+  committed at the time of the act;
+- a later dispute must be able to open a commitment, without the evidence
+  having disclosed it in the meantime;
+- and a rebuttal must be an act a party can be held to, not a value that anyone
+  could have manufactured.
 
 ## Decision
 
@@ -56,7 +59,7 @@ recipient claim*, not objective extraction from the ciphertext.
   future work with its prerequisites named, not invented now.
 - **Commitment inequality alone as a valid rebuttal.** Rejected: inequality
   is trivially manufacturable by inventing a salt, so any recipient provider
-  could have rebutted any availability-grade DE.
+  could have rebutted any availability-grade Delivery Evidence.
 
 ## Trade-off
 
@@ -85,7 +88,7 @@ Nothing.
 
 ## Normative owner
 
-The Internet-Draft, *Grade Commitment* and *Mandate Commitment*; the TS,
+The Internet-Draft, *Grade Commitment* and *Mandate Commitment*; the technical specification,
 clause 6, for the dispute's evidence.
 
 ## Open questions

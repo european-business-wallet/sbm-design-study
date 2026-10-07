@@ -142,9 +142,18 @@ def test_the_decisions_index_is_a_map_and_the_detail_is_in_the_records():
     assert columns == ["ADR", "Choice", "Principal trade-off", "Decision",
                        "Implementation", "Open"], columns
     assert "one click away" in " ".join(index.split())
-    # The trade-off column is the benefit AND its cost, not one of them.
-    row = next(l for l in index.splitlines() if l.startswith("| [SBM-ADR-0001]"))
-    assert "— at the cost of" in row, row
+    # The trade-off column is the benefit AND its cost, not one of them — and
+    # which half a reader is in must be LABELLED. The two were welded with
+    # "— at the cost of", which made one sentence out of two lists and left the
+    # reader to find the hinge. Asserted as the two labels, so a rewording of
+    # either half does not fail this and dropping a half does.
+    for row in [l for l in index.splitlines() if l.startswith("| [SBM-ADR-")]:
+        cells = row.strip("|").split("|")
+        trade = cells[2]
+        assert "**Buys:**" in trade and "**Costs:**" in trade, row
+        buys, _, costs = trade.partition("**Costs:**")
+        assert len(buys.split()) > 4 and len(costs.split()) > 4, \
+            f"a labelled half with nothing in it is worse than no label: {row}"
 
 
 # --- pointers resolve for the reader who has the export ----------------------

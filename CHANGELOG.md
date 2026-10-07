@@ -18,7 +18,69 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-10-07, edition r41
+## Current — 2026-10-07, edition r42
+
+**The decision records, read by somebody who did not write them. No artefact
+version moves, and no decision changes.** The sixteen architecture decision
+records were reviewed for whether a reader who did not write them can follow
+them. One record said something that disagreed with the rest of the snapshot,
+and that is corrected; otherwise no record now says anything it did not say
+before.
+
+**What was wrong with them.** The summary fields that the generated decisions
+index actually shows a reader were telegrams — semicolon-joined noun phrases,
+compressed past the point of being sentences. One read, in full: *"one
+accountable, qualified party observes, transfers and attests; A9 and L1 dissolve
+by construction; one fewer identity, contract, descriptor and interface; the
+model the consultation asked for"*. And the index welded two such lists together
+with *"— at the cost of"*, so a reader met one long sentence and had to find the
+hinge before knowing which half of the trade-off they were in. The two halves are
+now labelled — **Buys** and **Costs** — and each is written as sentences.
+
+**The vocabulary.** The records leaned on terms a reader was assumed to arrive
+with: the provider roles, the evidence objects, the discovery documents, the key
+identifier. Each record now expands the terms its own decision turns on, at their
+first use in its body, and uses the short form after that. A record has to be
+readable on its own, because that is how one is read — somebody follows a
+citation into exactly one of them.
+
+**One record disagreed with every other document.** The record on the entity
+identifier expanded *EDD* as "entity discovery directory". The umbrella profile's
+glossary, two published contracts, the architecture figure, the vision document
+and the record on the federation all say **European Directory of Entities**. One
+record was teaching a reader a second name for the same institution, and nothing
+compared the two. A check does now, and it reads the expansions it holds the
+records to out of the normative text rather than carrying its own list — so a
+record cannot drift from that text by being edited on its own, and a second
+expansion of one abbreviation is a failure. Two names for one thing is worse than
+no name.
+
+**The most recent record, rewritten.** The record that names the observing
+provider on a delivery receipt now opens by naming the four things it turns on,
+states the two-provider problem concretely before introducing the field that
+solves it, sets out the two defects it was written for as a list rather than a
+paragraph, and gives the three reasons its answer is trustworthy as three
+reasons. Its consequences section keeps all three of its disclaimers and says
+plainly that each has been mistaken for a consequence of the decision.
+
+**Elsewhere.** Fifteen sentences carrying three or more clauses were split, across
+eleven records; the longest ran to 86 words. Ten of the index's short labels are
+plainer — *"MSP folded into the RDP"* is now *"One provider role, not two"*.
+Those labels appear only in the record and in the generated index, so nothing
+cites the old ones.
+
+**Two checks were holding the prose to its phrasing rather than to its claims**,
+and failed on rewordings that changed neither the decision nor the meaning. Both
+now assert what the text must *say*. A check that cannot tell a rewording from a
+removal teaches an editor to leave prose alone instead of keeping it readable,
+which is the opposite of what it is for.
+
+What this edition deliberately does **not** do: rewrite the bodies of the earlier
+records end to end. They are records of past decisions, and rewriting a record's
+reasoning can change what it is understood to have decided. Their titles are
+untouched for the same reason — a title is how a record is cited.
+
+## Edition r41 — 2026-10-07
 
 **An unanswerable question must not erase an answered one. No artefact version
 moves.** An independent verification confirmed both corrections in the previous

@@ -1,24 +1,19 @@
 ---
 id: SBM-ADR-0007
 title: "Declared delivery grades and terminal outcomes"
-label: "Declared grades, terminal outcomes"
+label: "Delivery grades are declared, not assumed"
 decision_status: accepted
 implementation_status: [specified, in-reference]
 implementation: >-
   specified; in the reference
 choice: >-
-  verification by default, acceptance under quorum or `all`, availability only where the recipient declared it per class;
-  each grade dated by its own event; a verified mismatch or refusal ends the message ·
-  [§8.3b](../../Secure-Business-Messaging-Profile.md#83b-delivery-grade-declaration-normative); the I-D, *Delivery State Model* and *Timing*; TS clause 6
+  There is no single meaning of 'delivered'. Three grades are named, and which one applies is declared rather than assumed: verification by default; acceptance where a quorum or all members must accept; availability only for the content classes the recipient has declared it for. Each grade is dated by its own event. A verified digest mismatch, or a refusal, ends the message · [§8.3b](../../Secure-Business-Messaging-Profile.md#83b-delivery-grade-declaration-normative); the I-D, *Delivery State Model* and *Timing*; TS clause 6
 alternative: >-
-  an implicit handover grade for every message — excluded ([§7.1](../../Secure-Business-Messaging-Profile.md#71-technical-architecture-authoritative));
-  a refusal that changes nothing — revised
+  Two. An implicit handover grade applied to every message — excluded ([§7.1](../../Secure-Business-Messaging-Profile.md#71-technical-architecture-authoritative)). And a refusal that changes nothing about the message's state — revised rather than kept
 benefit: >-
-  the legally operative act is chosen and visible; mailbox deposit never counts
+  Which act carries legal effect is chosen deliberately and is visible in the evidence. Depositing a message in a mailbox never counts as delivery
 cost: >-
-  recipient cooperation at the default grades; one member's refusal or mismatch ends the message;
-  the availability grade rests on the DS's observation, which SBM-ADR-0015 makes the
-  RDP's own ([A9](../REVIEW_AGENDA.md), resolved)
+  At the default grades the recipient has to cooperate for delivery to be evidenced at all. One member's refusal or digest mismatch ends the message for everyone. The availability grade rests on the Delivery Service's observation — which SBM-ADR-0015 makes the provider's own ([A9](../REVIEW_AGENDA.md), resolved)
 open_questions: []
 author_questions: []
 supersedes: []
@@ -46,17 +41,23 @@ of the recipient entity.
 
 ## Decision
 
-Three delivery grades: verification by default, acceptance under a quorum or
-`all` policy, and availability only where the recipient declared it for that
-content class. Each grade is dated by its own event: the availability grade
-by the delivery service's server-observed receipt of the acknowledged
-handover, the verification and acceptance grades by the instant the
-recipient-side RDP received and verified the completing confirmation, on its
-own clock, with every contributing act preceding it. A recipient confirmation
-is one member's act; distinct eligible members contribute until the policy
-is satisfied; a verified digest mismatch or a verified refusal by an eligible
-member ends the message, and a reveal is dispute material that changes no
-state.
+Three delivery grades: **verification** by default, **acceptance** under a
+quorum or `all` policy, and **availability** only where the recipient has
+declared it for that class of content.
+
+Each grade is dated by its own event, and the events differ:
+
+- the **availability** grade by the delivery service's own server-observed
+  receipt of the acknowledged handover;
+- the **verification** and **acceptance** grades by the instant the
+  recipient-side Registered Delivery Provider (RDP) received and verified the
+  confirmation that completes them, on that provider's own clock, with every
+  contributing act preceding it.
+
+A recipient confirmation is one member's act. Distinct eligible members
+contribute until the policy is satisfied. A verified digest mismatch, or a
+verified refusal by an eligible member, ends the message. A reveal is dispute
+material and changes no state.
 
 ## Alternatives considered
 
@@ -67,9 +68,9 @@ state.
   timeliness, for S2 and equally one grade up.
 - **Confirmations keyed on the message rather than the member.** Rejected:
   it made quorum and `all` unreachable through the published request.
-- **A refusal that is recorded and changes nothing.** Revised: it left a DE
-  issuable over an explicit, attributable refusal by a member of the entity
-  the DE says accepted the message.
+- **A refusal that is recorded and changes nothing.** Revised: it left
+  Delivery Evidence (a DE) issuable over an explicit, attributable refusal by a
+  member of the very entity that evidence says accepted the message.
 
 ## Trade-off
 
@@ -98,7 +99,7 @@ Nothing.
 
 The umbrella [§8.3b](../../Secure-Business-Messaging-Profile.md#83b-delivery-grade-declaration-normative) for
 the declaration; the Internet-Draft, *Delivery State Model* and *Timing*; the
-TS, clause 6, for the operative act and its evidence.
+technical specification, clause 6, for the operative act and its evidence.
 
 ## Open questions
 
