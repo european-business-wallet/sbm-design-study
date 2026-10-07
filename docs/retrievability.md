@@ -45,7 +45,7 @@ entry point cannot be handed is a finding rather than a documented input.
 | `suite_registry` | none published — carried as a demonstration fixture | the design authority | bundle manifest key `suite_registry` | yes |
 | `federation_register` | GET /participants/{participant_id}?as_of= | the Federation Authority | bundle manifest key `federation_register` | yes |
 | `fa_anchors` | the Authority's published key set | the Federation Authority | `bundle_lint.py --trust-store` — the verifier's own configured Federation-Authority anchors, not bundle material | yes |
-| `receipts` | none published for third-party retrieval — the receipt travels to the party that collected | the issuing RDP; the collecting party's own copy | bundle manifest key `receipts` | **no** |
+| `receipts` | none published for third-party retrieval — the receipt travels to the party that collected | the issuing RDP; the collecting party's own copy | bundle manifest key `receipts` — keyed by the delivery it substantiates: the bare `message_id`, or `<origin>/<message_id>` where one identifier is evidenced under more than one origin (R39-01) | **no** |
 | `evidence` | GET /uid/{uid}/evidence/{message_id} , GET /evidence/{message_id} | each party's own wallet copy; the issuing RDP | bundle manifest key `evidence` | yes |
 | `reveals` | none, by design — the salt travels only inside the end-to-end-encrypted envelope | the endpoints, and only the parties of a dispute | bundle manifest key `grade_reveals` | yes |
 | `mandate_reveals` | none, by design — as for reveals | the endpoints, and only the parties of a dispute | bundle manifest key `mandate_reveals` | yes |
@@ -120,6 +120,7 @@ entry point cannot be handed is a finding rather than a documented input.
 **`receipts`** — The DS-signed handover receipts the delivery event rests on.
 
 - *Absent:* the S2 event rests on the DE's assertion rather than on the DS's signature.
+- Supplied as a MAP of handle to receipt, not a list: `{"receipts": {"urn:sbm:rdp:mockeu-001/01HZ3AVLBCDEFGH9JKMN0PQRST": "receipt.json"}}`. A BARE key — `{"01HZ3AVLBCDEFGH9JKMN0PQRST": "receipt.json"}` — still resolves, to the one origin this bundle evidences for that identifier; where it evidences several, which delivery is meant is AMBIGUOUS and reported (LINT-BND-I9) rather than settled by the order the evidence was listed in. What the key does is state WHICH delivery the entry claims; it proves nothing about it. The evidence must still establish the origin, the octets and the recipient, and the receipt’s own signed `issuing_rdp_id` is COMPARED with the handle rather than used to choose it — selecting the SE by the claim under test is the self-consistency R38-01 removed.
 
 **`evidence`** — The sealed evidence objects and packages themselves.
 

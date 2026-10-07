@@ -1555,6 +1555,14 @@ def test_the_origins_descriptor_does_not_resolve_the_receipt():
 AVAIL = "01HZ3AVLBCDEFGH9JKMN0PQRST"
 
 
+def bl_is_incomplete(rule):
+    """A declared residual is INCOMPLETE, not a violation. Asked of the catalogue
+    rather than of a hard-coded list, so a rule that stops being declared stops
+    satisfying these probes."""
+    import bundle_lint as bl
+    return bl.is_incomplete(rule)
+
+
 def _avail_se():
     return json.loads((ROOT / "samples" / "sample-SE-availability.json").read_text())["projection"]
 
@@ -1730,11 +1738,23 @@ def test_reordering_the_same_evidence_cannot_change_the_verdict(tmp_path):
 
 def test_a_namespaced_entry_resolves_the_delivery_it_names(tmp_path):
     """And the way to say which: the entry carries the origin. Same two SEs, both
-    orders, one answer — this time a clean one."""
+    orders, one answer.
+
+    R40-01 sharpened what that answer is. The receipt is placed, and the SE it is
+    compared with agrees — but this bundle also retains a LOOSE DE for the same
+    identifier, and a standalone DE names no origin, so nothing attributes it to
+    either delivery. That used to be dropped in silence and read as a clean pass;
+    it is now the declared incompleteness it always was. The comparison the DE
+    was the subject of has not been made, and the report says so.
+    """
     receipt = _other_receipt(issuing_rdp_id="urn:sbm:rdp:mockeu-002")
     key = f"urn:sbm:rdp:mockeu-002/{AVAIL}"
-    for order in (["matching", "other"], ["other", "matching"]):
-        assert _mixed_origin_bundle(order, key, receipt, tmp_path) == [], order
+    answers = [_mixed_origin_bundle(order, key, receipt, tmp_path)
+               for order in (["matching", "other"], ["other", "matching"])]
+    assert answers[0] == answers[1], answers
+    assert [r for r, _ in answers[0]] == ["LINT-BND-I9"], answers[0]
+    assert "DE-v1" in answers[0][0][1], answers[0][0][1]
+    assert bl_is_incomplete("LINT-BND-I9"), "an unattributable outcome is not a violation"
 
 
 def test_a_namespaced_entry_filed_under_the_wrong_origin_is_reported(tmp_path):
@@ -1745,8 +1765,216 @@ def test_a_namespaced_entry_filed_under_the_wrong_origin_is_reported(tmp_path):
     se = _avail_se()
     found = _mixed_origin_bundle(["matching", "other"], f"{se['rdp_id']}/{AVAIL}",
                                  receipt, tmp_path)
-    assert [r for r, _ in found] == ["LINT-BND-38"], found
-    assert se["rdp_id"] in found[0][1] and "urn:sbm:rdp:mockeu-002" in found[0][1]
+    violations = [(r, m) for r, m in found if not bl_is_incomplete(r)]
+    assert [r for r, _ in violations] == ["LINT-BND-38"], found
+    assert se["rdp_id"] in violations[0][1] and "urn:sbm:rdp:mockeu-002" in violations[0][1]
+
+
+# ---------------------------------------------------------------------------
+# R40-01 — an unanswerable question must not erase an answered one
+#
+# The receipt path asked four questions as one sequence of early returns:
+#
+#   1. which delivery is this receipt about?         (identity)
+#   2. does the bundle's evidence record it?         (association)
+#   3. is the receipt authentic and self-consistent? (authenticity)
+#   4. does it agree with the delivery's own date?   (the grade's rule)
+#
+# Nothing in 3 depends on 1 or 2 — a forged signature is forged whichever
+# delivery it names — and nothing in 4 depends on the context being STATABLE.
+# Running them as one sequence made the opposite true, so ADDING evidence to a
+# bundle removed findings from the report. Both halves below are that: in each
+# pair the second input is a superset of the first.
+# ---------------------------------------------------------------------------
+
+def _ep_bundle(receipt, key, *, extra_se=None, tmp_path=None):
+    """The dispute EP — which carries the availability SE and its DE, sealed
+    together — a receipt under the given key, and optionally one more sealed SE
+    for the same bare identifier under an unrelated origin."""
+    import bundle_lint as bl
+    ep = json.loads((ROOT / "samples" / "sample-EP-dispute.json").read_text())["projection"]
+    # `check_bundle` reads evidence BODIES; the manifest loader is what unwraps an
+    # M4 artefact. Passing the wrapper here made the extra SE invisible — the
+    # bundle was never mixed-origin and two assertions below held vacuously.
+    # Invariant 13: a probe builds its world, and it must build the right one.
+    evidence = [ep] + ([extra_se["projection"] if "projection" in extra_se else extra_se]
+                       if extra_se else [])
+    return [(r, m) for r, m in bl.check_bundle(
+        ep["se"]["recipient_uid"],
+        bl._load(str(ROOT / "samples" / "sample-BW-MED.json")),
+        bl._load(str(ROOT / "samples" / "sample-BW-ORG.json")),
+        [], evidence, receipts={key: receipt},
+        provider_descriptors=[
+            bl._load(str(ROOT / "samples" / "sample-BW-PROVIDER-in.json"))])
+        if r in ("LINT-BND-38", "LINT-BND-I8", "LINT-BND-I9")]
+
+
+def _tampered(receipt):
+    """The same receipt with one signature bit flipped. Everything else — the
+    context, the instant, the kid, the observer — is left coherent, so the ONLY
+    thing wrong with it is the cryptography."""
+    out = copy.deepcopy(receipt)
+    sig = bytearray(base64.b64decode(out["ds_signature"]))
+    sig[-1] ^= 0xFF
+    out["ds_signature"] = base64.b64encode(bytes(sig)).decode()
+    return out
+
+
+def test_adding_unrelated_evidence_cannot_erase_a_time_mismatch(tmp_path):
+    """The reproduction. A qualified entry, an EP carrying its own SE and DE, and
+    a receipt signed 37 seconds after the DE it is supposed to date: LINT-BND-38.
+    Add one sealed SE for the same bare identifier under an unrelated origin —
+    changing nothing about the receipt, the EP, or the relationship the EP's seal
+    states — and the mismatch disappeared.
+
+    Cause: the bare-identifier ambiguity stripped every DE from the candidate
+    set, including one the EP had sealed beside its own SE, and with no DE
+    attributed the comparison did not run. The qualified key had already said
+    which origin was meant; the strip ignored it.
+    """
+    origin = _avail_se()["rdp_id"]
+    other = _second_origin_se()
+    late = _other_receipt(server_clock="2026-04-04T10:17:00Z")
+    alone = _ep_bundle(late, f"{origin}/{AVAIL}")
+    plus = _ep_bundle(late, f"{origin}/{AVAIL}", extra_se=other)
+    assert [r for r, _ in alone] == ["LINT-BND-38"], alone
+    assert "10:17:00Z" in alone[0][1] and "10:16:23Z" in alone[0][1], alone[0][1]
+    assert alone == plus, {"EP alone": alone, "EP + unrelated SE": plus}
+    # ...and the second bundle must really be mixed-origin, or this proves
+    # nothing: the SAME material under a BARE key is reported ambiguous.
+    bare = _ep_bundle(late, AVAIL, extra_se=other)
+    assert any(r == "LINT-BND-I9" and "AMBIGUOUS" in m for r, m in bare), bare
+
+
+def test_an_EP_keeps_its_outcome_bound_to_the_SE_sealed_beside_it(tmp_path):
+    """The positive half, and the reason the one above is a defect rather than a
+    judgement call: the package's seal covers both objects, and LINT-EP-01 holds
+    every outcome's `message_id` to the package's own SE. That relationship is a
+    statement its composer signed. A second origin reusing the identifier
+    elsewhere cannot unmake it."""
+    shipped = json.loads((ROOT / "samples" / "receipt.availability.demo.json").read_text())
+    origin, other = _avail_se()["rdp_id"], _second_origin_se()
+    assert _ep_bundle(shipped, f"{origin}/{AVAIL}") == []
+    assert _ep_bundle(shipped, f"{origin}/{AVAIL}", extra_se=other) == [], \
+        "the DE sealed inside the package is still the DE of this delivery"
+    assert any(r == "LINT-BND-I9" and "AMBIGUOUS" in m
+               for r, m in _ep_bundle(shipped, AVAIL, extra_se=other)), \
+        "the fixture must be mixed-origin, or the line above proves nothing"
+
+
+def test_an_ambiguous_entry_still_has_its_signature_verified(tmp_path):
+    """The second reproduction. A receipt whose signature does not verify, filed
+    under a bare key. Add the second-origin SE and the forgery stopped being
+    reported: the ambiguity branch emitted its LINT-BND-I9 and returned before
+    the key was even resolved.
+
+    The ambiguity is real and stays reported. It is not a substitute for the
+    cryptographic verdict, which does not depend on it.
+    """
+    bad = _tampered(json.loads(
+        (ROOT / "samples" / "receipt.availability.demo.json").read_text()))
+    origin = _avail_se()["rdp_id"]
+    one = _ep_bundle(bad, AVAIL)
+    both = _ep_bundle(bad, AVAIL, extra_se=_second_origin_se())
+    qualified = _ep_bundle(bad, f"{origin}/{AVAIL}", extra_se=_second_origin_se())
+
+    def invalid(found):
+        return [m for r, m in found if r == "LINT-BND-38" and "does not verify" in m]
+    assert len(invalid(one)) == 1, one
+    assert len(invalid(both)) == 1, both
+    assert len(invalid(qualified)) == 1, qualified
+    assert [r for r, _ in both] == ["LINT-BND-I9", "LINT-BND-38"], both
+    assert "AMBIGUOUS" in both[0][1], both[0][1]
+
+
+def test_an_unattributable_outcome_is_reported_not_dropped(tmp_path):
+    """Criterion 3. A standalone DE names no origin — its `rdp_id` is the outcome
+    ISSUER — so where the bundle evidences the identifier under several origins,
+    nothing attributes it. Dropping it silently turned a comparison that was never
+    made into one that passed. It is a declared incompleteness, and it says which
+    objects were set aside and that the comparisons needing them did not run."""
+    import bundle_lint as bl
+    shipped = json.loads((ROOT / "samples" / "receipt.availability.demo.json").read_text())
+    origin = _avail_se()["rdp_id"]
+    found = _mixed_origin_bundle(["matching", "other"], f"{origin}/{AVAIL}",
+                                 shipped, tmp_path)
+    assert [r for r, _ in found] == ["LINT-BND-I9"], found
+    assert "DE-v1" in found[0][1] and "NOT compared" in found[0][1], found[0][1]
+    assert bl.is_incomplete("LINT-BND-I9"), "set-aside material is not a violation"
+
+
+@pytest.mark.parametrize("label,mutate", [
+    # Three more sites of the same shape, found while reproducing the two above.
+    # Each already reported a violation and returned, so the report named the
+    # filing error and not the forgery — and "refile it" and "this signature is
+    # forged" are different conclusions.
+    ("an identifier no evidence names", lambda r, o: ("01JUNK000000000000000000", r)),
+    ("a handle filed under the wrong origin",
+     lambda r, o: (f"urn:sbm:rdp:mockeu-009/{AVAIL}", r)),
+    ("a mandatory context field omitted",
+     lambda r, o: (f"{o}/{AVAIL}", {k: v for k, v in r.items() if k != "device_id"})),
+])
+def test_an_unverifiable_signature_is_reported_whatever_else_is_wrong(label, mutate):
+    """Criterion 4: an independently provable violation survives alongside the
+    others. The signature is forged in every case, and in every case the report
+    used to omit it."""
+    origin = _avail_se()["rdp_id"]
+    bad = _tampered(json.loads(
+        (ROOT / "samples" / "receipt.availability.demo.json").read_text()))
+    key, receipt = mutate(bad, origin)
+    found = _ep_bundle(receipt, key)
+    assert any("does not verify" in m for _, m in found), (label, found)
+    assert len(found) == 2, (label, found)
+
+
+def test_the_skipped_stage_is_exactly_one_and_is_named(tmp_path):
+    """What `UNASSOCIATED` buys and what it must not. It is not `None`: `None`
+    meant "unchecked", which is the hole R7-02 closed, so it stays refused. It
+    carries no fields to compare and says so rather than comparing nothing."""
+    from lint_cli import (UNASSOCIATED, DeliveryContext, verify_ds_receipt,
+                          ReceiptVerificationError)
+    shipped = json.loads((ROOT / "samples" / "receipt.availability.demo.json").read_text())
+    descriptor = json.loads((ROOT / "samples" / "sample-BW-PROVIDER-in.json").read_text())
+    descriptor = descriptor.get("projection", descriptor)
+
+    # It is not a context and refuses to pose as one.
+    with pytest.raises(ReceiptVerificationError):
+        UNASSOCIATED.items()
+    # `None` still raises: an omitted expectation is not an unestablished one.
+    for absent in (None, {}, {f: None for f in ("message_id",)}):
+        with pytest.raises(ReceiptVerificationError):
+            verify_ds_receipt(shipped, descriptor, expect=absent)
+    # With it, everything but the context comparison runs: a valid receipt
+    # returns its signed payload...
+    signed = verify_ds_receipt(shipped, descriptor, expect=UNASSOCIATED)
+    assert signed["message_id"] == AVAIL and signed["server_time"]
+    # ...and a forged one is still refused.
+    with pytest.raises(ReceiptVerificationError):
+        verify_ds_receipt(_tampered(shipped), descriptor, expect=UNASSOCIATED)
+    # ...and so is one whose OUTER fields disagree with the signed ones, which is
+    # the check an ambiguous entry would otherwise have skipped entirely.
+    swapped = copy.deepcopy(shipped)
+    swapped["recipient_uid"] = "EU-DE-EOID-7K3D9W0Q2M5FW0"
+    with pytest.raises(ReceiptVerificationError):
+        verify_ds_receipt(swapped, descriptor, expect=UNASSOCIATED)
+
+
+def test_the_live_path_never_skips_the_context_comparison():
+    """The sentinel is for a verifier reading a retained bundle, which may not be
+    able to place a receipt. The live path is processing a delivery it has in
+    hand, so it has no business asking for the stage to be skipped — and a
+    `grep` is the gate, because the risk is somebody reaching for it later."""
+    src = (ROOT / "scripts" / "mock_rdp.py").read_text()
+    assert "UNASSOCIATED" not in src, \
+        "the live path must state the delivery it is processing"
+    # And the retained path never passes it SILENTLY: an association it could not
+    # establish is reported, every time. Stated behaviourally rather than by
+    # counting occurrences in the source, which would pass on a comment.
+    shipped = json.loads((ROOT / "samples" / "receipt.availability.demo.json").read_text())
+    for key, extra in ((AVAIL, _second_origin_se()),
+                       (f"urn:sbm:rdp:mockeu-009/{AVAIL}", None)):
+        found = _ep_bundle(shipped, key, extra_se=extra)
+        assert found, f"{key}: the receipt was accepted with its association unestablished"
 
 
 # ---------------------------------------------------------------------------
@@ -1802,3 +2030,18 @@ def test_the_availability_demonstration_has_an_intelligible_timeline():
     assert instant(states["S2"]) == instant(de["delivered_at"]) == instant(receipt["server_time"])
     assert instant(se["sent_at"]) < instant(de["delivered_at"]), \
         "a message cannot be handed over before it is submitted"
+    # R39-03, the half this probe missed the first time: the RELAY CHAIN. Its
+    # entries are ACT timestamps — the umbrella's §13.1 evaluates each hop
+    # provider's admission at that entry's own `timestamp` — and they sat at
+    # 09:57:00Z and 09:58:20Z, before the submission they relay. Checking the
+    # states and not the chain is why the correction was partial: this fixture
+    # has two records of the same two acts and only one of them moved.
+    chain = ep["rdp_chain"]
+    assert [h["rdp_id"] for h in chain] == [se["rdp_id"], de["rdp_id"]], chain
+    assert instant(se["sent_at"]) <= instant(chain[0]["timestamp"]), chain
+    for a, b in zip(chain, chain[1:]):
+        assert instant(a["timestamp"]) <= instant(b["timestamp"]), chain
+    assert instant(chain[-1]["timestamp"]) <= instant(de["delivered_at"]), chain
+    # and each hop timestamps the act it IS, so the two records of one act agree.
+    assert instant(chain[0]["timestamp"]) == instant(se["sent_at"])
+    assert instant(chain[1]["timestamp"]) == instant(states["S1"])

@@ -2694,6 +2694,47 @@ class DeliveryContext:
         return [(f, getattr(self, f)) for f in DELIVERY_CONTEXT_FIELDS]
 
 
+class _Unassociated:
+    """R40-01: the bundle does not establish WHICH delivery this receipt is about.
+
+    `expect=None` cannot mean this. `None` used to mean "unchecked", and R7-02
+    exists because that reading let a caller assert nothing while looking
+    complete — so `None` stays refused and this is a separate, named value with
+    one meaning: the caller has reported the association as UNESTABLISHED and is
+    asking for everything that does not depend on it.
+
+    What it skips is one stage, the last: the comparison with the expected
+    delivery context. The key resolution at the receipt's own instant, the
+    signature, the mandatory signed fields, the outer-vs-signed equality and the
+    `kid` attribution all still run, because none of them needs to know which
+    delivery the receipt belongs to. A receipt whose signature does not verify
+    does not verify whatever it is about.
+
+    It exists because the retained path used to `continue` past ALL of this
+    whenever it could not place the receipt, so adding one unrelated sealed SE to
+    a bundle made a forged signature stop being reported. An inability to answer
+    one question must not erase the answer to another.
+
+    A caller that passes this MUST have reported the association as incomplete —
+    `tests/test_production_signature_claims.py` holds the one caller to that, and
+    holds the live path to never passing it at all.
+    """
+
+    def items(self):
+        raise ReceiptVerificationError(
+            "receipt-context-invalid",
+            "UNASSOCIATED is not a delivery context and has no fields to "
+            "compare — it says the caller could not establish one (R40-01)")
+
+    def __repr__(self):
+        return "UNASSOCIATED"
+
+
+#: The one instance. Compared with `is`, so it cannot be constructed by accident
+#: or arrive from parsed input.
+UNASSOCIATED = _Unassociated()
+
+
 class ReceiptVerificationError(ValueError):
     """A DS receipt that cannot be relied upon. Carries the typed reason so the
     live path can return it and the retained path can report it."""
@@ -2737,6 +2778,13 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
     key can only make verification fail. The instant likewise only selects
     which published key must have signed — a forged instant that no valid key
     covers resolves to nothing.
+
+    **When the caller cannot say which delivery.** `expect=UNASSOCIATED` runs
+    every stage but the last and returns the authenticated payload. It is for the
+    retained path, where the bundle may evidence one identifier under several
+    origins; the association is reported unestablished and the signature is still
+    verified, because a forged receipt is forged whichever delivery it names. The
+    live path never passes it — it is processing a delivery it has in hand.
 
     **LIMIT, stated because the model has one.** Judging validity at the
     receipt's own time means a party holding a DS key that WAS valid in some
@@ -2889,6 +2937,14 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
     # matched, because the function had no parameter with which to notice. The
     # caller states what it is expecting and every stated field must match the
     # SIGNED payload exactly.
+    # R40-01: the caller may have been unable to say WHICH delivery this is —
+    # one identifier evidenced under several origins, with nothing in the bundle
+    # choosing between them. That is a question about the bundle, not about the
+    # receipt, and it is reported as such (LINT-BND-I9). Everything above does
+    # not depend on the answer and has already run; this one comparison does, and
+    # is the only thing skipped. `None` still raises: it meant "unchecked".
+    if expect is UNASSOCIATED:
+        return claimed
     if not isinstance(expect, DeliveryContext):
         raise ReceiptVerificationError(
             "receipt-context-invalid",

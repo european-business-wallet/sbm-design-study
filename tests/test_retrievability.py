@@ -244,3 +244,68 @@ def test_an_input_nothing_supplies_may_say_so(data):
     row = next(r for r in data["inputs"] if r["input"] == "transformation_traces")
     assert row["supplied_as"]["kind"] == "none" and row["supplied_as"]["why"]
     assert [f for f in retr.check(data) if f.startswith("RETR-04")] == []
+
+
+# ---------------------------------------------------------------------------
+# R40-02 — a registry that gates what it does not render
+# ---------------------------------------------------------------------------
+
+def test_a_supply_detail_reaches_the_table(data):
+    """The defect. `_supply_sentence` read `detail` for a `cli` row and ignored it
+    for a `manifest_key` one, so the receipt row's account of its own key syntax —
+    `<origin>/<message_id>`, the whole point of R39-01 — was in the JSON and in no
+    rendered document. RETR-05 is the gate; this is it firing."""
+    row = next(r for r in data["inputs"] if r["input"] == "receipts")
+    detail = row["supplied_as"]["detail"]
+    assert "<origin>/<message_id>" in detail, "the fixture must carry the syntax"
+    assert detail in retr._supply_sentence(row["supplied_as"]), \
+        "a detail the registry carries must reach the cell a reader reads"
+    assert detail in (ROOT / "docs" / "retrievability.md").read_text(encoding="utf-8")
+
+
+def test_the_gate_catches_a_detail_the_renderer_drops(data, monkeypatch):
+    """And the gate is a gate: with the renderer back in the state that lost it,
+    RETR-05 reports the row."""
+    monkeypatch.setattr(retr, "_supply_sentence",
+                        lambda s: f"bundle manifest key `{s['key']}`"
+                        if s.get("kind") == "manifest_key" else s.get("detail", ""))
+    findings = [f for f in retr.check(data) if f.startswith("RETR-05")]
+    assert any("receipts" in f for f in findings), findings
+
+
+def test_a_manifest_key_row_without_a_detail_is_not_a_finding(data):
+    """Most rows have nothing to add beyond the key, and RETR-05 does not demand
+    prose of them — it only requires that prose which EXISTS be rendered."""
+    row = next(r for r in data["inputs"] if r["input"] == "evidence")
+    assert "detail" not in row["supplied_as"]
+    assert [f for f in retr.check(data) if f.startswith("RETR-05")] == []
+
+
+def test_the_published_manifest_fragment_is_a_key_the_loader_accepts():
+    """The review asked for a concrete fragment, so the fragment must be REAL: the
+    key it shows is parsed out of the rendered document and RUN through the
+    published entry point. A worked example nobody executes is how the catalogue
+    came to describe a list where the code reads a map."""
+    import json as _json
+    import re
+    import sys
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import bundle_lint
+    md = (ROOT / "docs" / "retrievability.md").read_text(encoding="utf-8")
+    m = re.search(r'`(\{"receipts":\s*\{[^`]*\}\})`', md)
+    assert m, "the receipts row must show a concrete manifest fragment"
+    [(key, filename)] = _json.loads(m.group(1))["receipts"].items()
+    assert filename.endswith(".json"), filename
+
+    samples = ROOT / "samples"
+    manifest = _json.loads((samples / "bundle.default.manifest.json")
+                           .read_text(encoding="utf-8"))
+    origin, _, mid = key.rpartition("/")
+    se = _json.loads((samples / "sample-SE-availability.json")
+                     .read_text(encoding="utf-8"))["projection"]
+    assert (origin, mid) == (se["rdp_id"], se["message_id"]), \
+        "the documented handle must be the one the shipped evidence carries"
+    manifest["receipts"] = {key: "receipt.availability.demo.json"}
+    issues = bundle_lint.lint_bundle(manifest, str(samples))
+    assert [r for r, _ in issues
+            if r in ("LINT-BND-38", "LINT-BND-I8", "LINT-BND-I9")] == [], issues

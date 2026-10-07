@@ -181,6 +181,17 @@ def check(data):
                     f"`{key}`, which `lint_bundle` does not read — so the "
                     "published entry point cannot supply this input and every "
                     "rule that needs it is reachable only from a hand-built call")
+            # RETR-05 (R40-02): a `detail` the registry carries must REACH the
+            # table. `_supply_sentence` read `detail` for a `cli` row and ignored
+            # it here, so the receipt row's account of its own key syntax lived in
+            # the JSON and in no document a reader reads. A registry that gates
+            # what it does not render states a requirement to itself.
+            detail = str(stated.get("detail", "")).strip()
+            if detail and detail not in _supply_sentence(stated):
+                findings.append(
+                    f"RETR-05 row {row['input']!r} states a supply `detail` that the "
+                    "rendered table does not carry — the registry would be the only "
+                    "place it is said")
         elif kind == "cli":
             if not str(stated.get("detail", "")).strip():
                 findings.append(
@@ -209,10 +220,18 @@ def check(data):
 
 
 def _supply_sentence(s):
-    """How the material reaches a verifier, as one cell of the table."""
+    """How the material reaches a verifier, as one cell of the table.
+
+    R40-01/R40-02: `detail` was read for a `cli` row and IGNORED for a
+    `manifest_key` one, so the receipt row's account of its own key syntax —
+    `<origin>/<message_id>`, the whole point of R39-01 — existed in the registry
+    and in no document anybody reads. A registry that gates what it does not
+    render states a requirement to itself.
+    """
     kind = s.get("kind")
     if kind == "manifest_key":
-        return f"bundle manifest key `{s['key']}`"
+        said = f"bundle manifest key `{s['key']}`"
+        return f"{said} — {s['detail']}" if s.get("detail") else said
     if kind == "cli":
         return s["detail"]
     if kind == "none":

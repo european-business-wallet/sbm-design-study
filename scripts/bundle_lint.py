@@ -133,6 +133,7 @@ from lint_cli import (parse_common_flags, compute_grade_commitment,  # noqa: E40
                       resolve_ds_receipt_key, ReceiptKeyError,  # noqa: E402  — R4-03
                       verify_ds_receipt,  # noqa: E402  — R5-03 ONE receipt check
                       DeliveryContext,  # noqa: E402  — R7-02 exact context
+                      UNASSOCIATED,  # noqa: E402  — R40-01 association unestablished
                       DELIVERY_CONTEXT_FIELDS,  # noqa: E402
                       check_identity_coherence,  # noqa: E402  — R6-01 SHARED
                       check_scope_in_force,  # noqa: E402  — R6-01
@@ -1912,14 +1913,36 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
         # it travelled inside an EP, which is where the availability message's SE
         # is retained. The walk is shallow and explicit: an EP's own `se` and its
         # `outcomes`, not an arbitrary deep search.
-        def _supporting(ev, out):
+        def _supporting(ev, out, origin=None):
+            """Index the evidence by `message_id`, recording for each object the
+            ORIGIN it is attributable to — `None` where this bundle does not
+            establish one.
+
+            Only an SE names an origin, so only an SE places itself. An outcome
+            inside an Evidence Package is placed by the PACKAGE: LINT-EP-01 holds
+            every outcome's `message_id` to the EP's own SE, and the EP's seal
+            covers both, so the relationship is a statement the composer signed
+            and not an inference drawn here. A STANDALONE DE places itself
+            nowhere: its `rdp_id` is the outcome ISSUER, and reading that as the
+            origin is the conflation SBM-ADR-0016 removed.
+
+            R40-01: this walk used to flatten a package and discard that signed
+            relationship, which left a nested DE indistinguishable from a loose
+            one. One unrelated SE elsewhere in the bundle was then enough to
+            detach a DE from the SE sealed beside it — and with no DE attributed,
+            the delivery-instant comparison it was the subject of stopped running
+            at all, so ADDING evidence made a proven contradiction disappear.
+            """
             if not isinstance(ev, dict):
                 return out
-            if ev.get("message_id"):
-                out.setdefault(ev["message_id"], []).append(ev)
+            inner = origin
             if ev.get("type") == "EP-v1":
+                inner = ((ev.get("se") or {}).get("rdp_id")) or origin
                 for sub in [ev.get("se")] + list(ev.get("outcomes") or []):
-                    _supporting(sub, out)
+                    _supporting(sub, out, inner)
+            if ev.get("message_id"):
+                own = ev.get("rdp_id") if ev.get("type") == "SE-v1" else inner
+                out.setdefault(ev["message_id"], []).append((own, ev))
             return out
 
         by_message = {}
@@ -1932,15 +1955,10 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
         # take the FIRST SE in the list: two SEs sharing an identifier under
         # different origins gave opposite verdicts when the same two files were
         # listed in the other order. Order is not evidence.
-        #
-        # A DE cannot be placed in this index by its own fields: its `rdp_id` is
-        # the OUTCOME ISSUER, not the origin. So a DE associates with a handle only
-        # when the bundle leaves no doubt which one — exactly one evidenced origin
-        # for that identifier.
         origins_of = {}
         for mid, group in by_message.items():
-            origins_of[mid] = sorted({e["rdp_id"] for e in group
-                                      if e.get("type") == "SE-v1" and e.get("rdp_id")})
+            origins_of[mid] = sorted({o for o, e in group
+                                      if e.get("type") == "SE-v1" and o})
 
         def _handle(key, receipt):
             """The (origin, message_id) a receipt entry is filed under.
@@ -1959,52 +1977,102 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 return None, mid, found
             return (found[0] if found else receipt.get("issuing_rdp_id")), mid, None
 
+        # R40-01: the four questions below are SEPARATE, and the answers to the
+        # later ones do not depend on the answers to the earlier ones.
+        #
+        #   1. which delivery is this receipt about?        (identity)
+        #   2. does the bundle's evidence record it?        (association)
+        #   3. is the receipt authentic and self-consistent? (authenticity)
+        #   4. does it agree with the delivery's own date?  (the grade's rule)
+        #
+        # They used to run as one sequence of `continue`s, so an unanswerable
+        # earlier question ERASED a later answer the material already proved:
+        # with one identifier evidenced under two origins, a receipt whose
+        # signature does not verify was reported as merely unplaceable. Nothing
+        # about a forged signature depends on knowing which delivery it names.
+        # Every question is now asked, and each one reports its own answer.
         for key, receipt in receipts.items():
             if not isinstance(receipt, dict):
                 continue      # not a receipt object; nothing to resolve
+            # ---- 1. identity. From the claimant's filing, or from evidence that
+            # leaves no doubt — NEVER from the receipt's own `issuing_rdp_id`.
+            # That claim is what step 2 tests, and selecting the SE by it would
+            # make the test vacuous: the self-consistency R38-01 removed.
             origin_key, message_id, ambiguous = _handle(key, receipt)
+            group = by_message.get(message_id) or []
+            several = len(origins_of.get(message_id) or []) > 1
+            supported, unplaceable = [], []
+            if not ambiguous:
+                for own, ev in group:
+                    if own is None:
+                        # Attributable to nothing by itself. Where the bundle
+                        # evidences ONE origin for this identifier there is no
+                        # doubt to resolve; where it evidences several, this
+                        # object is not evidence about this handle, and saying so
+                        # is the point — dropping it silently is what made a
+                        # missing comparison look like a successful one.
+                        (unplaceable if several else supported).append(ev)
+                    elif own == origin_key:
+                        supported.append(ev)
+                    # another origin's: a different delivery, and not this one.
+            se = next((e for e in supported if e.get("type") == "SE-v1"), None)
+            de = next((e for e in supported if e.get("type") == "DE-v1"), None)
+
+            # ---- 2. association. `placed` means the supported evidence records
+            # THIS delivery; `comparable` adds that a full delivery context can be
+            # stated. Each finding below sets one of them and none of them skips
+            # what follows.
+            placed = not ambiguous
             if ambiguous:
                 add("LINT-BND-I9",
                     f"DS receipt filed under the bare identifier {message_id!r}, which "
                     f"this bundle evidences under {len(ambiguous)} origins "
                     f"({', '.join(ambiguous)}): which delivery it substantiates is "
                     "AMBIGUOUS, and the order the evidence was listed in does not "
-                    "decide it. File it under `<origin>/<message_id>` (R39-01)")
-                continue
-            supported = [e for e in (by_message.get(message_id) or [])
-                         if e.get("type") != "SE-v1" or e.get("rdp_id") == origin_key]
-            # A DE is kept only where the identifier is unambiguous in this bundle.
-            if len(origins_of.get(message_id) or []) > 1:
-                supported = [e for e in supported if e.get("type") != "DE-v1"]
-            if not supported:
-                add("LINT-BND-38",
-                    f"a DS receipt is filed under {message_id!r}, which no "
-                    "evidence in this bundle names — a receipt substantiates a "
-                    "delivery, and there is none here to substantiate (R6-03)")
-                continue
+                    "decide it. File it under `<origin>/<message_id>` (R39-01). The "
+                    "receipt's own signature and internal consistency are checked "
+                    "below regardless (R40-01)")
+            if unplaceable:
+                kinds = ", ".join(sorted({str(e.get("type")) for e in unplaceable}))
+                add("LINT-BND-I9",
+                    f"DS receipt for {message_id!r}: {len(unplaceable)} retained "
+                    f"object(s) ({kinds}) carry that identifier without establishing "
+                    "which origin's delivery they record — a DE's `rdp_id` is its "
+                    f"ISSUER, not an origin — and this bundle evidences the identifier "
+                    f"under {len(origins_of.get(message_id) or [])} origins. They are "
+                    "NOT compared with this receipt, and the comparisons that needed "
+                    "them have not been made. Retain such an outcome inside its "
+                    "Evidence Package, whose SE states the origin (R40-01)")
             # R7-02 requirement 6: bind the retained receipt to the exact
             # SE/DE it substantiates, INCLUDING the issuing-RDP namespace and
             # the full signed delivery context — not only the manifest key.
-            # The partial context this built before ({message_id} plus
-            # sometimes recipient_uid) asserted a fraction of what the receipt
-            # claims, so a receipt could be correct about the message and wrong
-            # about everything else.
-            se = next((e for e in supported if e.get("type") == "SE-v1"), None)
-            de = next((e for e in supported if e.get("type") == "DE-v1"), None)
             if origin_key and receipt.get("issuing_rdp_id") not in (None, origin_key):
                 add("LINT-BND-38",
                     f"DS receipt filed under origin {origin_key!r} attests "
                     f"{receipt['issuing_rdp_id']!r} — the entry and the signed origin "
                     "name different deliveries (R39-01)")
-                continue
-            missing = [f for f in DELIVERY_CONTEXT_FIELDS
-                       if receipt.get(f) is None]
+                placed = False
+            elif not group:
+                add("LINT-BND-38",
+                    f"a DS receipt is filed under {message_id!r}, which no "
+                    "evidence in this bundle names — a receipt substantiates a "
+                    "delivery, and there is none here to substantiate (R6-03)")
+                placed = False
+            elif placed and not supported:
+                add("LINT-BND-38",
+                    f"a DS receipt is filed under the handle ({origin_key!r}, "
+                    f"{message_id!r}), which no evidence in this bundle records: "
+                    f"that identifier is evidenced under "
+                    f"{origins_of.get(message_id) or ['no origin']}, not under the "
+                    "origin the entry names (R39-01)")
+                placed = False
+            missing = [f for f in DELIVERY_CONTEXT_FIELDS if receipt.get(f) is None]
             if missing:
                 add("LINT-BND-38",
                     f"DS receipt for {message_id!r} omits {missing}, so the "
                     "delivery context it attests cannot be stated in full "
                     "(R7-02)")
-                continue
+            comparable = placed and not missing
             # R38-01: the expectation is DERIVED FROM THE EVIDENCE, not copied
             # from the receipt being checked.
             #
@@ -2021,44 +2089,47 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
             # origin, which only the SE proves. The DE's `rdp_id` is the DE's
             # ISSUER — using it here would be the very conflation SBM-ADR-0016
             # removed.
-            unproven = []
-            origin = (se or {}).get("rdp_id")
-            if origin is None:
-                unproven.append("its origin (no SE for this message is retained, "
-                                "and only an SE proves one)")
-            commitment = (se or {}).get("envelope_hash") or (de or {}).get("envelope_hash")
-            if commitment is None:
-                unproven.append("the octets it attests (no retained object commits "
-                                "to them)")
-            evidenced_uid = (se or {}).get("recipient_uid") or (de or {}).get("recipient_uid")
-            if evidenced_uid is None:
-                unproven.append("the recipient it names")
-            # THESE three come from the receipt, and are stated as such: no
-            # published evidence object names the observing provider, the
-            # acknowledging member's device or the session it acknowledged in.
-            # That is A1's gap, not a comparison this rule declines to make.
-            expect = DeliveryContext(
-                message_id=message_id,
-                issuing_rdp_id=origin or receipt["issuing_rdp_id"],
-                observed_by=receipt["observed_by"],
-                recipient_uid=evidenced_uid or receipt["recipient_uid"],
-                mid=receipt["mid"], device_id=receipt["device_id"],
-                session_binding=receipt["session_binding"],
-                message_digest=commitment or receipt["message_digest"])
-            if unproven:
-                add("LINT-BND-I9",
-                    f"DS receipt for {message_id!r} cannot be bound to the "
-                    f"evidenced delivery: this bundle does not establish "
-                    f"{'; '.join(unproven)}. The signature is checked, but a "
-                    "receipt that verifies may be true about another delivery "
-                    "(R38-01)")
-            # SBM-ADR-0015/0016: the receipt key is the OBSERVING provider's,
-            # published in its own BW-PROVIDER descriptor and pinned to it by its
-            # membership record. It used to be read from the entity's BW-MED,
-            # because the Delivery Service was a second provider and the
-            # customer's signed document was the only thing already retained for
-            # the evidence period; the MED path is DELETED rather than kept as a
-            # fallback, so a `kid` published only in a BW-MED does not resolve.
+            expect = UNASSOCIATED
+            if comparable:
+                unproven = []
+                origin = (se or {}).get("rdp_id")
+                if origin is None:
+                    unproven.append("its origin (no SE for this message is retained, "
+                                    "and only an SE proves one)")
+                commitment = (se or {}).get("envelope_hash") or (de or {}).get("envelope_hash")
+                if commitment is None:
+                    unproven.append("the octets it attests (no retained object commits "
+                                    "to them)")
+                evidenced_uid = (se or {}).get("recipient_uid") or (de or {}).get("recipient_uid")
+                if evidenced_uid is None:
+                    unproven.append("the recipient it names")
+                # THESE three come from the receipt, and are stated as such: no
+                # published evidence object names the observing provider, the
+                # acknowledging member's device or the session it acknowledged in.
+                # That is A1's gap, not a comparison this rule declines to make.
+                expect = DeliveryContext(
+                    message_id=message_id,
+                    issuing_rdp_id=origin or receipt["issuing_rdp_id"],
+                    observed_by=receipt["observed_by"],
+                    recipient_uid=evidenced_uid or receipt["recipient_uid"],
+                    mid=receipt["mid"], device_id=receipt["device_id"],
+                    session_binding=receipt["session_binding"],
+                    message_digest=commitment or receipt["message_digest"])
+                if unproven:
+                    add("LINT-BND-I9",
+                        f"DS receipt for {message_id!r} cannot be bound to the "
+                        f"evidenced delivery: this bundle does not establish "
+                        f"{'; '.join(unproven)}. The signature is checked, but a "
+                        "receipt that verifies may be true about another delivery "
+                        "(R38-01)")
+            # ---- 3. authenticity, which needs none of the above. SBM-ADR-0015/
+            # 0016: the receipt key is the OBSERVING provider's, published in its
+            # own BW-PROVIDER descriptor and pinned to it by its membership
+            # record. It used to be read from the entity's BW-MED, because the
+            # Delivery Service was a second provider and the customer's signed
+            # document was the only thing already retained for the evidence
+            # period; the MED path is DELETED rather than kept as a fallback, so a
+            # `kid` published only in a BW-MED does not resolve.
             #
             # This selected by `issuing_rdp_id` — the message's ORIGIN — which is
             # the right descriptor only where origin and observer coincide, the
@@ -2074,20 +2145,32 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                     f"for the observing provider {observer!r} was supplied, so "
                     "the key that signed it cannot be resolved and the handover "
                     "rests on the DE's assertion alone (SBM-ADR-0016)")
-                continue
+                continue      # nothing below can be checked without the key
             try:
+                # `expect is UNASSOCIATED` where step 2 could not place the
+                # receipt: the signature, the mandatory signed fields, the
+                # outer-vs-signed equality and the `kid` attribution are all
+                # checked, and only the delivery-context comparison — the one
+                # thing that needs an association — is not (R40-01).
                 signed = verify_ds_receipt(receipt, descriptor, expect=expect)
             except ReceiptVerificationError as e:
                 add("LINT-BND-38",
                     f"DS receipt for {message_id!r}: {e.detail}")
                 continue
-            # R38-01: at the AVAILABILITY grade the receipt's own instant is what
-            # dates the DE (the I-D, *Delivery State Model*; R11-04). So the two
-            # must agree, and a receipt signed at another moment does not
-            # substantiate this delivery. NOT imposed at the verification and
-            # acceptance grades, where `delivered_at` is the completing
-            # confirmation's instant and the receipt dates nothing.
-            if de is not None and de.get("delivery_grade") == "availability":
+            # ---- 4. the availability grade's own rule. R38-01: at that grade the
+            # receipt's own instant is what dates the DE (the I-D, *Delivery State
+            # Model*; R11-04). So the two must agree, and a receipt signed at
+            # another moment does not substantiate this delivery. NOT imposed at
+            # the verification and acceptance grades, where `delivered_at` is the
+            # completing confirmation's instant and the receipt dates nothing.
+            #
+            # Gated on `placed`, because the comparison's premise is that this DE
+            # records THIS delivery. Where the entry and the signed origin name
+            # different deliveries that premise is false, and the disagreement
+            # reported would be between two unrelated acts. It is NOT gated on
+            # `comparable`: an omitted context field does not make the two
+            # instants agree.
+            if placed and de is not None and de.get("delivery_grade") == "availability":
                 at = signed.get("server_time") if isinstance(signed, dict) else None
                 dated = de.get("delivered_at")
                 # R39-02: compare INSTANTS, not spellings. `!=` on the raw strings
@@ -2114,7 +2197,6 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                             f"availability-grade DE is dated {dated!r} — at that grade "
                             "the receipt IS the date, so a receipt from another moment "
                             "substantiates another delivery (R38-01)")
-
     _bnd38()
 
     # LINT-BND-35 (R3-02/R3-T2): the pinned policy version was the LATEST one

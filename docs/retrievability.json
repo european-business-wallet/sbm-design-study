@@ -180,7 +180,8 @@
         "detail": "keyed by the delivery it substantiates: the bare `message_id`, or `<origin>/<message_id>` where one identifier is evidenced under more than one origin (R39-01)"
       },
       "absent": "the S2 event rests on the DE's assertion rather than on the DS's signature.",
-      "survives_provider_exit": false
+      "survives_provider_exit": false,
+      "note": "Supplied as a MAP of handle to receipt, not a list: `{\"receipts\": {\"urn:sbm:rdp:mockeu-001/01HZ3AVLBCDEFGH9JKMN0PQRST\": \"receipt.json\"}}`. A BARE key — `{\"01HZ3AVLBCDEFGH9JKMN0PQRST\": \"receipt.json\"}` — still resolves, to the one origin this bundle evidences for that identifier; where it evidences several, which delivery is meant is AMBIGUOUS and reported (LINT-BND-I9) rather than settled by the order the evidence was listed in. What the key does is state WHICH delivery the entry claims; it proves nothing about it. The evidence must still establish the origin, the octets and the recipient, and the receipt’s own signed `issuing_rdp_id` is COMPARED with the handle rather than used to choose it — selecting the SE by the claim under test is the self-consistency R38-01 removed."
     },
     {
       "input": "evidence",

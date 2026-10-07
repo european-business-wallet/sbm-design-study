@@ -18,7 +18,92 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-10-07, edition r40
+## Current — 2026-10-07, edition r41
+
+**An unanswerable question must not erase an answered one. No artefact version
+moves.** An independent verification confirmed both corrections in the previous
+edition and found a defect inside the first of them: **adding evidence to a
+package of retained material removed findings from the report.**
+
+The demonstration is exact. Take an evidence package carrying a message's
+submission evidence and its delivery evidence, sealed together; a delivery receipt
+that really was signed by the right provider, 37 seconds after the delivery
+evidence it is supposed to date; and a receipt entry that names the message's
+origin explicitly. The verifier reports the disagreement. Now add one further
+sealed submission evidence object, for the same bare identifier under an unrelated
+origin — changing nothing about the receipt, nothing about the package, and
+nothing about the relationship the package's own seal states — and the
+disagreement is no longer reported at all. Its companion: a receipt whose
+signature does **not** verify, filed under a bare identifier, stopped being
+reported as unverifiable once the same unrelated object was added.
+
+**The cause was one sequence doing four jobs.** The retained-receipt check asked
+four questions in a single chain, each step returning early: *which delivery is
+this receipt about; does the retained evidence record that delivery; is the receipt
+authentic and internally consistent; does it agree with the delivery's own date.*
+Chained that way, a question the material could not answer suppressed an answer the
+material already contained. Nothing about a forged signature depends on knowing
+which delivery it names.
+
+The four are separate now, and each reports its own answer. Where the retained
+material does not establish which delivery a receipt belongs to, that is reported
+as an incomplete verification — and the key is still resolved, the signature still
+verified, the signed fields still compared with the ones presented beside them.
+The one thing not done is the comparison that genuinely needs the association.
+
+**A package's seal states a relationship, and the walk discarded it.** An evidence
+package holds every outcome it carries to its own submission evidence, and its seal
+covers both — so an outcome retained inside a package is attributed by the party
+that composed it, not by inference at verification time. Flattening the package
+made an outcome inside one indistinguishable from a loose one, and a single
+unrelated object elsewhere was then enough to detach a delivery record from the
+submission record sealed beside it. A **standalone** outcome genuinely names no
+origin, so where an identifier is ambiguous nothing attributes it: such an object
+is set aside, and now *said* to be set aside, together with the comparisons that
+needed it. Dropping it in silence made a comparison that never ran look like one
+that passed.
+
+**Three further instances of the same shape** were found while reproducing those
+two: a receipt filed under an identifier no retained evidence names, one filed
+under the wrong origin, and one omitting a field the delivery context needs. Each
+reported the filing error and stopped, so a forged signature in any of them went
+unmentioned. Stated with its weight: all three already failed the verification —
+what was wrong is that *refile this correctly* and *this signature is forged* are
+different conclusions, and only the first was printed.
+
+**The worked demonstration's relay chain still preceded the message it relays.**
+The previous edition moved the package's state records and left its chain of
+provider hops timestamped before the submission. Those are act timestamps: a
+verifier asks whether each provider was admitted **when it acted**, at that
+entry's own instant. Each hop now timestamps the act it is — the originating
+provider accepting at the submission instant, the relaying provider accepting at
+the instant the first state record names — so the package's two records of the
+same two acts agree. Only the package's own seal was recomputed: every enclosed
+issuer's seal is byte-identical, and a field-by-field comparison confirms nothing
+moved but those two instants.
+
+**And the input register gated prose it did not render.** The register that names,
+for each verification input, who serves it and what its absence costs, carried an
+account of the receipt entry's own key syntax — and the renderer read that account
+for a command-line input while ignoring it for a manifest key. So the syntax
+existed in the register and in no document a reader reads, and the rule catalogue
+still described the older shape. Both now carry the real one, with a worked
+manifest fragment that a check parses out of the rendered page and runs through the
+published entry point.
+
+Five consecutive editions have now each found the previous one's correction to
+contain the next one's defect, and in three of them a demonstration fixture was
+asserting something nothing compared. Each was caught by a check added the edition
+before. That is the review process working — and it is also the reason not to read
+*all gates green* as *correct*: every edition's gates were green over the defect the
+next verification found.
+
+What this edition does **not** change: no published operation carries a receipt
+from the provider that observed a handover to the party that issues the delivery
+evidence, and the open-items list still records that, together with the limits on
+corroborating a receipt's observer, device and session from published evidence.
+
+## Edition r40 — 2026-10-07
 
 **Order is not evidence, and one instant has more than one spelling. No artefact
 version moves.** An independent verification confirmed the previous edition's
