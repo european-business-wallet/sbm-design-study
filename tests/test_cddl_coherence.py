@@ -8,15 +8,16 @@ drifted. Skips when the `cddl` tool is absent."""
 import importlib.util
 import sys
 import pathlib
-import shutil
 import subprocess
 import tempfile
 
 import cbor2
-import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-pytestmark = pytest.mark.skipif(shutil.which("cddl") is None, reason="cddl tool not installed")
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from cddl_tool import requires_cddl  # noqa: E402
+
+pytestmark = requires_cddl
 
 
 def _lint_cli():
@@ -28,8 +29,9 @@ def _lint_cli():
 
 def test_every_sample_is_cddl_valid():
     r = subprocess.run([sys.executable, str(ROOT / "scripts" / "cddl_check.py")], capture_output=True, text=True)
-    if r.returncode == 3:
-        pytest.skip("cddl tool not installed")
+    # Exit 3 means the tool is unusable, and `requires_cddl` has already
+    # decided what that means: skipped locally, or run and failed under CI.
+    # Re-testing for it here would be a second answer to a settled question.
     assert r.returncode == 0, r.stdout + r.stderr
 
 

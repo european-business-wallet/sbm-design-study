@@ -26,7 +26,6 @@ import base64
 import json
 import os
 import pathlib
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -35,6 +34,7 @@ import cbor2
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+from cddl_probe import CddlUnavailable, unusable  # noqa: E402,F401 — one probe, three callers
 from lint_cli import projection_equals_decode, validate_body  # noqa: E402 — N1/N2
 CDDL_TEXT = (ROOT / "cddl" / "sm-mls-erd.cddl").read_text(encoding="utf-8")
 
@@ -67,6 +67,9 @@ def _body_rule(body):
 
 
 def _validate(raw: bytes, rule: str, label: str) -> bool:
+    reason = unusable()
+    if reason:
+        raise CddlUnavailable(reason)
     with tempfile.NamedTemporaryFile("w", suffix=".cddl", delete=False) as cf:
         cf.write(f"_root = {rule}\n" + CDDL_TEXT)
         cddl_path = cf.name
@@ -106,14 +109,14 @@ def _check_body(body, label):
 
 
 def main():
-    if not shutil.which("cddl"):
+    reason = unusable()
+    if reason:
         if os.environ.get("CI"):
-            print("[FAIL] the `cddl` tool is not installed but CI is set — the CDDL "
-                  "non-divergence gate MUST run in CI (N4/D7). Install it: "
-                  "cargo install cddl --version 0.9.5 --locked.")
+            print(f"[FAIL] {reason} — but CI is set, and the CDDL non-divergence "
+                  "gate MUST run in CI (N4/D7).")
             return 1
-        print("[skip] the `cddl` tool is not installed — CDDL coherence gate SKIPPED "
-              "(install: cargo install cddl). Non-gating LOCALLY only.")
+        print(f"[skip] {reason} — CDDL coherence gate SKIPPED. "
+              "Non-gating LOCALLY only.")
         return 3
     r = subprocess.run(["cddl", "--ci", "compile-cddl", "--cddl", str(ROOT / "cddl" / "sm-mls-erd.cddl")],
                        capture_output=True, text=True)

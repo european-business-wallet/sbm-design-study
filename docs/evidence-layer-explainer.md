@@ -17,12 +17,12 @@ A registered-delivery provider (RDP) seals evidence about a message it never rea
 |---|---|---|---|---|
 | **verification** (the default) | RDP(in) has verified an eligible member's confirmation that the digest matched — S3, which is S4 under `any-one` | RDP(in)'s receipt of that confirmation | an authenticated **assertion** by a member's device that it decrypted the content and re-verified its digest — attributable to the device's published key when wallet-signed, and only through RDP(in)'s session record when session-bound; the truth of the assertion rests on the endpoint | acceptance by the entity under a quorum; anything about what the content means |
 | **acceptance** (`quorum:n`, `all`) | the confirmations of distinct eligible members satisfy the policy — S4 | RDP(in)'s receipt of the completing confirmation | the entity's published policy was satisfied | that no later policy existed ([A3](REVIEW_AGENDA.md)) |
-| **availability** (declared per class, never implicit) | a device of the addressee took the bytes and acknowledged them in an authenticated session — S2 | the Delivery Service's receipt (`server_time`) | handover to an authenticated endpoint, with the sender-declared digest; after a reveal, that the class was declared for this grade | recipient-side verification; acceptance; the handover beyond the Delivery Service's own observation ([A9](REVIEW_AGENDA.md)) |
+| **availability** (declared per class, never implicit) | a device of the addressee took the bytes and acknowledged them in an authenticated session — S2 | the Delivery Service's receipt (`server_time`) | handover to an authenticated endpoint, with the sender-declared digest; after a reveal, that the class was declared for this grade | recipient-side verification; acceptance; the handover beyond the Delivery Service's own observation — which is the qualified provider's own, since [SBM-ADR-0015](adr/SBM-ADR-0015.md) resolved [A9](REVIEW_AGENDA.md) |
 
 | Proof | Made by | Shows | Does not show |
 |---|---|---|---|
 | SE, with the sender's signature (the default) | RDP(out); the sending device | these octets were submitted by an authenticated sender, as RDP(out) reports, and accepted by the Delivery Service before sealing; the signature attributes the submission to the device | delivery; the entity's legal intent ([L4](REVIEW_AGENDA.md)) |
-| The Delivery Service's receipt | the Delivery Service | a device of the addressee took these octets at `server_time` | that anyone decrypted them; that the observation is true (A9) |
+| The Delivery Service's receipt | the Delivery Service | a device of the addressee took these octets at `server_time`; its signed `observed_by` names which provider's Delivery Service observed ([SBM-ADR-0016](adr/SBM-ADR-0016.md)) | that anyone decrypted them; that the observation is TRUE — it is the qualified provider's own word, which [SBM-ADR-0015](adr/SBM-ADR-0015.md) settled rather than removed |
 | A member's `s3` confirmation | the member's device | an authenticated assertion that the member decrypted and the digest matched — attributable to the device key when wallet-signed, to the session when session-bound | that the assertion is true, which rests on the endpoint; the entity's acceptance, unless it completes the policy |
 | A mismatch proof | a member's device | an attributable claim that the digest failed; it ends the message with an NDE | why — corruption, error or attack |
 | A refusal | a member | an attributable decline; it ends the message with the member's RE | its legal weight ([L4](REVIEW_AGENDA.md)) |
@@ -40,7 +40,7 @@ Five clocks stay apart: what a device **declares**, what the Delivery Service an
 
 ## 1. What the evidence layer is for
 
-The Secure Business Messaging Profile carries messages between legal entities over an end-to-end encrypted channel (a profile of IETF MLS) in which no intermediary — not the messaging providers, not the delivery providers — can read the content. On its own, that gives confidentiality but no legal weight. The **evidence layer** is what supplies the legal weight: a set of signed, time-stamped records, issued by qualified providers, that attest *who* sent something, *to whom*, *when*, under *which policy*, and *with what outcome* — all without the issuer ever seeing the content.
+The Secure Business Messaging Profile carries messages between legal entities over an end-to-end encrypted channel (a profile of IETF MLS) in which no intermediary — not the registered delivery providers, not the delivery services they operate — can read the content. On its own, that gives confidentiality but no legal weight. The **evidence layer** is what supplies the legal weight: a set of signed, time-stamped records, issued by qualified providers, that attest *who* sent something, *to whom*, *when*, under *which policy*, and *with what outcome* — all without the issuer ever seeing the content.
 
 The design turns on a single idea that recurs throughout this document: **evidence binds to a cryptographic fingerprint of the content, never to the content**. Providers certify events, identities, timestamps and digests; the plaintext stays between the endpoints. This is what lets the profile claim, simultaneously, the statutory presumptions of Regulation (EU) No 910/2014, Article 43(2) — integrity, sender, addressee, time — and genuine end-to-end confidentiality, two properties normally presented as a trade-off.
 
@@ -52,7 +52,8 @@ The evidence layer is Layer 3 of the stack, sitting above addressing/discovery (
 - **The recipient wallet** is a *trust participant*, not just an endpoint: after decrypting, it recomputes the digest and produces a **recipient confirmation** — wallet-signed or bound to an authenticated session — that the recipient-side RDP relies upon to issue Delivery Evidence (§6).
 - **RDP(out)** — the sender-side provider — issues Sending Evidence and, in the single-provider case, composes the Evidence Package.
 - **RDP(in)** — the recipient-side provider — issues Delivery, Non-Delivery or Refusal Evidence.
-- **The RDP's Delivery Service** routes ciphertext and issues no evidence object. It is nonetheless an **observer** the evidence can rest on: at the availability grade, the Delivery Service's signed receipt of a device's acknowledged handover (S2) is what dates the DE (§6). The receipt's signature can be checked by anyone holding the Delivery Service's key; the event it reports is the Delivery Service's own observation, which the RDP seals without re-witnessing it — attributed, not independently established. Who observes S2 is settled (review agenda A9, SBM-ADR-0015): the RDP, which operates the Delivery Service as part of its qualified service; what remains is the trust already placed in that provider. Its other signals appear in the package, if at all, as non-operative state records.
+- **The RDP's Delivery Service** routes ciphertext and issues no evidence object. It is nonetheless an **observer** the evidence can rest on: at the availability grade, the Delivery Service's signed receipt of a device's acknowledged handover (S2) is what dates the DE (§6). The event it reports is the Delivery Service's own observation, which the RDP seals without re-witnessing it — attributed, not independently established. Who observes S2 is settled (review agenda A9, [SBM-ADR-0015](adr/SBM-ADR-0015.md)): the RDP, which operates the Delivery Service as part of its qualified service, and what remains is the trust already placed in that provider.
+  **Whose** receipt it is, the receipt says. Its signed `observed_by` names the provider whose Delivery Service observed, and that provider's own descriptor is the one place the verifying key may be published — so a verifier holding the receipt knows which published document to look in, and whose admission to check it against ([SBM-ADR-0016](adr/SBM-ADR-0016.md)). In a four-corner exchange that provider is the **recipient's**, not the message's origin: one provider role does not mean one provider per message. The Delivery Service's other signals appear in the package, if at all, as non-operative state records.
 
 In the minimal deployment (Annex P profile 1) RDP(out) and RDP(in) are co-located; in the federated case (profile 2) RDP(out) relays the ciphertext with the sealed SE to RDP(in), and the two exchange per-hop relay evidence, under the four-corner requirements.
 
@@ -96,6 +97,39 @@ The `payload_hash` is a `{alg, hex, hash_mode}` descriptor. The sender computes 
 
 Because the RDP handles only ciphertext, it *cannot itself verify* the plaintext digest. The layer closes this gap on the recipient side: the recipient wallet recomputes `payload_hash` after decryption and confirms the match; its acknowledgement is the attestation. The same digest travels in the application envelope (Layer 2) as `content_digest` and in the evidence as `payload_hash`, and the two **must be equal** for the same message. If the recomputed digest does not match, the recipient must not acknowledge, and the responsible RDP issues an NDE with reason `payload-hash-mismatch` — a first-class failure, not ordinary non-delivery, carrying audit obligations, because a mismatch may indicate corruption, an implementation error or an attack.
 
+
+### 5.1 The digest is UNSALTED, and what that costs
+
+A digest is not a cipher. Anyone holding an evidence object or an Evidence
+Package — both providers, either party, an archive, an assessor, a court — can
+take a **guess** at the content, hash it, and see whether it matches. Nothing in
+the object stops them, and nothing is supposed to: the digest exists so that a
+holder of the content can confirm it.
+
+What that means depends entirely on how guessable the content is. For a document
+with real entropy the test is useless. For content drawn from a small set — an
+invoice on a known template whose only variable is an amount in a narrow range, a
+standard notice, an order confirmation — the digest **confirms** the guess, and
+the evidence has disclosed the content to anyone who held a plausible candidate.
+Under the multipart mode the exposure is wider: the manifest travels in the
+sealed Sending Evidence with each part's own digest, length, media type and,
+optionally, its file name.
+
+The profile's other bindings to things it must not disclose are already salted
+commitments — the availability grade's content class, and an agent act's mandate
+(§7.1). The content digest is not. [A12](REVIEW_AGENDA.md) is the open question
+of whether it should be, and [SBM-ADR-0014](adr/SBM-ADR-0014.md) is a concrete
+proposal for the construction, **proposed and not implemented**: today
+`payload_hash` is a bare digest, and no document, schema or sample behaves
+otherwise. A reader comparing editions should not infer a salt from that record's
+existence.
+
+What is written down, rather than left to be noticed, is the limit itself: the
+Internet-Draft carries *Guessable content behind an unsalted digest* — who can
+test a guess, who cannot (an observer of the network, which never sees a digest),
+and what an implementation handling low-entropy content should do about it.
+[`docs/end-to-end-encryption-explainer.md`](end-to-end-encryption-explainer.md)
+sets this beside the other properties the encryption does and does not give.
 ## 6. Delivery is not availability: the four states and the recipient confirmation
 
 The layer refuses to conflate "the message arrived somewhere" with "delivery occurred". It distinguishes four recipient-side states:
@@ -127,7 +161,7 @@ Availability-grade raises a verifiability problem. To protect privacy, the conte
 
 The layer solves this with a **grade commitment**: the sender wallet computes a salted hash commitment binding the content class to the referenced BW-ORG `delivery_grades` entry (tied to the same `acceptance_policy_ref.doc_digest`, so it commits to the published map version). The RDP echoes it verbatim into SE and into the availability-grade DE as `grade_commitment`, and must not issue an availability-grade DE without one. The salt travels only in the end-to-end-encrypted envelope, so both endpoints hold it while providers and external verifiers learn nothing about the class **from the commitment**. That is a statement about this field and not about the bundle: where the recipient publishes a scope map, the `scope_ref` the evidence echoes resolves to the set of content classes that scope covers, and a scope covering one class resolves to that class (§11.1 of the umbrella).
 
-In a dispute, either party **reveals** `(salt, content_class)`; any verifier then recomputes the commitment against the referenced BW-ORG version and checks (a) equality with the sealed `grade_commitment`, and (b) that the revealed class maps to `availability` in that document. A **matching** reveal of a declared class establishes, for any verifier, that the commitment opens to that class. A **failing** reveal establishes nothing on its own — inequality can be manufactured by inventing a salt — so what a recipient can produce is an *attributable* signed assertion (a GCM), which starts a dispute rather than settling it; whether the delivery evidence may be relied upon is decided through the dispute path (TS clause 6). A reveal discloses that one message's class to the parties of that dispute and nothing else. What it verifies without trusting the issuer is the grade's *eligibility* — that the sealed commitment opens to a class declared availability-grade; the handover the DE dates remains the Delivery Service's observation (§6, review agenda A9).
+In a dispute, either party **reveals** `(salt, content_class)`; any verifier then recomputes the commitment against the referenced BW-ORG version and checks (a) equality with the sealed `grade_commitment`, and (b) that the revealed class maps to `availability` in that document. A **matching** reveal of a declared class establishes, for any verifier, that the commitment opens to that class. A **failing** reveal establishes nothing on its own — inequality can be manufactured by inventing a salt — so what a recipient can produce is an *attributable* signed assertion (a GCM), which starts a dispute rather than settling it; whether the delivery evidence may be relied upon is decided through the dispute path (TS clause 6). A reveal discloses that one message's class to the parties of that dispute and nothing else. What it verifies without trusting the issuer is the grade's *eligibility* — that the sealed commitment opens to a class declared availability-grade; the handover the DE dates remains the Delivery Service's observation (§6) — the qualified provider's own, since [SBM-ADR-0015](adr/SBM-ADR-0015.md) resolved [A9](REVIEW_AGENDA.md).
 
 ## 8. The ETSI event model: why the event is not just a label
 

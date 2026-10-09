@@ -11,7 +11,12 @@ The pytest skip guards remain for deliberate ad-hoc `pytest` invocations; this
 preflight is the gate for the canonical `make test` run and CI.
 """
 import importlib
+import os
+import pathlib
 import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from cddl_probe import unusable  # noqa: E402 — one probe, three callers
 
 # import-name -> why it is test-required
 REQUIRED = {
@@ -27,6 +32,33 @@ REQUIRED = {
                     "EdDSA, ES256 and ES384, so Ed25519-only verification rejects "
                     "conforming evidence",
 }
+
+
+def _report_cddl():
+    """The Rust `cddl` tool is a BINARY, not an import, and the policy is stated
+    rather than discovered: **optional locally, required in CI.**
+
+    `scripts/cddl_check.py` has said so since N4/D7 — exit 3 locally, exit 1
+    when `CI` is set — and `.github/workflows/ci.yml` installs it for that
+    reason. What was missing was the preflight saying it out loud: six tests
+    executed the tool with no guard, so a machine without it reported six
+    FAILURES, and nothing before pytest mentioned the tool at all. Now the
+    preflight names it, and `tests/cddl_tool.requires_cddl` skips those tests
+    locally while running them under CI.
+    """
+    reason = unusable()
+    if reason is None:
+        print("cddl: present — the CDDL non-divergence gate will run")
+        return 0
+    if os.environ.get("CI"):
+        print(f"[FAIL] cddl: {reason}. CI is set, and the CDDL non-divergence "
+              "gate MUST run in CI (N4/D7).", file=sys.stderr)
+        return 1
+    print(f"cddl: {reason}\n"
+          "      OPTIONAL locally: `make cddl-check` exits 3 and the tests that "
+          "need it SKIP.\n"
+          "      Required in CI, where this is a hard failure.")
+    return 0
 
 
 def main():
@@ -46,7 +78,7 @@ def main():
     # Derived, not hand-listed: the old message named five modules and would
     # have kept saying so after this map grew.
     print("env preflight OK — " + ", ".join(REQUIRED) + " present")
-    return 0
+    return _report_cddl()
 
 
 if __name__ == "__main__":

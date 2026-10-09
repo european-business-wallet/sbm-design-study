@@ -135,7 +135,7 @@ def render_md(data):
              "docs/lint-catalogue.json. Regenerate with `make lint-catalogue` "
              "(scripts/lint_catalogue.py --render). -->")
     L.append("")
-    L.append("# Normative lint catalogue (X-20)")
+    L.append("# Normative lint catalogue")
     L.append("")
     L.append("This catalogue is the **normative definition** of every `LINT-*` "
              "conformance rule referenced by the umbrella (§9.4) and the TS "
@@ -199,7 +199,7 @@ def cmd_check():
     if missing:
         ok = False
         print("[FAIL] rules emitted by the reference tools but NOT in the "
-              "catalogue (an undocumented conformance rule — X-20):")
+              "catalogue (an undocumented conformance rule):")
         for i in missing:
             print(f"  - {i}")
     if phantom:

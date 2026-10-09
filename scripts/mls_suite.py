@@ -198,7 +198,7 @@ def plan_targets(members):
         if not suites:
             raise MissingDeviceCapabilities(
                 f"{mid}/{device_id} publishes no cipher_suites (BW-MEMBER 2.2) "
-                "— the suite selection cannot be executed for it (DR-08)")
+                "— the suite selection cannot be executed for it")
         targets.append({"mid": mid, "device_id": device_id})
     return targets
 
@@ -221,7 +221,7 @@ def select_suite_for_devices(members, package_suites, preference=PREFERENCE):
     for uid, mid, device_id, suites in caps:
         if not suites:
             raise MissingDeviceCapabilities(
-                f"{uid}/{mid}/{device_id} publishes no cipher_suites (DR-08)")
+                f"{uid}/{mid}/{device_id} publishes no cipher_suites")
     for suite in preference:
         if all(suite in suites and
                suite in set(package_suites.get((uid, mid, device_id), ()))
@@ -277,7 +277,7 @@ def check_reservation(targets, reservation):
             "keypackage-target-unavailable",
             "no package for " + ", ".join(f"{m}/{d}" for m, d in sorted(missing))
             + " — a group formed from a partial reservation is a group missing "
-              "a member's device (X-26)")
+              "a member's device")
     return got
 
 
@@ -327,13 +327,13 @@ def verify_group_params(params, *, cipher_suite_name, formation, registry):
         raise UnverifiableDecision(
             "an sbm_group_params v1 record binds neither the entity of its "
             "raises nor the inputs it was taken on; it cannot be recomputed as "
-            "it was taken (R12-X4)")
+            "it was taken")
     if formation is None or \
             mls_wire.formation_inputs_digest(formation) != params.get("inputs_digest"):
         raise UnverifiableDecision(
             "the formation supplied is not the one this decision commits to "
             f"(inputs_digest {str(params.get('inputs_digest'))[:16]}…); a "
-            "decision is recomputed from its own inputs or not at all (R12-X4)")
+            "decision is recomputed from its own inputs or not at all")
     members = formation["members"]
     package_suites = {(e["uid"], e["mid"], e["device_id"]): e["suites"]
                       for e in formation["package_suites"]}
@@ -349,7 +349,7 @@ def verify_group_params(params, *, cipher_suite_name, formation, registry):
         raise ValueError(
             "verify_group_params needs the RETAINED registry revision the group "
             "was formed under; judging against today's registry is how registry "
-            "evolution would invalidate a correct historical decision (R10-11)")
+            "evolution would invalidate a correct historical decision")
     problems = []
     reg = registry
     # R5-05: the ranking comes from the RETAINED registry, not from the module
@@ -375,7 +375,7 @@ def verify_group_params(params, *, cipher_suite_name, formation, registry):
         problems.append(
             f"floor_version {params.get('floor_version')!r} is not the current "
             f"{reg['registry_version']!r} — supply the retained registry "
-            "revision to verify this decision (R4-06)")
+            "revision to verify this decision")
         return problems
 
     # (b) the selected suite IS the group's actual suite

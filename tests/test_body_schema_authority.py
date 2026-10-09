@@ -23,6 +23,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import lint_cli as lc  # noqa: E402
 import discovery_lint as dl  # noqa: E402
 import evidence_lint as el  # noqa: E402
+from cddl_tool import requires_cddl  # noqa: E402
+
 
 
 def _load(name, filename):
@@ -35,6 +37,7 @@ def _load(name, filename):
 mock = _load("mock_rdp", "mock_rdp.py")
 
 
+@requires_cddl
 def test_negative_minimal_discovery_body_is_rejected_at_the_entry_point():
     """The acceptance criterion: CDDL-valid + projection≡payload, Schema-invalid
     → rejected by ONE entry point (the discovery linter), fail-closed."""

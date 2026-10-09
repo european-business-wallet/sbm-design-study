@@ -1,16 +1,16 @@
 {
-  "$comment": "G3 (partly answered). Every verification this repository's tooling performs reads material a verifier was HANDED: no linter dereferences a URL, and no check consults live state. That is why `docs/lifecycle-and-custody.md` §1 can say 'unaffected' so often — and it is exactly why custody is the open question, because a verdict is only as durable as somebody's willingness to keep answering the read that supplies the material. This registry names, per verification input, which published operation retrieves it, who serves it, what its absence does to the verdict, and whether that survives a provider exit. An absent input does not have ONE consequence: a required one leaves a stated property unproven and, where a residual rule names it, reported INCOMPLETE; an OPTIONAL opening simply stays unopened; and where a current binding can stand in for a historical one the answer silently becomes a question about today. Each row says which of those it is (R30-PUB-04). Rendered to docs/retrievability.md by scripts/retrievability.py, which also gates it: every retained-material argument of `check_bundle`, every LINT-BND-I* residual and every published as-of read must appear here, so none can be added without saying who keeps it retrievable.",
+  "$comment": "G3 (partly answered). Every verification this repository's tooling performs reads material a verifier was HANDED: no linter dereferences a URL, and no check consults live state. That is why `docs/lifecycle-and-custody.md` §1 can say 'unaffected' so often — and it is exactly why custody is the open question, because a verdict is only as durable as somebody's willingness to keep answering the read that supplies the material. This registry names, per verification input, which published operation retrieves it, who serves it, what its absence does to the verdict, and whether that survives a provider exit. An absent input does not have ONE consequence: a required one leaves a stated property unproven and, where a residual rule names it, reported INCOMPLETE; an OPTIONAL opening simply stays unopened; and where a current binding can stand in for a historical one the answer silently becomes a question about today. Each row says which of those it is. Rendered to docs/retrievability.md by scripts/retrievability.py, which also gates it: every retained-material argument of `check_bundle`, every LINT-BND-I* residual and every published as-of read must appear here, so none can be added without saying who keeps it retrievable.",
   "inputs": [
     {
       "input": "med",
-      "material": "The entity's sealed BW-MED: its provider endpoints and MLS parameters. SBM-ADR-0015 moved the DS receipt keys OFF it, to the provider's own BW-PROVIDER descriptor. Sealed by a key the DIRECTORY RECORD authorises — the MED is not its own trust anchor.",
+      "material": "The entity's sealed BW-MED: its provider endpoints and MLS parameters. SBM-ADR-0015 moved the DS receipt keys OFF it, to the provider's own BW-PROVIDER descriptor, and SBM-ADR-0016 says WHOSE descriptor that is: the observing provider's, which the receipt names in its signed `observed_by`. Sealed by a key the DIRECTORY RECORD authorises — the MED is not its own trust anchor.",
       "operation": "GET /.well-known/bw/med/{uid}",
       "served_by": "the entity's provider (EDD resolver surface)",
       "supplied_as": {
         "kind": "manifest_key",
         "key": "med"
       },
-      "absent": "the entity's provider endpoints are unknown, so the material they point at cannot be resolved. R30-PUB-04: this row said the MED 'pins every other seal key'. It does not — `DirectoryRecord.authorized_seal_keys` does, and a retained MED is no substitute for the historical directory authorisation that made it acceptable.",
+      "absent": "the entity's provider endpoints are unknown, so the material they point at cannot be resolved. The MED does NOT pin the other seal keys — `DirectoryRecord.authorized_seal_keys` does — and a retained MED is no substitute for the historical directory authorisation that made it acceptable.",
       "survives_provider_exit": false,
       "note": "The endpoints INSIDE it move on an exit; the document itself must remain retrievable as it stood at the act, and nothing names who serves that."
     },
@@ -29,7 +29,7 @@
     },
     {
       "input": "policy_history",
-      "material": "The BW-ORG succession chain: the versions linking the pinned one to its predecessors, so linkage and in-force at the act can be shown. It does NOT establish that the pinned version was the latest — a retained prefix looks complete whether or not a successor was omitted, which is what LINT-BND-I3 says and what this row used to contradict (R30-PUB-04).",
+      "material": "The BW-ORG succession chain: the versions linking the pinned one to its predecessors, so linkage and in-force at the act can be shown. It does NOT establish that the pinned version was the latest — a retained prefix looks complete whether or not a successor was omitted, which is what LINT-BND-I3 says.",
       "operation": "GET /.well-known/bw/org/{uid}?doc_digest= , once per version",
       "served_by": "the entity's provider (EDD resolver surface)",
       "supplied_as": {
@@ -58,7 +58,7 @@
     },
     {
       "input": "member_history",
-      "material": "Superseded BW-MEMBER versions with their windows, so a member's status and confirmation key can be resolved AS THEY STOOD AT THE ACT (X-17/DR-11).",
+      "material": "Superseded BW-MEMBER versions with their windows, so a member's status and confirmation key can be resolved AS THEY STOOD AT THE ACT.",
       "operation": "GET /.well-known/bw/member/{uid}/{mid}?as_of= (or ?version=)",
       "served_by": "the entity's provider (EDD resolver surface)",
       "supplied_as": {
@@ -100,7 +100,7 @@
       "input": "group_contexts",
       "material": "Retained MLS GroupContext bytes for every evidenced epoch, so `mls_state` can be recomputed rather than trusted.",
       "operation": "GET /groups/{group_id}/context?epoch=",
-      "served_by": "the Delivery Service — the retention duty's read surface, access-controlled to authorised verifiers (X-23)",
+      "served_by": "the Delivery Service — the retention duty's read surface, access-controlled to authorised verifiers",
       "supplied_as": {
         "kind": "manifest_key",
         "key": "group_contexts"
@@ -177,11 +177,11 @@
       "supplied_as": {
         "kind": "manifest_key",
         "key": "receipts",
-        "detail": "keyed by the delivery it substantiates: the bare `message_id`, or `<origin>/<message_id>` where one identifier is evidenced under more than one origin (R39-01)"
+        "detail": "keyed by the delivery it substantiates: the bare `message_id`, or `<origin>/<message_id>` where one identifier is evidenced under more than one origin"
       },
       "absent": "the S2 event rests on the DE's assertion rather than on the DS's signature.",
       "survives_provider_exit": false,
-      "note": "Supplied as a MAP of handle to receipt, not a list: `{\"receipts\": {\"urn:sbm:rdp:mockeu-001/01HZ3AVLBCDEFGH9JKMN0PQRST\": \"receipt.json\"}}`. A BARE key — `{\"01HZ3AVLBCDEFGH9JKMN0PQRST\": \"receipt.json\"}` — still resolves, to the one origin this bundle evidences for that identifier; where it evidences several, which delivery is meant is AMBIGUOUS and reported (LINT-BND-I9) rather than settled by the order the evidence was listed in. What the key does is state WHICH delivery the entry claims; it proves nothing about it. The evidence must still establish the origin, the octets and the recipient, and the receipt’s own signed `issuing_rdp_id` is COMPARED with the handle rather than used to choose it — selecting the SE by the claim under test is the self-consistency R38-01 removed."
+      "note": "Supplied as a MAP of handle to receipt, not a list: `{\"receipts\": {\"urn:sbm:rdp:mockeu-001/01HZ3AVLBCDEFGH9JKMN0PQRST\": \"receipt.json\"}}`. A BARE key — `{\"01HZ3AVLBCDEFGH9JKMN0PQRST\": \"receipt.json\"}` — still resolves, to the one origin this bundle evidences for that identifier; where it evidences several, which delivery is meant is AMBIGUOUS and reported (LINT-BND-I9) rather than settled by the order the evidence was listed in. What the key does is state WHICH delivery the entry claims; it proves nothing about it. The evidence must still establish the origin, the octets and the recipient, and the receipt’s own signed `issuing_rdp_id` is COMPARED with the handle rather than used to choose it — selecting the SE by the claim under test would make that comparison a self-consistency check, which proves nothing about the delivery."
     },
     {
       "input": "evidence",
@@ -192,7 +192,7 @@
         "kind": "manifest_key",
         "key": "evidence"
       },
-      "absent": "there is nothing to verify. R38-01: a retained DS receipt is related to the delivery it substantiates only through this material — the SE's origin and octet commitment, the evidenced recipient, and at the availability grade the DE's instant. Without them a receipt whose signature verifies may be true about a different delivery, so the relationship is reported UNPROVEN (LINT-BND-I9) rather than passed.",
+      "absent": "there is nothing to verify. A retained DS receipt is related to the delivery it substantiates only through this material — the SE's origin and octet commitment, the evidenced recipient, and at the availability grade the DE's instant. Without them a receipt whose signature verifies may be true about a different delivery, so the relationship is reported UNPROVEN (LINT-BND-I9) rather than passed.",
       "survives_provider_exit": true,
       "note": "The only material with a SECOND independent holder by design: each party keeps its own copy, so a provider exit does not destroy it. Why the evidence itself is the durable part and the material needed to CHECK it is the fragile part.",
       "residuals": [
@@ -208,7 +208,7 @@
         "kind": "manifest_key",
         "key": "grade_reveals"
       },
-      "absent": "the grade commitment stays unopened, which is the point; the claim that rests on it is then unproven rather than failed. R30-PUB-04: not the same as the class being hidden — a cleartext `scope_ref` resolved against a published scope map can narrow it, and a scope covering one class gives it. What an unopened commitment withholds is the committed value, not every inference about the message.",
+      "absent": "the grade commitment stays unopened, which is the point; the claim that rests on it is then unproven rather than failed. That is NOT the same as the class being hidden — a cleartext `scope_ref` resolved against a published scope map can narrow it, and a scope covering one class gives it. What an unopened commitment withholds is the committed value, not every inference about the message.",
       "survives_provider_exit": true
     },
     {
@@ -220,17 +220,17 @@
         "kind": "manifest_key",
         "key": "mandate_reveals"
       },
-      "absent": "the mandate commitment stays unopened, which is the point; the claim that rests on it is then unproven rather than failed. R30-PUB-04: not the same as the class being hidden — a cleartext `scope_ref` resolved against a published scope map can narrow it, and a scope covering one class gives it. What an unopened commitment withholds is the committed value, not every inference about the message.",
+      "absent": "the mandate commitment stays unopened, which is the point; the claim that rests on it is then unproven rather than failed. That is NOT the same as the class being hidden — a cleartext `scope_ref` resolved against a published scope map can narrow it, and a scope covering one class gives it. What an unopened commitment withholds is the committed value, not every inference about the message.",
       "survives_provider_exit": true
     },
     {
       "input": "transformation_traces",
       "material": "Evidence that a Change-Indication Evidence's outputs are the transformation of its input. Neither of the two transformations is profiled, so there is no operation to trace.",
-      "operation": "none — neither is profiled (open items A13/A15)",
+      "operation": "none — neither is profiled (open item A15)",
       "served_by": "nobody: the profile does not claim this is establishable",
       "supplied_as": {
         "kind": "none",
-        "why": "no operation produces the material — neither transformation is profiled (A13/A15) — so no manifest key is defined and none should be"
+        "why": "no operation produces the material — neither transformation is profiled (A15) — so no manifest key is defined and none should be"
       },
       "absent": "LINT-BND-I7 — stated as unestablishable rather than reported as a gap in the bundle, because neither is profiled and a provider MUST NOT issue one.",
       "survives_provider_exit": true,
@@ -249,7 +249,7 @@
       },
       "absent": "no discovery document can be shown to have been sealed by a key the entity was entitled to use, so the whole discovery chain is unanchored (`check_directory_pin`).",
       "survives_provider_exit": true,
-      "note": "R30-PUB-04 found this missing from the inventory entirely: RETR-01 demands the arguments of `check_bundle`, and the trust anchors are arguments of `discovery_lint` instead. Registry-held, so an exit does not strand it — but the AS-OF question does: the record is served current, and nothing publishes the authorisation as it stood at a past act."
+      "note": "RETR-01 demands the arguments of `check_bundle`, and the trust anchors are arguments of `discovery_lint` instead — which is how this input came to be missing from the inventory. Registry-held, so an exit does not strand it — but the AS-OF question does: the record is served current, and nothing publishes the authorisation as it stood at a past act."
     },
     {
       "input": "trust_store",
@@ -278,7 +278,7 @@
       "residuals": [
         "LINT-BND-I8"
       ],
-      "note": "SBM-ADR-0015 moved this key off the customer's BW-MED, where it sat because the Delivery Service was a second provider and the entity's signed document was the only thing already retained for the evidence period. A provider's key belongs in the provider's descriptor — but it moves the key onto a surface a provider exit takes away, where it had been on one the entity controls. That is the trade the decision makes, and this row is where it is visible."
+      "note": "SBM-ADR-0016 makes the OBSERVING provider's descriptor the one place this key may be published — the receipt names that provider in its signed `observed_by`, and in a four-corner exchange it is the recipient's provider, not the message's origin. SBM-ADR-0015 had moved the key off the customer's BW-MED, where it sat because the Delivery Service was a second provider and the entity's signed document was the only thing already retained for the evidence period. A provider's key belongs in the provider's descriptor — but it moves the key onto a surface a provider exit takes away, where it had been on one the entity controls. That is the trade the decision makes, and this row is where it is visible."
     }
   ]
 }

@@ -96,11 +96,11 @@ def _validate_nde_registry(reasons):
             raise ValueError(
                 f"registries/reason-codes.json: nde_reason {code!r} is "
                 "INCOMPLETE — stages, allowed_events and en_319_522 are "
-                "registration prerequisites (X-30)")
+                "registration prerequisites")
         if sorted(set(stages.values())) != sorted(set(events)):
             raise ValueError(
                 f"registries/reason-codes.json: nde_reason {code!r} "
-                "allowed_events disagree with its stages table (X-30)")
+                "allowed_events disagree with its stages table")
 
 
 _validate_nde_registry(_REASONS["nde_reasons"])
@@ -322,7 +322,7 @@ def select_policy_key(org, scope_ref, recipient_addr):
         raise UnaddressedSubmission(
             "no recipient_addr: the acceptance policy cannot be selected "
             "without knowing what the message is addressed to. Absence is not "
-            "entity addressing — entity addressing is written down (R3-01)")
+            "entity addressing — entity addressing is written down")
     # R4-01 (Blocker): the address must name THE ENTITY WHOSE POLICY IS BEING
     # SELECTED. It did not have to, so an address naming a different entity
     # selected a role policy inside this one's BW-ORG:
@@ -337,12 +337,12 @@ def select_policy_key(org, scope_ref, recipient_addr):
     if parsed is None:
         raise ForeignAddress(
             f"recipient_addr {recipient_addr!r} is not a well-formed bw: "
-            "address, so the entity it names cannot be checked (R4-01)")
+            "address, so the entity it names cannot be checked")
     if org_uid and parsed != org_uid:
         raise ForeignAddress(
             f"recipient_addr names entity {parsed!r}, but the acceptance policy "
             f"being selected belongs to {org_uid!r} — an address to a different "
-            "entity cannot select a role inside this one's policy map (R4-01)")
+            "entity cannot select a role inside this one's policy map")
     sid = (scope_ref or {}).get("scope_id") or "default"
     if sid != "default":
         for sc in ((org.get("scope_map") or {}).get("scopes") or []):
@@ -1120,7 +1120,7 @@ def require_rdp_id(value, *, context="principal"):
             f"({_rdp_id_pattern().pattern}). Legacy identifiers are NOT "
             "aliased: an alias resolving to the same namespace is a second "
             "name for one thing, and two names is how the collision returns "
-            "(R7-04/R7-X1)")
+            "")
     return value
 
 
@@ -1154,7 +1154,7 @@ def canonical_rdp_id(san_uris):
         raise RdpIdentityError(
             "rdp-identity-absent",
             "the client certificate carries no canonical `urn:sbm:rdp:` "
-            "subjectAltName URI, so the provider cannot be attributed (R7-04)")
+            "subjectAltName URI, so the provider cannot be attributed")
     if len(canonical) > 1:
         distinct = sorted(set(canonical))
         # Every matching occurrence is reported for diagnostics; the DECISION
@@ -1169,7 +1169,7 @@ def canonical_rdp_id(san_uris):
             + ". A certificate that names two providers cannot be attributed "
               "to one, and picking would make the namespace depend on "
               "extension order; a repeated one is malformed issuance and must "
-              "not be normalised away by counting distinct values (R7-04/R8-05)")
+              "not be normalised away by counting distinct values")
     return canonical[0]
 
 
@@ -1299,7 +1299,7 @@ def expiry_problems(sent_at, expires_at, *, max_ttl=None, clock=None):
     if exp <= sent:
         out.append(("expiry-not-after-sent",
                     f"expires_at {expires_at} is not later than sent_at "
-                    f"{sent_at} — a reversed or zero TTL (X-22)"))
+                    f"{sent_at} — a reversed or zero TTL"))
     else:
         try:
             limit = parse_iso_duration(max_ttl or DEFAULT_MAX_TTL)
@@ -1319,7 +1319,7 @@ def expiry_problems(sent_at, expires_at, *, max_ttl=None, clock=None):
             out.append(("sent-at-in-future",
                         f"sent_at {sent_at} is more than "
                         f"{SENT_AT_FUTURE_BOUND} ahead of the RDP's clock "
-                        f"{clock} (X-22)"))
+                        f"{clock}"))
     return out
 
 
@@ -1525,7 +1525,7 @@ def validate_submission_metadata(meta):
     """
     if not isinstance(meta, dict):
         raise SubmissionInvalid("submission-malformed",
-                                "the submission is not an object (R7-01)")
+                                "the submission is not an object")
     schema, validator = request_schema("wallet-rdp-openapi.yaml",
                                        "SubmissionMetadata")
     # A required field that is ABSENT or explicitly null is incomplete. The
@@ -1538,14 +1538,14 @@ def validate_submission_metadata(meta):
             f"the submission omits contract-required field(s) {missing}. The "
             "published request Schema requires them and the evidence Schema "
             "requires them; sealing an SE without them produces an artefact "
-            "that fails its own authoritative Schema (R7-01)",
+            "that fails its own authoritative Schema",
             fields=missing)
     unknown = sorted(set(meta) - set(schema.get("properties", {})))
     if unknown and schema.get("unevaluatedProperties") is False:
         raise SubmissionInvalid(
             "submission-unexpected-field",
             f"the submission carries undeclared field(s) {unknown}; the "
-            "request Schema forbids them (R7-01)",
+            "request Schema forbids them",
             fields=unknown)
     errors = sorted(validator.iter_errors(meta), key=lambda e: list(e.path))
     if errors:
@@ -1562,7 +1562,7 @@ def validate_submission_metadata(meta):
             f"{where} violates the published request Schema ({why})"
             + (f" (+{len(errors) - 1} more)" if len(errors) > 1 else "")
             + ". The contract is executed, not summarised: a value the "
-              "contract rejects must not reach a ledger or a seal (R8-01)",
+              "contract rejects must not reach a ledger or a seal",
             fields=_offending_fields(errors))
     return meta
 
@@ -1623,31 +1623,31 @@ def check_identity_coherence(meta, *, org=None, members=None,
     if parsed is None:
         add("unaddressed-submission",
             f"recipient_addr {r_addr!r} is not a well-formed bw: address, so "
-            "the entity it names cannot be compared with recipient_uid (R6-01)")
+            "the entity it names cannot be compared with recipient_uid")
     else:
         if parsed[0] != r_uid:
             add("identity-incoherent",
                 f"recipient_uid is {r_uid!r} but recipient_addr names "
-                f"{parsed[0]!r} — one message, two recipients (R6-01)")
+                f"{parsed[0]!r} — one message, two recipients")
         if org and org.get("uid") and parsed[0] != org["uid"]:
             add("identity-incoherent",
                 f"recipient_addr names {parsed[0]!r} but the acceptance policy "
-                f"supplied belongs to {org['uid']!r} (R6-01/R4-01)")
+                f"supplied belongs to {org['uid']!r}")
     if org and org.get("uid") and org["uid"] != r_uid:
         add("identity-incoherent",
             f"recipient_uid is {r_uid!r} but the BW-ORG governing the "
-            f"submission is {org['uid']!r} (R6-01)")
+            f"submission is {org['uid']!r}")
 
     # ---- sender: the same, against the member that actually signed --------
     s_uid, s_addr = meta.get("sender_uid"), meta.get("sender_addr")
     s_parsed = parse_bw_address(s_addr) if s_addr else None
     if s_parsed is None:
         add("unaddressed-submission",
-            f"sender_addr {s_addr!r} is not a well-formed bw: address (R6-01)")
+            f"sender_addr {s_addr!r} is not a well-formed bw: address")
     elif s_parsed[0] != s_uid:
         add("identity-incoherent",
             f"sender_uid is {s_uid!r} but sender_addr names {s_parsed[0]!r} "
-            "— the acting entity and the addressed entity differ (R6-01)")
+            "— the acting entity and the addressed entity differ")
 
     sc = meta.get("sender_confirmation")
     if isinstance(sc, dict) and members is not None:
@@ -1655,27 +1655,27 @@ def check_identity_coherence(meta, *, org=None, members=None,
         member = _member_as_of(members, mid, member_history=member_history, at=at)
         if member is None:
             add("sender-confirmation-unverifiable",
-                f"no BW-MEMBER for {mid!r} in force at {at} (R6-01)")
+                f"no BW-MEMBER for {mid!r} in force at {at}")
         else:
             if member.get("uid") != s_uid:
                 add("identity-incoherent",
                     f"sender_uid is {s_uid!r} but the signing member {mid!r} "
                     f"belongs to {member.get('uid')!r} — the signature is "
-                    "valid and it is not this entity's (R6-01)")
+                    "valid and it is not this entity's")
             if member.get("status") != "active":
                 add("member-not-active",
                     f"the signing member {mid!r} is {member.get('status')!r} at "
-                    f"{at}, so its confirmation cannot be relied upon (R6-01)")
+                    f"{at}, so its confirmation cannot be relied upon")
             # the address must name what actually signed
             if s_parsed and s_parsed[1] == "member" and s_parsed[2] != mid:
                 add("identity-incoherent",
                     f"sender_addr is member-addressed to {s_parsed[2]!r} but "
-                    f"the confirmation was signed by {mid!r} (R6-01)")
+                    f"the confirmation was signed by {mid!r}")
             if s_parsed and s_parsed[1] == "role":
                 if s_parsed[2] not in (member.get("roles") or []):
                     add("identity-incoherent",
                         f"sender_addr claims role {s_parsed[2]!r} but member "
-                        f"{mid!r} holds {member.get('roles') or []} (R6-01)")
+                        f"{mid!r} holds {member.get('roles') or []}")
             problems.extend(_signing_device_problems(member, device_id, at))
     return problems
 
@@ -1704,7 +1704,7 @@ def _signing_device_problems(member, device_id, at):
     if dev is None:
         out.append(("sender-confirmation-unverifiable",
                     f"device {device_id!r} is not published by member "
-                    f"{member.get('mid')!r} (R6-01)"))
+                    f"{member.get('mid')!r}"))
         return out
     try:
         target = instant(at, field="sent_at") if at else None
@@ -1712,23 +1712,23 @@ def _signing_device_problems(member, device_id, at):
         removed = instant_or_none(dev.get("removed_at"))
     except TimestampError as e:
         out.append(("sender-confirmation-unverifiable",
-                    f"device {device_id!r}: {e} (R6-01)"))
+                    f"device {device_id!r}: {e}"))
         return out
     if target is not None:
         if added is not None and added > target:
             out.append(("device-not-in-force",
                         f"device {device_id!r} was added at {dev.get('added_at')}, "
-                        f"after the act at {at} — it did not exist then (R6-01)"))
+                        f"after the act at {at} — it did not exist then"))
         if removed is not None and removed <= target:
             out.append(("device-not-in-force",
                         f"device {device_id!r} was removed at "
-                        f"{dev.get('removed_at')}, before the act at {at} (R6-01)"))
+                        f"{dev.get('removed_at')}, before the act at {at}"))
     caps = dev.get("capabilities") or []
     if "sign" not in caps:
         out.append(("device-not-sign-capable",
                     f"device {device_id!r} publishes capabilities {caps} and not "
                     "`sign`, so it is not authorised to produce the sender's "
-                    "advanced electronic signature (R6-01)"))
+                    "advanced electronic signature"))
     return out
 
 
@@ -1753,24 +1753,23 @@ def check_scope_in_force(org, scope_ref, *, at):
                             if s.get("scope_id") == sid})
         return [("no-matching-scope",
                  f"scope {sid!r} version {version!r} is not published by this "
-                 f"entity (published: {published or 'none'}) (R6-01)")]
+                 f"entity (published: {published or 'none'})")]
     if at:
         try:
             target = instant(at, field="sent_at")
             vf = instant_or_none(exact[0].get("valid_from"))
             vu = instant_or_none(exact[0].get("valid_until"))
         except TimestampError as e:
-            return [("no-matching-scope", f"scope {sid!r}: {e} (R6-01)")]
+            return [("no-matching-scope", f"scope {sid!r}: {e}")]
         if vf is not None and vf > target:
             return [("scope-not-in-force",
                      f"scope {sid!r} v{version} takes force at "
-                     f"{exact[0].get('valid_from')}, after the act at {at} "
-                     "(R6-01)")]
+                     f"{exact[0].get('valid_from')}, after the act at {at}")]
         if vu is not None and vu <= target:
             return [("scope-not-in-force",
                      f"scope {sid!r} v{version} ceased at "
                      f"{exact[0].get('valid_until')}, at or before the act at "
-                     f"{at} (R6-01)")]
+                     f"{at}")]
     return []
 
 
@@ -1827,7 +1826,7 @@ def check_directory_pin(doc, seal_b64, store, directory):
                     f"discovery seal key (spki-sha256 {spki[:16]}…) is not an "
                     f"authorized seal key for UID {uid!r} in the directory record "
                     "— a key authorised for another UID cannot seal this entity's "
-                    "discovery documents (X-01)"))
+                    "discovery documents"))
         return out
     inst = _latest_declared_instant(doc)
     if inst is not None and not any(
@@ -1996,8 +1995,7 @@ def authenticate_register(register, anchors):
         return None, [("LINT-TRUST-08",
                        "no Federation Authority anchor is configured, so the "
                        "membership register cannot be authenticated — an "
-                       "unauthenticated register cannot establish admission "
-                       "(R10-01)")]
+                       "unauthenticated register cannot establish admission")]
     records = (register or {}).get("records")
     if not isinstance(records, list):
         return None, [("LINT-TRUST-08",
@@ -2023,7 +2021,7 @@ def authenticate_register(register, anchors):
         except Exception as e:                  # fail closed, never crash
             out.append(("LINT-TRUST-08",
                         f"{tag} could not be evaluated ({type(e).__name__}: {e}); "
-                        "an unreadable record authenticates nothing (R11-10)"))
+                        "an unreadable record authenticates nothing"))
     for pid, idx in seen.items():
         if len(idx) > 1:
             out.append(("LINT-TRUST-08",
@@ -2071,14 +2069,14 @@ def _authenticate_record(i, rec, pid, tag, anchors, seen, out, cbor2, VerifyKey)
         out.append(("LINT-TRUST-08",
                     f"{tag}: the seal's protected header is not a byte string "
                     "holding a map, so neither its signer nor its algorithm is "
-                    "authenticated (R11-10)"))
+                    "authenticated"))
         return
     if not isinstance(payload, (bytes, bytearray)) or \
             not isinstance(sig, (bytes, bytearray)):
         out.append(("LINT-TRUST-08",
                     f"{tag}: the seal's payload or signature is not a byte string "
                     "— a detached or null payload signs nothing this verifier can "
-                    "compare with the record (R11-10)"))
+                    "compare with the record"))
         return
     kid = ph.get(4)
     kid = kid.decode("utf-8", "replace") if isinstance(kid, (bytes, bytearray)) else kid
@@ -2092,7 +2090,7 @@ def _authenticate_record(i, rec, pid, tag, anchors, seen, out, cbor2, VerifyKey)
                        "That is not an algorithm this profile permits. ")
                     + "The configured anchor is an Ed25519 key, and a signature is "
                     "verified under the algorithm it declares or not at all — "
-                    "never under a substituted one (R11-10)"))
+                    "never under a substituted one"))
         return
     anchor = anchors.get(kid)
     if anchor is None:
@@ -2173,11 +2171,11 @@ def live_authorisation(register, participant_id, *, decision_at, max_age):
         raise TypeError(
             "live_authorisation takes an AuthenticatedRegister — the value "
             "authenticate_register returns — never a register read from input "
-            "(R10-01)")
+            "")
     if max_age is None:
         raise ValueError(
             "no maximum assertion age was supplied: the Federation Authority "
-            "publishes it, and a live decision without it has no bound (R11-X3)")
+            "publishes it, and a live decision without it has no bound")
     lease = parse_iso_duration(max_age)
     records = [r for r in register.get("records", [])
                if r.get("participant_id") == participant_id]
@@ -2284,7 +2282,7 @@ def check_register_pin(doc, seal_b64, store, register):
             "LINT-TRUST-07",
             f"the register's record for {pid!r} was asserted before the "
             f"descriptor ({asserted}), so it cannot speak for the instant the "
-            "descriptor asserts itself; a later assertion is needed (R10-X1)")]
+            "descriptor asserts itself; a later assertion is needed")]
     if status != "admitted":
         out.append((
             "LINT-TRUST-07",
@@ -2674,20 +2672,20 @@ class DeliveryContext:
             raise ReceiptVerificationError(
                 "receipt-context-invalid",
                 f"unknown delivery-context member(s) {unknown}: a misspelt "
-                "member would silently assert nothing (R7-02)")
+                "member would silently assert nothing")
         missing = [f for f in DELIVERY_CONTEXT_FIELDS if f not in fields]
         if missing:
             raise ReceiptVerificationError(
                 "receipt-context-incomplete",
                 f"the delivery context omits {missing}. A partial context is "
-                "what let a receipt for one act authorise another (R7-02)")
+                "what let a receipt for one act authorise another")
         for f in DELIVERY_CONTEXT_FIELDS:
             if fields[f] is None:
                 raise ReceiptVerificationError(
                     "receipt-context-incomplete",
                     f"delivery-context member {f!r} is None. `None` used to be "
                     "SKIPPED, so a caller could name every dimension and "
-                    "assert nothing (R7-02)")
+                    "assert nothing")
             setattr(self, f, fields[f])
 
     def items(self):
@@ -2724,7 +2722,7 @@ class _Unassociated:
         raise ReceiptVerificationError(
             "receipt-context-invalid",
             "UNASSOCIATED is not a delivery context and has no fields to "
-            "compare — it says the caller could not establish one (R40-01)")
+            "compare — it says the caller could not establish one")
 
     def __repr__(self):
         return "UNASSOCIATED"
@@ -2803,7 +2801,7 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
         raise ReceiptVerificationError(
             "receipt-unverifiable",
             "the receipt names no ds_kid, so 'the DS's published key' has no "
-            "referent and the verifying key cannot be resolved (R3-04)")
+            "referent and the verifying key cannot be resolved")
     # SBM-ADR-0015/0016: the key is the OBSERVING provider's OWN, published in its
     # BW-PROVIDER descriptor. Both arms below are the sentence this function's
     # docstring already made — "a kid published only in a BW-MED does not
@@ -2865,7 +2863,7 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
         raise ReceiptVerificationError(
             "receipt-unverifiable",
             f"the signed payload cannot be decoded, so the asserted fields "
-            f"cannot be compared with it: {e} (R4-03)")
+            f"cannot be compared with it: {e}")
     if not isinstance(claimed, dict):
         raise ReceiptVerificationError(
             "receipt-unverifiable", "the signed payload is not an object")
@@ -2876,19 +2874,19 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
             "receipt-unverifiable",
             "neither the receipt nor its signed payload carries a server_time, "
             "so key validity cannot be judged at the receipt's own instant "
-            "(R3-04)")
+            "")
 
     # 3-4. Resolve the published key that must have signed at that instant.
     try:
         key = resolve_ds_receipt_key(provider, kid, at=at)
     except (ReceiptKeyError, TimestampError) as e:
-        raise ReceiptVerificationError("receipt-unverifiable", f"{e} (R3-04)")
+        raise ReceiptVerificationError("receipt-unverifiable", f"{e}")
     if receipt.get("ds_alg") is not None and key.get("alg") != receipt.get("ds_alg"):
         raise ReceiptVerificationError(
             "receipt-unverifiable",
             f"the receipt declares alg {receipt.get('ds_alg')!r} but key "
             f"{kid!r} is published as {key.get('alg')!r} — algorithm confusion "
-            "(DR-12)")
+            "")
 
     # 5. NOW the payload is authenticated — and not one instant earlier.
     try:
@@ -2897,7 +2895,7 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
         raise ReceiptVerificationError(
             "receipt-unverifiable",
             f"the signature does not verify against the published key {kid!r}: "
-            f"{e} — the delivery it attests is unproven (R4-03)")
+            f"{e} — the delivery it attests is unproven")
 
     # 6. A valid signature is still not enough: the COSE payload is EMBEDDED,
     # so the signature covers the bytes inside the structure, not the object
@@ -2910,7 +2908,7 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
             f"the signed payload omits {missing} — a receipt must SIGN the "
             "fields it is relied upon for, and comparing only the intersection "
             "of what happens to be present compares an omitted field with "
-            "nothing (R6-03)")
+            "nothing")
     for field in DS_RECEIPT_SIGNED_FIELDS:
         if field not in claimed:
             continue
@@ -2919,7 +2917,7 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
                 "receipt-unverifiable",
                 f"{field} is {receipt[field]!r} but the SIGNED payload says "
                 f"{claimed[field]!r} — the signature is valid over something "
-                "other than what the receipt asserts (R4-03)")
+                "other than what the receipt asserts")
 
     # R6-03 point 4: the key the signature was verified with must be the key
     # the payload NAMES. Resolution used the outer selector, so re-aliasing one
@@ -2930,7 +2928,7 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
             "receipt-unverifiable",
             f"the receipt selects key {kid!r} but the signed payload names "
             f"{claimed.get('ds_kid')!r} — the verifying key must be the one the "
-            "signer committed to (R6-03)")
+            "signer committed to")
 
     # R6-03 point 2: the expected DELIVERY CONTEXT. A valid receipt for message
     # A was accepted while processing message B whenever the ciphertext digest
@@ -2950,14 +2948,14 @@ def verify_ds_receipt(receipt, provider, *, expect=None):
             "receipt-context-invalid",
             "the expected delivery context must be a DeliveryContext — a bare "
             "mapping allowed `{}` and all-None contexts, which asserted "
-            "nothing while looking complete (R7-02)")
+            "nothing while looking complete")
     for field, want in expect.items():
         if claimed.get(field) != want:
             raise ReceiptVerificationError(
                 "receipt-context-mismatch",
                 f"the receipt attests {field}={claimed.get(field)!r} but this "
                 f"act is {want!r} — a valid signature over a DIFFERENT "
-                "delivery (R6-03)")
+                "delivery")
     return claimed
 
 

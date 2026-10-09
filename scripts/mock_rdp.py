@@ -260,7 +260,7 @@ def _check_policy_against_discovery(meta, org):
             "no BW-ORG was supplied to intake, so the acceptance policy cannot "
             "be recomputed. Fail closed: skipping the check when the material "
             "is absent is exactly how an unproven property became a silent "
-            "pass (R5-01)")
+            "pass")
 
     if ref.get("doc_digest", {}).get("hex") != _org_body_digest(org):
         raise SubmissionRejected(
@@ -273,7 +273,7 @@ def _check_policy_against_discovery(meta, org):
             "policy-digest-mismatch",
             f"acceptance_policy_ref names policy_version "
             f"{ref.get('policy_version')!r} but the pinned body is "
-            f"{org.get('policy_version')!r} (R5-01)")
+            f"{org.get('policy_version')!r}")
 
     sent = meta.get("sent_at")
     try:
@@ -286,22 +286,22 @@ def _check_policy_against_discovery(meta, org):
                 "must not be evaluated under rules that did not yet exist when "
                 "the act took place (R5-01, LINT-BND-33 at intake)")
     except TimestampError as e:
-        raise SubmissionRejected("policy-not-in-force", f"{e} (R5-01)")
+        raise SubmissionRejected("policy-not-in-force", f"{e}")
 
     try:
         computed = select_policy_key(org, meta.get("scope_ref"),
                                      meta.get("recipient_addr"))
     except ForeignAddress as e:
-        raise SubmissionRejected("unaddressed-submission", f"{e} (R4-01)")
+        raise SubmissionRejected("unaddressed-submission", f"{e}")
     except KeyError as e:
-        raise SubmissionRejected("no-matching-scope", f"{e} (X-12)")
+        raise SubmissionRejected("no-matching-scope", f"{e}")
     if ref.get("policy_key") != computed:
         raise SubmissionRejected(
             "policy-key-mismatch",
             f"the submission claims acceptance policy {ref.get('policy_key')!r} "
             f"and the published BW-ORG selects {computed!r} for this address "
             "and scope — the RDP's recomputation is the authority, and a "
-            "disagreement is refused BEFORE any evidence exists (R5-01)")
+            "disagreement is refused BEFORE any evidence exists")
 
 
 def _check_sender_confirmation(meta, members, computed):
@@ -355,7 +355,7 @@ def _check_sender_confirmation(meta, members, computed):
             "sender-confirmation-unverifiable",
             "no member roster was supplied to intake, so the sending device's "
             "published confirmation key cannot be resolved and the signature "
-            "cannot be verified. Fail closed (R5-01)")
+            "cannot be verified. Fail closed")
     mid, device_id = sc.get("mid"), sc.get("device_id")
     member = next((m for m in members if m.get("mid") == mid), None)
     device = next((d for d in (member or {}).get("devices") or []
@@ -372,7 +372,7 @@ def _check_sender_confirmation(meta, members, computed):
         raise SubmissionRejected(
             "sender-confirmation-invalid",
             f"the sender_confirmation does not verify against the published "
-            f"confirmation key of ({mid!r}, {device_id!r}): {e} (R5-01)")
+            f"confirmation key of ({mid!r}, {device_id!r}): {e}")
 
 
 def accept_submission(meta, retained_group_context=None, *,
@@ -437,7 +437,7 @@ def accept_submission(meta, retained_group_context=None, *,
                     "unaddressed-submission",
                     f"no {field}: every message is explicitly entity-, role- "
                     "or member-addressed, and the address is inside the tuple "
-                    "the sender signs (R3-01)")
+                    "the sender signs")
         # R8-01 requirement 2, same shape: the contract expresses "a
         # sender-signed submission carries the D4 tuple" as a `oneOf`, so the
         # executed Schema now catches an absent tuple that only
@@ -451,7 +451,7 @@ def accept_submission(meta, retained_group_context=None, *,
                 "origin_proof is 'sender-signed' and the submission carries no "
                 "`sender_confirmation`: the published request contract and the "
                 "SE Schema both require the D4 tuple for this origin proof "
-                "(R3-01/R8-01)")
+                "")
         raise SubmissionRejected(e.reason, e.detail)
 
     # R3-01/R3-T1: the addressing gate comes FIRST, before any commitment is
@@ -465,7 +465,7 @@ def accept_submission(meta, retained_group_context=None, *,
                 "unaddressed-submission",
                 f"no {field}: every message is explicitly entity-, role- or "
                 "member-addressed, and the address is inside the tuple the "
-                "sender signs (R3-01)")
+                "sender signs")
 
     # ---- R7-04: the issuing identity is canonical, or there is no
     # namespace to be idempotent within. Checked before any ledger key is
@@ -553,7 +553,7 @@ def accept_submission(meta, retained_group_context=None, *,
         raise SubmissionRejected(
             "mls-group-invalid",
             "the supplied mls_state does not match the retained GroupContext "
-            "for this (group, epoch) — SE records an RDP-verified state (DR-02)")
+            "for this (group, epoch) — SE records an RDP-verified state")
 
     mid_key = (principal, meta.get("message_id"))
     # R6-01 point 8: the reservation binds the COMPLETE immutable submission
@@ -581,7 +581,7 @@ def accept_submission(meta, retained_group_context=None, *,
             "duplicate-message-id",
             f"message_id {mid_key!r} was accepted for a different submission — "
             f"{differing} differ. Reusing the handle for another message is a "
-            "collision, not a retry (R6-01/INTF-4)")
+            "collision, not a retry (INTF-4)")
 
     # R5-01: now that the commitments are RDP-derived, the sender's D4 tuple
     # can be checked against them rather than against the sender's own copies.
@@ -743,7 +743,7 @@ def _require_session(session_binding):
             "delivery-session-invalid",
             "the transfer carries no authenticated session object; a receipt "
             "attests a handover IN a session, and 'no session' cannot be "
-            "signed as one (R8-02)")
+            "signed as one")
     missing = [f for f in ("kind", "digest")
                if not isinstance(session_binding.get(f), str)
                or not session_binding[f].strip()]
@@ -752,7 +752,7 @@ def _require_session(session_binding):
             "delivery-session-invalid",
             f"the session binding omits {missing}; the published "
             "`DeliveryReceipt` requires an object with `kind` and `digest`, so "
-            "a partial one would be signed into an invalid receipt (R8-02)")
+            "a partial one would be signed into an invalid receipt")
     return session_binding
 
 
@@ -797,7 +797,7 @@ def queue_delivery(issuing_rdp_id, message_id, *, recipient_uid, mid,
             "delivery-item-unknown",
             f"{(issuing_rdp_id, message_id)!r} was never accepted at the "
             "Delivery Service, so there is nothing to queue — a receipt for it "
-            "would attest a transfer of octets the DS never received (R7-02)")
+            "would attest a transfer of octets the DS never received")
     # R11-01 — THE KEY IS THE WHOLE PRINCIPAL. It was (issuing RDP, message,
     # device_id), so two devices sharing a label — across entities, or across
     # members of one entity — were one row, and the second fan-out target hit
@@ -871,7 +871,7 @@ def transfer_delivery(issuing_rdp_id, message_id, *, principal,
         raise DeliveryStateError(
             "delivery-item-unknown",
             f"no queued delivery item for {key!r} — a sibling device must not "
-            "take another's delivery (R7-02/R8-X2)")
+            "take another's delivery")
     if item["state"] == "acknowledged":
         return dict(item)             # terminal: the event already exists
     if item["state"] == "transferred" and item["session_binding"] == session_binding:
@@ -912,13 +912,13 @@ def collect_messages(*, credential, session_binding):
             "to ONE enrolled device, identified by its entity, member and "
             "label; an entity- or member-level credential covers many, and a "
             "bare device label names a device of every member that uses it "
-            "(R8-03/R11-01)")
+            "")
     _require_session(session_binding)
     if credential.get("session") != session_binding["digest"]:
         raise DeliveryStateError(
             "delivery-session-invalid",
             "the credential is not bound to the session the transfer would be "
-            "recorded in (R8-03)")
+            "recorded in")
 
     # R9-02 requirements 1 and 2 — SELECT, PREFLIGHT, THEN TRANSITION.
     #
@@ -944,7 +944,7 @@ def collect_messages(*, credential, session_binding):
                 "delivery-item-unknown",
                 f"item {(rdp, mid_, *principal)!r} has no accepted octets to "
                 "hand over; the whole collection is refused rather than "
-                "returning a subset the caller cannot tell is partial (R9-02)")
+                "returning a subset the caller cannot tell is partial")
 
     out = []
     for rdp, mid_ in selected:
@@ -974,12 +974,12 @@ def resolve_transferred(issuing_rdp_id, message_id, *, principal,
             "delivery-item-unknown",
             f"no delivery item for {key!r}: the DS never accepted, queued or "
             "transferred this message to this device, so there is no transfer "
-            "to attest (R7-02)")
+            "to attest")
     if item["state"] == "queued":
         raise DeliveryStateError(
             "delivery-not-transferred",
             f"item {key!r} is queued and has not been handed to a device — a "
-            "receipt would attest a transfer that has not happened (R7-02)")
+            "receipt would attest a transfer that has not happened")
     # R8-02: UNCONDITIONAL. This used to be guarded by
     # `if session_binding is not None`, so the one caller that supplied nothing
     # skipped the comparison entirely — absence read as agreement.
@@ -987,7 +987,7 @@ def resolve_transferred(issuing_rdp_id, message_id, *, principal,
         raise DeliveryStateError(
             "delivery-wrong-session",
             f"item {key!r} was transferred in a different authenticated "
-            "session than the one acknowledging it (R7-02)")
+            "session than the one acknowledging it")
     return item
 
 
@@ -1056,12 +1056,12 @@ def receipt_ack(message_id, device_id, *, credential,
             "the acknowledged handover requires DEVICE-bound authentication "
             "naming the device's entity and member; a "
             f"{(credential or {}).get('kind')!r} credential, or a bare device "
-            "label, cannot create a device handover (DR-10/R11-01)")
+            "label, cannot create a device handover")
     if principal[2] != device_id:
         raise AckRejected(
             "device-auth-required",
             "the credential is bound to a different device than the one "
-            "claiming to have received the bytes (DR-10)")
+            "claiming to have received the bytes")
     # R8-02: the session must EXIST and be well-formed before it is compared.
     # `credential.get("session") != (session_binding or {}).get("digest")` was
     # `None != None` for a null session — the comparison passed because both
@@ -1074,7 +1074,7 @@ def receipt_ack(message_id, device_id, *, credential,
         raise AckRejected(
             "session-replay",
             "the acknowledgement was presented outside the session it was "
-            "issued in — the ack is session-bound (F-09/DR-10)")
+            "issued in — the ack is session-bound")
 
     # R9-01 requirement 1: the token is REQUIRED, and absence is rejected here —
     # before the item is looked up and long before anything is mutated. The
@@ -1091,7 +1091,7 @@ def receipt_ack(message_id, device_id, *, credential,
             "request declares it REQUIRED: it is the capability the transfer "
             "issued, and it is the only evidence that this acknowledgement "
             "resolves that exact handover rather than any message the caller "
-            "can name (R9-01)")
+            "can name")
 
     # R9-01 requirement 5: the reference validates its OWN call against the
     # published request Schema, so the two cannot describe different protocols
@@ -1105,7 +1105,7 @@ def receipt_ack(message_id, device_id, *, credential,
         raise AckRejected(
             "acknowledgement-malformed",
             f"the acknowledgement does not satisfy the published "
-            f"`ReceiptAckRequest`: {problems[:2]} (R9-01)")
+            f"`ReceiptAckRequest`: {problems[:2]}")
 
     # R7-02 requirements 2 and 3: RESOLVE the server-owned item, and take the
     # attested facts FROM IT. Nothing here is signed on the caller's say-so.
@@ -1144,7 +1144,7 @@ def receipt_ack(message_id, device_id, *, credential,
             "delivery-token-mismatch",
             "the acknowledgement quotes a collection token that is not this "
             "transfer's — a receipt may only attest the handover the device "
-            "actually collected (R8-03)")
+            "actually collected")
     # R8-02: `stored_digest` is the ACCEPTANCE record's `envelope_hash`,
     # carried by reference through the delivery item. The comparison below was
     # always rigorous; what it compared against used to be a replacement the
@@ -1156,7 +1156,7 @@ def receipt_ack(message_id, device_id, *, credential,
         raise AckRejected(
             "delivery-digest-mismatch",
             "the octets acknowledged are not the octets the DS accepted — the "
-            "receipt would attest a handover of different bytes (R7-02/R8-02)")
+            "receipt would attest a handover of different bytes")
     # Everything the receipt asserts now comes from the STORED item.
     recipient_uid = item["recipient_uid"]
     mid = item["mid"]
@@ -1215,7 +1215,7 @@ def receipt_ack(message_id, device_id, *, credential,
             "receipt-schema-invalid",
             f"the receipt this acknowledgement would sign does not satisfy the "
             f"published `DeliveryReceipt`: {problems[:3]} — nothing is signed "
-            "and the item is not acknowledged (R8-02)")
+            "and the item is not acknowledged")
     receipt["ds_signature"] = base64.b64encode(
         # `ds_seed` travels with `ds_kid`: a receipt is verified against the key
         # the ISSUING RDP publishes in its own descriptor (SBM-ADR-0015), so a
@@ -1231,7 +1231,7 @@ def receipt_ack(message_id, device_id, *, credential,
             "receipt-schema-invalid",
             f"the signed receipt does not satisfy the published "
             f"`DeliveryReceipt`: {problems[:3]} — it is not stored and the "
-            "item is not acknowledged (R8-02)")
+            "item is not acknowledged")
     item["state"] = "acknowledged"
     _ACK_LEDGER[key] = receipt
     return receipt
@@ -1293,12 +1293,12 @@ def _proven_origin(origin, message_id, mls_group_id, digest):
         se = reconstruct(art)
     except Exception as e:                      # an unreadable proof proves nothing
         raise TransportRejected("origin-unproven",
-                                f"the forwarded SE cannot be evaluated: {e} (R12-X2)")
+                                f"the forwarded SE cannot be evaluated: {e}")
     if found:
         raise TransportRejected(
             "origin-unproven",
             f"the forwarded SE does not verify as the origin's sealed evidence: "
-            f"{sorted({r for r, _ in found})} (R12-X2)")
+            f"{sorted({r for r, _ in found})}")
     wrong = [f for f, want in (("type", "SE-v1"), ("rdp_id", claim),
                                ("message_id", message_id),
                                ("mls_group_id", mls_group_id),
@@ -1308,7 +1308,7 @@ def _proven_origin(origin, message_id, mls_group_id, digest):
             "origin-unproven",
             f"the forwarded SE does not bind this submission: {wrong} differ — "
             "an origin claim is proven only by the origin's SE for THESE octets "
-            "under THIS message_id (R12-X2)")
+            "under THIS message_id")
     return claim
 
 
@@ -1359,7 +1359,7 @@ def ds_accept_message(message_id, mls_group_id, mls_message_b64,
             "unauthenticated",
             "the Delivery Service derives the idempotency namespace from the "
             "authenticated issuing RDP, so an unauthenticated submission has "
-            "no namespace to be idempotent within (R4-05/R4-U3)")
+            "no namespace to be idempotent within")
     # R12-X2: the published request, executed — the body was an inline Schema
     # nothing validated against, which is how an origin could never be stated.
     request = {"message_id": message_id, "mls_group_id": mls_group_id,
@@ -1380,7 +1380,7 @@ def ds_accept_message(message_id, mls_group_id, mls_message_b64,
             raise TransportRejected(
                 "forwarder-not-authorised",
                 f"{principal!r} is not an RDP this Delivery Service accepts "
-                "forwarded submissions from (R12-X2)")
+                "forwarded submissions from")
         forwarder, principal = principal, _proven_origin(
             origin, message_id, mls_group_id, digest)
     key = (principal, message_id)
@@ -1391,7 +1391,7 @@ def ds_accept_message(message_id, mls_group_id, mls_message_b64,
                 "duplicate-message-id",
                 f"message_id {message_id!r} is already bound at the Delivery "
                 f"Service, for issuing RDP {principal!r}, to different octets — "
-                "the two ledgers must not diverge (R3-07)")
+                "the two ledgers must not diverge")
         if prior["mls_group_id"] != mls_group_id:
             raise TransportRejected(
                 "duplicate-message-id",
@@ -1424,7 +1424,7 @@ def ds_accept_message(message_id, mls_group_id, mls_message_b64,
             "acceptance-record-invalid",
             f"the acceptance record this submission would return does not "
             f"satisfy the published `AcceptanceRecord`: {problems[:3]} — "
-            "nothing is stored (R8-05)")
+            "nothing is stored")
     # R9-X3 / R10-04: the recipient set is fixed HERE, once, from what the DS
     # observed — and stored, so that a retry resumes the same set rather than
     # reading a roster that has moved since.
@@ -1558,7 +1558,7 @@ def submit(meta, *, fail_at=None, retained_group_context=None,
                 f"the SE this submission would seal does not satisfy its own "
                 f"Schema: {problems[:3]} — refused BEFORE the Delivery Service "
                 "was contacted, so no transport acceptance and no SE exist "
-                "(R8-01)")
+                "")
 
     if fail_at == "before-acceptance":
         raise TransportRejected("interrupted", "before DS acceptance (test)")
@@ -1570,7 +1570,7 @@ def submit(meta, *, fail_at=None, retained_group_context=None,
         raise TransportRejected(
             "envelope-hash-mismatch",
             "the Delivery Service accepted different octets than RDP(out) "
-            "committed to — no SE (R3-07)")
+            "committed to — no SE")
 
     if fail_at == "after-acceptance":
         raise TransportRejected("interrupted", "after DS acceptance (test)")
@@ -1590,7 +1590,7 @@ def submit(meta, *, fail_at=None, retained_group_context=None,
             raise SubmissionRejected(
                 "evidence-schema-invalid",
                 f"the SE about to be sealed does not satisfy its own Schema: "
-                f"{problems[:3]} — nothing is sealed (R8-01)")
+                f"{problems[:3]} — nothing is sealed")
         prior = evidence_artifact(body)
         _SE_LEDGER[(principal, mid)] = prior
 
@@ -1788,13 +1788,13 @@ def reserve_keypackages(uid, *, credential, cipher_suite, targets,
             "idempotency-key-required",
             "`Idempotency-Key` is REQUIRED and at least 16 characters: without "
             "it a retried reservation opens a second one and the packages of "
-            "the first are held until they expire (R9-03)")
+            "the first are held until they expire")
     seen = set()
     for t in targets:
         pair = (t["mid"], t["device_id"])
         if pair in seen:
             raise ReservationError("keypackage-target-duplicate",
-                                   f"device {pair!r} named twice (DR-08)")
+                                   f"device {pair!r} named twice")
         seen.add(pair)
 
     key = (creator, idempotency_key)
@@ -1820,7 +1820,7 @@ def reserve_keypackages(uid, *, credential, cipher_suite, targets,
                 "reservation-conflict",
                 f"`Idempotency-Key` {idempotency_key!r} was used for a "
                 "different reservation. A replay converges; a different "
-                "request under one key is a conflict (R9-03)")
+                "request under one key is a conflict")
         return _reservation_response(prior)
 
     _RESERVATION_SEQ[0] += 1
@@ -1856,7 +1856,7 @@ def _reservation_of(reservation_id, creator, *, at):
         raise ReservationError(
             "reservation-expired",
             f"reservation {reservation_id!r} expired at {r['expires_at']} and "
-            "its packages returned to the pool; re-reserve (R9-03)")
+            "its packages returned to the pool; re-reserve")
     return r
 
 
@@ -1905,7 +1905,7 @@ def release_reservation(reservation_id, *, credential,
             "reservation-committed",
             f"reservation {reservation_id!r} is committed: its packages are "
             "consumed and do not return to the pool. A group that failed after "
-            "commit is retried with a NEW reservation (R10-X2)")
+            "commit is retried with a NEW reservation")
     r["state"] = "released"        # idempotent: released or expired alike
     return None                    # 204: there is nothing to say
 
@@ -1931,19 +1931,19 @@ def resolve_committed_target(reservation_id, *, keypackage_ref, device_id,
             "reservation-unknown",
             f"reservation {reservation_id!r} is unknown or belongs to another "
             "creator, so nothing binds this invitation to a KeyPackage the DS "
-            "actually issued (R8-04)")
+            "actually issued")
     if r["state"] != "committed":
         raise InvitationError(
             "reservation-not-committed",
             f"reservation {reservation_id!r} is {r['state']!r}: a Welcome "
             "deposited against an uncommitted reservation names packages that "
-            "may still return to the pool (R8-04)")
+            "may still return to the pool")
     labelled = [t for t in r["targets"] if t["device_id"] == device_id]
     if not labelled:
         raise InvitationError(
             "keypackage-target-unrequested",
             f"device {device_id!r} is not a target of reservation "
-            f"{reservation_id!r}, so no package was consumed for it (R8-04)")
+            f"{reservation_id!r}, so no package was consumed for it")
     for t in labelled:
         if t.get("keypackage_ref") == keypackage_ref:
             # `uid` travels with the target: R9-X3 needs the recipient ENTITY
@@ -1954,7 +1954,7 @@ def resolve_committed_target(reservation_id, *, keypackage_ref, device_id,
         "keypackage-not-consumed",
         f"the invitation names KeyPackage {keypackage_ref!r} for device "
         f"{device_id!r}, but that reservation consumed no such package for "
-        "it (R8-04)")
+        "it")
 
 
 def published_device_floor(members, device):
@@ -2047,7 +2047,7 @@ def _creator_of(credential):
         raise WelcomeAccessDenied(
             "the member credential does not name its entity and `mid`, so "
             "there is no creator identity to own the resulting outcomes — a "
-            "MID is unique only within its entity (R8-X3/R11-01)")
+            "MID is unique only within its entity")
     return who
 
 
@@ -2074,14 +2074,14 @@ def _invitation_window(deposit):
         raise InvitationError(
             "invitation-window-invalid",
             f"{e}: an instant that cannot be parsed cannot bound a window "
-            "(R9-04)")
+            "")
     if created >= expires:
         raise InvitationError(
             "invitation-window-invalid",
             f"created_at {deposit['created_at']!r} ({created.isoformat()}) is "
             f"not before expires_at {deposit['expires_at']!r} "
             f"({expires.isoformat()}): the invitation would be born expired "
-            "and no refusal could ever be in window (R8-04/R9-04)")
+            "and no refusal could ever be in window")
 
 
 # R9-04 requirements 3, 4 and 5 — RESPONSE DTOs, and they are validated.
@@ -2113,7 +2113,7 @@ def _public(schema_name, obj, *, fields):
         raise InvitationError(
             "response-schema-invalid",
             f"the generated {schema_name} does not satisfy its published "
-            f"Schema: {problems[:3]} — it is not returned (R9-04)")
+            f"Schema: {problems[:3]} — it is not returned")
     return out
 
 
@@ -2142,7 +2142,7 @@ def deposit_welcome(deposit, *, credential, queued_at="2026-04-04T10:00:00Z"):
             f"the deposit does not satisfy the published `InvitationDeposit`: "
             f"{problems[:3]} — each field is something a refusal must be "
             "checkable against, so an unusable record is refused rather than "
-            "retained (R7-03/R8-04)")
+            "retained")
     _invitation_window(deposit)
     try:
         base64.b64decode(deposit["welcome_b64"], validate=True)
@@ -2151,7 +2151,7 @@ def deposit_welcome(deposit, *, credential, queued_at="2026-04-04T10:00:00Z"):
             "welcome-malformed",
             "`welcome_b64` is not valid base64, so the DS would queue bytes no "
             "device can parse and the invitation could never be acted on "
-            "(R8-04)")
+            "")
 
     # R8-04 requirements 3 and 6 — the reservation and the exact KeyPackage.
     device = deposit["recipient_device"]
@@ -2164,7 +2164,7 @@ def deposit_welcome(deposit, *, credential, queued_at="2026-04-04T10:00:00Z"):
             f"the invitation offers {deposit['offered_suite']!r} while the "
             f"committed reservation consumed a {target['cipher_suite']!r} "
             "KeyPackage — the suite a refusal is checked against must be the "
-            "one actually reserved (R8-04)")
+            "one actually reserved")
 
     inv_id = deposit["invitation_id"]
     # R12-08 — THE HANDLE IS THE CREATOR'S. `invitation_id` is chosen by the
@@ -2181,7 +2181,7 @@ def deposit_welcome(deposit, *, credential, queued_at="2026-04-04T10:00:00Z"):
             raise InvitationError(
                 "invitation-conflict",
                 f"invitation {inv_id!r} already exists with different content "
-                "(R7-03)")
+                "")
         return _public("WelcomeQueued", prior,
                        fields=("welcome_id", "recipient_device"))
     # R12-07 — ONE PACKAGE, ONE INVITATION. The reservation proved the package
@@ -2194,8 +2194,7 @@ def deposit_welcome(deposit, *, credential, queued_at="2026-04-04T10:00:00Z"):
             "keypackage-already-deposited",
             f"KeyPackage {deposit['keypackage_ref']!r} of reservation "
             f"{deposit['reservation_id']!r} was consumed by another invitation; "
-            "a single-use package authorises one Welcome — reserve afresh "
-            "(R12-07, R10-X2)")
+            "a single-use package authorises one Welcome — reserve afresh")
     _WELCOME_SEQ[0] += 1
     item = {"welcome_id": f"wel-{_WELCOME_SEQ[0]:04d}",
             "recipient_device": device,
@@ -2329,7 +2328,7 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
         raise InvitationError(
             "invitation-unknown",
             "unknown, already handled, expired, or belonging to another "
-            "device — uniformly indistinguishable (R7-03)")
+            "device — uniformly indistinguishable")
     inv = entry["invitation"]
 
     # R8-04 requirement 7 — the TERMINAL result, before the state check, so a
@@ -2344,19 +2343,19 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
             "invitation-conflict",
             "this Welcome was already refused with a different reason, suite "
             "or floor. A retry converges; a different request is a conflict "
-            "and must not silently replace the terminal result (R8-04)")
+            "and must not silently replace the terminal result")
     if entry["state"] != "open":
         raise InvitationError(
             "invitation-unknown",
             "unknown, already handled, expired, or belonging to another "
-            "device — uniformly indistinguishable (R7-03)")
+            "device — uniformly indistinguishable")
 
     # R8-04 requirement 6: the credential must hold THIS invitation's package.
     if credential.get("keypackage_ref") != inv["keypackage_ref"]:
         raise InvitationError(
             "invitation-unknown",
             "unknown, already handled, expired, or belonging to another "
-            "device — uniformly indistinguishable (R7-03)")
+            "device — uniformly indistinguishable")
 
     # R10-05: the published request, EXECUTED — as `ReceiptAckRequest` and
     # `InvitationDeposit` already are. It was inline and could not be
@@ -2394,14 +2393,14 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
             f"{reason!r} is not a registered group-establishment outcome "
             f"({sorted(GROUP_ESTABLISHMENT_REASONS)}). The reason is enumerated "
             "so a creator can act on it; a free-text value retained verbatim is "
-            "an attacker-chosen string in the creator's queue (R8-04)")
+            "an attacker-chosen string in the creator's queue")
     problems = validate_contract_object("delivery-service-openapi.yaml",
                                         "WelcomeRefusalRequest", request)
     if problems:
         raise InvitationError(
             "refusal-request-invalid",
             f"the refusal does not satisfy the published "
-            f"`WelcomeRefusalRequest`: {problems[:2]} (R10-05)")
+            f"`WelcomeRefusalRequest`: {problems[:2]}")
     # And the suite it CLAIMS is checked against the record before any of it is
     # used: the key resolution below recomputes the package reference, and a
     # suite the registry does not know made that raise a ValueError out of the
@@ -2411,7 +2410,7 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
             "invitation-suite-mismatch",
             f"the refusal says it was offered {offered_suite!r}; this "
             f"invitation offered {inv['offered_suite']!r}. The DS validates "
-            "the claim against the record rather than echoing it (R7-03)")
+            "the claim against the record rather than echoing it")
 
     # G1 — THE PRE-JOIN PROOF. Holding `keypackage_ref` proves nothing: it is a
     # hash of the package's PUBLIC bytes, returned to the creator by the
@@ -2483,12 +2482,12 @@ def refuse_welcome(welcome_id, *, credential, reason, offered_suite,
         raise InvitationError(
             "invitation-unknown",
             "unknown, already handled, expired, or belonging to another "
-            "device — uniformly indistinguishable (R7-03)")
+            "device — uniformly indistinguishable")
     if not (lo <= at <= hi):
         raise InvitationError(
             "invitation-unknown",
             "unknown, already handled, expired, or belonging to another "
-            "device — uniformly indistinguishable (R7-03)")
+            "device — uniformly indistinguishable")
 
     # R10-05: the published request, EXECUTED — as `ReceiptAckRequest` and
     # `InvitationDeposit` already are. It was inline and could not be
@@ -2562,14 +2561,14 @@ def _resolved_floor(members, device, required_floor):
             f"the floor device {device!r} publishes cannot be resolved from "
             "the supplied discovery material, so `required_floor` cannot be "
             "checked and the refusal would be an unverifiable assertion "
-            "(R8-04)")
+            "")
     if required_floor != published:
         raise InvitationError(
             "refusal-floor-mismatch",
             f"the refusal claims a floor of {required_floor!r}; device "
             f"{device!r} publishes {published!r}. The creator is told to verify "
             "the claim against published discovery, so the DS checks the same "
-            "thing rather than forwarding whatever it was sent (R8-04)")
+            "thing rather than forwarding whatever it was sent")
     return published
 
 
@@ -2595,13 +2594,13 @@ def register_founder(mls_group_id, *, credential):
         raise InvitationError(
             "group-unknown",
             "unknown, or formed by another creator — uniformly "
-            "indistinguishable (R12-X3)")
+            "indistinguishable")
     prior = _FOUNDERS.get(mls_group_id)
     if prior is not None and prior != device:
         raise InvitationError(
             "founder-conflict",
             f"group {mls_group_id!r} already has its founding device; a group "
-            "has one creator (R12-X3)")
+            "has one creator")
     _FOUNDERS[mls_group_id] = device
     return None                    # 204
 
@@ -2646,12 +2645,12 @@ def ack_outcome(outcome_id, *, credential):
         raise InvitationError(
             "outcome-unknown",
             "unknown or belonging to another creator — uniformly "
-            "indistinguishable (R7-03)")
+            "indistinguishable")
     if entry["creator"] != who:
         raise InvitationError(
             "outcome-unknown",
             "unknown or belonging to another creator — uniformly "
-            "indistinguishable (R7-03)")
+            "indistinguishable")
     del _OUTCOMES[outcome_id]
     _ACKED_OUTCOMES[outcome_id] = who
     # R9-X4: 204 means no content, and now that is true. `{"acknowledged":
@@ -2669,7 +2668,7 @@ def _device_of(credential):
             "the device's entity and member: it hands over the group secrets "
             "of ONE device, an entity- or member-level credential covers many, "
             "and a bare label names a device of every member using it "
-            "(R3-06/R11-01)")
+            "")
     return who
 
 
@@ -2708,7 +2707,7 @@ def collect_welcomes(*, credential, at="2026-04-04T10:05:00Z"):
     if problems:
         raise WelcomeAccessDenied(
             f"the generated WelcomeQueue does not satisfy its published "
-            f"Schema: {problems[:3]} — it is not returned (R9-04)")
+            f"Schema: {problems[:3]} — it is not returned")
     return queue
 
 
@@ -2764,17 +2763,25 @@ def delivered_at_from_receipt(receipt, submitted_envelope_hash, provider=None,
     receipt.
     """
     from lint_cli import verify_ds_receipt, ReceiptVerificationError
-    # SBM-ADR-0015: the key is the ISSUING RDP's, from its BW-PROVIDER
+    # SBM-ADR-0015: the receipt key is a PROVIDER's, from its BW-PROVIDER
     # descriptor. It was the entity's BW-MED, because the Delivery Service was a
-    # second provider; with one provider role the key is the RDP's own. The MED
-    # path is deleted rather than kept as a fallback — a `kid` published only in
-    # a BW-MED must not resolve, or the move would be a rename.
+    # second provider; with one provider role the key is the provider's own. The
+    # MED path is deleted rather than kept as a fallback — a `kid` published only
+    # in a BW-MED must not resolve, or the move would be a rename.
+    #
+    # SBM-ADR-0016: WHOSE provider. The observing one — the receipt's signed
+    # `observed_by` — not the issuing RDP, which is the message's ORIGIN. This
+    # message still said "the issuing RDP" after the shared check had been
+    # corrected to resolve by the observer: the diagnostic described a rule the
+    # code no longer applies, which is the one place a reader would look to learn
+    # what it does.
     if provider is None:
         raise AckRejected(
             "receipt-unverifiable",
-            "no BW-PROVIDER descriptor supplied for the issuing RDP, so the DS "
-            "receipt key cannot be resolved and the signature cannot be "
-            "verified against anything (R4-03/SBM-ADR-0015)")
+            "no BW-PROVIDER descriptor supplied for the OBSERVING provider — the "
+            "one the receipt names in `observed_by` — so the DS receipt key "
+            "cannot be resolved and the signature cannot be verified against "
+            "anything")
     # R6-03: the act being processed is STATED. Without it a valid receipt for
     # message A was accepted while handling message B whenever the ciphertext
     # digest matched — the function had no parameter with which to notice, so
@@ -2784,7 +2791,7 @@ def delivered_at_from_receipt(receipt, submitted_envelope_hash, provider=None,
         raise AckRejected(
             "receipt-context-missing",
             "no expected delivery context was supplied, so this receipt could "
-            "be a valid one for another act. Fail closed (R6-03)")
+            "be a valid one for another act. Fail closed")
     try:
         signed = verify_ds_receipt(receipt, provider, expect=expect)
     except ReceiptVerificationError as e:
@@ -2801,7 +2808,7 @@ def delivered_at_from_receipt(receipt, submitted_envelope_hash, provider=None,
         raise AckRejected(
             "receipt-unverifiable",
             "the signed payload carries no server_time, so there is no "
-            "attested delivery instant to record (R5-03)")
+            "attested delivery instant to record")
     return delivered_at
 
 
@@ -3089,7 +3096,7 @@ def _selected_policy(se, org, members):
         raise ConfirmationRejected(
             "confirmation-policy-unresolvable",
             "the BW-ORG supplied is not the version the SE pins, so the policy "
-            "this confirmation would count toward is not known (R11-02)")
+            "this confirmation would count toward is not known")
     key = ref.get("policy_key")
     pol = (org.get("acceptance_policy") or {}).get(key)
     if not (isinstance(pol, str) and POLICY_RE.match(pol)) \
@@ -3175,7 +3182,7 @@ def deliver_confirmation(request, *, credential, se, rdp_id, observed_at,
         raise ConfirmationRejected(
             "confirmation-malformed",
             f"the request does not satisfy the published "
-            f"`ConfirmationDelivery`: {problems[:2]} (R10-07)")
+            f"`ConfirmationDelivery`: {problems[:2]}")
     kind, conf = request["confirmation_kind"], request["confirmation"]
 
     # 2. WHO — authorisation first (R11-03).
@@ -3189,7 +3196,7 @@ def deliver_confirmation(request, *, credential, se, rdp_id, observed_at,
             "the authenticated principal is not the confirming member of the "
             "message's recipient entity (and device, where one is named): "
             "INTF-1 requires the session to resolve to the member whose act "
-            "this is (TS clause 6, R11-01)")
+            "this is (TS clause 6)")
 
     # 3. WHICH MESSAGE — the originating namespace (R11-02).
     handle = (request["issuing_rdp_id"], request["message_id"])
@@ -3216,7 +3223,7 @@ def deliver_confirmation(request, *, credential, se, rdp_id, observed_at,
             raise ConfirmationRejected(
                 "confirmation-conflict",
                 f"member {who[1]!r} already made a different confirmation for "
-                f"{handle!r}; the first stands (R11-X1)")
+                f"{handle!r}; the first stands")
         return _copy.deepcopy(prior["issued"])
 
     # R12-02 — EACH KIND ITS OWN RULES. Only `s3` and `mismatch` carry a
@@ -3276,13 +3283,13 @@ def deliver_confirmation(request, *, credential, se, rdp_id, observed_at,
     except TimestampError as e:
         raise ConfirmationRejected(
             "confirmation-time-invalid",
-            f"the confirmation's {when} cannot be read: {e} (R11-04)")
+            f"the confirmation's {when} cannot be read: {e}")
     if future:
         raise ConfirmationRejected(
             "confirmation-time-invalid",
             f"{when} {conf.get(when)} is after RDP(in) received the "
             f"confirmation at {observed_at}; an act cannot be dated after its "
-            "own receipt (R11-X2)")
+            "own receipt")
 
     # 7. INTF-3 — for the kinds that carry a policy reference.
     if rules["policy_ref"] and \
@@ -3369,7 +3376,7 @@ def deliver_confirmation(request, *, credential, se, rdp_id, observed_at,
             "confirmation-rejected",
             f"the {kind} is not about this message: the evidence it would rest "
             f"on fails {sorted(set(found))} — nothing is stored or sealed "
-            "(R12-01/R12-02)")
+            "")
 
     # 8. THE AGGREGATE — R11-X1 and R12-X1. `s3` counts; a verified `mismatch`,
     # `validation-failure` or `refusal` is terminal and issues its evidence; a

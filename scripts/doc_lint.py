@@ -273,7 +273,17 @@ def scan():
 #: outward-facing README spelled it out in plain language — "a messaging service
 #: provider, which need not be qualified" — and the sweep that reported 113
 #: occurrences closed reported it clean.
-STALE_ROLE = re.compile(r"\bMSPs?\b|messaging\s+service\s+provider", re.IGNORECASE)
+#: `messaging provider` is here because of what it cost. The one-provider sweep
+#: of 6 October inventoried the tree with `git grep -nw MSP` and this pattern
+#: spelled the role out one way — so the TECHNOLOGY-NEUTRAL four-corner figure,
+#: which says "messaging provider" because it names no technology, kept two
+#: provider boxes, a register note reading "messaging providers PLANNED" and a
+#: caption calling an answered question open, for three days after its
+#: technology-named twin was redrawn. A figure that must say the same as another
+#: said the opposite, and nothing could see it.
+STALE_ROLE = re.compile(
+    r"\bMSPs?\b|messaging\s+service\s+providers?|messaging\s+providers?",
+    re.IGNORECASE)
 #: A path or URL that merely CONTAINS the word is not a role name: the
 #: historical `docs/rdp-msp-trust-analysis/` folder keeps its name, and a
 #: reading path is allowed to link to it. A path is what this matches: a
@@ -314,6 +324,44 @@ def _json_prose(node, trail=()):
     elif isinstance(node, list):
         for i, item in enumerate(node):
             yield from _json_prose(item, trail + (str(i),))
+
+
+#: The work programme SBM-ADR-0015 withdrew. Not a role name but a PLAN, which
+#: is why it is its own pattern: `Batch B` was to give the second provider an
+#: identity, a contract and an `observed_by` binding, and it is not coming. The
+#: one-provider sweep removed the codename from the reading path and missed two
+#: places, because neither spells a role: an identity-proof figure whose legend
+#: still read *"PLANNED — decided, not implemented (Batch B)"* three days later,
+#: and a linter comment promising that `Batch B adds \`msp\``. The historical
+#: records keep it — `EXEMPT` holds the CHANGELOG and every declared record —
+#: for the same reason the decision records keep the role name.
+WITHDRAWN_PROGRAMME = re.compile(r"\bBatch\s+B\b")
+#: …unless the same line says that is what it is.
+PROGRAMME_BURIED = re.compile(
+    r"withdraw|superseded|not coming|no longer|never (?:came|arrived)|dropped",
+    re.IGNORECASE)
+
+
+def scan_withdrawn_programme():
+    """[(rel, line_no, line)] — current-facing text naming the withdrawn plan."""
+    out, seen = [], set()
+    for g in STALE_ROLE_GLOBS + ["schemas/*.json", "*.yaml"]:
+        for path in sorted(ROOT.glob(g)):
+            rel = path.relative_to(ROOT).as_posix()
+            if rel in seen or rel in EXEMPT:
+                continue
+            if rel in STALE_ROLE_EXEMPT_FILES or any(
+                    rel.startswith(d) for d in STALE_ROLE_EXEMPT_DIRS):
+                continue
+            seen.add(rel)
+            for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                # Name it to say it was withdrawn and the line stands: that is
+                # what the provider descriptor's own `$comment` does, recording
+                # why a key moved anyway after the plan that would have moved it
+                # was dropped. The rule is name it only to bury it.
+                if WITHDRAWN_PROGRAMME.search(line) and not PROGRAMME_BURIED.search(line):
+                    out.append((rel, n, line.strip()))
+    return out
 
 
 def scan_stale_roles():
@@ -400,6 +448,65 @@ def figure_text(path, fm):
         words = [l.strip() for l in path.read_text(encoding="utf-8").splitlines()
                  if l.strip() and not l.strip().startswith("%%")]
     return words + [fm[k] for k in ("question", "alt") if fm and fm.get(k)]
+
+
+#: The review agenda's own rows, and which of them are no longer open.
+#: `Deferred` is NOT closed: A15 is deferred WITH A PROHIBITION attached, and a
+#: document calling it open is right.
+AGENDA_ROW = re.compile(r"^\|\s*([AGLP]\d+)\s*\|(.*)$", re.M)
+AGENDA_CLOSED = re.compile(r"\*\*(?:RESOLVED|CLOSED|Closed|Decided)\b")
+AGENDA_CITE = re.compile(r"\b([AGLP]\d+)\b")
+#: Words that say, in the label itself, that the entry is no longer open.
+AGENDA_SETTLED = re.compile(
+    r"settled|resolved|closed|decided|superseded|moot|withdrawn|answered|reopen|no longer",
+    re.IGNORECASE)
+
+
+def agenda_entries(path=None):
+    """{identifier: is it closed} as the agenda's own rows mark it, or None.
+
+    Resolved against `ROOT` when it is called, not when this module is
+    imported, so a caller that points `ROOT` at a copy gets that copy's agenda.
+    None where there is no agenda at all: that is a test fixture holding a few
+    figures, not a repository. In a repository the agenda cannot quietly go
+    missing — every reading path links to it, and the link check below fails.
+    """
+    path = path or ROOT / "docs" / "REVIEW_AGENDA.md"
+    if not path.exists():
+        return None
+    return {m.group(1): bool(AGENDA_CLOSED.search(m.group(2)))
+            for m in AGENDA_ROW.finditer(path.read_text(encoding="utf-8"))}
+
+
+def figure_agenda_problems(labels, entries):
+    """[problem] — a figure may not cite an entry the agenda does not have, nor
+    cite a CLOSED one without saying so in the same label.
+
+    **Figures only, and the limit is the reason.** A paragraph may cite an
+    answered question and answer it in the next sentence, and a reader follows
+    it; the Internet-Draft and `CONTRIBUTING.md` both do exactly that, and a
+    line-level rule over prose flags them while they are correct. A figure label
+    has no next sentence: it is read where it sits. That is why every instance
+    of this defect found so far was in a figure — a legend still planning a
+    withdrawn programme, a caption calling an answered question open, a label
+    pointing at the question that used to be the right one. Prose keeps its own
+    gate, `tests/test_agenda_citations.py`, which checks that a cited entry
+    exists; nothing checks prose for citing a closed entry as open, and this
+    does not pretend to.
+    """
+    if entries is None:
+        return []
+    out = []
+    for label in labels:
+        for ident in sorted(set(AGENDA_CITE.findall(label))):
+            if ident not in entries:
+                out.append(f"cites {ident}, which the review agenda does not "
+                           f"have: {label[:90]}")
+            elif entries[ident] and not AGENDA_SETTLED.search(label):
+                out.append(f"cites {ident} as if it were open — the agenda "
+                           f"records it as closed, and a figure label is read "
+                           f"on its own: {label[:90]}")
+    return out
 
 
 SCANNABLE = (".svg", ".mermaid", ".mmd")
@@ -555,6 +662,7 @@ def scan_record_classification(root=None):
 def scan_figures():
     """[(file, problem)] for every figure under docs/diagrams/ (DOC-01)."""
     exports = {e["export"]: e for e in load_exports()}
+    entries = agenda_entries()
     problems, historical = [], set()
     figures = sorted(p for p in DIAGRAMS.iterdir()
                      if p.suffix in (".svg", ".mermaid", ".mmd", ".png"))
@@ -575,8 +683,10 @@ def scan_figures():
         if fm and fm.get("status") == "historical":
             historical.add(rel)
             continue
+        labels = figure_text(path, fm)
         problems += [(rel, f"'{m}' in figure text: {label[:100]}")
-                     for label, m in _figure_hits(figure_text(path, fm))]
+                     for label, m in _figure_hits(labels)]
+        problems += [(rel, why) for why in figure_agenda_problems(labels, entries)]
     for rel, e in exports.items():
         export, source = ROOT / rel, ROOT / e["source"]
         if not export.exists() or not source.exists():
@@ -591,8 +701,10 @@ def scan_figures():
         if e["source"] in historical:
             continue
         if export.suffix == ".svg":
+            labels = figure_text(export, None)
             problems += [(rel, f"'{m}' in figure text: {label[:100]}")
-                         for label, m in _figure_hits(figure_text(export, None))]
+                         for label, m in _figure_hits(labels)]
+            problems += [(rel, why) for why in figure_agenda_problems(labels, entries)]
     problems += raster_source_problems(exports)
     # A public brief, where one exists (the design-study export carries one),
     # embeds its own figures; a superseded mechanism must not survive there
@@ -765,6 +877,11 @@ def main():
     for rel, n, text in roles:
         snippet = text if len(text) <= 120 else text[:117] + "..."
         print(f"[ROLE] {rel}:{n}: a withdrawn role name (SBM-ADR-0015) -> {snippet}")
+    plan = scan_withdrawn_programme()
+    for rel, n, text in plan:
+        snippet = text if len(text) <= 120 else text[:117] + "..."
+        print(f"[PLAN] {rel}:{n}: a withdrawn work programme (SBM-ADR-0015) -> {snippet}")
+    roles = roles + plan
     f = scan_figures()
     for rel, problem in f:
         print(f"[FIGURE] {rel}: {problem}")
@@ -797,9 +914,12 @@ def main():
     print("doc-lint: no pre-inversion mechanism tokens in prose or figures "
           f"({scanned} figure source(s) read; {rasters} raster export(s) covered "
           "through a scannable same-stem source, its digests and its text chunks); "
-          "every figure has front matter and a fresh export; every local link "
-          "resolves; every file the licence lists exists; every declared record is "
-          "presented as one ✓")
+          "every figure has front matter and a fresh export; no current-facing "
+          "text names the withdrawn provider role or the work programme that "
+          "would have given it one; no figure cites a "
+          "review-agenda entry the agenda does not have, or a closed one as if it "
+          "were open; every local link resolves; every file the licence lists "
+          "exists; every declared record is presented as one ✓")
 
 
 if __name__ == "__main__":

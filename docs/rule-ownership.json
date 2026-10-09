@@ -1,5 +1,5 @@
 {
-  "$comment": "X-34 RULE-OWNERSHIP INVENTORY (single source of truth). Each rule family has exactly ONE normative owner document; other documents carry only informative summaries that reference the owner. scripts/rule_ownership.py (make rule-ownership) and tests/test_rule_ownership.py enforce: the owner states the rule, no non-owner document carries a BARE normative restatement, and the I-D's deployment-defined-interface count matches the bullets it lists. docs/rule-ownership.md is generated from this file. Registry / well-known ownership layering is deferred to X-25 (Batch 4) and deliberately NOT covered here.",
+  "$comment": "RULE-OWNERSHIP INVENTORY (single source of truth). Each rule family has exactly ONE normative owner document; other documents carry only informative summaries that reference the owner. scripts/rule_ownership.py (make rule-ownership) and tests/test_rule_ownership.py enforce: the owner states the rule, no non-owner document carries a BARE normative restatement, and the I-D's deployment-defined-interface count matches the bullets it lists. docs/rule-ownership.md is generated from this file. Registry and well-known ownership layering is deferred and deliberately NOT covered here.",
   "inventory_version": "1",
   "doc_keys": {
     "umbrella": "Secure-Business-Messaging-Profile.md",
@@ -86,14 +86,14 @@
       "informative_refs": [
         {
           "doc": "id",
-          "note": "the I-D defines the FIELDS, the lexical value spaces and the unknown-code ingest rule only (IANA Considerations, X-25 registry layering); registry contents/governance are not restated"
+          "note": "the I-D defines the FIELDS, the lexical value spaces and the unknown-code ingest rule only (IANA Considerations, registry layering); registry contents/governance are not restated"
         },
         {
           "doc": "ts",
           "note": "clause 8.1/8.3 owns the ERD event mappings the registered reasons bind to"
         }
       ],
-      "note": "X-25 / X-34 residual: the transport I-D previously claimed to BE the registry ('initially this document') and registered well-known resources defined elsewhere; the split gives each registry one owner and moves the well-known registration to umbrella §8.1."
+      "note": "Residual: the transport I-D previously claimed to BE the registry ('initially this document') and registered well-known resources defined elsewhere; the split gives each registry one owner and moves the well-known registration to umbrella §8.1."
     },
     {
       "id": "acceptance-policy-evaluator",
@@ -113,7 +113,7 @@
           "note": "the delivery-state model consumes the evaluated outcome; it does not evaluate"
         }
       ],
-      "note": "X-10: the former two-owner text is collapsed to one owner, RDP(in). The phrasing that is now forbidden is `non_owner_forbidden` above, and tests/test_policy_evaluator_owner.py records the former wording verbatim; both keep a role name SBM-ADR-0015 withdrew, because a detector must carry what it detects. A prose-ownership family, not a sample-checkable LINT rule."
+      "note": "the former two-owner text is collapsed to one owner, RDP(in). The phrasing that is now forbidden is `non_owner_forbidden` above, and tests/test_policy_evaluator_owner.py records the former wording verbatim; both keep a role name SBM-ADR-0015 withdrew, because a detector must carry what it detects. A prose-ownership family, not a sample-checkable LINT rule."
     },
     {
       "id": "status-capability",
@@ -135,7 +135,7 @@
           "note": "the delivery-state model consumes the gate; the hold note defers to the umbrella"
         }
       ],
-      "note": "D6 (F-10/X-07): one mechanism, two findings. The capability object is STATUS-v1; the EDD contract v1.8.0 serves it; LINT-DISC-25 checks it."
+      "note": "One mechanism, two findings. The capability object is STATUS-v1; the EDD contract v1.8.0 serves it; LINT-DISC-25 checks it."
     },
     {
       "id": "hash-mode-mandatory-to-implement",

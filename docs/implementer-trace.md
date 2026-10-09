@@ -60,7 +60,7 @@ One usable KeyPackage per (member, device). The reservation id is server-assigne
 
 **Negative branch.** The same key for different targets is a conflict, not a second reservation.
 
-**Refused:** `reservation-conflict` — reservation-conflict: `Idempotency-Key` 'idem-000000000001' was used for a different reservation. A replay converges; a different request under one key is a conflict (R9-03)
+**Refused:** `reservation-conflict` — reservation-conflict: `Idempotency-Key` 'idem-000000000001' was used for a different reservation. A replay converges; a different request under one key is a conflict
 
 ### → `POST /reservations/{id}/commit`
 
@@ -96,13 +96,13 @@ The second member's device, invited on the same reservation.
 
 **Negative branch.** The refusal is authenticated by the KeyPackage the device holds. Without it the item is indistinguishable from one that does not exist — the queue must not be an existence oracle over another device's state. This is the proof whose exact bytes **G1** still owes.
 
-**Refused:** `invitation-unknown` — invitation-unknown: unknown, already handled, expired, or belonging to another device — uniformly indistinguishable (R7-03)
+**Refused:** `invitation-unknown` — invitation-unknown: unknown, already handled, expired, or belonging to another device — uniformly indistinguishable
 
 ### ✗ `POST /welcomes/{id}/refuse (no proof)`
 
 **Negative branch.** Holding `keypackage_ref` proves nothing: it is a hash of the package's PUBLIC bytes, returned to the creator by the reservation and held by the Delivery Service — the two parties best placed to forge a refusal attributed to this device both have it.
 
-**Refused:** `refusal-request-invalid` — refusal-request-invalid: the refusal does not satisfy the published `WelcomeRefusalRequest`: [('$', "'refusal_proof' is a required property")] (R10-05)
+**Refused:** `refusal-request-invalid` — refusal-request-invalid: the refusal does not satisfy the published `WelcomeRefusalRequest`: [('$', "'refusal_proof' is a required property")]
 
 ### → `GET /welcome (the refusing device)`
 
@@ -138,7 +138,7 @@ The device refuses before joining, with its proof. The creator learns it from th
 
 **Negative branch.** The nonce is spent when the refusal is ACCEPTED, so a captured copy is unusable — while an exact retry converges on the stored outcome before the proof is examined at all. Replay protection and idempotency do not fight each other.
 
-**Refused:** `invitation-conflict` — invitation-conflict: this Welcome was already refused with a different reason, suite or floor. A retry converges; a different request is a conflict and must not silently replace the terminal result (R…
+**Refused:** `invitation-conflict` — invitation-conflict: this Welcome was already refused with a different reason, suite or floor. A retry converges; a different request is a conflict and must not silently replace the terminal result
 
 ### → `GET /outcomes`
 
@@ -159,7 +159,7 @@ The intake validates the candidate against the published request Schema, recompu
 
 **Negative branch.** Every field is independently valid and they name two entities: a German recipient UID with a French address. Refused before a seal exists.
 
-**Refused:** `identity-incoherent` — identity-incoherent: recipient_uid is 'EU-DE-EOID-7K3D9W0Q2M5FW0' but recipient_addr names 'EU-FR-PSBID-ZYWVTSRQPNM8M4' — one message, two recipients (R6-01)
+**Refused:** `identity-incoherent` — identity-incoherent: recipient_uid is 'EU-DE-EOID-7K3D9W0Q2M5FW0' but recipient_addr names 'EU-FR-PSBID-ZYWVTSRQPNM8M4' — one message, two recipients
 
 ### ✗ `POST /submissions (policy digest outside its domain)`
 
@@ -171,7 +171,7 @@ The intake validates the candidate against the published request Schema, recompu
 
 **Negative branch.** `expires_at` not later than `sent_at` — a zero or reversed lifetime, checked at intake rather than by a linter after sealing.
 
-**Refused:** `expiry-not-after-sent` — expiry-not-after-sent: expires_at 2026-04-04T10:15:00Z is not later than sent_at 2026-04-04T10:15:00Z — a reversed or zero TTL (X-22)
+**Refused:** `expiry-not-after-sent` — expiry-not-after-sent: expires_at 2026-04-04T10:15:00Z is not later than sent_at 2026-04-04T10:15:00Z — a reversed or zero TTL
 
 ### → `POST /submissions (exact retry)`
 
@@ -235,7 +235,7 @@ The quorum is satisfied — **S4**. The delivery decision is the instant THIS pr
 
 ### → `(diagnostic) the confirmation aggregate, read directly`
 
-**Not a published operation.** No contract operation serves this; it is the reference's own `confirmation_state`, read here so the page SHOWS what the three acts above produced instead of asserting it in prose (R32-RES-01). The trace mixes published calls with local work a party does for itself — building a proof, re-verifying parts — and each is named for what it does. This one is different in kind: it reads the service's own state, which no operation exposes, so an implementer should not go looking for it (R33-OBS-02, R34-OBS-01). The acceptance policy is **satisfied**: two distinct members, the retry counted once.
+**Not a published operation.** No contract operation serves this; it is the reference's own `confirmation_state`, read here so the page SHOWS what the three acts above produced instead of asserting it in prose. The trace mixes published calls with local work a party does for itself — building a proof, re-verifying parts — and each is named for what it does. This one is different in kind: it reads the service's own state, which no operation exposes, so an implementer should not go looking for it. The acceptance policy is **satisfied**: two distinct members, the retry counted once.
 
 **Returned:** `state` = `satisfied`, `counted` = `F1N2C3D4P, F2X3Y4Z55`
 
@@ -276,7 +276,7 @@ Mode C is TWO recomputations in order: each part's digest from the octets receiv
 
 **Negative branch.** The recipient's OBSERVATION cannot be checked by anyone else. The sender's DECLARATION is in the sending evidence, and an assertion that misstates it is refused before sealing.
 
-**Refused:** `confirmation-rejected` — confirmation-rejected: the validation-failure is not about this message: the evidence it would rest on fails ['LINT-NDE-08'] — nothing is stored or sealed (R12-01/R12-02)
+**Refused:** `confirmation-rejected` — confirmation-rejected: the validation-failure is not about this message: the evidence it would rest on fails ['LINT-NDE-08'] — nothing is stored or sealed 
 
 
 ---

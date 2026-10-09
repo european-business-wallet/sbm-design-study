@@ -34,7 +34,7 @@ A terminal outcome is final: acts arriving afterwards are retained and change no
 ## 3. Three acknowledgements that are three different acts
 
 - **The Welcome acknowledgement** (`DELETE /welcome/{welcome_id}`) is the device **joining the group**. It says nothing about any message.
-- **The receipt acknowledgement** (`.../receipt-ack`, quoting the collection token) is the device **taking these octets**: S2, the acknowledged handover, dated by the Delivery Service's own clock. At the availability grade it dates the DE; at the others it does not by itself establish delivery.
+- **The receipt acknowledgement** (`.../receipt-ack`, quoting the collection token) is the device **taking these octets**: S2, the acknowledged handover, dated by the Delivery Service's own clock. At the availability grade it dates the DE; at the others it does not by itself establish delivery. The receipt names the provider whose Delivery Service observed it, in its signed `observed_by` — the **recipient's** provider where the two correspondents are on different ones, which is also whose published descriptor holds the key that verifies it ([SBM-ADR-0016](adr/SBM-ADR-0016.md)). The path in the request names the message's ORIGIN instead, because that is the namespace its identifier belongs to.
 - **Acceptance** is the recipient entity's: each eligible member's confirmation that it decrypted and the digest matched (S3), and the policy satisfied over distinct members (S4), observed by RDP(in). Under `any-one`, S4 coincides with S3.
 
 ## 4. Five clocks

@@ -43,6 +43,8 @@ import evidence_lint as ev  # noqa: E402
 import lint_cli as lc  # noqa: E402
 import multipart as mp  # noqa: E402
 import test_current_claims as tc  # noqa: E402
+from cddl_tool import requires_cddl  # noqa: E402
+
 
 _ld = lambda f: json.loads((ROOT / "samples" / f).read_text())["projection"]  # noqa: E731
 SE_MP = _ld("sample-SE-multipart.json")
@@ -194,6 +196,7 @@ def _deliver(m, conf, se=SE_MP, members=None, org=None):
         observed_at="2026-04-04T10:47:00Z", members=members, org=org)
 
 
+@requires_cddl
 @pytest.mark.parametrize("name", sorted(CASES))
 def test_the_failure_reaches_a_sealed_outcome(name):
     """The acceptance criterion the review sets: a helper returning an error

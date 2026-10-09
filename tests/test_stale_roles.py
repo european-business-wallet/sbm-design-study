@@ -91,6 +91,65 @@ def test_a_slash_between_role_names_is_read_as_roles(tmp_path, line):
         "this line must be one the shipped scrubber missed, or it proves nothing"
 
 
+@pytest.mark.parametrize("line", [
+    "A messaging provider may carry confirmations verbatim.",
+    "the messaging providers do not relay to each other",
+    "creating endpoint ↔ counterparty's messaging provider",
+])
+def test_the_role_without_the_middle_word_is_still_the_role(tmp_path, line):
+    """The spelling that walked past the sweep.
+
+    The one-provider inventory of 6 October was `git grep -nw MSP`, and the
+    guard spelled the role out one way: `messaging service provider`. The
+    TECHNOLOGY-NEUTRAL four-corner figure names no technology, so it writes
+    `messaging provider` — and it kept two provider boxes, a register note
+    reading "messaging providers PLANNED" and a caption calling an answered
+    question open, for three days after its technology-named twin was redrawn,
+    while every sweep reported the tree clean. A figure whose own front matter
+    says it must say the same as another said the opposite, unseen.
+    """
+    _write(tmp_path, "docs/diagrams/a-figure.svg",
+           f"<svg><text>{line}</text></svg>\n")
+    hits = _dl(tmp_path).scan_stale_roles()
+    assert [h[0] for h in hits] == ["docs/diagrams/a-figure.svg"], hits
+
+
+# ---------------------------------------------------------------------------
+# The plan, not the role: name it only to bury it
+# ---------------------------------------------------------------------------
+
+def test_the_withdrawn_work_programme_is_caught(tmp_path):
+    """Neither of these spells a role, so the role guard cannot see them.
+
+    Both are real. The first stood in an ACTIVE figure's legend — linked from
+    the README and the architecture note — for three days after the decision
+    that withdrew the plan; the second was a live comment in a linter,
+    promising a role that is not coming.
+    """
+    _write(tmp_path, "docs/diagrams/identity.svg",
+           "<svg><text>PLANNED — decided, not implemented (Batch B).</text></svg>\n")
+    _write(tmp_path, "README.md",
+           "closed to `rdp`, matching the register. Batch B adds `msp`.\n")
+    hits = _dl(tmp_path).scan_withdrawn_programme()
+    assert sorted(h[0] for h in hits) == ["README.md", "docs/diagrams/identity.svg"], hits
+
+
+def test_naming_the_plan_to_say_it_was_withdrawn_stands(tmp_path):
+    """The provider descriptor's own `$comment` records why a key moved anyway
+    after the plan that would have moved it was dropped. A guard that forbade
+    the words would demand deleting the reason."""
+    _write(tmp_path, "README.md",
+           "the load-bearing half of Batch B — and Batch B was withdrawn with "
+           "the participant model.\n")
+    assert _dl(tmp_path).scan_withdrawn_programme() == []
+
+
+def test_the_records_keep_the_plan(tmp_path):
+    for rel in ("CHANGELOG.md", "docs/adr/SBM-ADR-0004.md"):
+        _write(tmp_path, rel, "X3, X4 and X5 land in Batch B.\n")
+    assert _dl(tmp_path).scan_withdrawn_programme() == []
+
+
 def test_a_path_or_link_to_the_historical_folder_is_not_a_role(tmp_path):
     """The folder keeps its name, and a reading path may point at it."""
     _write(tmp_path, "README.md",

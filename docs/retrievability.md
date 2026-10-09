@@ -40,25 +40,25 @@ entry point cannot be handed is a finding rather than a documented input.
 | `member_history` | GET /.well-known/bw/member/{uid}/{mid}?as_of= (or ?version=) | the entity's provider (EDD resolver surface) | bundle manifest key `member_history` | **no** |
 | `counterparty_members` | GET /.well-known/bw/member/{uid}/{mid} on the SENDER's provider | the sender entity's provider — a different provider, and often a different jurisdiction | bundle manifest key `counterparty_members` | **no** |
 | `roster` | GET /uid/{uid}/roster-snapshot?scope_id=&epoch= | the recipient's provider | bundle manifest key `roster` | **no** |
-| `group_contexts` | GET /groups/{group_id}/context?epoch= | the Delivery Service — the retention duty's read surface, access-controlled to authorised verifiers (X-23) | bundle manifest key `group_contexts` | **no** |
+| `group_contexts` | GET /groups/{group_id}/context?epoch= | the Delivery Service — the retention duty's read surface, access-controlled to authorised verifiers | bundle manifest key `group_contexts` | **no** |
 | `formation_inputs` | none published — the read surface exists for group context, not for the formation inputs (A5) | the recipient's provider | bundle manifest key `formation_inputs` | **no** |
 | `suite_registry` | none published — carried as a demonstration fixture | the design authority | bundle manifest key `suite_registry` | yes |
 | `federation_register` | GET /participants/{participant_id}?as_of= | the Federation Authority | bundle manifest key `federation_register` | yes |
 | `fa_anchors` | the Authority's published key set | the Federation Authority | `bundle_lint.py --trust-store` — the verifier's own configured Federation-Authority anchors, not bundle material | yes |
-| `receipts` | none published for third-party retrieval — the receipt travels to the party that collected | the issuing RDP; the collecting party's own copy | bundle manifest key `receipts` — keyed by the delivery it substantiates: the bare `message_id`, or `<origin>/<message_id>` where one identifier is evidenced under more than one origin (R39-01) | **no** |
+| `receipts` | none published for third-party retrieval — the receipt travels to the party that collected | the issuing RDP; the collecting party's own copy | bundle manifest key `receipts` — keyed by the delivery it substantiates: the bare `message_id`, or `<origin>/<message_id>` where one identifier is evidenced under more than one origin | **no** |
 | `evidence` | GET /uid/{uid}/evidence/{message_id} , GET /evidence/{message_id} | each party's own wallet copy; the issuing RDP | bundle manifest key `evidence` | yes |
 | `reveals` | none, by design — the salt travels only inside the end-to-end-encrypted envelope | the endpoints, and only the parties of a dispute | bundle manifest key `grade_reveals` | yes |
 | `mandate_reveals` | none, by design — as for reveals | the endpoints, and only the parties of a dispute | bundle manifest key `mandate_reveals` | yes |
-| `transformation_traces` | none — neither is profiled (open items A13/A15) | nobody: the profile does not claim this is establishable | nothing supplies it: no operation produces the material — neither transformation is profiled (A13/A15) — so no manifest key is defined and none should be | yes |
+| `transformation_traces` | none — neither is profiled (open item A15) | nobody: the profile does not claim this is establishable | nothing supplies it: no operation produces the material — neither transformation is profiled (A15) — so no manifest key is defined and none should be | yes |
 | `directory_record` | GET /resolve/{uid} | the EDD core registry | `discovery_lint.py --directory` — a RETAINED record on disk. The ecosystem retrieval is `GET /resolve/{uid}` at the EDD core registry, but nothing in this repository dereferences a URL: the reference is handed the record, like every other input | yes |
 | `trust_store` | none published — a verifier's own configuration | the verifying party | `bundle_lint.py --trust-store` / `discovery_lint.py --trust-store` — the verifier's own configuration | yes |
 | `provider_descriptors` | the provider's own discovery surface; the descriptor's seal key is pinned to the participant by the membership register (LINT-TRUST-07) | each RDP, for itself | bundle manifest key `provider_descriptors` | **no** |
 
 ## What each absence does to the verdict
 
-**`med`** — The entity's sealed BW-MED: its provider endpoints and MLS parameters. SBM-ADR-0015 moved the DS receipt keys OFF it, to the provider's own BW-PROVIDER descriptor. Sealed by a key the DIRECTORY RECORD authorises — the MED is not its own trust anchor.
+**`med`** — The entity's sealed BW-MED: its provider endpoints and MLS parameters. SBM-ADR-0015 moved the DS receipt keys OFF it, to the provider's own BW-PROVIDER descriptor, and SBM-ADR-0016 says WHOSE descriptor that is: the observing provider's, which the receipt names in its signed `observed_by`. Sealed by a key the DIRECTORY RECORD authorises — the MED is not its own trust anchor.
 
-- *Absent:* the entity's provider endpoints are unknown, so the material they point at cannot be resolved. R30-PUB-04: this row said the MED 'pins every other seal key'. It does not — `DirectoryRecord.authorized_seal_keys` does, and a retained MED is no substitute for the historical directory authorisation that made it acceptable.
+- *Absent:* the entity's provider endpoints are unknown, so the material they point at cannot be resolved. The MED does NOT pin the other seal keys — `DirectoryRecord.authorized_seal_keys` does — and a retained MED is no substitute for the historical directory authorisation that made it acceptable.
 - The endpoints INSIDE it move on an exit; the document itself must remain retrievable as it stood at the act, and nothing names who serves that.
 
 **`org`** — The sealed BW-ORG version the message pinned: acceptance policy, delivery grades, scope map.
@@ -66,7 +66,7 @@ entry point cannot be handed is a finding rather than a documented input.
 - *Absent:* the policy that governed the act cannot be read.
 - Retrieval BY DIGEST is the right interface: evidence pins `acceptance_policy_ref.doc_digest`, so a verifier can ask for exactly the version it needs. The interface is settled; the custody is not.
 
-**`policy_history`** — The BW-ORG succession chain: the versions linking the pinned one to its predecessors, so linkage and in-force at the act can be shown. It does NOT establish that the pinned version was the latest — a retained prefix looks complete whether or not a successor was omitted, which is what LINT-BND-I3 says and what this row used to contradict (R30-PUB-04).
+**`policy_history`** — The BW-ORG succession chain: the versions linking the pinned one to its predecessors, so linkage and in-force at the act can be shown. It does NOT establish that the pinned version was the latest — a retained prefix looks complete whether or not a successor was omitted, which is what LINT-BND-I3 says.
 
 - *Absent:* LINT-BND-I1 / LINT-BND-I3 — linkage and in-force are provable from the pinned document alone; MAXIMALITY is not, and the verdict says INCOMPLETE rather than passing.
 - *Declared residual:* LINT-BND-I1, LINT-BND-I3
@@ -76,7 +76,7 @@ entry point cannot be handed is a finding rather than a documented input.
 - *Absent:* no attribution and no satisfiability check can run.
 - This list answers the PRESENT-tense question only (satisfiability, LINT-BND-08/09). Attribution reads `member_history` as of the act.
 
-**`member_history`** — Superseded BW-MEMBER versions with their windows, so a member's status and confirmation key can be resolved AS THEY STOOD AT THE ACT (X-17/DR-11).
+**`member_history`** — Superseded BW-MEMBER versions with their windows, so a member's status and confirmation key can be resolved AS THEY STOOD AT THE ACT.
 
 - *Absent:* attribution falls back to the current binding, which is correct only while nothing has changed; LINT-BND-34 exists because a key minted after the act must not anchor it.
 - TS ICS 146 / MWAP §3 require as-of retrieval for the evidence retention period, INCLUDING for retired members — a duty on a surface that a provider exit removes.
@@ -120,21 +120,21 @@ entry point cannot be handed is a finding rather than a documented input.
 **`receipts`** — The DS-signed handover receipts the delivery event rests on.
 
 - *Absent:* the S2 event rests on the DE's assertion rather than on the DS's signature.
-- Supplied as a MAP of handle to receipt, not a list: `{"receipts": {"urn:sbm:rdp:mockeu-001/01HZ3AVLBCDEFGH9JKMN0PQRST": "receipt.json"}}`. A BARE key — `{"01HZ3AVLBCDEFGH9JKMN0PQRST": "receipt.json"}` — still resolves, to the one origin this bundle evidences for that identifier; where it evidences several, which delivery is meant is AMBIGUOUS and reported (LINT-BND-I9) rather than settled by the order the evidence was listed in. What the key does is state WHICH delivery the entry claims; it proves nothing about it. The evidence must still establish the origin, the octets and the recipient, and the receipt’s own signed `issuing_rdp_id` is COMPARED with the handle rather than used to choose it — selecting the SE by the claim under test is the self-consistency R38-01 removed.
+- Supplied as a MAP of handle to receipt, not a list: `{"receipts": {"urn:sbm:rdp:mockeu-001/01HZ3AVLBCDEFGH9JKMN0PQRST": "receipt.json"}}`. A BARE key — `{"01HZ3AVLBCDEFGH9JKMN0PQRST": "receipt.json"}` — still resolves, to the one origin this bundle evidences for that identifier; where it evidences several, which delivery is meant is AMBIGUOUS and reported (LINT-BND-I9) rather than settled by the order the evidence was listed in. What the key does is state WHICH delivery the entry claims; it proves nothing about it. The evidence must still establish the origin, the octets and the recipient, and the receipt’s own signed `issuing_rdp_id` is COMPARED with the handle rather than used to choose it — selecting the SE by the claim under test would make that comparison a self-consistency check, which proves nothing about the delivery.
 
 **`evidence`** — The sealed evidence objects and packages themselves.
 
-- *Absent:* there is nothing to verify. R38-01: a retained DS receipt is related to the delivery it substantiates only through this material — the SE's origin and octet commitment, the evidenced recipient, and at the availability grade the DE's instant. Without them a receipt whose signature verifies may be true about a different delivery, so the relationship is reported UNPROVEN (LINT-BND-I9) rather than passed.
+- *Absent:* there is nothing to verify. A retained DS receipt is related to the delivery it substantiates only through this material — the SE's origin and octet commitment, the evidenced recipient, and at the availability grade the DE's instant. Without them a receipt whose signature verifies may be true about a different delivery, so the relationship is reported UNPROVEN (LINT-BND-I9) rather than passed.
 - *Declared residual:* LINT-BND-I9
 - The only material with a SECOND independent holder by design: each party keeps its own copy, so a provider exit does not destroy it. Why the evidence itself is the durable part and the material needed to CHECK it is the fragile part.
 
 **`reveals`** — The (salt, content_class) opening of an availability-grade commitment.
 
-- *Absent:* the grade commitment stays unopened, which is the point; the claim that rests on it is then unproven rather than failed. R30-PUB-04: not the same as the class being hidden — a cleartext `scope_ref` resolved against a published scope map can narrow it, and a scope covering one class gives it. What an unopened commitment withholds is the committed value, not every inference about the message.
+- *Absent:* the grade commitment stays unopened, which is the point; the claim that rests on it is then unproven rather than failed. That is NOT the same as the class being hidden — a cleartext `scope_ref` resolved against a published scope map can narrow it, and a scope covering one class gives it. What an unopened commitment withholds is the committed value, not every inference about the message.
 
 **`mandate_reveals`** — The opening of an agent act's mandate commitment.
 
-- *Absent:* the mandate commitment stays unopened, which is the point; the claim that rests on it is then unproven rather than failed. R30-PUB-04: not the same as the class being hidden — a cleartext `scope_ref` resolved against a published scope map can narrow it, and a scope covering one class gives it. What an unopened commitment withholds is the committed value, not every inference about the message.
+- *Absent:* the mandate commitment stays unopened, which is the point; the claim that rests on it is then unproven rather than failed. That is NOT the same as the class being hidden — a cleartext `scope_ref` resolved against a published scope map can narrow it, and a scope covering one class gives it. What an unopened commitment withholds is the committed value, not every inference about the message.
 
 **`transformation_traces`** — Evidence that a Change-Indication Evidence's outputs are the transformation of its input. Neither of the two transformations is profiled, so there is no operation to trace.
 
@@ -144,7 +144,7 @@ entry point cannot be handed is a finding rather than a documented input.
 **`directory_record`** — The EU-governed directory record for the entity: where to resolve it, and `authorized_seal_keys` — the set that decides which key may seal its BW-MED/ORG/MEMBER documents.
 
 - *Absent:* no discovery document can be shown to have been sealed by a key the entity was entitled to use, so the whole discovery chain is unanchored (`check_directory_pin`).
-- R30-PUB-04 found this missing from the inventory entirely: RETR-01 demands the arguments of `check_bundle`, and the trust anchors are arguments of `discovery_lint` instead. Registry-held, so an exit does not strand it — but the AS-OF question does: the record is served current, and nothing publishes the authorisation as it stood at a past act.
+- RETR-01 demands the arguments of `check_bundle`, and the trust anchors are arguments of `discovery_lint` instead — which is how this input came to be missing from the inventory. Registry-held, so an exit does not strand it — but the AS-OF question does: the record is served current, and nothing publishes the authorisation as it stood at a past act.
 
 **`trust_store`** — The configured trust anchors a verifier resolves seals against.
 
@@ -155,7 +155,7 @@ entry point cannot be handed is a finding rather than a documented input.
 
 - *Absent:* LINT-BND-I8 — the key that signed a retained receipt cannot be resolved, so the handover rests on the DE's assertion alone and the verdict says INCOMPLETE rather than passing.
 - *Declared residual:* LINT-BND-I8
-- SBM-ADR-0015 moved this key off the customer's BW-MED, where it sat because the Delivery Service was a second provider and the entity's signed document was the only thing already retained for the evidence period. A provider's key belongs in the provider's descriptor — but it moves the key onto a surface a provider exit takes away, where it had been on one the entity controls. That is the trade the decision makes, and this row is where it is visible.
+- SBM-ADR-0016 makes the OBSERVING provider's descriptor the one place this key may be published — the receipt names that provider in its signed `observed_by`, and in a four-corner exchange it is the recipient's provider, not the message's origin. SBM-ADR-0015 had moved the key off the customer's BW-MED, where it sat because the Delivery Service was a second provider and the entity's signed document was the only thing already retained for the evidence period. A provider's key belongs in the provider's descriptor — but it moves the key onto a surface a provider exit takes away, where it had been on one the entity controls. That is the trade the decision makes, and this row is where it is visible.
 
 ## The shape that works
 

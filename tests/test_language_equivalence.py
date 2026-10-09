@@ -12,11 +12,13 @@ Schema is AUTHORITATIVE for the decoded body. Proven three ways:
 import importlib.util
 import json
 import pathlib
-import shutil
+import sys
 
 import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from cddl_tool import requires_cddl  # noqa: E402
 jsonschema = pytest.importorskip("jsonschema")
 cbor2 = pytest.importorskip("cbor2")
 
@@ -70,7 +72,7 @@ def test_authoritative_body_schema_rejects(schema_file, doc):
 
 
 # ---- (b) reproduced divergence: CDDL accepts (outer bound), Schema rejects
-@pytest.mark.skipif(not shutil.which("cddl"), reason="the `cddl` tool is not installed")
+@requires_cddl
 def test_n2_minimal_org_is_cddl_valid_but_schema_invalid():
     cc = _load("cddl_check", "cddl_check.py")
     body = {"type": "BW-ORG-v1", "version": _current("discovery_bw_org")}

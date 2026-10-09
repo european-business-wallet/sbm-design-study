@@ -3,13 +3,13 @@
 
 <!-- GENERATED FILE — do not edit by hand. Source of truth: docs/rule-ownership.json. Regenerate with `make rule-ownership` (scripts/rule_ownership.py --render). -->
 
-# Rule-ownership inventory (X-34)
+# Rule-ownership inventory
 
 Each normative rule family below has exactly **one owning document**. Other documents carry only *informative* summaries that reference the owner — never a second normative statement. `scripts/rule_ownership.py` (`make rule-ownership`) and `tests/test_rule_ownership.py` enforce this: the owner states the rule, no non-owner document carries a bare normative (MUST/SHALL) restatement, and the Internet-Draft's deployment-defined-interface count matches the interfaces it lists.
 
 This complements the verbatim-duplication guard (`tests/test_no_normative_duplication.py`), which catches identical sentences copied across the three specification documents; this inventory catches the same rule *reworded* and restated normatively in more than one place.
 
-**Out of scope (deferred to X-25, Batch 4):** the registry and well-known-resource ownership split. This inventory covers rule ownership and the interface-count correction only.
+**Out of scope, deferred:** the registry and well-known-resource ownership split. This inventory covers rule ownership and the interface-count correction only.
 
 Document keys: `umbrella` = `Secure-Business-Messaging-Profile.md`, `id` = `ietf/draft-sbm-mls-erd-00.md`, `ts` = `etsi/TS-SBM-QERDS-Binding-v0.1.md`.
 
@@ -49,9 +49,9 @@ Document keys: `umbrella` = `Secure-Business-Messaging-Profile.md`, `id` = `ietf
 - **Normative owner:** `umbrella` — §13.4 (registry operation) + the registries/ artefacts
 - **Machine-checked by:** `LINT-NDE-07`, `LINT-NDE-W1`, `LINT-DISC-16`
 - **Informative summaries (must reference the owner):**
-    - `id` — the I-D defines the FIELDS, the lexical value spaces and the unknown-code ingest rule only (IANA Considerations, X-25 registry layering); registry contents/governance are not restated
+    - `id` — the I-D defines the FIELDS, the lexical value spaces and the unknown-code ingest rule only (IANA Considerations, registry layering); registry contents/governance are not restated
     - `ts` — clause 8.1/8.3 owns the ERD event mappings the registered reasons bind to
-- **Note:** X-25 / X-34 residual: the transport I-D previously claimed to BE the registry ('initially this document') and registered well-known resources defined elsewhere; the split gives each registry one owner and moves the well-known registration to umbrella §8.1.
+- **Note:** Residual: the transport I-D previously claimed to BE the registry ('initially this document') and registered well-known resources defined elsewhere; the split gives each registry one owner and moves the well-known registration to umbrella §8.1.
 
 ### RDP(in) is the sole evidence-authoritative acceptance-policy evaluator
 
@@ -60,7 +60,7 @@ Document keys: `umbrella` = `Secure-Business-Messaging-Profile.md`, `id` = `ietf
 - **Informative summaries (must reference the owner):**
     - `umbrella` — §7.2 responsibility table and the §8.3 bullet describe the split and defer to the TS
     - `id` — the delivery-state model consumes the evaluated outcome; it does not evaluate
-- **Note:** X-10: the former two-owner text is collapsed to one owner, RDP(in). The phrasing that is now forbidden is `non_owner_forbidden` above, and tests/test_policy_evaluator_owner.py records the former wording verbatim; both keep a role name SBM-ADR-0015 withdrew, because a detector must carry what it detects. A prose-ownership family, not a sample-checkable LINT rule.
+- **Note:** the former two-owner text is collapsed to one owner, RDP(in). The phrasing that is now forbidden is `non_owner_forbidden` above, and tests/test_policy_evaluator_owner.py records the former wording verbatim; both keep a role name SBM-ADR-0015 withdrew, because a detector must carry what it detects. A prose-ownership family, not a sample-checkable LINT rule.
 
 ### Legal-effect issuance is gated on the signed short-lived status assertion (D6)
 
@@ -70,7 +70,7 @@ Document keys: `umbrella` = `Secure-Business-Messaging-Profile.md`, `id` = `ietf
 - **Informative summaries (must reference the owner):**
     - `ts` — ICS row 172 tags the requirement [UMB]
     - `id` — the delivery-state model consumes the gate; the hold note defers to the umbrella
-- **Note:** D6 (F-10/X-07): one mechanism, two findings. The capability object is STATUS-v1; the EDD contract v1.8.0 serves it; LINT-DISC-25 checks it.
+- **Note:** One mechanism, two findings. The capability object is STATUS-v1; the EDD contract v1.8.0 serves it; LINT-DISC-25 checks it.
 
 ### Every defined payload hash mode is mandatory to implement; the mode is not negotiated
 

@@ -28,6 +28,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import lint_cli as lc  # noqa: E402
 import evidence_lint as el  # noqa: E402
+from cddl_tool import requires_cddl  # noqa: E402
+
 
 
 def _load(name, filename):
@@ -75,6 +77,7 @@ def test_matrix_schema_and_linter_agree(desc, mutate):
         f"linter entry point disagreed with the schema on: {desc}")
 
 
+@requires_cddl
 def test_positive_the_valid_sample_passes_both():
     """The control for the matrix above — and it seals an artefact, so it is
     held to all three representations. A shipped sample is covered by

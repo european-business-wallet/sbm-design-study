@@ -728,7 +728,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 f"MID {mid!r} is bound to two different "
                 f"accountability.authorisation_ref ({_mid_authz[mid]!r} and "
                 f"{authz!r}) — a MID MUST NOT be reassigned to a different "
-                f"member/authorisation chain within a UID (X-17)")
+                f"member/authorisation chain within a UID")
         else:
             _mid_authz.setdefault(mid, authz)
 
@@ -773,7 +773,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
             _history_error((mid, "no-act-time"), "LINT-BND-34",
                            f"{context}: {mid!r} carries a version history but the "
                            "act has no resolvable time — the version in force "
-                           "cannot be determined (DR-11)")
+                           "cannot be determined")
             return None
         try:
             # R4 meta-finding: DELEGATE to as_of_resolve rather than repeat its
@@ -787,18 +787,18 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                         if as_of_resolve([v], at=act_time) is not None]
         except TimestampError as e:
             _history_error((mid, "unparsable"), "LINT-BND-34",
-                           f"{context}: {mid!r} history cannot be resolved: {e} (DR-11)")
+                           f"{context}: {mid!r} history cannot be resolved: {e}")
             return None
         if len(covering) > 1:
             _history_error((mid, "overlap"), "LINT-BND-34",
                            f"{context}: {len(covering)} versions of {mid!r} claim to be "
                            f"in force at {act_time} — an ambiguous history is rejected, "
-                           "not resolved by manifest order (DR-11)")
+                           "not resolved by manifest order")
             return None
         if not covering:
             _history_error((mid, "gap"), "LINT-BND-34",
                            f"{context}: no version of {mid!r} was in force at "
-                           f"{act_time} — the history does not cover the act (DR-11)")
+                           f"{act_time} — the history does not cover the act")
             return None
         chosen = covering[0]
         if roster is not None:
@@ -814,7 +814,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                                    f"{context}: the version of {mid!r} selected for "
                                    f"{act_time} does not match the signed ROSTER "
                                    "snapshot's member_doc_digest — the history "
-                                   "disagrees with the roster (DR-11)")
+                                   "disagrees with the roster")
                     return None
         return chosen
 
@@ -832,13 +832,13 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
             removed = instant_or_none(dev.get("removed_at"))
         except TimestampError as e:
             add("LINT-BND-34", f"{context}: {mid!r}/{device_id!r} device window "
-                               f"cannot be evaluated: {e} (DR-11)")
+                               f"cannot be evaluated: {e}")
             return None
         if added is not None and added > at:
             add("LINT-BND-34",
                 f"{context}: device {device_id!r} of {mid!r} was added at "
                 f"{dev.get('added_at')}, AFTER the act at {act_time} — a key "
-                "minted after the fact cannot anchor it (DR-11)")
+                "minted after the fact cannot anchor it")
             return None
         if removed is not None and removed <= at:
             add("LINT-BND-34",
@@ -903,7 +903,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
         except CertificateBindingError as e:
             add("LINT-BND-39",
                 f"{context}: the confirming device's certificate does not hold "
-                f"at the act ({act_time}): {e} (R4-04)")
+                f"at the act ({act_time}): {e}")
 
     def _anchor_at(mid, device_id, act_time, context):
         """The published confirmation KEY OBJECT of (mid, device_id) as it
@@ -936,7 +936,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 add("LINT-BND-32",
                     f"confirmation_key shared by {_ck_owner[pk]!r} and "
                     f"{owner!r} — one key per device; cross-context reuse "
-                    "makes attribution ambiguous (X-32)")
+                    "makes attribution ambiguous")
             _ck_owner[pk] = owner
 
     def _resolves_acker(mid, device_id=None, act_time=None):
@@ -999,7 +999,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
             add("LINT-BND-28",
                 f"sender_confirmation by {smid!r}/{sdid!r} has no resolvable "
                 "confirmation_key anchor — nowhere to verify the sender "
-                "signature (X-03/D4)")
+                "signature")
         elif (why := _verify_wallet_sig(sc.get("wallet_signature_b64") or "", spub)):
             add("LINT-BND-28",
                 f"sender_confirmation wallet_signature_b64 does not verify "
@@ -1128,7 +1128,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                         add("LINT-BND-21",
                             f"wallet-signed quorum entry by {qmid!r}/{qdid!r} has no "
                             "resolvable confirmation_key anchor — nowhere to verify "
-                            "the portable proof (X-05)")
+                            "the portable proof")
                     elif (why := _verify_wallet_sig(
                             acker.get("wallet_signature_b64") or "", qpub)):
                         add("LINT-BND-21",
@@ -1493,14 +1493,14 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 add("LINT-BND-40",
                     f"evidence commits to MLS state for {key[0]}/{key[1]} and "
                     "no retained GroupContext is supplied for it — the state "
-                    "the evidence names cannot be inspected (R6-05)")
+                    "the evidence names cannot be inspected")
         for key, gc in contexts.items():
             if key not in committed:
                 add("LINT-BND-40",
                     f"a GroupContext is supplied for {key[0]}/{key[1]}, which "
                     "no evidence in this bundle commits to — an extra context "
                     "is either the wrong bundle or an attempt to be inspected "
-                    "in place of the real one (R6-05)")
+                    "in place of the real one")
                 continue
             actual = hashlib.sha256(gc).hexdigest()
             if actual not in committed[key]:
@@ -1508,7 +1508,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                     f"the GroupContext supplied for {key[0]}/{key[1]} hashes to "
                     f"{actual[:16]}…, which is not the mls_state the evidence "
                     f"commits to ({sorted(committed[key])[0][:16]}…) — a "
-                    "substituted context (R6-05)")
+                    "substituted context")
                 continue
             try:
                 parsed_key = mls_wire.parse_group_context(gc)
@@ -1528,7 +1528,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 add("LINT-BND-40",
                     f"the GroupContext filed under {key[0]}/{key[1]} decodes to "
                     f"a different group/epoch — the map key is not the "
-                    "context's own identity (R6-05)")
+                    "context's own identity")
 
         # R12-X4: the formations this bundle retains, by the digest a
         # decision commits to.
@@ -1542,11 +1542,11 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                     add("LINT-BND-40",
                         f"the retained GroupContext for {gid}/{epoch} carries no "
                         "sbm_group_params — the cipher-suite decision it was "
-                        "supposed to pin is absent (R4-06/R3-08)")
+                        "supposed to pin is absent")
                     continue
             except mls_wire.GroupParamsError as e:
                 add("LINT-BND-40",
-                    f"the retained GroupContext for {gid}/{epoch}: {e} (R4-06)")
+                    f"the retained GroupContext for {gid}/{epoch}: {e}")
                 continue
             # R6-05 class 3: the recomputation gets EVERY input it needs, or
             # says it could not do it. `_bnd40` passed only the current roster,
@@ -1570,7 +1570,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                     f"the group {gid}/{epoch} pins registry revision "
                     f"{params.get('floor_version')!r}; the retained registry "
                     f"supplied is revision {rev!r}, so the decision cannot be "
-                    "recomputed as it was taken — supply that revision (R11-X4)")
+                    "recomputed as it was taken — supply that revision")
                 continue
             # R12-X4 — recompute ONLY from the inputs the decision is bound to.
             # A v1 record binds none: it is not recomputed from current data,
@@ -1581,7 +1581,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                     f"the group {gid}/{epoch} pins its decision in sbm_group_params "
                     "v1, which binds neither the entity of its raises nor the "
                     "inputs it was taken on — it cannot be recomputed as it was "
-                    "taken, and is not recomputed from current data (R12-X4)")
+                    "taken, and is not recomputed from current data")
                 continue
             formation = formations.get(params.get("inputs_digest"))
             if formation is None:
@@ -1589,7 +1589,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                     f"the group {gid}/{epoch} was decided on inputs with digest "
                     f"{str(params.get('inputs_digest'))[:16]}…, and no retained "
                     "formation matches it — the decision is not recomputed from "
-                    "anything else (R12-X4)")
+                    "anything else")
                 continue
             suite_name = mls_wire.wire_map(suite_registry).get(parsed["cipher_suite"])
             if suite_name is None:
@@ -1599,18 +1599,18 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                         f"the GroupContext for {gid}/{epoch} running "
                         f"{parsed['cipher_suite']:#06x} — not an IANA allocation "
                         "— cannot be decoded as it stood: unverifiable, not "
-                        "decoded by today's map (R11-X4)")
+                        "decoded by today's map")
                 else:
                     add("LINT-BND-40",
                         f"the GroupContext for {gid}/{epoch} runs cipher suite "
                         f"{parsed['cipher_suite']:#06x}, which registry revision "
-                        f"{rev!r} does not define (R4-06/R11-X4)")
+                        f"{rev!r} does not define")
                 continue
             for problem in verify_group_params(
                     params, cipher_suite_name=suite_name,
                     formation=formation, registry=suite_registry):
                 add("LINT-BND-40",
-                    f"group {gid}/{epoch}: {problem} (R4-06)")
+                    f"group {gid}/{epoch}: {problem}")
 
     _bnd40()
 
@@ -1661,7 +1661,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
         if not isinstance(when, dict) or "kind" not in when:
             raise RequiredPropertyConfigError(
                 f"required property {prop.get('id')!r} declares no executable "
-                "`when` precondition (R7-05)")
+                "`when` precondition")
         kind = when["kind"]
         if kind == "always":
             return True
@@ -1701,13 +1701,13 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
             if unknown:
                 raise RequiredPropertyConfigError(
                     f"{prop['id']!r}: `any_input` names unknown input(s) "
-                    f"{unknown} (R7-05)")
+                    f"{unknown}")
             return any(_SUPPLIED.get(n) for n in names)
         raise RequiredPropertyConfigError(
             f"{prop['id']!r}: unknown precondition kind {kind!r}. The "
             "vocabulary is closed and unmapped kinds are fatal, because the "
             "previous design treated an unknown declaration as 'does not "
-            "apply' and skipped it in silence (R7-05)")
+            "apply' and skipped it in silence")
 
     # R8-06 requirement 2 — the CLOSED STRATEGY VOCABULARY. Behaviour is
     # selected by a declared key, never by the identifier of the rule a row
@@ -1748,7 +1748,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 f"a check reported establishing {property_id!r}, which is not "
                 f"a declared required property {sorted(declared)}. An "
                 "establishment signal nobody declared is a claim about a "
-                "property that does not exist (R9-05)")
+                "property that does not exist")
         _established.setdefault(property_id, []).append(detail)
 
     def _gaps():
@@ -1767,12 +1767,12 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
         if duplicated:
             raise RequiredPropertyConfigError(
                 f"required properties declare duplicate id(s) {duplicated}: a "
-                "second row under one id makes the set unreadable (R8-06)")
+                "second row under one id makes the set unreadable")
         mandatory = registry.get("mandatory")
         if not mandatory:
             raise RequiredPropertyConfigError(
                 "the required-property registry declares no `mandatory` set, "
-                "so a row could be deleted without anything noticing (R8-06)")
+                "so a row could be deleted without anything noticing")
         if set(ids) != set(mandatory):
             missing = sorted(set(mandatory) - set(ids))
             extra = sorted(set(ids) - set(mandatory))
@@ -1780,28 +1780,28 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 f"the required-property set does not match the declared "
                 f"mandatory set — missing {missing}, undeclared {extra}. "
                 "Adding a property means declaring it mandatory or recording a "
-                "migration; removing one may not be silent (R8-06)")
+                "migration; removing one may not be silent")
 
         for prop in props:
             for field in ("id", "input", "gap_rule", "establishes", "strategy"):
                 if not prop.get(field):
                     raise RequiredPropertyConfigError(
-                        f"a required property declares no {field!r} (R7-05)")
+                        f"a required property declares no {field!r}")
             if prop["input"] not in _SUPPLIED:
                 raise RequiredPropertyConfigError(
                     f"required property {prop['id']!r} names input "
                     f"{prop['input']!r}, which check_bundle does not accept — "
-                    "a declaration the verifier cannot act on (R7-05)")
+                    "a declaration the verifier cannot act on")
             if prop["gap_rule"] not in catalogued:
                 raise RequiredPropertyConfigError(
                     f"required property {prop['id']!r} names gap rule "
-                    f"{prop['gap_rule']!r}, which is not catalogued (R7-05)")
+                    f"{prop['gap_rule']!r}, which is not catalogued")
             if prop["strategy"] not in _STRATEGIES:
                 raise RequiredPropertyConfigError(
                     f"required property {prop['id']!r} declares strategy "
                     f"{prop['strategy']!r}; the vocabulary is closed "
                     f"({list(_STRATEGIES)}) and an unmapped strategy is fatal "
-                    "rather than a skip (R8-06)")
+                    "rather than a skip")
             if prop["strategy"] == "delegated":
                 owners = prop.get("delegated_to") or []
                 unknown = [r for r in owners if r not in catalogued]
@@ -1822,7 +1822,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 continue
             add(prop["gap_rule"],
                 f"{prop['establishes']} — NOT ESTABLISHED: the bundle carries "
-                f"no `{prop['input']}` (R6-05)")
+                f"no `{prop['input']}`")
 
     def _verify_delegations():
         """R8-06 requirement 1/2, corrected by R9-05 — the delegation is
@@ -1845,7 +1845,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                     f"{prop['establishes']} — NOT ESTABLISHED: the bundle "
                     f"carries no `{prop['input']}`, and {prop['delegated_to']} "
                     "— declared to establish it — recorded no result for this "
-                    "property (R8-06/R9-05)")
+                    "property")
 
     _gaps()
 
@@ -1884,7 +1884,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                     f"SE-v1 {ev.get('message_id')!r} is signed by member "
                     f"{mid!r} of {ev.get('sender_uid')!r}, whose BW-MEMBER this "
                     "bundle does not carry — the sender-side identity tuple "
-                    "cannot be checked from this material (R6-01)")
+                    "cannot be checked from this material")
             for reason, detail in check_identity_coherence(
                     ev, org=org, members=roster, member_history=member_history,
                     at=ev.get("sent_at")):
@@ -2031,7 +2031,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                     "AMBIGUOUS, and the order the evidence was listed in does not "
                     "decide it. File it under `<origin>/<message_id>` (R39-01). The "
                     "receipt's own signature and internal consistency are checked "
-                    "below regardless (R40-01)")
+                    "below regardless")
             if unplaceable:
                 kinds = ", ".join(sorted({str(e.get("type")) for e in unplaceable}))
                 add("LINT-BND-I9",
@@ -2042,7 +2042,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                     f"under {len(origins_of.get(message_id) or [])} origins. They are "
                     "NOT compared with this receipt, and the comparisons that needed "
                     "them have not been made. Retain such an outcome inside its "
-                    "Evidence Package, whose SE states the origin (R40-01)")
+                    "Evidence Package, whose SE states the origin")
             # R7-02 requirement 6: bind the retained receipt to the exact
             # SE/DE it substantiates, INCLUDING the issuing-RDP namespace and
             # the full signed delivery context — not only the manifest key.
@@ -2050,13 +2050,13 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 add("LINT-BND-38",
                     f"DS receipt filed under origin {origin_key!r} attests "
                     f"{receipt['issuing_rdp_id']!r} — the entry and the signed origin "
-                    "name different deliveries (R39-01)")
+                    "name different deliveries")
                 placed = False
             elif not group:
                 add("LINT-BND-38",
                     f"a DS receipt is filed under {message_id!r}, which no "
                     "evidence in this bundle names — a receipt substantiates a "
-                    "delivery, and there is none here to substantiate (R6-03)")
+                    "delivery, and there is none here to substantiate")
                 placed = False
             elif placed and not supported:
                 add("LINT-BND-38",
@@ -2064,7 +2064,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                     f"{message_id!r}), which no evidence in this bundle records: "
                     f"that identifier is evidenced under "
                     f"{origins_of.get(message_id) or ['no origin']}, not under the "
-                    "origin the entry names (R39-01)")
+                    "origin the entry names")
                 placed = False
             missing = [f for f in DELIVERY_CONTEXT_FIELDS if receipt.get(f) is None]
             if missing:
@@ -2196,7 +2196,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                             f"DS receipt for {message_id!r} is signed at {at!r} and the "
                             f"availability-grade DE is dated {dated!r} — at that grade "
                             "the receipt IS the date, so a receipt from another moment "
-                            "substantiates another delivery (R38-01)")
+                            "substantiates another delivery")
     _bnd38()
 
     # LINT-BND-35 (R3-02/R3-T2): the pinned policy version was the LATEST one
@@ -2248,7 +2248,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 f"the bundle carries no policy history, so MAXIMALITY IS NOT "
                 f"PROVEN: this verification shows the version was in force at "
                 f"{sent}, not that it was the latest such version. Supply the "
-                "signed chain to prove it (R4-02)")
+                "signed chain to prove it")
             return
 
         # R9-05: this rule OWNS `policy-chain`, and it says so for THIS act.
@@ -2263,7 +2263,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                            key=lambda v: instant(v.get("valid_from"),
                                                  field="valid_from"))
         except TimestampError as e:
-            add("LINT-BND-35", f"policy history cannot be ordered: {e} (R3-02)")
+            add("LINT-BND-35", f"policy history cannot be ordered: {e}")
             return
 
         # R6-02/R6-W1: a PREFIX is not a history. Round 5 made the ABSENT
@@ -2290,14 +2290,14 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                     f"BW-ORG {v.get('policy_version')!r} names predecessor "
                     f"{sup.get('policy_version')!r}, which the supplied history "
                     "does not contain — this is a PREFIX, not the chain. The "
-                    "document itself says a version is missing (R6-02)")
+                    "document itself says a version is missing")
                 return
         roots = [v for v in chain if not isinstance(v.get("supersedes"), dict)]
         if len(roots) != 1:
             add("LINT-BND-35",
                 f"the supplied history has {len(roots)} first publications "
                 "(documents with no `supersedes`); a chain has exactly one, so "
-                "this is either a fragment or two chains spliced (R6-02)")
+                "this is either a fragment or two chains spliced")
             return
 
         seen_from = set()
@@ -2307,7 +2307,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 add("LINT-BND-35",
                     f"two BW-ORG versions claim valid_from {vf} — a duplicate "
                     "boundary makes the version in force at that instant "
-                    "ambiguous (R3-02)")
+                    "ambiguous")
                 return
             seen_from.add(vf)
             if v.get("valid_until"):
@@ -2326,7 +2326,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                         f"BW-ORG {nxt.get('policy_version')!r} does not name "
                         f"{v.get('policy_version')!r} as its predecessor — the "
                         "chain is not linked, so a version could be dropped "
-                        "from the history unnoticed (R3-02)")
+                        "from the history unnoticed")
                     return
                 want = hashlib.sha256(dcbor(
                     {k: val for k, val in v.items() if k != "doc_cose_b64"}
@@ -2337,7 +2337,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                         "predecessor digest that is not its predecessor's "
                         "content — an equivocated history (R3-02). Note this "
                         "detects a fork only when BOTH documents are observed; "
-                        "it does not prevent equivocation (X-33)")
+                        "it does not prevent equivocation")
                     return
 
         # The window of chain[i] is [valid_from(i), valid_from(i+1)) — derived.
@@ -2378,14 +2378,14 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
             "in a retained prefix can exclude a successor the claimant did not "
             "supply, and a complete chain is indistinguishable from a truncated "
             "one from inside the bundle. Excluding one needs an authenticated "
-            "head (X-33) (R6-02/R6-W1)")
+            "head (X-33)")
         if latest.get("policy_version") != org.get("policy_version"):
             add("LINT-BND-35",
                 f"{ev.get('type')} pins BW-ORG "
                 f"{org.get('policy_version')!r}, but the version in force at "
                 f"{sent} was {latest.get('policy_version')!r} — pinning an "
                 "earlier version applies rules that had already been "
-                "superseded (R3-02)")
+                "superseded")
 
     # LINT-BND-33 (DR-04): the pinned version was IN FORCE at the act. X-12
     # made selection deterministic and F-08 made the selected KEY recomputable,
@@ -2449,7 +2449,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
         if pk not in policy:
             add("LINT-BND-30",
                 f"{ev.get('type')} acceptance_policy_ref.policy_key {pk!r} does "
-                "not exist in the pinned BW-ORG's acceptance_policy map (F-08)")
+                "not exist in the pinned BW-ORG's acceptance_policy map")
             return
         src = se_ctx if se_ctx is not None else (
             ev if ev.get("type") == "SE-v1" else None)
@@ -2490,7 +2490,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 add("LINT-BND-30",
                     f"{ev.get('type')} acceptance_policy_kind {kind!r} != "
                     f"{want_kind!r}, the kind of acceptance_policy[{pk!r}] = "
-                    f"{pol!r} in the pinned ORG (F-08)")
+                    f"{pol!r} in the pinned ORG")
 
     for ev in evidence:
         if ev.get("type") == "EP-v1":
@@ -2532,7 +2532,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
             add("LINT-BND-25",
                 f"relay hop for {ev.get('message_id')!r} attests a different "
                 "envelope_hash than the SE — substituted ciphertext under the "
-                "same metadata (F-02)")
+                "same metadata")
 
     # LINT-BND-26 (X-04/D5/DR-03, evidence 2.7): grade-commitment-mismatch
     # verification — REWRITTEN. The former rule accepted a dispute whenever the
@@ -2580,7 +2580,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
             add("LINT-BND-26",
                 f"GCM for {g.get('message_id')!r} carries NO recipient "
                 "reveal_confirmation — commitment inequality alone proves "
-                "nothing and is manufacturable by inventing a salt (DR-03)")
+                "nothing and is manufacturable by inventing a salt")
             continue
         cmid, cdid = conf.get("mid"), conf.get("device_id")
         # DR-11: as-of resolution — the key valid at read_at, not the current
@@ -2597,7 +2597,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
         if not cpub:
             add("LINT-BND-26",
                 f"GCM reveal_confirmation by {cmid!r}/{cdid!r} has no resolvable "
-                "confirmation_key anchor as of read_at (DR-03)")
+                "confirmation_key anchor as of read_at")
             continue
         if (why := _verify_wallet_sig(conf.get("wallet_signature_b64") or "", cpub)):
             add("LINT-BND-26",
@@ -2618,7 +2618,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 add("LINT-BND-26",
                     f"GCM reveal_confirmation.{field} does not match the dispute "
                     f"({conf.get(field)!r} != {want!r}) — the signed tuple must "
-                    "cover the disputed values (DR-03)")
+                    "cover the disputed values")
                 break
         else:
             # (b) MISMATCH — evaluated only now that the claim is attributable
@@ -2671,7 +2671,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 elif reason in ("submission-invalid", "policy-unresolvable"):
                     add("LINT-BND-27",
                         f"SE for {se_.get('message_id')!r}: TTL cannot be "
-                        f"evaluated: {detail} (DR-05)")
+                        f"evaluated: {detail}")
                 # ordering is LINT-DE-18's concern
 
     # LINT-BND-24 (X-16): a bw: address that names a role or member MUST RESOLVE.
@@ -2701,7 +2701,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
         if sparsed is None:
             add("LINT-BND-37",
                 f"{ev.get('type')} sender_addr {saddr!r} is not a well-formed "
-                "bw: address (R4-01/X-16)")
+                "bw: address")
             continue
         if sparsed[0] != suid:
             add("LINT-BND-37",
@@ -2716,11 +2716,11 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
             if sparsed[1] == "role" and sparsed[2] not in addressable_roles:
                 add("LINT-BND-37",
                     f"{ev.get('type')} sender_addr names role {sparsed[2]!r}, "
-                    f"not a declared role of {entity!r} (R4-01)")
+                    f"not a declared role of {entity!r}")
             elif sparsed[1] == "member" and sparsed[2] not in member_mids:
                 add("LINT-BND-37",
                     f"{ev.get('type')} sender_addr names member {sparsed[2]!r}, "
-                    f"not a member of {entity!r} (R4-01)")
+                    f"not a member of {entity!r}")
     for ev in _addr_objs:
         addr = ev.get("recipient_addr")
         if not isinstance(addr, str):
@@ -2728,7 +2728,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
         parsed = _parse_bw_address(addr)
         if parsed is None:
             add("LINT-BND-24", f"{ev.get('type')} recipient_addr {addr!r} is not a "
-                "well-formed bw: address (X-16)")
+                "well-formed bw: address")
             continue
         uid, kind, val = parsed
         # R4-01 (Blocker): this WAS `continue  # not this bundle's org`. The
@@ -2743,7 +2743,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 f"{ev.get('type')} recipient_addr names entity {uid!r} but the "
                 f"object is addressed to {target_uid or entity!r} — the address "
                 "and the evidence must name the SAME entity, or the address can "
-                "select a policy inside an entity it does not belong to (R4-01)")
+                "select a policy inside an entity it does not belong to")
             continue
         if uid != entity:
             # Coherent with its own recipient_uid but not this bundle's entity:
@@ -2753,10 +2753,10 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
         if kind == "role" and val not in addressable_roles:
             add("LINT-BND-24", f"{ev.get('type')} recipient_addr names role {val!r}, "
                 f"not a declared role of {entity!r} — an address MUST resolve to a "
-                "declared role (X-16)")
+                "declared role")
         elif kind == "member" and val not in member_mids:
             add("LINT-BND-24", f"{ev.get('type')} recipient_addr names member {val!r}, "
-                f"not a published member of {entity!r} (X-16)")
+                f"not a published member of {entity!r}")
     # ---- LINT-TRUST-06 (Batch A / A5) — federation admission at the act ----
     #
     # The bundle establishes that an issuer sealed this evidence. It does not
@@ -2784,7 +2784,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 "federation at the instant of its act — NOT ESTABLISHED: a "
                 "register was supplied, but no Federation Authority anchor is "
                 "configured (--trust-store), so its authenticity cannot be "
-                "established and it was not consulted (R10-01)")
+                "established and it was not consulted")
         else:
             register, _reg_issues = authenticate_register(
                 federation_register, fa_anchors)
@@ -2808,7 +2808,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                 f"that every provider named in the bundle was admitted to the "
                 f"federation at the instant of its act — NOT ESTABLISHED for "
                 f"{label}: provider {pid!r} acted at {at}, after the register's "
-                "assertion for it, which cannot speak for a later instant (R10-X1)")
+                "assertion for it, which cannot speak for a later instant")
             return
         if status is None:
             add("LINT-TRUST-06",
@@ -2858,7 +2858,7 @@ def check_bundle(entity, med, org, members, evidence, reveals=None,
                         f"to the federation at the instant of its act — NOT "
                         f"ESTABLISHED for {label}: the package's timestamp "
                         "carries no readable instant, so the moment of "
-                        "composition cannot be read (R10-X5)")
+                        "composition cannot be read")
                 else:
                     _resolve(label, composer, composed)
 

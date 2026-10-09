@@ -91,7 +91,7 @@ def render_md(data):
              "docs/rule-ownership.json. Regenerate with `make rule-ownership` "
              "(scripts/rule_ownership.py --render). -->")
     L.append("")
-    L.append("# Rule-ownership inventory (X-34)")
+    L.append("# Rule-ownership inventory")
     L.append("")
     L.append("Each normative rule family below has exactly **one owning document**. "
              "Other documents carry only *informative* summaries that reference the "
@@ -108,7 +108,7 @@ def render_md(data):
              "inventory catches the same rule *reworded* and restated normatively "
              "in more than one place.")
     L.append("")
-    L.append("**Out of scope (deferred to X-25, Batch 4):** the registry and "
+    L.append("**Out of scope, deferred:** the registry and "
              "well-known-resource ownership split. This inventory covers rule "
              "ownership and the interface-count correction only.")
     L.append("")

@@ -28,8 +28,12 @@ import id_grammar  # noqa: E402  — X-02: the single UID/MID check-symbol algor
 
 DISCOVERY_TYPES = {"BW-MED-v1", "BW-ORG-v1", "BW-MEMBER-v1",
                    "BW-PROVIDER-v1"}
-# Batch A / A3: closed to `rdp`, matching the register's `role` enum and
-# the descriptor Schema. Batch B adds `msp`.
+# A3: closed to `rdp`, matching the register's `role` enum and the descriptor
+# Schema. It stays closed: SBM-ADR-0015 made `rdp` the ONE provider role — the
+# Registered Delivery Provider operates the Delivery Service as part of the
+# qualified service it is supervised for — so there is no second role to admit.
+# This comment said `msp` was coming, which was true of 17 September 2026 and
+# withdrawn on 6 October; the enum it describes never moved.
 PROVIDER_ROLES = {"rdp"}
 COSE_ALG_ALLOWLIST = {-8, -7, -35}
 UID_RE = re.compile(
@@ -358,7 +362,7 @@ def _check_device_suites(v, doc, dev, i):
               f"device {did!r} cipher_suites omits the REQUIRED baseline "
               f"{BASELINE} — every implementation supports it, and the "
               "selector's guarantee that a selection always exists depends on "
-              "it being in every intersection (DR-08)")
+              "it being in every intersection")
     if len(set(suites)) != len(suites):
         v.add("LINT-DISC-29",
               f"device {did!r} cipher_suites repeats a suite — the set is what "
@@ -392,7 +396,7 @@ def _check_device_floor(v, doc, dev, i):
         v.add("LINT-DISC-30",
               f"device {did!r} min_cipher_suite {raised!r} is WEAKER than the "
               f"mandatory {FLOOR_ID} ({FLOOR}) — the published floor may only "
-              "RAISE the mandatory one (DR-15/R2-M5)")
+              "RAISE the mandatory one")
     if raised not in (dev.get("cipher_suites") or []):
         v.add("LINT-DISC-30",
               f"device {did!r} demands {raised!r} but does not publish it in "
@@ -463,7 +467,7 @@ def _check_leaf_binding(v, doc, dev, i):
             v.add("LINT-DISC-23",
                   f"BW-MEMBER devices[{i}] mls_leaf_binding signature does not "
                   "verify against the entity seal key — the binding was not "
-                  "authorised by the entity (F-04)")
+                  "authorised by the entity")
 
 
 def lint_member(v, d):
@@ -566,14 +570,14 @@ def _production_confirmation_keys(v, doc):
             v.add("LINT-DISC-31",
                   f"device {did!r} publishes a confirmation_key with no x5chain "
                   "— in the production profile the key must be authorised by a "
-                  "certificate, not asserted (R3-05)")
+                  "certificate, not asserted")
             continue
         try:
             check_certificate_binds_key(chain, ck.get("alg"),
                                         ck.get("public_key_b64"))
         except CertificateBindingError as e:
             v.add("LINT-DISC-31",
-                  f"device {did!r} confirmation_key: {e} (R3-05)")
+                  f"device {did!r} confirmation_key: {e}")
 
 
 def _production_check(v, doc):
@@ -809,7 +813,7 @@ def lint(doc, verify_demo=False, profile="pilot", trust_store=None, directory=No
         v.add("LINT-TRUST-08",
               "a membership register was supplied with no trust store, so no "
               "Federation Authority anchor is configured and the register "
-              "cannot be authenticated; it was not consulted (R10-01)")
+              "cannot be authenticated; it was not consulted")
     return v.items
 
 
@@ -976,7 +980,7 @@ def lint_roster(v, d, member_docs=None, expected_tree_hash=None):
     evidence. Fail-closed."""
     _check_doc_seal(v, d)
     if not d.get("members"):
-        v.add("LINT-DISC-26", "roster snapshot with no members (F-12)")
+        v.add("LINT-DISC-26", "roster snapshot with no members")
         return
     mids = [m.get("mid") for m in d["members"]]
     if len(set(mids)) != len(mids):
@@ -987,22 +991,22 @@ def lint_roster(v, d, member_docs=None, expected_tree_hash=None):
             if mid not in snap:
                 v.add("LINT-DISC-26",
                       f"active member {mid!r} is OMITTED from the snapshot — "
-                      "the completeness the signature attests is false (F-12)")
+                      "the completeness the signature attests is false")
             elif snap[mid] != digest:
                 v.add("LINT-DISC-26",
                       f"snapshot pins a different document version for {mid!r} "
                       "than the sealed BW-MEMBER supplied — a mixed-version "
-                      "enumeration (F-12)")
+                      "enumeration")
         for mid in snap:
             if mid not in member_docs:
                 v.add("LINT-DISC-26",
                       f"snapshot member {mid!r} matches no supplied sealed "
-                      "BW-MEMBER (F-12)")
+                      "BW-MEMBER")
     if expected_tree_hash is not None and d.get("tree_hash") != expected_tree_hash:
         v.add("LINT-DISC-26",
               "snapshot tree_hash does not equal the ratchet-tree hash the "
               "evidence mls_state commits to — the enumeration does not chain "
-              "to the evidenced epoch (F-12)")
+              "to the evidenced epoch")
 
 
 def main(argv):

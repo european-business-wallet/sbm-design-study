@@ -112,6 +112,81 @@ def test_a_mermaid_label_is_scanned_and_its_comments_are_not(figures):
     assert any("MSP→MSP" in p for _, p in dl.scan_figures())
 
 
+# ---------------------------------------------------------------------------
+# A figure label is read on its own, so it carries its own status
+# ---------------------------------------------------------------------------
+
+AGENDA = (
+    "| # | Question | Current assumption | Claim | Expertise |\n"
+    "|---|---|---|---|---|\n"
+    "| A9 | **Who observes it?** | **RESOLVED, 6 October 2026** by a record. | — | — |\n"
+    "| A15 | **What is a transformation?** | **Deferred, 27 September 2026**; "
+    "a provider MUST NOT issue one until this is answered. | — | — |\n"
+    "| A16 | **Which object names the observer?** | None does. | — | — |\n")
+
+
+def _with_agenda(root, label):
+    """A world with an agenda and one figure carrying one label."""
+    (root / "docs").mkdir(parents=True, exist_ok=True)
+    (root / "docs" / "REVIEW_AGENDA.md").write_text(AGENDA, encoding="utf-8")
+    fig = root / "docs" / "diagrams" / "probe.svg"
+    fig.write_text(
+        "<svg xmlns='http://www.w3.org/2000/svg'><!-- figure\n"
+        "owner: a probe\nsource: probe.svg\nquestion: does the gate read this?\n"
+        "profile: all\nstatus: current\nreferences: none\nalt: a probe\n-->\n"
+        f"<text>{label}</text></svg>\n", encoding="utf-8")
+    return fig
+
+
+@pytest.mark.parametrize("label,caught", [
+    # The three shapes actually found, each in a figure:
+    ("PLANNED — decided, not implemented (Batch B). … is the S2 question (A9).", False),
+    ("Who observes the handover, and what a provider alone could make another "
+     "attest, is open (A9).", True),
+    ("(the S2 receipt — A9)", True),
+    # …and the ones that must pass.
+    ("Who observes the handover is settled (A9): the provider's own service.", False),
+    ("no published path — OPEN (A15)", False),          # deferred is NOT closed
+    ("no object names it (A16)", False),                 # open
+])
+def test_a_figure_citing_a_closed_agenda_entry_is_caught(figures, label, caught):
+    """A paragraph may cite an answered question and answer it in the next
+    sentence; the Internet-Draft and CONTRIBUTING.md both do, correctly. A
+    figure label has no next sentence.
+
+    The first case is the legend that actually stood in an active figure, and it
+    is a `False` here on purpose: its citation says *decided*, so this rule is
+    right to let it pass, and what is wrong with it — a withdrawn work
+    programme presented as planned work — belongs to
+    `scan_withdrawn_programme`, which the assertion below checks. Two rules, and
+    neither is asked to do the other's work."""
+    root, dl = figures
+    _with_agenda(root, label)
+    hits = [p for rel, p in dl.scan_figures()
+            if rel.endswith("probe.svg") and "agenda" in p]
+    assert bool(hits) is caught, hits
+    if "Batch B" in label:
+        assert [h[0] for h in dl.scan_withdrawn_programme()] == \
+            ["docs/diagrams/probe.svg"], "the other rule must catch this one"
+
+
+def test_a_figure_citing_an_entry_the_agenda_does_not_have_is_caught(figures):
+    root, dl = figures
+    _with_agenda(root, "the question nobody wrote down (A41)")
+    assert any("does not have" in p for rel, p in dl.scan_figures()
+               if rel.endswith("probe.svg"))
+
+
+def test_without_an_agenda_the_check_stands_down(figures):
+    """A fixture holding a few figures is not a repository. In a repository the
+    agenda cannot go missing quietly: every reading path links to it."""
+    root, dl = figures
+    fig = _with_agenda(root, "is open (A9)")
+    (root / "docs" / "REVIEW_AGENDA.md").unlink()
+    assert not [p for rel, p in dl.scan_figures() if rel.endswith("probe.svg")]
+    assert fig.exists()
+
+
 def test_a_figure_without_front_matter_is_reported(figures):
     root, dl = figures
     _edit(root / "docs/diagrams/architecture-four-corner.svg", "<!-- figure", "<!-- no longer a figure block")

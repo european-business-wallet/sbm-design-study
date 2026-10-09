@@ -377,12 +377,12 @@ def check_auth_assurance(v, auth_context, context, arm=None):
             v.add("LINT-AUTH-W1",
                   f"auth method {method!r} is not REGISTERED in "
                   "registries/auth-assurance.json — accepted and preserved "
-                  "verbatim; the assurance claim is UNASSESSED (X-27)")
+                  "verbatim; the assurance claim is UNASSESSED")
         return
     if loa not in reg["admissible_loa"]:
         v.add("LINT-AUTH-03",
               f"method {method!r} cannot claim loa {loa!r} — its registered "
-              f"admissible set is {reg['admissible_loa']} (X-27)")
+              f"admissible set is {reg['admissible_loa']}")
     rule = AUTH_ASSURANCE["contexts"].get(context)
     if rule is None:
         return
@@ -423,7 +423,7 @@ def lint_se(v, se):
                 v.add("LINT-DE-19",
                       f"sender_confirmation.{field} != se.{field} — the sender's "
                       "signed act and the sealed SE describe different "
-                      "submissions (X-03/D4)")
+                      "submissions")
     # LINT-DE-18 (X-22): the sender-computed expiry is VALIDATED, not echoed —
     # expires_at MUST be strictly later than sent_at. Through the ONE X-22
     # validator (R10-08), which intake now runs before sealing: this comment
@@ -440,7 +440,7 @@ def lint_se(v, se):
                 v.add("LINT-DE-18", detail)
             elif reason == "submission-invalid":     # an unreadable instant
                 v.add("LINT-DE-18",
-                      f"SE expiry ordering cannot be evaluated: {detail} (DR-05)")
+                      f"SE expiry ordering cannot be evaluated: {detail}")
     _check_evidence_seal(v, se)
     # LINT-AUTH-01 (X5): the auth_context method must match the declared method.
     if (se.get("auth_context") or {}).get("method") != se.get("auth_method"):
@@ -570,7 +570,7 @@ def lint_de(v, de, se=None):
                       f"session-authenticated confirmation with no session_binding "
                       f"claims member-grade authentication (method={method!r}, "
                       f"loa={loa!r}) — a bare boolean is the provider-attested "
-                      "narrowed mode and cannot claim the stronger proof (X-05)")
+                      "narrowed mode and cannot claim the stronger proof")
     # LINT-DE-21 (R11-04 / R11-X2): `delivered_at` DATES the delivery event.
     # At the verification and acceptance grades that event is the confirmation
     # that completed the policy, as RDP(in) observed it, so no act the DE rests
@@ -599,7 +599,7 @@ def lint_de(v, de, se=None):
                       f"delivered_at {dat} precedes {label} {at}: the DE dates its "
                       "delivery before an act it rests on — at this grade the event "
                       "is the completing confirmation as RDP(in) observed it, not "
-                      "the Delivery Service's S2 instant (R11-04)")
+                      "the Delivery Service's S2 instant")
     kind = de.get("acceptance_policy_kind")
     ev = de.get("event")
     # LINT-DE-20 (X-05): a wallet-signed quorum entry is a portable proof of
@@ -610,7 +610,7 @@ def lint_de(v, de, se=None):
             v.add("LINT-DE-20",
                   f"wallet-signed quorum entry by {q.get('mid')!r} covers "
                   f"message_id {q.get('message_id')!r}, not this DE's "
-                  f"{de.get('message_id')!r} — not a proof of this acceptance (X-05)")
+                  f"{de.get('message_id')!r} — not a proof of this acceptance")
     if kind in ("quorum", "all") and ev != DE_ACCEPTANCE_EVENT:
         v.add("LINT-DE-05",
               f"acceptance_policy_kind={kind} requires event {DE_ACCEPTANCE_EVENT}, got {ev}")
@@ -689,7 +689,7 @@ def lint_de(v, de, se=None):
             and de.get("envelope_hash") != se.get("envelope_hash")):
         v.add("LINT-DE-17",
               "availability DE envelope_hash != se.envelope_hash — the "
-              "transmitted-octet chain breaks at the delivery boundary (F-02)")
+              "transmitted-octet chain breaks at the delivery boundary")
 
 
 #: Per-cause shape of one part's detail: (REQUIRED, FORBIDDEN) field names.
@@ -943,7 +943,7 @@ def lint_re_semantics(v, re_obj):
             v.add("LINT-RE-01",
                   "refusal_kind 'member' without a recipient-produced "
                   "refusal_confirmation is an RDP-only assertion of a user act "
-                  "— rejected (X-29)")
+                  "— rejected")
         else:
             for field, want in (("mid", re_obj.get("mid")),
                                 ("message_id", re_obj.get("message_id")),
@@ -961,7 +961,7 @@ def lint_re_semantics(v, re_obj):
         if rc is not None or re_obj.get("mid"):
             v.add("LINT-RE-01",
                   "an organisation-policy refusal names no refusing member and "
-                  "carries no member confirmation (X-29)")
+                  "carries no member confirmation")
     if kind == "member" and reason_kind not in (None, "member"):
         v.add("LINT-RE-01",
               f"reason {reason!r} is registry-bound to refusal_kind "
@@ -981,30 +981,30 @@ def lint_ce(v, ce, se=None):
         if not ce.get("envelope_hash_after"):
             v.add("LINT-CE-01",
                   "re-packaging CE without envelope_hash_after — the output "
-                  "bytes are unattested (X-24)")
+                  "bytes are unattested")
         if ce.get("part_envelope_hashes"):
             v.add("LINT-CE-01",
                   "re-packaging CE carrying part_envelope_hashes — wrong-kind "
-                  "commitment (X-24)")
+                  "commitment")
     elif kind == "chunking":
         parts = ce.get("part_envelope_hashes")
         if not (isinstance(parts, list) and len(parts) >= 2):
             v.add("LINT-CE-01",
                   "chunking CE without part_envelope_hashes (>= 2 parts) — "
-                  "the emitted parts are unattested (X-24)")
+                  "the emitted parts are unattested")
         if ce.get("envelope_hash_after"):
             v.add("LINT-CE-01",
                   "chunking CE carrying envelope_hash_after — wrong-kind "
-                  "commitment (X-24)")
+                  "commitment")
     if not ce.get("envelope_hash_before"):
         v.add("LINT-CE-01",
               "CE without envelope_hash_before — the input bytes are "
-              "unattested (X-24)")
+              "unattested")
     elif se is not None and se.get("envelope_hash") is not None \
             and ce.get("envelope_hash_before") != se.get("envelope_hash"):
         v.add("LINT-CE-01",
               "CE envelope_hash_before != se.envelope_hash — the attested "
-              "input is not the transmitted message (X-24)")
+              "input is not the transmitted message")
 
 
 def lint_relay(v, r):
@@ -1132,7 +1132,7 @@ def lint_ep(v, ep):
                       f"{k[:-1]} {c.get('type')} message_id "
                       f"{c.get('message_id')!r} != the EP's "
                       f"{ep.get('message_id')!r} — a package never carries "
-                      "another message's evidence (X-31)")
+                      "another message's evidence")
     for c in ep.get("changes") or []:
         lint_ce(v, c, se=ep.get("se"))
 
@@ -1165,16 +1165,16 @@ def lint_gcm(v, gcm, se=None):
     if ac_mid is not None and gcm.get("mid") != ac_mid:
         v.add("LINT-GCM-02",
               f"GCM mid {gcm.get('mid')!r} != auth_context.mid {ac_mid!r} — the "
-              "disputing member and the authenticated member must be one (DR-03)")
+              "disputing member and the authenticated member must be one")
     if not gcm.get("envelope_hash"):
         v.add("LINT-GCM-02",
               "GCM without envelope_hash — a dispute binds to the disputed "
-              "OCTETS, not merely to a message_id (DR-03)")
+              "OCTETS, not merely to a message_id")
     _salt = ((gcm.get("reveal") or {}).get("salt"))
     if isinstance(_salt, str) and not re.fullmatch(r"[a-f0-9]{32}", _salt):
         v.add("LINT-GCM-02",
               f"GCM reveal.salt must be exactly 32 lowercase hex characters "
-              f"(16 bytes), got {len(_salt)} character(s) (DR-03)")
+              f"(16 bytes), got {len(_salt)} character(s)")
     _conf = gcm.get("reveal_confirmation")
     if isinstance(_conf, dict):
         _check_wallet_sig(v, _conf, "reveal_confirmation")

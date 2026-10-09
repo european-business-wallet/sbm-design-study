@@ -551,7 +551,13 @@ def test_an_old_record_cannot_admit_an_act_after_it_was_asserted():
     asserted before the act and cannot speak for it."""
     got = _admission(OLD, _acts(LATE))
     assert [r for r, _ in got] == ["LINT-BND-I6"], got
-    assert "R10-X1" in got[0][1]
+    # The REASON, not an identifier. This asserted that the message carried the
+    # round identifier `R10-X1`, which an implementer reading the diagnostic has
+    # no way to resolve — so the identifier was removed from the message and this
+    # now holds the message to the thing it has to explain: that the record was
+    # asserted before the act and therefore cannot speak for it.
+    assert "NOT ESTABLISHED" in got[0][1], got[0][1]
+    assert "cannot speak for a later instant" in got[0][1], got[0][1]
 
 
 def test_the_later_record_reports_the_suspension_as_a_violation():
