@@ -558,6 +558,15 @@ OVERCLAIM = [
      re.compile(r"declared", re.I),
      "EX-03 adjacent: what a reveal establishes is the DECLARED class, so "
      "overreach against a declared mandate is what is provable."),
+    (re.compile(r"cannot forge", re.I),
+     re.compile(r"mandate|within|by itself|on its own", re.I),
+     "Reported with lot 1 as a further instance of the class EX-01, EX-02, EX-04 "
+     "and EX-08 share: a takeaway said agent-process compromise cannot forge "
+     "channel authentication or evidence, full stop. The agent holds no keys, so "
+     "it cannot forge BY ITSELF — and it can still instruct the wallet WITHIN ITS "
+     "MANDATE, which is what the mandate scope and `human_acceptance` exist to "
+     "bound. The umbrella's own threat row passes this rule because it names the "
+     "second control in the same cell; the takeaway did not."),
     (re.compile(r"only lawful", re.I),
      None,
      "EX-02: a rule of this profile stated as a rule of law. Always refused in "

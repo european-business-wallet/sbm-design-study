@@ -73,7 +73,7 @@ The evidence chain records **who acted** (the acting MID, resolvable to the `acc
 Three properties are load-bearing and stated as a normative NOTE (§11.2):
 
 - **Counterparty content is untrusted input.** Message content from an identified counterparty is still adversary-influenced input to the agent that reads it — the machine-speed analogue of a manipulated instruction. Implementations MUST treat received content as untrusted, and content received over the channel MUST NOT escalate the agent's authority or push it outside its mandate scope. Identified-sender + qualified evidence establish *who* sent *what*, not that the content is *safe to act on*.
-- **Key isolation** (Annex R.4): agent-process compromise cannot forge channel authentication or evidence.
+- **Key isolation** (Annex R.4): the agent holds no keys, so agent-process compromise cannot forge channel authentication or evidence **by itself**. What a compromised agent can still do is **instruct the wallet within its mandate** — which is why the mandate's scope and `human_acceptance` are the bound that matters, and why key isolation alone is not a containment argument.
 - **Mandate revocation propagates:** a revoked or expired mandate MUST NOT yield acceptance (validity is checked at `sent_at`, LINT-BND-15; the wallet-agent interface stops honouring instructions once the mandate lapses).
 
 This maps onto the European approach to governing consequential automated behaviour — **human oversight** operationalised by acceptance policies (§8.3/A3), **traceability** operationalised by qualified evidence (the acting identity and mandate on the evidence chain, A5) — without asserting conformance to any specific instrument.

@@ -69,6 +69,12 @@ dl = _doc_lint()
     # EX-08 — the compromise scenario
     ("RD->>RD: evidence already issued stays valid", True),
     ("RD->>RD: evidence already issued remains presumptively valid", False),
+    # The seventh entry, and the two units that decided its qualifier
+    ("- **Key isolation:** agent-process compromise cannot forge evidence.", True),
+    ("- **Key isolation:** compromise cannot forge evidence by itself; it can still "
+     "instruct the wallet within its mandate.", False),
+    ("| Compromised agent process | the agent holds no keys, so a compromise cannot "
+     "forge evidence — and act-time mandate validity stops a lapsed one |", False),
     # EX-03 adjacent
     ("- **Reads as:** overreach is provable, not deniable.", True),
     ("- **Reads as:** overreach against the declared mandate is provable, not deniable.", False),
