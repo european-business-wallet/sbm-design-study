@@ -11,7 +11,7 @@ choice: >-
 alternative: >-
   Two. A cryptographic proof tying the ciphertext to the reveal — left as future work. And treating a commitment that does not match as a rebuttal on its own — rejected
 benefit: >-
-  A claim can be checked without the evidence having disclosed the content, or even the class of content, before a dispute arises. The scope reference echoed in the evidence still narrows the class to the set its scope allows
+  A claim can be checked without the evidence having disclosed the content, or even the class of content, before a dispute arises
 cost: >-
   Performing a reveal discloses the content class to the parties to the dispute. And a reveal that fails proves nothing by itself
 open_questions: [L5, L7, A12]

@@ -28,7 +28,7 @@ The contract, when written, is expected to cover at least these operations (name
 |---|---|---|
 | `authenticate` | Establish an agent↔wallet session bound to the system member | Property 1 |
 | `submit` | Instruct the wallet to send a message on a (pair, scope) group | Properties 3, 4 |
-| `confirm` | Instruct the wallet to produce a recipient confirmation (S3) | Properties 3, 4; never S4 for a `human_acceptance` class (A8) |
+| `confirm` | Instruct the wallet to produce a recipient confirmation (S3) | Properties 3, 4; never S4 for a `human_acceptance` class (Annex R.3) |
 | `status` | Query mandate validity / scope for a prospective act | Property 4 (fail-closed on revoked/expired) |
 
 What the interface **does not** expose: raw key material, an unscoped signing oracle, or any path that bypasses mandate-scope enforcement or the acting-identity record.

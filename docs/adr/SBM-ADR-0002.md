@@ -5,7 +5,7 @@ label: "A governed federation, four instruments"
 decision_status: accepted
 implementation_status: [specified, in-reference, planned]
 implementation: >-
-  Specified, and the register is in the reference: it admits Registered Delivery Providers, and its `role` list is closed to that one role by decision rather than as a stage, since SBM-ADR-0015 withdrew the second kind of participant ([A6](../REVIEW_AGENDA.md), closed). What is still only planned is an OPERATED register. None exists; what ships is a file
+  Specified, and the register is in the reference: it admits the one provider role by decision rather than as a stage ([A6](../REVIEW_AGENDA.md), closed). An OPERATED register is only planned — what ships is a file
 choice: >-
   Providers are admitted and supervised, and four instruments answer four different questions, each kept separate from the others: Trusted Lists say who is qualified, the membership register says who is admitted to the federation, the European Directory of Entities says who an entity is, and a design authority controls changes to the specification · [§13.1](../../Secure-Business-Messaging-Profile.md#131-institutional-roles)
 alternative: >-
@@ -13,7 +13,7 @@ alternative: >-
 benefit: >-
   The weight evidence carries rests on operators who are known, and a verifier can check qualification and admission independently of each other
 cost: >-
-  There is a barrier to entry, there is central governance, and somebody must keep the admission data fresh — the Federation Authority and the providers. How old an admission record may be and still authorise a live exchange is not yet fixed ([A2](../REVIEW_AGENDA.md))
+  A barrier to entry, central governance, and admission data somebody must keep fresh — the Federation Authority and the providers
 open_questions: [A2]
 author_questions: []
 supersedes: []

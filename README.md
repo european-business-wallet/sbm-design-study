@@ -207,6 +207,7 @@ what it describes, and the umbrella's *Document map* says which governs what.
 | [`docs/federated-flow-explainer.md`](docs/federated-flow-explainer.md) | One message between two providers, phase by phase through the published operations, with the open boundaries where they sit. |
 | [`docs/end-to-end-encryption-explainer.md`](docs/end-to-end-encryption-explainer.md) | What "end-to-end encrypted" means here: which parties read what, the properties MLS supplies and the four that surprise readers — the ends are devices, the address is not the encryption boundary, and the content digest is unsalted and confirms a guess. |
 | [`docs/corrections-to-earlier-editions.md`](docs/corrections-to-earlier-editions.md) | Claims earlier editions of the companions made that were wrong in a way a reader could have acted on. Kept out of the explanations and kept rather than erased, for anyone working from an earlier reading |
+| [`docs/comprehension-check.md`](docs/comprehension-check.md) | Eight questions from the r42 clarity review, each beside the place on the short route that must answer it. A checklist for a human reader, not a test: the answers are deliberately not written down |
 | [`docs/decisions-index.md`](docs/decisions-index.md) | Today's choices — generated from the decision records: each with its principal trade-off and its two statuses; the alternative weighed and the full cost are in the record it links to. |
 | [`docs/REVIEW_AGENDA.md`](docs/REVIEW_AGENDA.md) | The open questions, each with its assumption, the claim that depends on it and the expertise that would settle it. |
 | [`docs/lifecycle-and-custody.md`](docs/lifecycle-and-custody.md) | What changes at enrolment, device replacement, role change, compromise, policy rotation and provider exit; who keeps plaintext, evidence and verification material — and what is not decided. |
@@ -432,7 +433,7 @@ specification does **not** yet answer — protocol, production trust and legal �
 with the assumption each one rests on, and what is not yet written, the
 implementer guide, carried as G1 to G4.
 
-- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r47`,
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r48`,
   the git tag of that name; earlier tags of this snapshot stay where they are
   and each names the edition it was cut from. Cite the tag, or the commit you
   hold, so an answer can be matched to the text it answers. The reviewer

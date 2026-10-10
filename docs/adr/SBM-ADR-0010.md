@@ -13,7 +13,7 @@ alternative: >-
 benefit: >-
   The minimum viable deployment stays small, and nothing holds a decryption capability that the other side cannot see
 cost: >-
-  Where scopes are adopted there are more groups to run and administer, and the audience that can read a message is visibly larger than strict confidentiality would allow. The consequence to keep in mind: the address a message is sent to is not the boundary of who can decrypt it
+  Where scopes are adopted there are more groups to run and administer, and the audience that can read a message is visibly larger than strict confidentiality would allow
 open_questions: []
 author_questions: []
 supersedes: []

@@ -50,7 +50,7 @@ Each case follows the same arc: the sender resolves the **recipient's** scope ma
 - **Setup:** a procurement **agent** (`member_type=system`, standing `mandate_ref.scope: [invoice]`, valid this year) sends an `invoice`.
 - **Resolution:** the agent **instructs its wallet** (wallet-agent interface); the wallet checks the instruction is in mandate scope, forms/reuses the `finance` group, and sends. The SE records `auth_context.identity=system`, the acting `mid`, `mandate_ref`, and — being opposable — a `mandate_commitment`.
 - **Verification:** `evidence_lint` confirms the opposable agent SE carries a well-formed commitment (LINT-DE-15); a verifier with the discovery documents confirms the SE mandate matches the standing mandate and was valid at `sent_at` (LINT-BND-15); a reveal shows `invoice ∈ scope`.
-- **Reads as:** a provable, in-mandate agent act.
+- **Reads as:** the **declared** class is verifiably within the mandate. That the content is what the declaration says remains the sending wallet's conformance, not something the reveal certifies.
 
 ## 7. Agent outside mandate (refused)
 

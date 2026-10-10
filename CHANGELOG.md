@@ -18,7 +18,7 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-10-10, edition r47
+## Current — 2026-10-11, edition r48
 
 **The decision records, read by somebody who did not write them. No artefact
 version moves, and no decision changes.** The sixteen architecture decision

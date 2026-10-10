@@ -13,7 +13,7 @@ alternative: >-
 benefit: >-
   A verdict that was correct about the past stays correct, whatever changes afterwards
 cost: >-
-  The chains, registries, formation inputs and assertions all have to be retained, and where the material is missing the verification is reported INCOMPLETE rather than passed. One thing stays unproven: that no later policy version existed ([A3](../REVIEW_AGENDA.md))
+  The chains, registries, formation inputs and assertions all have to be retained, and where the material is missing the verification is reported INCOMPLETE rather than passed
 open_questions: [A3, A5]
 author_questions: []
 supersedes:

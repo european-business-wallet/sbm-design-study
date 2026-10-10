@@ -13,7 +13,7 @@ alternative: >-
 benefit: >-
   Which act carries legal effect is chosen deliberately and is visible in the evidence. Depositing a message in a mailbox never counts as delivery
 cost: >-
-  At the default grades the recipient has to cooperate for delivery to be evidenced at all. One member's refusal or digest mismatch ends the message for everyone. The availability grade rests on the Delivery Service's observation — which SBM-ADR-0015 makes the provider's own ([A9](../REVIEW_AGENDA.md), resolved)
+  At the default grades the recipient has to cooperate for delivery to be evidenced at all, and one member's refusal or digest mismatch ends the message for everyone
 open_questions: []
 author_questions: []
 supersedes: []

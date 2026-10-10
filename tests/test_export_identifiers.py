@@ -23,6 +23,7 @@ exactly those messages, which is how 10 of them reached a shipped document.
 """
 import ast
 import io
+import os
 import pathlib
 import re
 import tokenize
@@ -57,6 +58,63 @@ SHIPPED = [
 #: the source, because that is where an identifier would be put back.
 REGISTERS = ["docs/lint-catalogue.json", "docs/rule-ownership.json",
              "docs/retrievability.json"]
+
+
+#: What `rebuild_export.py` does not carry into the export. A shipped document
+#: that links one of these sends an export reader to a file that is not there.
+NOT_SHIPPED = ("docs/DESIGN_", "docs/DOCUMENTATION_", "docs/FEDERATION_PARTICIPANT_PLAN.md",
+               "docs/rdp-msp-trust-analysis/", "docs/review-round12-probes/",
+               "docs/reviews/", "docs/vision-and-context.md",
+               "docs/OCTET_AUTHORITATIVE_DESIGN.md")
+#: ...and `CHANGELOG.md`, which the export REPLACES with its own. A link there
+#: resolves — to a document of a different kind, the export's edition history —
+#: which is worse than dangling, because the file exists and looks like an
+#: answer. It cost an edition: three explainers' corrections were moved into the
+#: changelog and the export's readers lost them.
+#:
+#: `README.md` is an own file too and is NOT here: it is the front door of
+#: whichever repository you are in, so a link to it means the same thing in both.
+OWN_IN_EXPORT = ("CHANGELOG.md",)
+#: DERIVED, not listed. The hand-kept `SHIPPED` above is for the identifier
+#: rule and a new document has to be remembered into it — which is how
+#: `docs/comprehension-check.md` linked a review body the export excludes and
+#: no check saw it. Every Markdown document under `docs/` that the export
+#: carries is scanned here, whether or not anyone remembered it.
+def _scanned():
+    out = []
+    for p in sorted((ROOT / "docs").glob("*.md")):
+        rel = p.relative_to(ROOT).as_posix()
+        if rel.startswith(NOT_SHIPPED) or rel in OWN_IN_EXPORT:
+            continue
+        out.append(rel)
+    return out
+
+
+SCANNED = _scanned()
+LINK = re.compile(r"\]\(([^)#]+)(?:#[^)]*)?\)")
+
+
+@pytest.mark.parametrize("rel", SCANNED)
+def test_a_shipped_document_links_only_what_the_export_also_ships(rel):
+    """Three times in two days a document or a test reasoned about one tree
+    while the other ships a different set of files: a probe naming a review body
+    the export lacks, corrections moved into a changelog the export writes
+    itself, and a checklist linking the review it came from. The source's bar
+    cannot see any of them — it has all the files.
+    """
+    p = _exists(rel)
+    here = pathlib.PurePosixPath(rel).parent
+    for target in LINK.findall(p.read_text(encoding="utf-8")):
+        if target.startswith(("http://", "https://", "mailto:")):
+            continue
+        resolved = str(pathlib.PurePosixPath(os.path.normpath(here / target)))
+        assert not resolved.startswith(NOT_SHIPPED), (
+            f"{rel} links {target}, which the export does not ship — an export "
+            f"reader follows it to nothing")
+        assert resolved not in OWN_IN_EXPORT, (
+            f"{rel} links {target}, which the export REPLACES with its own. The "
+            f"link resolves there, to a different document, which is worse than "
+            f"a dangling one")
 
 
 def _exists(rel):

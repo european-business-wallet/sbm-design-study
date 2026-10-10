@@ -11,9 +11,9 @@ choice: >-
 alternative: >-
   Three. Leave the digest unsalted and write down the assumption that choice rests on. Derive the salt from the MLS exporter secret rather than generating it. Or reuse the salt the grade commitment already carries. The first two are weighed in the record; the third is rejected
 benefit: >-
-  A guess at the content cannot be confirmed from the evidence alone. What stands between the digest and a dictionary attack becomes the salt, rather than however much entropy the content happens to have
+  A guess at the content cannot be confirmed from the evidence alone
 cost: >-
-  Both wallets must keep the salt alongside the content, or an evidence package can no longer be tied to the document it is about. And the evidence version moves, so every sample is re-sealed. That falls on the parties, on implementers, and on anyone holding a package without being able to ask the parties
+  Both wallets must keep the salt alongside the content, or an evidence package can no longer be tied to the document it is about
 open_questions: [A12]
 author_questions: []
 supersedes: []

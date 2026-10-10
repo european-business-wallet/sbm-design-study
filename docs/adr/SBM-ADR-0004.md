@@ -5,7 +5,7 @@ label: "The messaging provider as a separate participant"
 decision_status: superseded
 implementation_status: [specified, in-reference]
 implementation: >-
-  The relay is in force, and it is the only part of this record that was ever built. The participant model, `observed_by`, `receipt_digest` and the composition axis were never implemented, and SBM-ADR-0015 withdrew them rather than leave them to be built later
+  The relay is in force and is the only part of this record that was ever built. SBM-ADR-0015 withdrew the rest rather than leave it to be built later
 choice: >-
   The Messaging Service Provider is each side's local delivery service and a participant in its own right. The relay stays between the two Registered Delivery Providers. Delivery Evidence should bind the observation it rests on. Whether one company plays both roles is a deployment choice, not a maturity rung · §7.2, [§13.1](../../Secure-Business-Messaging-Profile.md#131-institutional-roles)
 alternative: >-

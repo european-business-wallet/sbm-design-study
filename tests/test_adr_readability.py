@@ -146,6 +146,37 @@ def test_the_index_labels_the_two_halves_of_the_trade_off():
     assert "— at the cost of" not in index
 
 
+#: What the generated index renders into a row, and the length at which a cell
+#: stops being a map and becomes a document to study. The bounds are the
+#: measured state after the r42 review's EX-10 pass, with headroom: the longest
+#: of each field today is label 50, benefit 161, cost 199, implementation 189.
+INDEX_CELL_LIMIT = {"label": 60, "benefit": 200, "cost": 200, "implementation": 220}
+
+
+def test_an_index_cell_stays_a_map_and_does_not_become_a_document():
+    """EX-10 of the r42 clarity review: *shorten the generated decisions-index
+    cells in the source ADR metadata; keep detailed reasoning and migration
+    history in the records.*
+
+    Eleven fields were over these bounds — one `implementation` ran to 531
+    characters and one `benefit` to 368 — and the index's longest row to 1110.
+    Nothing was deleted: every clause removed from a summary was already in the
+    record's body, and every agenda question a cell carried is in the row's own
+    **Open** column. Without a bound they grow back one careful sentence at a
+    time, which is how they got there.
+
+    The limit is on the SOURCE field, not on the rendered row, because the
+    record is where a cell is written and the index is generated from it.
+    """
+    for p, fm, _body in _records():
+        for field, limit in INDEX_CELL_LIMIT.items():
+            value = " ".join(str(fm.get(field, "")).split())
+            assert len(value) <= limit, (
+                f"{p.stem}: `{field}` is {len(value)} characters, over {limit} — "
+                f"the index renders it as one cell. Put the detail in the record: "
+                f"{value[:80]!r}")
+
+
 def test_a_summary_field_is_sentences_not_a_pile_of_clauses():
     """`benefit` and `cost` are what the index shows. They were semicolon-joined
     noun phrases — *"one accountable, qualified party observes, transfers and

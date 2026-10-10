@@ -5,15 +5,15 @@ label: "One provider role, not two"
 decision_status: proposed
 implementation_status: [specified, in-reference]
 implementation: >-
-  Specified, and in the reference. No evidence object, companion contract or schema rule carries a second provider's identity, and the membership register admits only the one provider role. But two DISCOVERY documents did change shape and version for this decision — the Messaging Entity Descriptor at 2.2 dropped `msp` and `ds_receipt_keys`, and the provider descriptor at 1.1 publishes them — and the reference resolves the receipt key accordingly. 'Nothing changes on the wire' was true of the evidence family and not of discovery
+  Specified, and in the reference. No evidence object, companion contract or schema rule carries a second provider's identity — but two DISCOVERY documents did change shape and version for it
 choice: >-
   The Registered Delivery Provider operates the Delivery Service itself, as part of the qualified service it is already supervised for. There is one provider role. The Messaging Service Provider ceases to exist as a participant, as a role and as a name on the wire · §7.2, [§13.1](../../Secure-Business-Messaging-Profile.md#131-institutional-roles)
 alternative: >-
   Two. The Messaging Service Provider as a federation participant with an identity, an admission and an `observed_by` binding of its own — that was SBM-ADR-0004, planned and never implemented, and this record supersedes it. And a relay running between two Messaging Service Providers — still rejected
 benefit: >-
-  One qualified party observes the handover, carries the message and attests to both, so it is accountable for all three. Two questions that had been open disappear rather than being answered ([A9](../REVIEW_AGENDA.md), [L1](../REVIEW_AGENDA.md)). One fewer identity, contract, descriptor and interface to specify and keep. And it is the model the consultation asked for
+  One qualified party observes the handover, carries the message and attests to both, so it is accountable for all three
 cost: >-
-  Transport and evidence can no longer be bought from different suppliers. The provider sits in the data path of every delivery. The privacy argument for keeping the two apart is given up. And a decision accepted on 17 September 2026 is superseded three weeks later
+  Transport and evidence can no longer be bought from different suppliers. The provider sits in the data path of every delivery. The privacy argument for keeping the two apart is given up
 open_questions: [A10]
 author_questions: []
 supersedes: [SBM-ADR-0004]

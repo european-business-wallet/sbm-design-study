@@ -5,13 +5,13 @@ label: "The observer is named on the receipt"
 decision_status: proposed
 implementation_status: [specified, in-reference]
 implementation: >-
-  Specified, and in the reference implementation. The delivery receipt carries `observed_by`; it is required, and it is inside the part of the receipt the signature covers. One piece of code resolves the verifying key from that field, and both paths use it — the live one that issues receipts and the retained one that verifies them years later. Companion contracts at 16.0.0
+  Specified, and in the reference: the delivery receipt carries a required `observed_by`, inside the part the signature covers, and one piece of code resolves the key from it
 choice: >-
   A delivery receipt names TWO providers, because in general two are involved. `issuing_rdp_id` is where the message came FROM, proven by that message's Sending Evidence. `observed_by` is the provider whose Delivery Service actually took delivery of it, watched the recipient collect it, and signed the receipt. The key that verifies the receipt belongs to the SECOND of those · delivery-service-openapi.yaml, `DeliveryReceipt`
 alternative: >-
   Three were considered, all rejected. (1) Go on resolving the key from `issuing_rdp_id` — what the reference did; correct only when the sender's provider and the recipient's provider are the same one. (2) Let the party assembling the evidence state the association in the bundle, with no change to the receipt — rejected, because then the claimant asserts whose observation this was, which is the signer's statement to make. (3) Try every descriptor supplied until one of them resolves the key — rejected, because that is "any document carrying the key will do", and it makes the verdict depend on what the claimant chose to hand over
 benefit: >-
-  A receipt can be tied to the party that signed it, so a verifier knows which single published document should hold the verifying key and can check that document against that provider's admission to the federation. The legitimate signer — the recipient's provider — is no longer refused
+  A receipt can be tied to the party that signed it, so a verifier knows which single published document should hold the verifying key
 cost: >-
   A published contract changes shape, and a field SBM-ADR-0015 had just withdrawn comes back, for a different reason than the one it was withdrawn with
 open_questions: []

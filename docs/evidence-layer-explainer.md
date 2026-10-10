@@ -136,15 +136,17 @@ The seal is an **advanced electronic seal of the QTSP** within the meaning of Ar
 
 ## 5. The digests: how evidence refers to content it cannot see
 
-**One word, three domains.** This document said *the digest* throughout, and the
-profile commits to three different things under that word. Each has its own
+**One word, several domains.** This document said *the digest* throughout, and
+the profile commits to different things under that word — three in the
+verification model, and the published documents' digests beside them. Each has its own
 input, and each can be recomputed by a different set of parties — which is what
 decides who can check what:
 
-| Commitment | Over which octets | Who can recompute it |
+| Commitment | Over which octets | Who can recompute it from the material they hold |
 |---|---|---|
-| `payload_hash` | the **plaintext's** transmitted octets | only a party holding the plaintext: the two wallets, and anyone a party shows it to. No provider |
-| `envelope_hash` | the **transmitted ciphertext**: the TLS-serialized MLSMessage handed to transport | anyone holding those octets — both providers, the Delivery Service that accepted them, the recipient device that decrypted them |
+| `payload_hash` — the envelope calls it `content_digest` | the **plaintext's** transmitted octets; for a multipart message, the manifest with each part's own digest | only a party holding the plaintext: the two wallets, and anyone a party shows it to. No provider |
+| `envelope_hash` — the Delivery Service receipt calls it `message_digest` | the **transmitted ciphertext**: the TLS-serialized MLSMessage handed to transport | anyone holding those octets — both providers, the Delivery Service that accepted them, the recipient device that decrypted them |
+| `mls_state` | the **retained GroupContext** octets, TLS-serialized | a verifier holding those octets, which the bundle retains |
 | `doc_digest` | a **published document's** octets — such as the version of **BW-ORG**, the entity's signed organisation document, that an acceptance policy pins | anyone holding that document, which the bundle retains |
 
 The grade commitment (§7.1) and the mandate commitment are not in this table:

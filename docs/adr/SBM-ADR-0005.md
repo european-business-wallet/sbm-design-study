@@ -13,7 +13,7 @@ alternative: >-
 benefit: >-
   Two messages that happen to carry the same local identifier under two different origins stay two messages. And no device has to welcome itself into its own group
 cost: >-
-  The Delivery Service has to hold the origins' evidence-verification keys and a list of who may forward. Two things stay open: how a receipt reaches the party that issues the Delivery Evidence ([A1](../REVIEW_AGENDA.md)), and who routes a group after it has been formed ([A10](../REVIEW_AGENDA.md))
+  The Delivery Service has to hold the origins' evidence-verification keys and a list of who may forward
 open_questions: [A1, A10]
 author_questions: []
 supersedes: []

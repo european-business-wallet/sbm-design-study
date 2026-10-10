@@ -13,7 +13,7 @@ alternative: >-
 benefit: >-
   In the wallet-signed modes, each side's act is attributable to a key held on that side's device, so it does not rest on the providers' word
 cost: >-
-  Key custody, a minimum assurance level and a story for handling a compromised device all become part of the evidence model — for wallet providers and for entities ([MWAP](../wallet-assurance-profile.md))
+  Key custody, a minimum assurance level and a story for a compromised device all become part of the evidence model — for wallet providers and for entities
 open_questions: [L4]
 author_questions: []
 supersedes: []
