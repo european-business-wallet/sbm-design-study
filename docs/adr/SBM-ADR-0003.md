@@ -1,13 +1,13 @@
 ---
 id: SBM-ADR-0003
 title: "MLS, bilateral, per device"
-label: "MLS, one pair of entities, every device"
+label: "MLS, one pair of entities, device-level membership"
 decision_status: accepted
 implementation_status: [specified, in-reference]
 implementation: >-
   specified; in the reference
 choice: >-
-  One MLS group per pair of entities, per confidentiality scope. Every device belonging to either entity is a leaf of that group · the I-D, *Group Topology*
+  One MLS group per pair of entities, per confidentiality scope. Membership is at the level of the DEVICE, not the entity: one leaf per eligible participating device — by default every enrolled device of both entities, and in a role-confined scope only the devices the scope admits · the I-D, *Group Topology*
 alternative: >-
   Multiparty groups — prohibited here, and recorded as future study rather than as a closed question
 benefit: >-
@@ -41,8 +41,14 @@ re-keying the relationship.
 
 ## Decision
 
-One MLS group per pair of entities (and per confidentiality scope where
-scopes are used); every enrolled device of both entities is a leaf. Groups
+One MLS group per pair of entities, and one per confidentiality scope where
+scopes are used. Membership is at the level of the **device**: one leaf per
+eligible participating device. Which devices are eligible is the scope's
+answer, not a universal one — in the default scope it is every enrolled device
+of both entities, in a role-confined scope it is the devices of the members
+holding that scope's roles, and where the scope declares `recoverability:
+records` with a `records_role` the records holders' devices join them as a
+recovery leaf that recovers but does not accept. Groups
 are bilateral: a group containing the devices of three or more entities is
 rejected at creation, at join and at verification. Multiparty use is
 recorded as a possible future extension, not current scope.

@@ -431,7 +431,7 @@ specification does **not** yet answer â€” protocol, production trust and legal â
 with the assumption each one rests on, and what is not yet written, the
 implementer guide, carried as G1 to G4.
 
-- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r43`,
+- **Edition.** This snapshot is the review edition `design-study-2026-09-20-r44`,
   the git tag of that name; earlier tags of this snapshot stay where they are
   and each names the edition it was cut from. Cite the tag, or the commit you
   hold, so an answer can be matched to the text it answers. The reviewer

@@ -46,8 +46,8 @@
       "source": "docs/diagrams/change-swimlane.mermaid",
       "command": "mmdc -i docs/diagrams/change-swimlane.mermaid -o docs/diagrams/change-swimlane.svg -b white",
       "tool": "@mermaid-js/mermaid-cli 10.4.0",
-      "source_sha256": "7c32e74c729a58ce7af081616fbcb19697617f3d6cb3f12d6477b1096a756345",
-      "export_sha256": "55125da144613e2f916221cc790a4e26f771d8733f0a764a357cbb45ff8592c2"
+      "source_sha256": "a416fc813fd411388776b74f28c04ea8b9a24dbf2ad94761d5beb3c38fb727ba",
+      "export_sha256": "668faeedea3e411202c704d893f74afe2eedd8fd105812f75fa866d7a7b837bb"
     }
   ]
 }

@@ -24,7 +24,7 @@ The topology is a **four-corner federation**: each entity submits to, and receiv
 | Lifeline | Role |
 |---|---|
 | **WU-S** — sender wallet (Entity A) | Computes the content digest and (for availability grade) the grade commitment; drives resolution, group creation and submission. Never issues evidence. |
-| **EDD** — directory | The European Digital Delivery directory (Layer 0): resolves a UID to provider endpoints, the signed capability document, and a pointer to published MLS key material. |
+| **EDD** — directory | The European Directory of Entities (Layer 0): resolves a UID to provider endpoints, the signed capability document, and a pointer to published MLS key material. |
 | **DS(out)** — sender-side Delivery Service | The Delivery Service RDP(out) operates. Accepts the octets RDP(out) submits — the acceptance the SE rests on — and routes them to the devices it observed joining the group; issues no evidence. |
 | **RDP(out)** — sender-side QERDS | The sender's Registered Delivery Provider: issues Sending Evidence, and in this case composes the Evidence Package. |
 | **RDP(in)** — recipient-side QERDS | The recipient's Registered Delivery Provider: issues Delivery / Non-Delivery / Refusal Evidence. |

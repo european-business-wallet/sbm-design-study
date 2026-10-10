@@ -249,7 +249,7 @@ This note owns nothing. Each row names the document that does.
 | Confidentiality, integrity, authentication; forward secrecy and post-compromise security per epoch; opaque group identifiers | the Internet-Draft, *Security Considerations* |
 | The provider routes ciphertext and holds no content key | the umbrella's object model and Delivery-Service mapping, and the Internet-Draft's DS mapping |
 | What each party observes, per path | umbrella, the privacy section |
-| Group topology: one group per entity pair and scope, every device a leaf | the Internet-Draft, *Group Topology*; [SBM-ADR-0003](adr/SBM-ADR-0003.md) |
+| Group topology: one group per entity pair and scope, one leaf per eligible device | the Internet-Draft, *Group Topology*; [SBM-ADR-0003](adr/SBM-ADR-0003.md) |
 | Canonicalisation, the digest and its modes | the Internet-Draft, *Canonicalisation and Payload Hashing* |
 | The salted commitments and their reveals | the Internet-Draft, *Grade Commitment* and *Mandate Commitment*; [SBM-ADR-0009](adr/SBM-ADR-0009.md) |
 | Confidentiality scopes and the visible records leaf | umbrella §8.3a; [SBM-ADR-0010](adr/SBM-ADR-0010.md) |

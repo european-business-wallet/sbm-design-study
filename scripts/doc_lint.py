@@ -509,6 +509,141 @@ def figure_agenda_problems(labels, entries):
     return out
 
 
+# ---------------------------------------------------------------------------
+# A claim that arrives without its qualification (the r42 clarity review)
+# ---------------------------------------------------------------------------
+#
+# EX-01, EX-02, EX-04 and EX-08 were one defect four times: a heading, a label,
+# a generated cell or a figure takeaway claiming more than the body beneath it.
+# A reader who reads only the summary carries away the stronger claim, and the
+# careful paragraph underneath never reaches them.
+#
+# **The unit is what a reader reads on its own**, and nothing larger: one
+# heading line, one front-matter value, one table row, one bullet, one figure
+# label. Taking the surrounding body as the unit would make every instance pass
+# — the body is careful in all four, which is exactly the defect — so a
+# qualifier counts only where it sits in the same unit as the claim.
+#
+# **Prose is not scanned, deliberately.** `every device` occurs sixteen times in
+# the reading path's prose and almost all of them are legitimate — "every device
+# that can decrypt is a visible leaf", "every enrolled device must be able to
+# receive" is a requirement. Scanning prose would bury four real findings under
+# a dozen false ones, and a noisy gate is worse than none.
+#: Each entry: the claim, the qualifier that redeems it IN THE SAME UNIT (None =
+#: always refused), and why the entry exists. An entry earns its place with an
+#: instance in the tree; when it stops earning it, delete it.
+OVERCLAIM = [
+    (re.compile(r"without revealing", re.I),
+     re.compile(r"disclos|when opened|on opening|to the verifier", re.I),
+     "EX-01: the grade-commitment heading promised verification without "
+     "revealing the class, over a procedure that reveals (salt, content_class) "
+     "to the verifier on opening. Say what a reveal discloses, in the heading."),
+    (re.compile(r"supplies the legal weight", re.I),
+     re.compile(r"designed to support", re.I),
+     "EX-02: an unqualified statement that the evidence layer supplies legal "
+     "weight, in a study whose own claim register leaves the presumption "
+     "question open. The approved wording is designed to support. Whether a "
+     "deployment qualifies is TODO(legal) and counsel's."),
+    (re.compile(r"every device", re.I),
+     re.compile(r"eligible|participating", re.I),
+     "EX-04: the pair's every enrolled device as a leaf, against the "
+     "confidentiality scopes that exist to confine the audience. Device-level "
+     "membership is the claim; universal membership is not."),
+    (re.compile(r"stays valid", re.I),
+     re.compile(r"presumptiv", re.I),
+     "EX-08: evidence already issued described as staying valid, in a scenario "
+     "that includes suspected compromise. The baseline is presumptively valid, "
+     "rebuttable through the dispute path."),
+    (re.compile(r"provable, not deniable", re.I),
+     re.compile(r"declared", re.I),
+     "EX-03 adjacent: what a reveal establishes is the DECLARED class, so "
+     "overreach against a declared mandate is what is provable."),
+    (re.compile(r"only lawful", re.I),
+     None,
+     "EX-02: a rule of this profile stated as a rule of law. Always refused in "
+     "these positions; write permitted by this profile. A quotation of law "
+     "belongs in a blockquote, which is not one of the positions scanned."),
+]
+
+#: Where a claim arrives without its qualification. Markdown side; the figure
+#: side is the drawn text and the alt line, checked in `scan_figures`.
+OVERCLAIM_POSITIONS = (
+    ("heading", re.compile(r"^\s{0,3}#{1,6}\s")),
+    ("table cell", re.compile(r"^\s*\|")),
+    ("takeaway bullet", re.compile(r"^\s*[-*]\s+\*\*[^*]+\*\*")),
+)
+#: The decision records' summary fields, which the generated index renders as a
+#: reader's one-line view of the decision. Read through the YAML rather than by
+#: line, because every one of them is FOLDED — `choice: >-` with the text on the
+#: lines after it — so a line-matched `^choice:` sees the key and never the
+#: claim. The first version of this guard did exactly that and reported the ADR
+#: whose label it caught as clean on its `choice`, which carried the same claim.
+OVERCLAIM_ADR_FIELDS = ("label", "choice")
+OVERCLAIM_GLOBS = ["*.md", "docs/*.md", "docs/adr/*.md", "brief/*.md",
+                   "ietf/*.md", "etsi/*.md"]
+
+
+def overclaim_hits(unit):
+    """[(claim, why)] for a single unit of text a reader reads on its own."""
+    out = []
+    for claim, qualifier, why in OVERCLAIM:
+        if claim.search(unit) and not (qualifier and qualifier.search(unit)):
+            out.append((claim.pattern, why))
+    return out
+
+
+def scan_overclaims(root=None):
+    """[(rel, line_no, position, claim, line)] over the Markdown positions.
+
+    An ADR's `label:` and `choice:` are scanned as single lines because that is
+    how they are written and how the generated index renders them; a value
+    folded over several lines would need the front matter parsed, and none is.
+    """
+    root = root or ROOT
+    out, seen = [], set()
+    for g in OVERCLAIM_GLOBS:
+        for path in sorted(root.glob(g)):
+            rel = path.relative_to(root).as_posix()
+            if rel in seen or rel in EXEMPT:
+                continue
+            seen.add(rel)
+            for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                position = next((name for name, pat in OVERCLAIM_POSITIONS
+                                 if pat.match(line)), None)
+                if position is None:
+                    continue
+                for claim, _why in overclaim_hits(line):
+                    out.append((rel, n, position, claim, line.strip()))
+    out += _adr_field_overclaims(root)
+    return out
+
+
+def _adr_field_overclaims(root):
+    """The decision records' `label` and `choice`, read as whole values."""
+    import yaml
+    out = []
+    for path in sorted((root / "docs" / "adr").glob("SBM-ADR-*.md")):
+        rel = path.relative_to(root).as_posix()
+        text = path.read_text(encoding="utf-8")
+        parts = text.split("---", 2)
+        if len(parts) < 3:
+            continue
+        try:
+            fm = yaml.safe_load(parts[1]) or {}
+        except yaml.YAMLError:
+            continue
+        for field in OVERCLAIM_ADR_FIELDS:
+            value = fm.get(field)
+            if not isinstance(value, str):
+                continue
+            n = next((i for i, l in enumerate(text.splitlines(), 1)
+                      if l.startswith(f"{field}:")), 1)
+            for claim, _why in overclaim_hits(value):
+                out.append((rel, n, f"front-matter `{field}`", claim,
+                            value.strip()))
+    return out
+
+
 SCANNABLE = (".svg", ".mermaid", ".mmd")
 
 
@@ -687,6 +822,9 @@ def scan_figures():
         problems += [(rel, f"'{m}' in figure text: {label[:100]}")
                      for label, m in _figure_hits(labels)]
         problems += [(rel, why) for why in figure_agenda_problems(labels, entries)]
+        problems += [(rel, f"a figure label claims more than the body beneath "
+                           f"it ('{claim}'): {label[:90]}")
+                     for label in labels for claim, _ in overclaim_hits(label)]
     for rel, e in exports.items():
         export, source = ROOT / rel, ROOT / e["source"]
         if not export.exists() or not source.exists():
@@ -705,6 +843,9 @@ def scan_figures():
             problems += [(rel, f"'{m}' in figure text: {label[:100]}")
                          for label, m in _figure_hits(labels)]
             problems += [(rel, why) for why in figure_agenda_problems(labels, entries)]
+            problems += [(rel, f"a figure label claims more than the body "
+                               f"beneath it ('{claim}'): {label[:90]}")
+                         for label in labels for claim, _ in overclaim_hits(label)]
     problems += raster_source_problems(exports)
     # A public brief, where one exists (the design-study export carries one),
     # embeds its own figures; a superseded mechanism must not survive there
@@ -881,7 +1022,12 @@ def main():
     for rel, n, text in plan:
         snippet = text if len(text) <= 120 else text[:117] + "..."
         print(f"[PLAN] {rel}:{n}: a withdrawn work programme (SBM-ADR-0015) -> {snippet}")
-    roles = roles + plan
+    over = scan_overclaims()
+    for rel, n, position, claim, text in over:
+        snippet = text if len(text) <= 120 else text[:117] + "..."
+        print(f"[CLAIM] {rel}:{n}: a {position} claims more than the body "
+              f"beneath it ('{claim}') -> {snippet}")
+    roles = roles + plan + over
     f = scan_figures()
     for rel, problem in f:
         print(f"[FIGURE] {rel}: {problem}")
@@ -919,7 +1065,9 @@ def main():
           "would have given it one; no figure cites a "
           "review-agenda entry the agenda does not have, or a closed one as if it "
           "were open; every local link resolves; every file the licence lists "
-          "exists; every declared record is presented as one ✓")
+          "exists; every declared record is presented as one; no heading, label, "
+          "table cell, takeaway or figure label claims more than the body beneath "
+          "it ✓")
 
 
 if __name__ == "__main__":

@@ -57,7 +57,7 @@ Each case follows the same arc: the sender resolves the **recipient's** scope ma
 - **Setup:** the same agent is instructed to send a `legal-notice` (not in its `mandate_ref.scope`).
 - **Resolution:** the **wallet refuses** the instruction at the wallet-agent interface (mandate-scope enforcement, Annex R.4) — the message is never sent. Nothing crosses the channel.
 - **If a non-conformant wallet sent it anyway:** on reveal the commitment recomputes but `legal-notice ∉ scope`, so the reveal establishes **overreach** (LINT-BND-15); and the act is not opposable beyond what the participation agreement allows (A3).
-- **Reads as:** the mandate is a gate, and overreach is provable, not deniable.
+- **Reads as:** the mandate is a gate, and overreach against the **declared** mandate scope — read against the class the commitment opens to, which is also the declared one — is provable, not deniable.
 
 ---
 
