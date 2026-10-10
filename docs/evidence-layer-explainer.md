@@ -29,7 +29,7 @@ seals a record that delivery happened, with a qualified timestamp over the seal.
 That record is the **Delivery Evidence**, and the date on it is the moment the
 provider verified the statement.
 
-**One case, concretely.** An invoice is submitted at 09:58. The sending
+**One case, concretely** — the same case `message-lifecycle.md` and `architecture-identity-trust.md` use, so the instants can be compared across the three. An invoice is submitted at 09:58. The sending
 provider's own delivery service accepts the octets, and the provider seals the
 **Sending Evidence** at 09:59 — after that acceptance, never before. The
 recipient's device collects the message at 10:14 and acknowledges it; the

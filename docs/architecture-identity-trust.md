@@ -13,6 +13,48 @@ The question this note answers: **who does what, who talks to whom, and why is a
 
 ## 1. Who does what
 
+**The ordinary case, in plain words.** Two organisations exchange a message.
+Each has a provider. The sender's wallet encrypts the message — the provider
+never sees its content — and hands it over; the provider's own delivery service
+takes it, and the provider seals a record of the submission. The message crosses
+to the recipient's provider, whose delivery service holds it until one of the
+recipient's devices collects it. The device decrypts it and says whether the
+content matched. The recipient's provider — and only it — decides whether that
+satisfies the recipient organisation's published policy, and seals the record of
+the outcome.
+
+**Why any of it is believed** is the second half of this note, and it has one
+shape: nothing is trusted because it arrived, and everything is trusted because
+some record authorises the key that signed it. A device's key is published in
+its organisation's signed roster; that roster is sealed by a key the public
+directory pins to the organisation's identifier; the identifier was issued by a
+qualified issuer. A provider's seal is checked the same way, against a
+membership register sealed by an authority whose key the verifier was configured
+with. Two chains, meeting only at the evidence.
+
+**One case, concretely** — the same case `evidence-layer-explainer.md` and
+`message-lifecycle.md` use. The
+invoice submitted at **09:58** is sealed into Sending Evidence at **09:59** by
+the sender's provider. For a verifier to believe that seal eighteen months
+later, it needs three separate things: that the provider's certificate was
+qualified at 09:59, that the provider was admitted to the federation at 09:59,
+and that the device whose signature the evidence carries was in the sender's
+roster at 09:58. **None of the three implies another**, and the design depends
+on their staying apart — which is what §3's five questions are for.
+
+**What these chains establish, and what they do not.** They establish who could
+have signed what, and when a key was authorised to do it. They do not establish
+that what a signed statement *says* is true: a delivery service's receipt is its
+own observation, attested by nobody else, and §5 says so in the places it
+matters. Nor do they establish qualification from admission or the reverse —
+they are independent gates, and §2 draws them as two chains rather than one.
+
+**The terms the rest of this note uses.** The **RDP** is the Registered Delivery
+Provider, the qualified party that seals evidence; its **Delivery Service** is
+the service it operates to carry messages and queue them for devices; **SE** is
+the Sending Evidence it seals on submission. The discovery documents are named
+where they first matter in §4.
+
 ![Four-corner federated architecture — who carries what](diagrams/architecture-four-corner.svg)
 
 Each entity runs **wallet devices**, the only place plaintext exists. Its **Delivery Service**, operated by its RDP, holds its KeyPackages and queues and observes the handover of bytes to a device. Its **Registered Delivery Provider** (the RDP, a qualified trust service provider) seals the evidence. A message goes from the sender's wallet to its RDP, which gets its own Delivery Service to accept the exact octets before it seals the Sending Evidence, then relays the ciphertext **with that SE** to the recipient's RDP. That RDP hands it to its Delivery Service with the origin proven, and the recipient's devices collect it there. The recipient's confirmations reach its RDP, the **sole** evaluator of the acceptance policy (TS clause 6). The Delivery Service may carry them, verbatim; it decides nothing. There is no Delivery-Service-to-Delivery-Service relay: the one relay in the profile is the RDP-to-RDP hop described above.

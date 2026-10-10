@@ -234,6 +234,37 @@ def test_the_corrections_keep_what_a_reader_could_have_acted_on():
             f"{rel} drops its corrections instead of pointing at them"
 
 
+#: The three companions that open with the layering template share one worked
+#: case, so a reader can carry the instants from one to the next. Four instants,
+#: and the one the evidence carries is the last.
+RUNNING_CASE = ("09:58", "09:59", "10:14", "10:15")
+LAYERED = ("docs/evidence-layer-explainer.md", "docs/message-lifecycle.md",
+           "docs/architecture-identity-trust.md")
+
+
+def test_the_three_layered_companions_share_one_worked_case():
+    """Each of the three says it uses the same case as the other two, and a
+    cross-reference is only worth making if it is true. The instants are the
+    check: a document that changes one of them, or drops the case, breaks the
+    comparison the other two invite a reader to make.
+
+    `architecture-identity-trust.md` carries the first two — the submission and
+    its seal are what its trust chains are about — and the other two carry all
+    four.
+    """
+    for rel in LAYERED:
+        doc = _flat(ROOT / rel)
+        assert "One case, concretely" in doc, f"{rel} dropped the worked case"
+        for other in LAYERED:
+            if other != rel:
+                assert pathlib.Path(other).name in doc, \
+                    f"{rel} does not point at {other}"
+        wanted = RUNNING_CASE if rel != "docs/architecture-identity-trust.md" \
+            else RUNNING_CASE[:2]
+        for instant in wanted:
+            assert instant in doc, f"{rel} lost the instant {instant}"
+
+
 def test_the_lifecycle_heading_counts_its_own_table():
     lifecycle = (ROOT / "docs" / "message-lifecycle.md").read_text(encoding="utf-8")
     heading = next(l for l in lifecycle.splitlines() if l.startswith("## 2. "))

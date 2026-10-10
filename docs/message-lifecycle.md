@@ -13,6 +13,41 @@ It answers one question — **how do the public operations and their state machi
 
 ## 1. The smallest complete run
 
+**The ordinary case, in plain words.** Someone's wallet encrypts a message and
+hands it to the provider. The provider's own delivery service takes the octets
+and says so; only then does the provider seal a record that the submission was
+accepted. The recipient's device collects the message from that same service,
+acknowledges it, decrypts it and checks the content against the fingerprint the
+sender committed to. It says the check passed, in a signed statement. The
+provider verifies that statement and seals a record that delivery happened. Four
+acts, each by a different party, each leaving something signed behind.
+
+**One case, concretely** — the same case `evidence-layer-explainer.md` and
+`architecture-identity-trust.md` use, so the instants can be compared across
+the three. An invoice is
+submitted at **09:58**. The delivery service accepts the octets, and the
+provider seals the Sending Evidence at **09:59** — after that acceptance, never
+before. The recipient's device collects the message at **10:14** and
+acknowledges it, which is the handover. The provider verifies the device's
+confirmation at **10:15** and seals the Delivery Evidence, dated **10:15**.
+Three different instants, three different parties observing them, and the one
+the evidence carries is the last.
+
+**What the composition shows, and what it does not.** It shows that each step
+has a published operation behind it, that each operation leaves a durable result
+some named party owns, and that a retry of any of them is identified rather than
+duplicated. It does not show that any of this has legal effect, which is not
+this document's question — and it does not show the steps that have **no**
+published operation, which §6 lists rather than invents.
+
+**The terms the rest of this document uses.** The **RDP** is the Registered
+Delivery Provider, the qualified party that seals evidence; its **Delivery
+Service** is the service it operates to carry messages and queue them for
+devices. **S2** is the handover to a device, **S3** a member's confirmation that
+the content matched, **S4** the point at which the recipient's published
+acceptance policy is satisfied. The run below is **profile 1**: one operator
+serving both sides, so no relay between providers occurs.
+
 ![Minimal message, profile 1](diagrams/minimal-message.svg)
 
 One operator runs the RDP and the Delivery Service (Annex P profile 1); one recipient device; the verification grade. Every arrow is a published operation. Step 3 need not wait: the recipient's open invitation already routes its device when the message is accepted (§5, case 1).
