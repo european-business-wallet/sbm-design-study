@@ -6,10 +6,10 @@ question: What must a verifier hold, years later, besides the Evidence Package �
 profile: all; the relay hop evidence in the package exists from profile 2
 status: current
 references: docs/production-verifier-architecture.md (this figure's note); docs/required-properties.json; scripts/bundle_lint.py; README "What a green bar means"; decision record SBM-ADR-0011 (historical state: maximality, the live lease, formation inputs)
-alt: Three columns feeding one verdict. The Evidence Package carries the Sending Evidence, the outcome (DE, NDE or RE), the RDP chain with per-hop evidence, and optionally change records, non-operative state records and disputes. Beside it, the retained material that must accompany it: the policy chain, the counterparty roster, the retained GroupContext, the formation inputs, the suite registry and the federation register, each with the gap rule reported when it is absent, plus optional Delivery Service receipts and grade reveals. On the right, what is configured rather than retained: the EU Trusted Lists for qualification and the Federation Authority anchor for admission; the demo store holds demonstration keys for both roles in one file. The verdict is one of three: a pass, INCOMPLETE with exit code 3 when a required property cannot be established, or FAIL with exit code 1 for a violation. Two facts no retained material can establish are marked: that no later policy version existed, and that an observation reported by a Delivery Service is true.
+alt: Three columns feeding one verdict, and a second stage after it. The Evidence Package carries the Sending Evidence, the outcome (DE, NDE or RE), the RDP chain with per-hop evidence, and optionally change records, non-operative state records and disputes, each sealed and time-stamped from outside. Beside it, the material that must be retained with it or the verification is incomplete: the policy chain, the counterparty roster, the retained GroupContext, the formation inputs, the suite registry and the federation register, each with the gap rule reported when it is absent, plus optional Delivery Service receipts and grade reveals. On the right, what is configured rather than retained: the EU Trusted Lists for qualification, read by the production stage and not by the bar drawn here, and the Federation Authority anchor for admission, which is the only one of the two that reaches the verdict and the arrow says so; in this repository a demonstration store stands in for both, holding demo keys in one file. The central result is the REPOSITORY DEMONSTRATION VERDICT, produced by bundle_lint: a pass, FAIL with exit code 1 for a violation of a rule, or INCOMPLETE with exit code 3 — no violation has been established, but required proof is absent. An arrow leads from that verdict to a second stage, production validation, which this bar does not perform: certificate chains, timestamp-token validation and qualification scope at evidence time. Two facts no retained material can establish are marked: that no later policy version existed, and that an observation reported by a Delivery Service is true.
 -->
   <title>What a verifier must hold, besides the package</title>
-  <desc>The Evidence Package, the retained material that must accompany it with the gap rule for each, and the configured trust anchors — feeding one of three verdicts: pass, INCOMPLETE (exit 3) or FAIL (exit 1).</desc>
+  <desc>The Evidence Package, the retained material that must accompany it with the gap rule for each, and the configured trust anchors — feeding the repository demonstration verdict produced by bundle_lint: pass, INCOMPLETE at exit 3 when required proof is absent though no violation has been established, or FAIL at exit 1 for a violation. A second stage follows it, production validation, which this bar does not perform: certificate chains, timestamp tokens and qualification scope at evidence time.</desc>
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
@@ -60,13 +60,14 @@ alt: Three columns feeding one verdict. The Evidence Package carries the Sending
   <text x="836" y="78" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">Configured, not retained</text>
   <g font-size="11.5" fill="#475569">
     <text x="712" y="104">· the EU Trusted Lists</text>
-    <text x="724" y="119" font-size="10.5" fill="#64748b">qualification, at the act's instant</text>
-    <text x="712" y="143">· the Federation Authority's anchor</text>
-    <text x="724" y="158" font-size="10.5" fill="#64748b">admission — without it the register</text>
-    <text x="724" y="172" font-size="10.5" fill="#64748b">cannot be authenticated (I6)</text>
+    <text x="724" y="119" font-size="10.5" fill="#64748b">qualification, at the act's instant —</text>
+    <text x="724" y="132" font-size="10.5" fill="#64748b">read by the production stage, not here</text>
+    <text x="712" y="156">· the Federation Authority's anchor</text>
+    <text x="724" y="171" font-size="10.5" fill="#64748b">admission — without it the register</text>
+    <text x="724" y="185" font-size="10.5" fill="#64748b">cannot be authenticated (I6)</text>
   </g>
-  <text x="836" y="230" text-anchor="middle" font-size="11" fill="#64748b">the demo store holds demo keys</text>
-  <text x="836" y="246" text-anchor="middle" font-size="11" fill="#64748b">for both roles, in one file</text>
+  <text x="836" y="230" text-anchor="middle" font-size="11" fill="#64748b">here a demo store stands in for both,</text>
+  <text x="836" y="246" text-anchor="middle" font-size="11" fill="#64748b">holding demonstration keys in one file</text>
   <rect x="720" y="306" width="256" height="48" rx="6" fill="#ffffff" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3"/>
   <text x="848" y="324" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#1f2937">Supplied by a claimant, not configured</text>
   <text x="848" y="341" text-anchor="middle" font-size="10.5" fill="#64748b">the plaintext, only for a claim about content</text>
@@ -75,13 +76,16 @@ alt: Three columns feeding one verdict. The Evidence Package carries the Sending
   <line x1="169" y1="298" x2="330" y2="446" stroke="#475569" stroke-width="1.3" marker-end="url(#a)"/>
   <line x1="505" y1="388" x2="505" y2="446" stroke="#475569" stroke-width="1.3" marker-end="url(#a)"/>
   <line x1="704" y1="296" x2="678" y2="446" stroke="#475569" stroke-width="1.3" marker-end="url(#a)"/>
+  <text x="712" y="372" font-size="10.5" fill="#64748b">the anchor only —</text>
+  <text x="712" y="386" font-size="10.5" fill="#64748b">not the Trusted Lists</text>
 
   <!-- verdict -->
-  <rect x="300" y="450" width="410" height="86" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="1.6"/>
-  <text x="505" y="472" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">One of three verdicts — never a fourth</text>
-  <text x="505" y="493" text-anchor="middle" font-size="11.5" fill="#475569">a pass · INCOMPLETE, exit 3 — a required property not established</text>
-  <text x="505" y="510" text-anchor="middle" font-size="11.5" fill="#475569">FAIL, exit 1 — a violation of a rule</text>
-  <text x="505" y="528" text-anchor="middle" font-size="11" fill="#64748b">material that does not parse is a finding, not an exception</text>
+  <rect x="300" y="450" width="410" height="100" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="1.6"/>
+  <text x="505" y="470" text-anchor="middle" font-size="13" font-weight="bold" fill="#1f2937">The repository demonstration verdict — bundle_lint</text>
+  <text x="505" y="489" text-anchor="middle" font-size="11.5" fill="#475569">a pass · FAIL, exit 1 — a violation of a rule</text>
+  <text x="505" y="505" text-anchor="middle" font-size="11.5" fill="#475569">INCOMPLETE, exit 3 — no violation has been established,</text>
+  <text x="505" y="521" text-anchor="middle" font-size="11.5" fill="#475569">but required proof is absent</text>
+  <text x="505" y="539" text-anchor="middle" font-size="11" fill="#64748b">material that does not parse is a finding, not an exception</text>
 
   <!-- what nothing establishes -->
   <rect x="24" y="450" width="250" height="86" rx="8" fill="#fffbeb" stroke="#b45309" stroke-width="1.3" stroke-dasharray="5 4"/>
@@ -90,11 +94,13 @@ alt: Three columns feeding one verdict. The Evidence Package carries the Sending
   <text x="149" y="510" text-anchor="middle" font-size="11" fill="#b45309">that a reported observation is true</text>
   <text x="149" y="527" text-anchor="middle" font-size="11" fill="#b45309">(the S2 receipt — A16)</text>
 
-  <rect x="736" y="450" width="240" height="86" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.2" stroke-dasharray="2 3"/>
-  <text x="856" y="472" text-anchor="middle" font-size="12" font-weight="bold" fill="#1f2937">Outside this bar</text>
-  <text x="856" y="492" text-anchor="middle" font-size="11" fill="#475569">certificate chains, TSA tokens,</text>
-  <text x="856" y="509" text-anchor="middle" font-size="11" fill="#475569">qualification scope at evidence time</text>
-  <text x="856" y="527" text-anchor="middle" font-size="11" fill="#475569">— the production verifier's duties</text>
+  <line x1="712" y1="500" x2="732" y2="500" stroke="#475569" stroke-width="1.3" marker-end="url(#a)"/>
+  <rect x="736" y="450" width="240" height="100" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.2" stroke-dasharray="2 3"/>
+  <text x="856" y="470" text-anchor="middle" font-size="12" font-weight="bold" fill="#1f2937">THEN, for legal effect</text>
+  <text x="856" y="489" text-anchor="middle" font-size="11" fill="#475569">production validation — a second stage,</text>
+  <text x="856" y="505" text-anchor="middle" font-size="11" fill="#475569">not performed by the bar on the left:</text>
+  <text x="856" y="521" text-anchor="middle" font-size="11" fill="#475569">certificate chains, TSA tokens,</text>
+  <text x="856" y="539" text-anchor="middle" font-size="11" fill="#475569">qualification scope at evidence time</text>
 
   <text x="500" y="568" text-anchor="middle" font-size="11" fill="#64748b">Every instant is judged at the act it dates, never at verification time: admission at each act, key validity at the signature, policy at submission.</text>
   <text x="500" y="590" text-anchor="middle" font-size="11" fill="#64748b">A live admission lease authorises an exchange; it is never evidence of admission at an act inside it.</text>

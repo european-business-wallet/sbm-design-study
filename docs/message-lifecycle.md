@@ -17,9 +17,15 @@ It answers one question — **how do the public operations and their state machi
 
 One operator runs the RDP and the Delivery Service (Annex P profile 1); one recipient device; the verification grade. Every arrow is a published operation. Step 3 need not wait: the recipient's open invitation already routes its device when the message is accepted (§5, case 1).
 
-## 2. Five machines, and who owns each
+## 2. Five machines, four of them drawn
 
 ![State atlas](diagrams/state-atlas.svg)
+
+**The atlas draws four**, and the table below lists five. The fifth, the
+founder registration, has a durable result and no intermediate states — it is
+registered or it is not — so there is no lifecycle to draw. It is in the table
+because a reader tracking who owns what still needs it, and out of the figure
+because a state machine with one state teaches nothing.
 
 | Machine | Owner | Moved by | Durable result | Retry identity |
 |---|---|---|---|---|

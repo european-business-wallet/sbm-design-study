@@ -11,7 +11,44 @@
 
 The sequence diagram traces a **single message end to end** in the fully federated (four-corner) case: two legal entities — **Entity A** (sender) and **Entity B** (recipient) — served by **different** providers, from name resolution through to a relying party verifying the evidence eighteen months later. It follows the **verification grade** (the default) and shows the **digest-mismatch branch** as the alternative outcome.
 
-![Four-corner federated flow](diagrams/federated-flow.svg)
+### Assumptions of this illustrated path
+
+One sequence cannot draw every permitted ordering, and a reader needs to know
+which choices this one makes before reading it as the shape of the protocol.
+Three are worth naming:
+
+- **It narrates the recipient-side issuer model.** RDP(in) issues the delivery
+  outcome. **Who issues it, and how the Delivery Service's receipt reaches the
+  issuer, is not settled** — no published operation carries that receipt to the
+  evidence-issuing path, inside one provider or across two. That is review
+  agenda [A1](REVIEW_AGENDA.md), and this document does not answer it.
+- **The companion contracts do not agree on issuer ownership either**, which is
+  the same open question seen from the interface side rather than the flow side.
+- **The recipient need not be online, and need not have processed its Welcome
+  before the sender submits.** KeyPackages are pre-published precisely so that
+  it need not be; the diagram draws one interleaving because a sequence diagram
+  must draw one, not because that order is required.
+
+**The sequence is drawn in three panels**, because the full figure cannot be
+read at the width a page gives it: its viewBox is 3933 by 3558, so at 1200
+pixels its 16-pixel labels land under five. The panels carry the same actors
+and the same terminology, three or four lifelines at a time. **The full
+sequence is kept** — it is the one place the whole flow is visible at once, and
+it remains the source the panels are drawn from:
+[`diagrams/federated-flow.svg`](diagrams/federated-flow.svg) (and its source,
+[`diagrams/federated-flow.mermaid`](diagrams/federated-flow.mermaid)).
+
+**Phases 1 to 3 — resolution, first contact, submission.**
+
+![Resolution, first contact and submission](diagrams/flow-panel-1-discovery-and-submit.svg)
+
+**Phases 4 and 5 — the relay between the providers, and the delivery.**
+
+![Four-corner relay and delivery](diagrams/flow-panel-2-relay-and-deliver.svg)
+
+**Phases 6 and 7 — the Evidence Package, and what a relying party checks later.**
+
+![Evidence Package and verification](diagrams/flow-panel-3-package-and-verify.svg)
 
 The diagram is **illustrative only**. The normative flow is the Internet-Draft `draft-sbm-mls-erd` (*Message Flows and Delivery States*) and the TS-shaped `TS-SBM-QERDS-Binding` (clauses 4.1 and 6); the objects, seals and grades it names are defined there and in the umbrella profile. For the *why* behind the evidence objects — the seal-then-timestamp construction, the digest, the delivery grades, the grade commitment — see the companion [`evidence-layer-explainer.md`](evidence-layer-explainer.md); this document narrates the *sequence*.
 
@@ -100,10 +137,7 @@ These are the checks the profile designs the **Article 43(2)** presumptions — 
 
 ## Corrections, for readers of earlier editions
 
-Kept out of the reading path, so a reader who remembers the earlier text can see what changed:
-
-- Phase 3 denied a content signature by the sender; the sender's signature has been the default since evidence 2.3.
-- Phase 4 and the diagram drew the ciphertext relayed between two transport providers, a relay no contract publishes and the federation model rejects.
+Earlier editions of this document carried claims that were wrong in a way a reader could have acted on. They are kept in [`corrections-to-earlier-editions.md`](corrections-to-earlier-editions.md) — out of the explanation, and still there for someone working from an earlier reading.
 
 ---
 

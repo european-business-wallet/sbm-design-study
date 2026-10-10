@@ -115,7 +115,7 @@
     {
       "input": "formation_inputs",
       "material": "The per-device KeyPackage availability and registry revision AS THEY STOOD AT GROUP CREATION, so the cipher-suite decision can be recomputed.",
-      "operation": "none published — the read surface exists for group context, not for the formation inputs (A5)",
+      "operation": "none published — the read surface exists for group context, not for the formation inputs — review agenda [A5](REVIEW_AGENDA.md)",
       "served_by": "the recipient's provider",
       "supplied_as": {
         "kind": "manifest_key",
@@ -226,11 +226,11 @@
     {
       "input": "transformation_traces",
       "material": "Evidence that a Change-Indication Evidence's outputs are the transformation of its input. Neither of the two transformations is profiled, so there is no operation to trace.",
-      "operation": "none — neither is profiled (open item A15)",
+      "operation": "none — neither is profiled — review agenda [A15](REVIEW_AGENDA.md)",
       "served_by": "nobody: the profile does not claim this is establishable",
       "supplied_as": {
         "kind": "none",
-        "why": "no operation produces the material — neither transformation is profiled (A15) — so no manifest key is defined and none should be"
+        "why": "no operation produces the material — neither transformation is profiled (review agenda A15) — so no manifest key is defined and none should be"
       },
       "absent": "LINT-BND-I7 — stated as unestablishable rather than reported as a gap in the bundle, because neither is profiled and a provider MUST NOT issue one.",
       "survives_provider_exit": true,

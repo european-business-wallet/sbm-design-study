@@ -1,0 +1,31 @@
+%% figure
+%% owner: the maintainer (README, Feedback)
+%% source: docs/diagrams/flow-panel-2-relay-and-deliver.mermaid (this file is the source). Export: flow-panel-2-relay-and-deliver.svg (docs/diagrams/exports.json)
+%% question: How do the octets and the evidence cross from one provider to the other, and what dates the delivery?
+%% profile: 2 (four-corner), phases 4 and 5 of docs/diagrams/federated-flow.mermaid — the same actors and the same terminology, at a size a reader can read
+%% status: current
+%% references: docs/federated-flow-explainer.md phases 4 and 5; the full sequence in docs/diagrams/federated-flow.mermaid; TS clause 4.1; I-D "Message Flows and Delivery States"; review agenda A1
+%% alt: The sending provider relays the same octets with the sealed Sending Evidence to the receiving provider, which verifies the seal and checks that the digest of the octets equals the envelope hash the evidence names, or refuses the hop. It forwards them to the Delivery Service it operates as a forwarder, with the origin proven by the Sending Evidence, and receives an acceptance record naming the issuing and the forwarding provider; it returns a sealed relay acceptance at that hop. The recipient's device then collects the item in a device-authenticated session and acknowledges it, and the Delivery Service signs a receipt whose server-observed instant is the handover. An open question is marked: no published operation carries that receipt to the provider that issues the delivery evidence. The recipient decrypts and recomputes the payload hash; when it matches it returns a confirmation, the receiving provider verifies the signer, the roster and the tuple, evaluates the acceptance policy and issues the Delivery Evidence dated at its own verification of the completing confirmation, never at the receipt.
+%% end figure
+sequenceDiagram
+    autonumber
+    participant RO as RDP(out) · QERDS
+    participant RI as RDP(in) · QERDS
+    participant MI as DS(in) · RDP(in)'s
+    actor WR as WU-R · Recipient wallet (Entity B)
+
+    Note over RO,RI: Phase 4 — Four-corner relay (RDP to RDP: ciphertext + SE)
+    RO->>RI: POST /relay/messages — the SAME octets + the sealed SE
+    RI->>RI: verify the SE's seal · SHA-256(octets) == the SE's envelope_hash, or refuse the hop
+    RI->>MI: POST /messages as forwarder · origin = RDP(out), proven by its SE
+    MI-->>RI: AcceptanceRecord — issuing RDP(out), forwarding RDP(in)
+    RI-->>RO: B.1 RelayAcceptance — sealed and qualified-timestamped at this hop
+
+    Note over MI,WR: Phase 5 — Deliver and decrypt (S1 → S2 → S3)
+    WR->>MI: collect (device-authenticated), then acknowledge
+    MI-->>WR: DeliveryReceipt — DS-signed · the server-observed instant is S2
+    Note over RI,MI: OPEN (review agenda A1) — no published operation carries this receipt to the DE issuer
+    WR->>WR: decrypt, recompute payload_hash
+    WR->>RI: confirmation s3 — wallet-signed or member-bound session
+    RI->>RI: verify the signer, the roster and the tuple · evaluate acceptance_policy
+    RI-->>WR: DE — delivered_at is RDP(in)'s verification of the completing confirmation

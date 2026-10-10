@@ -18,7 +18,7 @@ Like the wallet↔RDP and Delivery-Service surfaces, the wallet-agent interface 
 1. **Agent-wallet authentication.** The agent is authenticated to its wallet in a session **bound to the system member** (the acting MID). An unauthenticated or wrongly-bound caller MUST be refused.
 2. **Key isolation.** The agent **cannot extract** MLS or seal private keys, nor obtain a signing oracle beyond issuing scoped instructions. Compromise of the agent process MUST NOT allow forging channel authentication or evidence.
 3. **Attributability.** Every agent instruction is attributable to the system member, feeding the `auth_context.identity=system` / `auth_context.mid` acting-identity record on the resulting evidence.
-4. **Mandate-scope enforcement.** The wallet **refuses** an instruction outside the agent's mandate scope (the standing `BW-MEMBER.mandate_ref.scope`); an opposable act additionally causes the wallet to compute the `mandate_commitment` (A1). A revoked or expired mandate MUST stop honouring instructions (act-time validity, A2).
+4. **Mandate-scope enforcement.** The wallet **refuses** an instruction outside the agent's mandate scope (the standing `mandate_ref.scope` in the agent's **BW-MEMBER**, the entity's signed roster of members and their devices); an opposable act additionally causes the wallet to compute the `mandate_commitment` (Annex R.1). A revoked or expired mandate MUST stop honouring instructions (act-time validity, A2).
 
 ## 3. Interface shape (outline — not the contract)
 

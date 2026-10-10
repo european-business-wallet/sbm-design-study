@@ -1,0 +1,33 @@
+%% figure
+%% owner: the maintainer (README, Feedback)
+%% source: docs/diagrams/flow-panel-1-discovery-and-submit.mermaid (this file is the source). Export: flow-panel-1-discovery-and-submit.svg (docs/diagrams/exports.json)
+%% question: Before any evidence exists, how does the sender find the recipient, form the channel, and get its submission accepted?
+%% profile: 2 (four-corner), phases 1 to 3 of docs/diagrams/federated-flow.mermaid — the same actors and the same terminology, at a size a reader can read
+%% status: current
+%% references: docs/federated-flow-explainer.md phases 1 to 3; the full sequence in docs/diagrams/federated-flow.mermaid; umbrella §5.2, §8; I-D "Message Flows and Delivery States"
+%% alt: The sender's wallet resolves the recipient's identifier at the directory, which returns a sealed directory record carrying the status, the resolution URL and the pinned seal keys. The wallet fetches the recipient's sealed discovery documents from the recipient's Delivery Service and verifies them against those pinned keys. It then reserves key packages for the recipient's devices and commits the reservation, creates the MLS group and pins its parameters, and deposits one invitation per device, registering itself as the group's founder. Finally it submits the exact message octets with their metadata to its own registered delivery provider, which hands the same octets to the Delivery Service it operates; that service accepts them and returns an acceptance record binding the octets, the issuing provider and the message identifier, and only then does the provider seal the Sending Evidence with a qualified timestamp.
+%% end figure
+sequenceDiagram
+    autonumber
+    actor WS as WU-S · Sender wallet (Entity A)
+    participant EDD as EDD · Directory
+    participant RO as RDP(out) · QERDS
+    participant MO as DS(out) · RDP(out)'s
+    participant MI as DS(in) · RDP(in)'s
+
+    Note over WS,MI: Phase 1 — Resolution and discovery
+    WS->>EDD: resolve(UID-B)
+    EDD-->>WS: DirectoryRecord — sealed · status, med_url, pinned seal keys
+    WS->>MI: GET BW-MED / BW-ORG / BW-MEMBER
+    MI-->>WS: sealed documents — verified against the pinned keys
+
+    Note over WS,MI: Phase 2 — First contact (MLS group, end-to-end encrypted)
+    WS->>MI: reserve KeyPackages, then commit — packages consumed
+    WS->>WS: create group, pin sbm_group_params, Commit
+    WS->>MI: deposit one Welcome per device · register as the group's founder
+
+    Note over WS,MO: Phase 3 — Submit (the content stays end-to-end encrypted)
+    WS->>RO: submit the exact MLSMessage octets + metadata · signed submission tuple
+    RO->>MO: POST /messages — the SAME octets
+    MO-->>RO: AcceptanceRecord — binds the octets, the issuing RDP, the message_id
+    RO-->>WS: SE — sealed and qualified-timestamped, AFTER acceptance

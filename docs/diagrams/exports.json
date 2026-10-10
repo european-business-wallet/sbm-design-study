@@ -2,12 +2,44 @@
   "$comment": "DOC-01 / hand-off gate 4 — source/export freshness. Each rendered figure is listed with the digest of the source it was rendered from and of the export itself, and the command that renders it. `make doc-lint` recomputes both: a source edited without re-rendering, or an export replaced without its source, fails. After changing a source: run its command, then `python3 scripts/doc_lint.py --record-exports` to record the new digests. A digest proves which bytes were recorded, not that the picture is true — that is the manual semantic check.",
   "exports": [
     {
+      "export": "docs/diagrams/change-swimlane.svg",
+      "source": "docs/diagrams/change-swimlane.mermaid",
+      "command": "mmdc -i docs/diagrams/change-swimlane.mermaid -o docs/diagrams/change-swimlane.svg -b white",
+      "tool": "@mermaid-js/mermaid-cli 10.4.0",
+      "source_sha256": "a416fc813fd411388776b74f28c04ea8b9a24dbf2ad94761d5beb3c38fb727ba",
+      "export_sha256": "668faeedea3e411202c704d893f74afe2eedd8fd105812f75fa866d7a7b837bb"
+    },
+    {
       "export": "docs/diagrams/federated-flow.svg",
       "source": "docs/diagrams/federated-flow.mermaid",
       "command": "mmdc -i docs/diagrams/federated-flow.mermaid -o docs/diagrams/federated-flow.svg -b white",
       "tool": "@mermaid-js/mermaid-cli 10.4.0",
       "source_sha256": "d9a9a5e6722f1582a9ee99521510f89f3126f1f6e9e1ae784e659a7e713fb03a",
       "export_sha256": "ec3e746c149ad9b61632bffadab3da80eac4dcbca265fa5cf477204006fd41a8"
+    },
+    {
+      "export": "docs/diagrams/flow-panel-1-discovery-and-submit.svg",
+      "source": "docs/diagrams/flow-panel-1-discovery-and-submit.mermaid",
+      "command": "mmdc -i docs/diagrams/flow-panel-1-discovery-and-submit.mermaid -o docs/diagrams/flow-panel-1-discovery-and-submit.svg -b white",
+      "tool": "@mermaid-js/mermaid-cli 10.4.0",
+      "source_sha256": "847b9384f89cbbdcf95bf4ffeeeb91e1c7bafb4e6bb0e6fdcb4ec4914ac0e108",
+      "export_sha256": "96f052bbc1729566c96bda553c64dff69eb0092a674f56695708fb70aa2f4bfb"
+    },
+    {
+      "export": "docs/diagrams/flow-panel-2-relay-and-deliver.svg",
+      "source": "docs/diagrams/flow-panel-2-relay-and-deliver.mermaid",
+      "command": "mmdc -i docs/diagrams/flow-panel-2-relay-and-deliver.mermaid -o docs/diagrams/flow-panel-2-relay-and-deliver.svg -b white",
+      "tool": "@mermaid-js/mermaid-cli 10.4.0",
+      "source_sha256": "6543de324151879699348729ea12e8dbf8569337475f001ef0e71ac49c14c5b1",
+      "export_sha256": "0c1f1210bc72084273a73cf0c91eb5ec26f321bc7f54ff9296c1e5f770d1eab6"
+    },
+    {
+      "export": "docs/diagrams/flow-panel-3-package-and-verify.svg",
+      "source": "docs/diagrams/flow-panel-3-package-and-verify.mermaid",
+      "command": "mmdc -i docs/diagrams/flow-panel-3-package-and-verify.mermaid -o docs/diagrams/flow-panel-3-package-and-verify.svg -b white",
+      "tool": "@mermaid-js/mermaid-cli 10.4.0",
+      "source_sha256": "8e290bac3470a4af0bc8fb093cac7977bb1b3e664d4dd3183f876234092d560c",
+      "export_sha256": "59be6411c5de78a271b72c0c59df43723ae405e143c2a69014f357f8af80b27e"
     },
     {
       "export": "docs/diagrams/four-corner-architecture-technology-neutral.png",
@@ -40,14 +72,6 @@
       "tool": "@mermaid-js/mermaid-cli 10.4.0",
       "source_sha256": "70b8a1c0a4ff4211ae091cce7dfd6ba84666b068591047b7d0995de1ab74ea6e",
       "export_sha256": "bb572e2c05604ec8b8bebee374a40d6652546519679b53ee7586a18b70d97260"
-    },
-    {
-      "export": "docs/diagrams/change-swimlane.svg",
-      "source": "docs/diagrams/change-swimlane.mermaid",
-      "command": "mmdc -i docs/diagrams/change-swimlane.mermaid -o docs/diagrams/change-swimlane.svg -b white",
-      "tool": "@mermaid-js/mermaid-cli 10.4.0",
-      "source_sha256": "a416fc813fd411388776b74f28c04ea8b9a24dbf2ad94761d5beb3c38fb727ba",
-      "export_sha256": "668faeedea3e411202c704d893f74afe2eedd8fd105812f75fa866d7a7b837bb"
     }
   ]
 }

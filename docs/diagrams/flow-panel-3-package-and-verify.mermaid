@@ -1,0 +1,27 @@
+%% figure
+%% owner: the maintainer (README, Feedback)
+%% source: docs/diagrams/flow-panel-3-package-and-verify.mermaid (this file is the source). Export: flow-panel-3-package-and-verify.svg (docs/diagrams/exports.json)
+%% question: What is composed at the end, who holds it, and what does a relying party check years later?
+%% profile: 2 (four-corner), phases 6 and 7 of docs/diagrams/federated-flow.mermaid — the same actors and the same terminology, at a size a reader can read
+%% status: current
+%% references: docs/federated-flow-explainer.md phases 6 and 7; the full sequence in docs/diagrams/federated-flow.mermaid; docs/evidence-layer-explainer.md; docs/production-verifier-architecture.md
+%% alt: The sending provider composes the Evidence Package from the Sending Evidence, the outcome and the chain of provider hops, and seals it with a qualified timestamp; composing is itself an act, so that provider must be admitted at the package's own timestamp instant. Both wallets store what they receive, the sender the package and the recipient the package or the delivery evidence. Later, any relying party decodes each artefact, verifies the seal over the deterministic CBOR body and the timestamp imprint over that seal, validates the decoded body against its authoritative JSON Schema and compares the payload hash with the plaintext it holds, and checks every provider's admission at the instant of its own act. A closing note records that qualification and admission are independent gates and neither implies the other, and that chaining the seal certificate to the Trusted Lists belongs to the production verifier.
+%% end figure
+sequenceDiagram
+    autonumber
+    actor WS as WU-S · Sender wallet (Entity A)
+    participant RO as RDP(out) · QERDS
+    participant RI as RDP(in) · QERDS
+    actor WR as WU-R · Recipient wallet (Entity B)
+
+    Note over WS,WR: Phase 6 — Evidence Package
+    RO->>RO: compose EP — se + outcome + rdp_chain[RDP(out), RDP(in)] · sealed + QTS
+    Note over RO: composing is an act — RDP(out) admitted at the EP's own QTS instant
+    RO-->>WS: EP (wallet-storable)
+    RI-->>WR: EP / DE (wallet-storable)
+
+    Note over WS,WR: Phase 7 — Verification, later, by any relying party
+    WR->>WR: decode [COSE_Sign1, QTS] · verify the seal over dCBOR(body) · QTS imprints SHA-256(seal)
+    WR->>WR: validate the decoded body against its JSON Schema · payload_hash == the held plaintext
+    WR->>WR: admission of every provider at its own act's instant, from the authenticated register
+    Note over WS,WR: qualification and admission are independent gates — neither implies the other

@@ -9,7 +9,7 @@
 
 ## 1. Why an agent profile
 
-AI agents are beginning to act for businesses — negotiating, ordering, filing, responding, reconciling. The question is not *whether* agents will transact between businesses, but *what infrastructure those transactions run on*. Every current agent-to-agent rail — bespoke APIs, platform accounts, emerging agent protocols — shares the same structural weaknesses:
+AI agents are beginning to act for businesses — negotiating, ordering, filing, responding, reconciling. The question is not *whether* agents will transact between businesses, but *what infrastructure those transactions run on*. The rails such transactions run on today — bespoke APIs, platform accounts, the emerging agent protocols — were not built to carry the three properties this study is about, and a deployment that needs them has to supply them some other way:
 
 - **No verified legal-entity identity** behind the agent.
 - **No machine-verifiable scope of authority** — nothing a counterparty can check to know the agent was allowed to do what it did.
@@ -27,31 +27,31 @@ The profile is the OPTIONAL, cumulative **deployment profile 5** (Annex P): laye
 
 ## 3. The six pieces (and how each is implemented)
 
-The profile decomposes into six pieces, labelled A1–A6 in Annex R. Each reuses existing machinery; each machine-checkable rule has a conformance linter.
+The profile decomposes into six pieces, **R.1 to R.6** of [Annex R](../Secure-Business-Messaging-Profile.md#annex-r--agent-profile-normative-where-a-deployment-adopts-it). The annex also labels them A1 to A6; this document uses the section numbers, because `A1` to `A16` are the review agenda's and a reader meeting both should not have to guess which register a bare `A3` belongs to. Each reuses existing machinery; each machine-checkable rule has a conformance linter.
 
-### 3.1 System members (A1) — *who is acting*
+### 3.1 System members (Annex R.1) — *who is acting*
 
 A member binding (`BW-MEMBER`) now declares **`member_type`** ∈ {`person`, `system`} (default `person`, so existing bindings are unchanged). A `system` member is an agent. When an agent is the acting identity, the evidence records it: **`auth_context.identity` = `system`**, together with the acting **`auth_context.mid`** — the pseudonymous member id of the agent that acted. Recording *that an agent, not a person, acted* is the accountability anchor; the MID resolves (off-wire, under controlled conditions) to the organisation's authorisation event (§8.4).
 
 *Implemented as:* `bw-member.schema.json` `member_type`; `evidence-common` `AuthContext.identity` gains `system` and an `mid` that is schema-required when `identity=system`. Cross-document check: `bundle_lint` **LINT-BND-14** — a system acting identity that names a MID of the acting entity must resolve to an *active* `member_type=system` member. This change moved the evidence family to **v1.12**.
 
-### 3.2 Mandate attestations (A2) — *by what authority*
+### 3.2 Mandate attestations (Annex R.2) — *by what authority*
 
 An agent's authority is a **scoped mandate** — an electronic attestation of attributes (EAA) or verifiable credential. The mandate credential itself travels **end-to-end encrypted** like any payload; only its **reference** is bound where a counterparty can check it:
 
 - **Standing authority** — the system member's `BW-MEMBER.mandate_ref`: `{issuer, id, scope, valid_from, valid_until}`, where `scope` enumerates the content classes the agent may act on. Published in the signed member binding, so a counterparty checks the agent's standing authority before treating its messages as binding.
 - **Acted-under** — the `SE.mandate_ref` on an agent-sent Sending Evidence: `{issuer, id}` linking to the standing mandate, recording *which* mandate was invoked for *this* message.
-- **Verifiable scope — required for an opposable act** — an `SE.mandate_ref.mandate_commitment`: a salted digest over (mandate id, content class, the referenced BW-ORG) whose salt travels only in the encrypted envelope, so a verifier can later confirm the acted-under scope covered the content class. An agent SE is **opposable by default** (an absent `opposable` field means opposable), and an opposable SE **must** carry the commitment; `opposable: false` marks an informative act, for which the commitment is **forbidden** and scope conformance can be established only by internal audit, payload reveal or the dispute path (Annex R.2; `evidence_lint` LINT-DE-15). **What the commitment hides, and what it does not.** The commitment itself discloses neither the mandate nor the class: a reader cannot test a guess against it. The bundle as a whole is a different question. The standing `mandate_ref` — including its `scope`, the classes the agent may act on — is published in the signed member binding, and the cleartext `scope_ref` resolved against the recipient's published scope map gives the set of classes the message could have belonged to; a scope covering one class gives that class. The mandate **credential** is never disclosed, and a reveal of `(salt, content_class)` discloses the committed class to the parties of that dispute. **What a valid opening proves** is what the sender *committed to* — that the class it declared falls inside the mandate's scope — not that the declared class describes the encrypted document. A sender could commit to a permitted class and encrypt something else; the commitment binds the declaration, and no cryptography here inspects the plaintext. The same limit is stated for the grade commitment, and for the same reason. The reveal procedure mirrors the availability-grade grade commitment (TS clause 6).
+- **Verifiable scope — required for an opposable act** — an `SE.mandate_ref.mandate_commitment`: a salted digest over (mandate id, content class, the referenced **BW-ORG** — the entity's signed organisation document, carrying its roles and acceptance policy) whose salt travels only in the encrypted envelope, so a verifier can later confirm the acted-under scope covered the content class. An agent SE is **opposable by default** (an absent `opposable` field means opposable), and an opposable SE **must** carry the commitment; `opposable: false` marks an informative act, for which the commitment is **forbidden** and scope conformance can be established only by internal audit, payload reveal or the dispute path (Annex R.2; `evidence_lint` LINT-DE-15). **What the commitment hides, and what it does not.** The commitment itself discloses neither the mandate nor the class: a reader cannot test a guess against it. The bundle as a whole is a different question. The standing `mandate_ref` — including its `scope`, the classes the agent may act on — is published in the signed member binding, and the cleartext `scope_ref` resolved against the recipient's published scope map gives the set of classes the message could have belonged to; a scope covering one class gives that class. The mandate **credential** is never disclosed, and a reveal of `(salt, content_class)` discloses the committed class to the parties of that dispute. **What a valid opening proves** is what the sender *committed to* — that the class it declared falls inside the mandate's scope — not that the declared class describes the encrypted document. A sender could commit to a permitted class and encrypt something else; the commitment binds the declaration, and no cryptography here inspects the plaintext. The same limit is stated for the grade commitment, and for the same reason. The reveal procedure mirrors the availability-grade grade commitment (TS clause 6).
 
 *Implemented as:* `evidence-common` `Mandate`/`MandateRef` definitions; `discovery_lint` **LINT-DISC-20** (a `system` member must publish a `mandate_ref`); `evidence_lint` **LINT-DE-14** (an agent-sent SE must carry a `mandate_ref`; a non-agent SE must not) and **LINT-DE-15** (an opposable agent SE must carry the commitment); `bundle_lint` **LINT-BND-15** (the SE mandate matches the member's standing mandate by issuer+id and is in validity at `sent_at`; the scope-covers-class check is verifier-side, or via the commitment reveal).
 
-### 3.3 Human-in-the-loop policy classes (A3) — *where a human must decide*
+### 3.3 Human-in-the-loop policy classes (Annex R.3) — *where a human must decide*
 
 The guardrail against fully-autonomous acceptance is the acceptance-policy machinery you already have. A confidentiality-scope descriptor may declare **`human_acceptance: true`** (§8.3a); system members are then **excluded from that scope's acceptance eligible set** (§8.3). An agent can still receive and verify a message in that scope, but its acknowledgement does **not** satisfy a human-gated content class — acceptance requires a human role or quorum. A misconfiguration where a human-gated scope could only ever be satisfied by agents is caught and rejected.
 
 *Implemented as:* `bw-org.schema.json` scope-descriptor `human_acceptance` (BW-ORG → v1.5); the §8.3 eligible-set definition excludes `member_type=system` for such scopes; `bundle_lint` **LINT-BND-16** rejects a `human_acceptance` scope whose entire eligible set is system members (unsatisfiable by agents alone).
 
-### 3.4 Wallet-agent interface (A4) — *how an agent acts without holding keys*
+### 3.4 Wallet-agent interface (Annex R.4) — *how an agent acts without holding keys*
 
 Agents never hold the channel's MLS or seal private keys. They **instruct the wallet** through a controlled, **deployment-defined** interface — the same pattern the profile already uses for wallet↔RDP and the Delivery-Service. Its normative REQUIRED properties:
 
@@ -62,18 +62,18 @@ Agents never hold the channel's MLS or seal private keys. They **instruct the wa
 
 *Implemented as:* a fourth surface in the I-D *Deployment-Defined Interfaces*, enumerated in the TS clause 4.1 companion-contract list. Its OpenAPI contract is a profile-5 companion deliverable (as the wallet↔RDP contract was a profile-2 prerequisite) — declared now, contracted later.
 
-### 3.5 Accountability and non-repudiation (A5) — *layered*
+### 3.5 Accountability and non-repudiation (Annex R.5) — *layered*
 
 The evidence chain records **who acted** (the acting MID, resolvable to the `accountability` event, §8.4) and **within which mandate** (the `mandate_ref`). Non-repudiation is **layered**, deliberately: **(1)** the protocol provides **verifiable evidence** that an agent MID acted under a mandate valid at act time; **(2)** whether that evidence is **opposable to the entity** is established by the federation / participation agreement, not by the protocol; **(3)** the **final legal qualification** depends on the applicable legal framework. The protocol makes the act *verifiable* — the precondition for the agreement and the law to attach effect — not automatically binding. A mandate that was revoked or expired at `sent_at` does not support acceptance.
 
 *Implemented as:* TS clause 6 (identity proofing / accountability), reusing the A1/A2 fields; no new field.
 
-### 3.6 Security posture (A6) — *the machine-speed threat*
+### 3.6 Security posture (Annex R.6) — *the machine-speed threat*
 
 Three properties are load-bearing and stated as a normative NOTE (§11.2):
 
 - **Counterparty content is untrusted input.** Message content from an identified counterparty is still adversary-influenced input to the agent that reads it — the machine-speed analogue of a manipulated instruction. Implementations MUST treat received content as untrusted, and content received over the channel MUST NOT escalate the agent's authority or push it outside its mandate scope. Identified-sender + qualified evidence establish *who* sent *what*, not that the content is *safe to act on*.
-- **Key isolation** (A4): agent-process compromise cannot forge channel authentication or evidence.
+- **Key isolation** (Annex R.4): agent-process compromise cannot forge channel authentication or evidence.
 - **Mandate revocation propagates:** a revoked or expired mandate MUST NOT yield acceptance (validity is checked at `sent_at`, LINT-BND-15; the wallet-agent interface stops honouring instructions once the mandate lapses).
 
 This maps onto the European approach to governing consequential automated behaviour — **human oversight** operationalised by acceptance policies (§8.3/A3), **traceability** operationalised by qualified evidence (the acting identity and mandate on the evidence chain, A5) — without asserting conformance to any specific instrument.
@@ -106,16 +106,16 @@ This maps onto the European approach to governing consequential automated behavi
 
 | Piece | Normative home | Conformance |
 |---|---|---|
-| System members (A1) | Annex R.1; §8.4 (`member_type`); `auth_context.identity=system`+`mid` | LINT-BND-14; ICS AGENT-1 |
-| Mandate attestations (A2) | Annex R.2; `BW-MEMBER.mandate_ref`, `SE.mandate_ref` | LINT-DISC-20, LINT-DE-14, LINT-BND-15; ICS AGENT-2 |
-| Human-in-the-loop (A3) | Annex R.3; §8.3/§8.3a (`human_acceptance`) | LINT-BND-16; ICS AGENT-3 |
-| Wallet-agent interface (A4) | Annex R.4; I-D *Deployment-Defined Interfaces*; TS clause 4.1 | verifier-side; ICS AGENT-4 |
-| Accountability (A5) | Annex R.5; TS clause 6 | verifier-side; ICS AGENT-5 |
-| Security posture (A6) | Annex R.6; §11.2 | analysis |
+| System members (Annex R.1) | §8.4 (`member_type`); `auth_context.identity=system`+`mid` | LINT-BND-14; ICS AGENT-1 |
+| Mandate attestations (Annex R.2) | `BW-MEMBER.mandate_ref`, `SE.mandate_ref` | LINT-DISC-20, LINT-DE-14, LINT-BND-15; ICS AGENT-2 |
+| Human-in-the-loop (Annex R.3) | §8.3/§8.3a (`human_acceptance`) | LINT-BND-16; ICS AGENT-3 |
+| Wallet-agent interface (Annex R.4) | I-D *Deployment-Defined Interfaces*; TS clause 4.1 | verifier-side; ICS AGENT-4 |
+| Accountability (Annex R.5) | TS clause 6 | verifier-side; ICS AGENT-5 |
+| Security posture (Annex R.6) | §11.2 | analysis |
 
 ## Corrections, for readers of earlier editions
 
-- §3.2 called the mandate commitment "optional"; it is required for an opposable act and forbidden for `opposable: false` (Annex R.2). §5's worked example concluded that "non-repudiation binds the buyer"; it now keeps Annex R.5's three layers.
+Earlier editions of this document carried claims that were wrong in a way a reader could have acted on. They are kept in [`corrections-to-earlier-editions.md`](corrections-to-earlier-editions.md) — out of the explanation, and still there for someone working from an earlier reading.
 
 ---
 

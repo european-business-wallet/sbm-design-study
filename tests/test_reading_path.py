@@ -205,17 +205,33 @@ def test_the_green_bar_claim_is_bounded_by_what_the_gates_check():
     assert "each time the answer was a new gate" in readme
 
 
-def test_the_corrections_appendix_keeps_what_a_reader_could_have_acted_on():
+def test_the_corrections_keep_what_a_reader_could_have_acted_on():
     """A corrections list that keeps everything stops being read. What survives
-    is the two entries where an earlier edition would have led a reader to a
-    wrong conclusion, not the bookkeeping."""
-    explainer = _flat(ROOT / "docs" / "evidence-layer-explainer.md")
-    section = explainer[explainer.index("Corrections, for readers of earlier editions"):]
-    assert "wrong in a way a reader could have acted on" in section
-    assert "made available to (or retrieved by)" in section
-    assert "proves misuse" in section
-    assert "dropped from this list" in section, \
+    is the entries where an earlier edition would have led a reader to a wrong
+    conclusion, not the bookkeeping.
+
+    They left the explainers on 10 October 2026 — process history belongs
+    outside a document whose job is the design as it stands — and they live in
+    `docs/corrections-to-earlier-editions.md`, which **the export ships**. The
+    first attempt moved them to `CHANGELOG.md`, and the export's own bar refused
+    it: the export writes its own CHANGELOG, so the pointer there resolved to a
+    file that did not contain them. This checks the claim where it now is, and
+    checks the other half of the move — that each explainer keeps a line
+    pointing at it, so the corrections are relocated rather than erased.
+    """
+    corrections = _flat(ROOT / "docs" / "corrections-to-earlier-editions.md")
+    assert "wrong in a way a reader could have acted on" in corrections
+    assert "made available to (or retrieved by)" in corrections
+    assert "proves misuse" in corrections
+    assert "dropped from this" in corrections, \
         "what was removed is stated, or provenance is erased rather than trimmed"
+
+    for rel in ("docs/evidence-layer-explainer.md", "docs/federated-flow-explainer.md",
+                "docs/agent-profile-explainer.md"):
+        doc = _flat(ROOT / rel)
+        assert "Corrections, for readers of earlier editions" in doc, rel
+        assert "](corrections-to-earlier-editions.md)" in doc, \
+            f"{rel} drops its corrections instead of pointing at them"
 
 
 def test_the_lifecycle_heading_counts_its_own_table():

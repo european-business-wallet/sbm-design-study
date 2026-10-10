@@ -9,9 +9,52 @@
 
 ## In brief — what each grade and proof establishes
 
-*The short version: the grades, what each proof shows and does not show, and which instant dates what. Everything after it is the detail, for a second reading.*
+*The short version. Everything after it is the detail, for a second reading.*
 
-A registered-delivery provider (RDP) seals evidence about a message it never reads: it binds to a **digest** of the content, a digest of the transmitted ciphertext and the MLS group state. Sending Evidence (SE) records an authenticated submission; the recipient side's Delivery Evidence (DE), Non-Delivery Evidence (NDE) or Refusal Evidence (RE) records the outcome; the Evidence Package (EP) bundles them. Each object is a seal over deterministic-CBOR bytes plus a qualified timestamp over that seal. What a DE *means* depends on the **delivery grade** the recipient declared for the content class.
+**The question this layer answers: if a provider never sees the message, what
+can its evidence prove?** That someone authenticated submitted exactly these
+octets at this instant; that a device of the addressee took them; that a member
+of the receiving organisation decrypted them and said the content matched what
+the sender committed to; and that a published policy of that organisation was
+satisfied. Not what the content was, and not whether anyone read it.
+
+**The ordinary case, in plain words.** A sender's wallet encrypts a message and
+hands it to its own provider, which records that it accepted it. The message
+travels to the recipient's provider, which passes it to the recipient's devices.
+A device decrypts it, recomputes a fingerprint of the content and compares it
+with the one the sender committed to. If they match, the device says so, in a
+signed statement. The recipient's provider checks that statement — who signed
+it, whether that member was active, whether it is about this message — and then
+seals a record that delivery happened, with a qualified timestamp over the seal.
+That record is the **Delivery Evidence**, and the date on it is the moment the
+provider verified the statement.
+
+**One case, concretely.** An invoice is submitted at 09:58. The sending
+provider's own delivery service accepts the octets, and the provider seals the
+**Sending Evidence** at 09:59 — after that acceptance, never before. The
+recipient's device collects the message at 10:14 and acknowledges it; the
+recipient's provider verifies the device's confirmation at 10:15 and seals the
+Delivery Evidence dated **10:15**. Not 10:14, which is when the handover
+happened, and not 09:58, which is when the sender let go of it. Which instant
+dates which fact is the whole of the subsection below.
+
+**What that establishes, and what it does not.** It establishes acts: a
+submission, a handover, a confirmation, a policy satisfied — each attributed to
+a key and dated by whoever observed it. It does **not** establish that the
+content was what either party says it was, that anyone read or understood it, or
+that a court will treat any of it as it treats a registered letter. The first
+rests on the digest and the plaintext a party still holds; the last is a legal
+question this study does not answer.
+
+**The variants, and the exact anchors.** The rest of this section is the precise
+form of all that: three delivery **grades**, the proofs each rests on, and the
+clocks. Three terms it uses from here on — **RDP(out)** is the sender's
+registered delivery provider, **RDP(in)** the recipient's, and **S2**, **S3**,
+**S4** are the three moments above: the handover to a device, a member's
+confirmation that the digest matched, and the point at which the recipient's
+published acceptance policy is satisfied.
+
+A registered-delivery provider (RDP) seals evidence about a message it never reads: it binds to a **digest** of the content (`payload_hash`), a digest of the transmitted ciphertext (`envelope_hash`) and the MLS group state. Sending Evidence (SE) records an authenticated submission; the recipient side's Delivery Evidence (DE), Non-Delivery Evidence (NDE) or Refusal Evidence (RE) records the outcome; the Evidence Package (EP) bundles them. Each object is a seal over deterministic-CBOR bytes plus a qualified timestamp over that seal. What a DE *means* depends on the **delivery grade** the recipient declared for the content class.
 
 | Grade | The DE is issued when | Dated by | It establishes | It does not establish |
 |---|---|---|---|---|
@@ -91,7 +134,28 @@ So the seal covers neither itself nor the timestamp, and the timestamp attests t
 
 The seal is an **advanced electronic seal of the QTSP** within the meaning of Article 44(1)(d), supported by a QSealC that chains to the Trusted List entry under which the RDP is inscribed as a QERDS. The COSE algorithm is one of EdDSA (-8), ES256 (-7) or ES384 (-35); Ed25519 is mandatory to implement, and production deployments may use ECDSA where the qualified certificate, the certified device and the ENISA Agreed Cryptographic Mechanisms permit. The timestamp is a qualified electronic timestamp (Article 42), an RFC 3161 or ETSI EN 319 422 token, from a time-stamping service inscribed in a Trusted List.
 
-## 5. The digest: how evidence refers to content it cannot see
+## 5. The digests: how evidence refers to content it cannot see
+
+**One word, three domains.** This document said *the digest* throughout, and the
+profile commits to three different things under that word. Each has its own
+input, and each can be recomputed by a different set of parties — which is what
+decides who can check what:
+
+| Commitment | Over which octets | Who can recompute it |
+|---|---|---|
+| `payload_hash` | the **plaintext's** transmitted octets | only a party holding the plaintext: the two wallets, and anyone a party shows it to. No provider |
+| `envelope_hash` | the **transmitted ciphertext**: the TLS-serialized MLSMessage handed to transport | anyone holding those octets — both providers, the Delivery Service that accepted them, the recipient device that decrypted them |
+| `doc_digest` | a **published document's** octets — such as the version of **BW-ORG**, the entity's signed organisation document, that an acceptance policy pins | anyone holding that document, which the bundle retains |
+
+The grade commitment (§7.1) and the mandate commitment are not in this table:
+they are **salted commitments** over a value, not digests of octets, and what
+they establish is what opening them reveals.
+
+**Recomputing a commitment is not proof of every assertion bound to it.** A
+matching `envelope_hash` says these are the octets the evidence names; it says
+nothing about who sent them, when they were handed over, or whether the
+acknowledgement that cites them was honest. Each of those rests on a different
+signature, and this document keeps them apart for that reason.
 
 The `payload_hash` is a `{alg, hex, hash_mode}` descriptor. The sender computes it over the plaintext's **transmitted octets**: `raw-sha256`/`raw-sha512` over those bytes directly, or `manifest-sha256`/`manifest-sha512` for multipart messages, where the digest is taken over a deterministic-CBOR manifest of parts, each with its own media type, length and digest — and each part's digest is again over that part's own octets. A digest in this profile is never a property of semantic content: an application that keeps a structured payload parsed and re-serialised, its original octets gone, cannot recompute the digest and must retain those octets. The `Hash` type is self-consistent: SHA-256 forces a 64-hex-character digest and a `*-sha256` mode; SHA-512 forces 128 and `*-sha512`.
 
@@ -183,10 +247,10 @@ For **production** verification, the linters are explicitly *not* legal qualific
 
 A verification-grade message, end to end:
 
-1. Sender wallet builds the envelope, computes `content_digest` over the plaintext, encrypts as an MLS PrivateMessage, submits to RDP(out) with the submission metadata.
-2. RDP(out) verifies the authenticated sender session and hands the same octets to the Delivery Service, which accepts them and computes their digest itself; only then does RDP(out) issue **SE** (`A.1`), seal it and time-stamp the seal.
+1. Sender wallet builds the envelope, computes `content_digest` over the plaintext — the value the evidence carries as `payload_hash` — encrypts as an MLS PrivateMessage, submits to RDP(out) with the submission metadata.
+2. RDP(out) verifies the authenticated sender session and hands the same octets to the Delivery Service, which accepts them and computes `envelope_hash` over them itself — the ciphertext domain, the only one a provider can recompute; only then does RDP(out) issue **SE** (`A.1`), seal it and time-stamp the seal.
 3. In the four-corner case RDP(out) relays the ciphertext **with the SE** to RDP(in), which checks the octets against the SE and forwards them to the recipient's Delivery Service. The DS queues them for the recipient's devices (S1); a device collects them and acknowledges the collection, and the DS signs a receipt of the instant it observed (S2 — the acknowledged handover; retrieval alone is not S2). At this grade neither is delivery.
-4. The recipient wallet decrypts, recomputes the digest, matches it, and returns a **confirmation** (S3) — wallet-signed or bound to an authenticated, member-bound session.
+4. The recipient wallet decrypts, recomputes `payload_hash` over the plaintext and `envelope_hash` over the octets it received, matches both, and returns a **confirmation** (S3) binding its assertion to the `envelope_hash` of what it actually decrypted — wallet-signed or bound to an authenticated, member-bound session.
 5. RDP(in) verifies the proof, the session, the policy reference and the member's roster status; the acceptance policy is satisfied (S4); it issues **DE** (`E.1` or `C.3`), sealed and time-stamped, embedding the confirmation as `s3_attestation`.
 6. The EP authority composes the **EP** — SE + DE (+ any CE/states) + `rdp_chain` — seals and time-stamps it. Both parties store it.
 
@@ -198,12 +262,7 @@ The evidence layer's coherence comes from a few decisions held consistently: bin
 
 ## Corrections, for readers of earlier editions
 
-Two claims in earlier editions of this document were wrong in a way a reader could have acted on. They are kept here, out of the reading path, because someone who read an earlier edition may still be working from them.
-
-- §7 said availability was the moment content was "made available to (or retrieved by)" a recipient endpoint. That is broader than the event the protocol records, and a reader who took it literally would expect the grade to attach to an act this profile does not attest.
-- §7.1 said a recipient "proves misuse" by a failing reveal. It does not: a failing reveal is an attributable assertion that *starts* a dispute, and reading it as proof would put weight on it that the cryptography does not carry.
-
-*(Two further corrections — a superseded sentence about the sender's signature, and a `version` literal since bound to `versions.json` — are dropped from this list: both were bookkeeping, neither changed what a reader could conclude, and a corrections list that keeps everything stops being read.)*
+Earlier editions of this document carried claims that were wrong in a way a reader could have acted on. They are kept in [`corrections-to-earlier-editions.md`](corrections-to-earlier-editions.md) — out of the explanation, and still there for someone working from an earlier reading.
 
 ---
 

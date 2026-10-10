@@ -41,7 +41,7 @@ entry point cannot be handed is a finding rather than a documented input.
 | `counterparty_members` | GET /.well-known/bw/member/{uid}/{mid} on the SENDER's provider | the sender entity's provider — a different provider, and often a different jurisdiction | bundle manifest key `counterparty_members` | **no** |
 | `roster` | GET /uid/{uid}/roster-snapshot?scope_id=&epoch= | the recipient's provider | bundle manifest key `roster` | **no** |
 | `group_contexts` | GET /groups/{group_id}/context?epoch= | the Delivery Service — the retention duty's read surface, access-controlled to authorised verifiers | bundle manifest key `group_contexts` | **no** |
-| `formation_inputs` | none published — the read surface exists for group context, not for the formation inputs (A5) | the recipient's provider | bundle manifest key `formation_inputs` | **no** |
+| `formation_inputs` | none published — the read surface exists for group context, not for the formation inputs — review agenda [A5](REVIEW_AGENDA.md) | the recipient's provider | bundle manifest key `formation_inputs` | **no** |
 | `suite_registry` | none published — carried as a demonstration fixture | the design authority | bundle manifest key `suite_registry` | yes |
 | `federation_register` | GET /participants/{participant_id}?as_of= | the Federation Authority | bundle manifest key `federation_register` | yes |
 | `fa_anchors` | the Authority's published key set | the Federation Authority | `bundle_lint.py --trust-store` — the verifier's own configured Federation-Authority anchors, not bundle material | yes |
@@ -49,7 +49,7 @@ entry point cannot be handed is a finding rather than a documented input.
 | `evidence` | GET /uid/{uid}/evidence/{message_id} , GET /evidence/{message_id} | each party's own wallet copy; the issuing RDP | bundle manifest key `evidence` | yes |
 | `reveals` | none, by design — the salt travels only inside the end-to-end-encrypted envelope | the endpoints, and only the parties of a dispute | bundle manifest key `grade_reveals` | yes |
 | `mandate_reveals` | none, by design — as for reveals | the endpoints, and only the parties of a dispute | bundle manifest key `mandate_reveals` | yes |
-| `transformation_traces` | none — neither is profiled (open item A15) | nobody: the profile does not claim this is establishable | nothing supplies it: no operation produces the material — neither transformation is profiled (A15) — so no manifest key is defined and none should be | yes |
+| `transformation_traces` | none — neither is profiled — review agenda [A15](REVIEW_AGENDA.md) | nobody: the profile does not claim this is establishable | nothing supplies it: no operation produces the material — neither transformation is profiled (review agenda A15) — so no manifest key is defined and none should be | yes |
 | `directory_record` | GET /resolve/{uid} | the EDD core registry | `discovery_lint.py --directory` — a RETAINED record on disk. The ecosystem retrieval is `GET /resolve/{uid}` at the EDD core registry, but nothing in this repository dereferences a URL: the reference is handed the record, like every other input | yes |
 | `trust_store` | none published — a verifier's own configuration | the verifying party | `bundle_lint.py --trust-store` / `discovery_lint.py --trust-store` — the verifier's own configuration | yes |
 | `provider_descriptors` | the provider's own discovery surface; the descriptor's seal key is pinned to the participant by the membership register (LINT-TRUST-07) | each RDP, for itself | bundle manifest key `provider_descriptors` | **no** |

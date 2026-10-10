@@ -22,7 +22,7 @@ An Evidence Package is **not** self-sufficient, and the design says so deliberat
 | The retained GroupContext octets | nothing of their own — the evidence's `mls_state` commits to them | retained | the MLS session the evidence names, and the suite decision pinned in it | the epoch the evidence names | `LINT-BND-I4` — INCOMPLETE |
 | The formation inputs, and the registry revision | the digest the decision commits to; the revision it pinned | retained | that the suite decision recomputes as it was taken | `formed_at` | `LINT-BND-I5` — INCOMPLETE |
 | The federation register's records | the Federation Authority's key | retained records, **configured** anchor | that each provider was admitted when it acted | each act's own instant | `LINT-BND-I6` — INCOMPLETE |
-| A Delivery Service receipt | the DS receipt key published in the BW-PROVIDER descriptor of the receipt's `observed_by`, valid at `server_time` | retained where held — optional today | the acknowledged handover an availability-grade DE rests on | the receipt's `server_time` | no gap rule today; how the issuer obtains it is open (A1) |
+| A Delivery Service receipt | the DS receipt key published in the BW-PROVIDER descriptor of the receipt's `observed_by`, valid at `server_time` | retained where held — optional today | the acknowledged handover an availability-grade DE rests on | the receipt's `server_time` | no gap rule today; how the issuer obtains it is open — review agenda [A1](REVIEW_AGENDA.md) |
 | A reveal of a commitment | the revealing member's wallet signature | produced in the dispute | that the sealed commitment opens to that content class or mandate scope | the reveal's own instant | the commitment stays **unopened** and its class binding unchecked — which is not the same as the class being unknown: the cleartext `scope_ref` resolved against the recipient's published scope map gives the set of classes that scope covers, and a scope covering one class gives that class (A12, and the umbrella's §11.1) |
 | The trust anchors | the external authorities themselves | **configured** | qualification (Trusted Lists); the register's authenticity (the Authority's anchor) | each act's instant | qualification unchecked — a production duty; an unauthenticated register is `LINT-BND-I6` |
 | The plaintext | held by a party, never by a provider | outside the bundle | that the digest in the evidence is the digest of this content | — | the digest binds nothing a verifier can compare |
@@ -41,21 +41,38 @@ Most claims need neither: seals, timestamps, admission, policy resolution, roste
 
 Formation, submission, acceptance, sealing, handover, confirmation, completion, composition — then, later, an admission assertion, a suspension or revocation, and the verification itself. [Which event dates which fact](evidence-layer-explainer.md#which-event-dates-which-fact) draws them on one line. The rule underneath is uniform: **every instant is judged at the act it dates**, never at verification time — admission at each act, credential validity at the signature, the policy at submission, the registry revision at formation. A later suspension does not unmake an earlier act. An admission assertion speaks for the participant's history up to its own `asserted_at` and for nothing after it — so an assertion made at 11:00 can establish admission for an act at 10:00, subject to the status history it authenticates, and cannot establish it for an act at 12:00: a verifier holding only that assertion reports the later act as *not established* and obtains a record asserted after it. Temporal coverage is not a verdict: the covering record must also show the provider admitted at the act's own instant. The live lease between providers is a different question with its own rule.
 
-## An annotated shipped bundle
+## An annotated shipped bundle — the repository demonstration verdict
 
-The repository ships bundles so the verdicts can be read rather than described. `scripts/bundle_lint.py samples/bundle.default.manifest.json`:
+**The verdict this section shows is the repository's demonstration verdict, not
+a production one**, and the exit codes below are `bundle_lint`'s. It is the
+first of two stages: this one establishes that the retained material is
+internally consistent and that the rules this repository publishes are
+satisfied; the second, which no tool here performs, is the production
+validation listed in the section after it. A reader who takes the first for the
+whole has taken a structural result for a legal one.
+
+The repository ships bundles so that verdict can be read rather than described.
+`scripts/bundle_lint.py samples/bundle.default.manifest.json`:
 
 - `LINT-BND-I3`, twice — once for the SE's pinned BW-ORG and once for the DE's. The chain **is** supplied, resolves back to a first publication, and shows the version in force at the act. What stays unproven is that no later version existed.
 - `LINT-BND-I6` — a register is supplied, but with no Federation Authority anchor configured its authenticity cannot be established, so it is not consulted.
-- Verdict: `INCOMPLETE: 0 violation(s), 3 unproven required property/properties`, exit **3**.
+- `bundle_lint`'s verdict: `INCOMPLETE: 0 violation(s), 3 unproven required property/properties`, **exit 3** — *no violation has been established, but required proof is absent*. That is the third verdict, and it is neither of the other two.
 
 Add the demo anchor — `--trust-store samples/trust-store.demo.json` — and admission resolves: two unproven properties remain, both `LINT-BND-I3`, and the exit code stays **3**. That residual is not a defect in the bundle; it is the property a retained prefix cannot establish, and the repository declines to report it as a pass. For contrast, `samples/bundle.negative.manifest.json` exits **1** with six violations — an unsatisfiable quorum and a quorum acknowledger who is not an active, ack-capable member among them.
 
-**What this does not establish.** A green or INCOMPLETE-but-clean verdict here says the retained material is internally consistent against demo trust material. It says nothing about qualification, certificate chains, TSA tokens or the legal effect of any of it — the duties listed next.
+**What this does not establish.** A green or INCOMPLETE-but-clean demonstration
+verdict says the retained material is internally consistent against **demo**
+trust material. It says nothing about qualification, certificate chains, TSA
+tokens or the legal effect of any of it. Those belong to the second stage, and
+the figure above draws it as the stage that follows this one rather than as an
+aside beside it.
 
-## What the demo validators do NOT check
+## The second stage: what a production verifier must add
 
-A production verifier evaluating an Evidence Package must, in addition to the repository's structural bar (`make conformance`):
+**None of the checks in this section is performed by anything in this
+repository**, and no exit code here reports on them. A production verifier
+evaluating an Evidence Package must, after the repository's structural bar
+(`make conformance`) and `bundle_lint`'s demonstration verdict:
 
 1. **QSealC chain building to the EU Trusted Lists.** Resolve the seal's signing certificate (COSE `x5chain`/`x5t`, the production-profile precheck LINT-PROD-01 only asserts its *presence*), build the chain to a trust anchor published in an EU Trusted List, and validate it — path, key usage, QSealC qualified status (TS clause 5.1).
 2. **RDP qualification scope at evidence time.** The issuing RDP (`rdp_id`) must have been a **QERDS-qualified** provider, within its qualified service scope, **at the time the evidence was issued** — Trusted-List status is time-dependent, and `profile`="production" is a claim, not proof (TS clause 9).
