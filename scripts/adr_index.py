@@ -38,6 +38,15 @@ IMPLEMENTATION_TAGS = ("specified", "in-reference", "planned", "not-implemented"
 REQUIRED_FIELDS = ("id", "title", "label", "decision_status", "implementation_status",
                    "implementation", "choice", "alternative", "benefit", "cost",
                    "open_questions", "author_questions", "supersedes")
+
+# A record may rest on something not yet citable and say so in its body, as
+# SBM-ADR-0015 does of the consultation comments. The declaration carries its
+# own condition — it stays `proposed` until the reference is in place — and
+# until now nothing held it to that: the status is one word in front matter and
+# the condition is a sentence twenty lines away, so the two could part without
+# anything noticing. This pattern is the declaration, and the rule below is the
+# condition.
+PLACEHOLDER_REFERENCE = re.compile(r"\*\*[^*\n]*reference:\s*placeholder[.:]?\*\*", re.I)
 REQUIRED_SECTIONS = ["Context", "Requirement and constraint", "Decision",
                      "Alternatives considered", "Trade-off",
                      "Consequences and residual limit", "Status", "Supersedes",
@@ -138,6 +147,13 @@ def check(records=None):
                 f"{name}: a superseded record carries the `planned` tag — the index "
                 "lists it under *Decided is not implemented*, which says a plan "
                 "stands. Say what the Status section says instead")
+        if fm.get("decision_status") == "accepted" and PLACEHOLDER_REFERENCE.search(body or ""):
+            problems.append(
+                f"{name}: the record is `accepted` while its own body still calls "
+                "the reference it rests on a placeholder. That body asked for the "
+                "reference — source, date and comment identifiers — before the "
+                "status moved. Put the reference in, or leave the status at "
+                "`proposed`")
         impl = str(fm.get("implementation") or "")
         for q in sorted(closed):
             # The defect shape is a plan and a closed question in ONE clause —

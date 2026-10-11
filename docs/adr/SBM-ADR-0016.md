@@ -2,7 +2,7 @@
 id: SBM-ADR-0016
 title: "The receipt names the provider that observed the handover"
 label: "The observer is named on the receipt"
-decision_status: proposed
+decision_status: accepted
 implementation_status: [specified, in-reference]
 implementation: >-
   Specified, and in the reference: the delivery receipt carries a required `observed_by`, inside the part the signature covers, and one piece of code resolves the key from it
@@ -188,9 +188,12 @@ for a consequence of it:
 
 ## Status
 
-- **Decision:** proposed, for the maintainer. It **amends** SBM-ADR-0015 rather
+- **Decision:** accepted, 11 October 2026. It **amends** SBM-ADR-0015 rather
   than superseding it: one provider role still stands, and this adds that one
-  role is not one party per message.
+  role is not one party per message. It had been left at `proposed` with no
+  reason recorded anywhere beyond awaiting that acceptance, while being
+  specified and in the reference — the shape every other accepted record in this
+  ledger has.
 - **Implementation:** specified and in the reference. The field is signed and
   required, both verification paths resolve by it, and
   `samples/receipt.availability.demo.json` is a four-corner receipt whose origin

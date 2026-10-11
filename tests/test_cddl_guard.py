@@ -214,6 +214,51 @@ def test_the_gate_diagnoses_the_tool_and_still_fails_closed_in_ci(tmp_path):
     assert "MUST run in CI" in r.stdout
 
 
+def _pinned():
+    import json
+    return json.loads((ROOT / "versions.json").read_text(encoding="utf-8")
+                      )["dimensions"]["cddl_tool"]["value"]
+
+
+def _preflight(tmp_path, version, ci=False):
+    d = _fake_cddl(tmp_path, f"echo 'cddl {version}'\n")
+    env = dict(os.environ, PATH=f"{d}:/usr/bin:/bin")
+    env.pop("CI", None)
+    if ci:
+        env["CI"] = "true"
+    return subprocess.run([sys.executable, "scripts/check_env.py"], cwd=ROOT,
+                          capture_output=True, text=True, env=env)
+
+
+def test_the_preflight_is_quiet_when_the_installed_tool_is_the_pinned_one(tmp_path):
+    r = _preflight(tmp_path, _pinned())
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "is the pinned version" not in r.stdout + r.stderr
+    assert _pinned() in r.stdout
+
+
+def test_a_tool_that_is_not_the_pinned_version_is_said_out_loud(tmp_path):
+    """A gate executed by two different validators is two gates. The
+    maintainer's machine ran 0.10.7 against CI's 0.9.5 for a week and nothing
+    said so: both were green, which is evidence that they agreed on that tree
+    and not that they agree. The first disagreement would have produced a
+    message about this repository's CDDL, not about the version."""
+    r = _preflight(tmp_path, "9.9.9")
+    assert r.returncode == 0, "locally it reports; the maintainer's machine is theirs"
+    out = r.stdout + r.stderr
+    assert "9.9.9 is installed" in out and _pinned() in out
+    assert "--force" in out and "versions.json" in out, "it says both ways out"
+
+
+def test_a_version_other_than_the_pin_fails_under_ci(tmp_path):
+    """CI installs the pin, so a mismatch there means the workflow and the
+    declaration have come apart — and CI is where the non-divergence guarantee
+    lives (N4/D7)."""
+    r = _preflight(tmp_path, "9.9.9", ci=True)
+    assert r.returncode == 1, r.stdout + r.stderr
+    assert "CI defect" in r.stdout + r.stderr
+
+
 def test_the_marker_does_not_skip_under_ci():
     """The policy stated in CONTRIBUTING: optional locally, required in CI. A
     marker that skipped in CI would have moved five modules out of the

@@ -16,7 +16,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from cddl_probe import unusable  # noqa: E402 — one probe, three callers
+from cddl_probe import installed, unusable  # noqa: E402 — one probe, three callers
 
 # import-name -> why it is test-required
 REQUIRED = {
@@ -34,6 +34,14 @@ REQUIRED = {
 }
 
 
+def _pinned_cddl():
+    """The version `versions.json` declares, or None where it declares none."""
+    import json
+    manifest = json.loads((pathlib.Path(__file__).resolve().parents[1] / "versions.json")
+                          .read_text(encoding="utf-8"))
+    return (manifest.get("dimensions", {}).get("cddl_tool") or {}).get("value")
+
+
 def _report_cddl():
     """The Rust `cddl` tool is a BINARY, not an import, and the policy is stated
     rather than discovered: **optional locally, required in CI.**
@@ -48,7 +56,26 @@ def _report_cddl():
     """
     reason = unusable()
     if reason is None:
-        print("cddl: present — the CDDL non-divergence gate will run")
+        have, pinned = installed(), _pinned_cddl()
+        if have and pinned and have != pinned:
+            # The gate is only one gate if everyone runs the same validator.
+            # CI installs the pin; a machine that runs another is executing a
+            # different parser against the same CDDL, and the first time they
+            # disagree the message will be about this repository's CDDL and not
+            # about the version. Loud locally, fatal where the guarantee lives.
+            where = "but CI installs the pin, so this is a CI defect" if \
+                os.environ.get("CI") else "so your bar and CI run different validators"
+            print(f"{'[FAIL] ' if os.environ.get('CI') else ''}cddl: {have} is "
+                  f"installed, {pinned} is the pinned version ({where}). Either "
+                  f"`cargo install cddl --version {pinned} --locked --force`, or "
+                  f"move the pin in versions.json — `make versions` holds its "
+                  f"three sites to it.",
+                  file=sys.stderr if os.environ.get("CI") else sys.stdout)
+            if os.environ.get("CI"):
+                return 1
+            return 0
+        print(f"cddl: {have or 'present'} — the pinned version; the CDDL "
+              "non-divergence gate will run")
         return 0
     if os.environ.get("CI"):
         print(f"[FAIL] cddl: {reason}. CI is set, and the CDDL non-divergence "

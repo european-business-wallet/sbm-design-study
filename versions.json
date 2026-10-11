@@ -560,6 +560,27 @@
           "pattern": "companion contracts\\s+\\*\\*(\\d+\\.\\d+\\.\\d+)\\*\\*"
         }
       ]
+    },
+    "cddl_tool": {
+      "value": "0.9.5",
+      "note": "The Rust `cddl` crate the CDDL non-divergence gate runs. It is a TOOL, not an artefact of this profile, and it is here because the version was restated in three places and nothing compared them: CI installed one, CONTRIBUTING told a contributor another could be the same, and the probe's install hint a third. A gate executed by two different validators is two gates. The maintainer's machine ran 0.10.7 against CI's 0.9.5 for a week; both were green on 89f2585, which is evidence that they agree on this tree today and not that they agree. `scripts/check_env.py` reports the installed version against this one on every run.",
+      "bindings": [
+        {
+          "kind": "text",
+          "file": ".github/workflows/ci.yml",
+          "pattern": "cargo install cddl --version (\\d+\\.\\d+\\.\\d+) --locked"
+        },
+        {
+          "kind": "text",
+          "file": "CONTRIBUTING.md",
+          "pattern": "cargo install cddl --version (\\d+\\.\\d+\\.\\d+) --locked"
+        },
+        {
+          "kind": "text",
+          "file": "scripts/cddl_probe.py",
+          "pattern": "cargo install cddl --version (\\d+\\.\\d+\\.\\d+) --locked"
+        }
+      ]
     }
   },
   "active_claim_sweep": [

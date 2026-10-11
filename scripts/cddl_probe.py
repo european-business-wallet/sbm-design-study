@@ -8,6 +8,7 @@ which must still run and report in an environment where `cbor2` is missing.
 The other two are the CDDL gate (`scripts/cddl_check.py`) and the test guard
 (`tests/cddl_tool.py`).
 """
+import re
 import shutil
 import subprocess
 
@@ -55,4 +56,28 @@ def _probe():
         first = ((r.stderr or r.stdout or "").strip().splitlines() or [""])[0]
         return (f"`cddl` at {exe} exits {r.returncode} on a bare `--version`"
                 + (f": {first}" if first else ""))
+    _VERSION.append(_parse_version(r.stdout or r.stderr or ""))
     return None
+
+
+_VERSION = []
+_SEMVER = re.compile(r"(\d+\.\d+\.\d+)")
+
+
+def _parse_version(text):
+    """The version `cddl --version` printed, or None if it printed none."""
+    m = _SEMVER.search(text)
+    return m.group(1) if m else None
+
+
+def installed():
+    """The version of the tool that actually ran, or None.
+
+    The probe already executes `cddl --version`; this is what it said. It is
+    separate from `unusable()` because a tool that runs is usable whatever
+    version it is — whether it is the version this repository PINS is a
+    different question, and `scripts/check_env.py` asks it.
+    """
+    if not _PROBED:
+        unusable()
+    return _VERSION[0] if _VERSION else None

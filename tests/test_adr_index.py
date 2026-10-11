@@ -161,3 +161,70 @@ def test_a_closed_question_named_as_closed_is_not_a_finding():
     assert "A6" in victim[1]["implementation"] and "planned" in victim[1]["implementation"]
     assert ai.check([victim]) == [] or all(
         "A6" not in p for p in ai.check([victim])), ai.check([victim])
+
+
+def _with_body(ident, status, body):
+    """One real record's front matter, restated, beside a body of our own.
+
+    The placeholder rule is deliberately probed on a planted body rather than on
+    a live record. SBM-ADR-0015 carried the only such declaration in the ledger
+    and was accepted on 11 October 2026 once its argument was shown not to rest
+    on the uncitable source; a probe that needed that declaration to be present
+    would have died with the defect it guards against, which is how a gate
+    quietly stops being one. The rule exists for the NEXT record that wants to
+    rest on something it cannot cite yet."""
+    victim = next(r for r in ai.load() if r[1]["id"] == ident)
+    fm = copy.deepcopy(victim[1])
+    fm["decision_status"] = status
+    return (victim[0], fm, body)
+
+
+PLACEHOLDER_BODY = """## Context
+
+The comments this record relies on are not public at the time of writing.
+
+> **Consultation reference: placeholder.** The maintainer will add the
+> reference — source, date and comment identifiers — when it can be cited.
+"""
+
+
+def test_a_record_cannot_be_accepted_while_it_calls_its_reference_a_placeholder():
+    """A record may rest on something not yet citable and say so, with its own
+    condition attached: it stays `proposed` until the reference is in place.
+    That condition is a sentence in the body and the status is a front-matter
+    word, so the two could part silently. The pair is now a finding."""
+    assert ai.PLACEHOLDER_REFERENCE.search(PLACEHOLDER_BODY), "the fixture does not declare one"
+    problems = ai.check([_with_body("SBM-ADR-0015", "accepted", PLACEHOLDER_BODY)])
+    assert any("calls" in p and "placeholder" in p for p in problems), problems
+
+
+def test_the_placeholder_rule_leaves_a_proposed_record_alone():
+    """The declaration is legitimate while the status honours it — that is the
+    state the rule exists to protect, not to punish."""
+    problems = ai.check([_with_body("SBM-ADR-0015", "proposed", PLACEHOLDER_BODY)])
+    assert not any("placeholder" in p for p in problems), problems
+
+
+def test_the_placeholder_rule_is_quiet_on_a_record_that_cites_its_reference():
+    """The rule must forbid the pair, not the word. A record that is `accepted`
+    and names its source is no finding — otherwise the rule would stand in the
+    way of the very act it exists to require."""
+    cited = PLACEHOLDER_BODY.replace(
+        "**Consultation reference: placeholder.** The maintainer will add the",
+        "**Consultation reference:** the comments of 3 September 2026, and the")
+    problems = ai.check([_with_body("SBM-ADR-0015", "accepted", cited)])
+    assert not any("placeholder" in p for p in problems), problems
+
+
+def test_no_record_is_implemented_while_still_only_proposed():
+    """SBM-ADR-0015 and SBM-ADR-0016 were the two records in this ledger that
+    were specified and in the reference while recorded as `proposed` — an
+    implemented decision read as an open one, which is the inverse of the usual
+    drift and invites a reader to think the model is still in discussion. Both
+    were accepted on 11 October 2026. A record may be `proposed` and
+    unimplemented, as SBM-ADR-0014 is; what it may not be is both at once."""
+    for _, fm, _ in ai.load():
+        if fm["decision_status"] != "proposed":
+            continue
+        assert "in-reference" not in fm["implementation_status"], (
+            f"{fm['id']} is `proposed` and in the reference: say which it is")

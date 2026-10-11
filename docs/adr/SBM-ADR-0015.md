@@ -2,7 +2,7 @@
 id: SBM-ADR-0015
 title: "One provider: the Delivery Service inside the Registered Delivery Provider"
 label: "One provider role, not two"
-decision_status: proposed
+decision_status: accepted
 implementation_status: [specified, in-reference]
 implementation: >-
   Specified, and in the reference. No evidence object, companion contract or schema rule carries a second provider's identity — but two DISCOVERY documents did change shape and version for it
@@ -58,17 +58,19 @@ What exists of the separation is text, and only text:
   44(1)(b) and (c) of Regulation (EU) No 910/2014 require may be performed by a
   participant that is admitted to the federation but is not itself qualified.
 
-The consultation returned comments that point the other way: the two-role
-model is read as complexity without a corresponding guarantee, and the
-reviewers asked for the model to be simplified.
+A consultation returned comments pointing away from the two-role model: it is
+read as complexity without a corresponding guarantee, and the reviewers asked
+for the model to be simplified.
 
-> **Consultation reference: placeholder.** The comments this record relies on
-> are not public at the time of writing. The maintainer will add the
-> reference — source, date and comment identifiers — when it can be cited.
-> Until then this record states what the comments asked for and does not
-> quote them; it is `proposed` and should not leave that status without the
-> reference in place. The reference, when added, is not part of the exported
-> design study unless the maintainer decides otherwise.
+**Those comments are mentioned, not relied on.** They are not public at the time
+of writing, and this record does not cite them, because a decision of this size
+should not stand on a source its reader cannot check. The ground is the next
+section: the separation existed as text and nowhere else, the model it was meant
+to serve is the one SBM-ADR-0004 analysed and then declined to choose, and the
+testimony a verifier must trust is the provider's under either model. The
+comments corroborated a conclusion the design had reached on its own — which is
+why this record does not need them, and why withdrawing them would not reopen
+it.
 
 ## Requirement and constraint
 
@@ -198,7 +200,13 @@ cost is real and is the price of the simplification.
 
 ## Status
 
-- **Decision:** proposed, for the maintainer.
+- **Decision:** accepted, 11 October 2026. It was held at `proposed` while its
+  *Context* put part of the case on consultation comments that cannot be cited.
+  The comments are now mentioned without evidentiary weight, because the case is
+  made in *Requirement and constraint* without them. **Nothing about the
+  decision changed when the status did**, and that is the test it had to pass:
+  had the conclusion needed those comments, taking them away would have reopened
+  it.
 - **Implementation:** specified and in the reference. The evidence family, the
   CDDL and the register's enumeration are untouched, and no object names a second
   provider — but this decision moved a published key between two discovery
