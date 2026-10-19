@@ -297,29 +297,6 @@ def test_the_standalone_refusal_schema_is_withdrawn():
     assert "group-establishment-refusal" not in cddl
 
 
-def test_the_id_specifies_the_PRE_JOIN_return_channel():
-    """R5-04/R5-V2 supersedes R4-U4, and the defective sentence was mine.
-
-    R4-U4 routed the refusal over MLS because "the refusing device is already
-    an invited member of the group being formed". Invited is not joined: to
-    send an authenticated message in that group the device must process the
-    Welcome and run the key schedule under the very suite it is refusing as
-    below its floor. The transport required doing the thing the refusal exists
-    to avoid.
-    """
-    t = " ".join((ROOT / "ietf" / "draft-sbm-mls-erd-00.md")
-                 .read_text().replace("**", "").replace("`", "").split())
-    assert "POST /welcome/{welcome_id}/refusal" in t
-    assert "KeyPackage credential" in t
-    assert "INVITED IS NOT JOINED" in t, \
-        "the correction should be legible, not silently swapped"
-    assert "MUST NOT instantiate a suite it has rejected" in t
-    # the alternative, and why it was not taken
-    assert "key-distribution problem in order to solve a reporting problem" in t
-    # and a silent non-join is still not acceptable
-    assert "indistinguishable from an offline device" in t
-
-
 def test_the_refusal_operation_exists_and_is_device_bound():
     """The R4-U4 failure was a transport that had no operation, no destination
     and no authentication. This one is checked for all three."""

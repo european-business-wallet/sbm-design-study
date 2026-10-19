@@ -95,23 +95,6 @@ def test_the_removed_value_is_admitted_nowhere():
     assert not [m for m in ts_transformations() if "epoch" in m], ts_transformations()
 
 
-def test_the_ts_states_what_an_epoch_change_is_instead():
-    """Removing the wrong sentence is half the fix: clause 7 has to say what a
-    sender does after an epoch change, or an implementer reads the silence as
-    latitude. The I-D's answer is a new submission, not a transformation."""
-    clause = ts_clause()
-    assert "epoch change re-encrypts no queued application message" in clause
-    assert "new submission" in clause
-    assert "cannot transform the end-to-end-encrypted envelope" in clause
-
-
-def test_the_id_and_the_ts_agree_that_an_intermediary_cannot_transform_the_envelope():
-    id_line = next(l for l in ID.read_text(encoding="utf-8").splitlines()
-                   if "intermediary cannot transform the E2EE envelope" in l)
-    assert "epoch change re-encrypts NO queued application message" in id_line
-    assert "NEW submission chain" in id_line
-
-
 def test_the_readers_are_not_fooled_by_a_reworded_sentence(tmp_path):
     """The check reads the clause's own list, so re-admitting the value in other
     words still fails: it is the SET that is compared, not a blacklist."""

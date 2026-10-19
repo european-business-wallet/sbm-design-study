@@ -157,16 +157,6 @@ def test_the_scan_reaches_every_document_of_its_path_that_exists_here():
             "each document of its reading path exactly where that document exists")
 
 
-def test_the_qualified_claims_are_still_there():
-    """The fix is a qualifier, not a deletion: the documents must still say what
-    the commitments do hide, or the correction has removed a true claim."""
-    explainer = (ROOT / "docs" / "evidence-layer-explainer.md").read_text(encoding="utf-8")
-    assert "learn nothing about the class **from the commitment**" in explainer
-    assert "scope_ref" in explainer and "resolves to the set of content classes" in explainer
-    examples = (ROOT / "docs" / "scope-resolution-examples.md").read_text(encoding="utf-8")
-    assert "the **commitment** discloses no class" in examples
-
-
 def test_the_internet_draft_sends_the_reader_to_the_consideration():
     """An open-items list records what is not proven; a security consideration
     tells an implementer what to do about it. R16-06."""
@@ -212,39 +202,6 @@ def test_the_guard_catches_the_phrasings_that_got_past_it():
     for spelling in ("this field", "that field"):
         assert QUALIFIER.search(f"so {spelling} discloses nothing: a reader cannot "
                                 "test a guess against it."), spelling
-
-
-def test_the_agent_branch_promises_no_more_than_the_evidence_branch():
-    """R26-PUB-05. The two locations the previous review named were corrected;
-    the agent branch was not, and a reviewer entering by agent expertise met a
-    stronger guarantee than one entering by security.
-
-    Two distinct claims had to be bounded. The commitment hides the class *from
-    that field* — but the standing `mandate_ref.scope` is published in the
-    signed member binding and the resolved `scope_ref` gives the set of classes
-    the message could have belonged to. And an opening proves what the sender
-    COMMITTED TO, not what it encrypted: a sender may commit to a permitted
-    class and encrypt something else, because no party to the reveal inspects
-    the plaintext.
-    """
-    agent = " ".join((ROOT / "docs" / "agent-profile-explainer.md").read_text(
-        encoding="utf-8").split())
-    assert "Before a dispute neither the mandate nor the class is disclosed" not in agent
-    assert "The commitment itself discloses neither the mandate nor the class" in agent
-    assert "a scope covering one class gives that class" in agent
-    assert "not that the declared class describes the encrypted document" in agent
-
-    umbrella = " ".join((ROOT / "Secure-Business-Messaging-Profile.md").read_text(
-        encoding="utf-8").split())
-    assert "without the mandate or the class leaking —" not in umbrella
-    assert "from the commitment" in umbrella.replace("**", "")
-
-    ts = " ".join((ROOT / "etsi" / "TS-SBM-QERDS-Binding-v0.1.md").read_text(
-        encoding="utf-8").split())
-    assert "shows the agent acted within its mandate;" not in ts
-    assert "the class the sender committed to lies within the mandate's scope" in \
-        ts.replace("**", "")
-    assert "an opening that fails to verify establishes neither misuse nor overreach" in ts
 
 
 def test_the_consolidated_threat_model_carries_the_digest_residual():

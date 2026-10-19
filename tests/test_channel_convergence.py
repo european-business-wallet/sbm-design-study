@@ -111,20 +111,3 @@ def test_the_superseded_chain_closes_with_mls_group_invalid():
     el.lint_nde(v, nde)
     assert not [m for r, m in v.items if r == "LINT-NDE-07"]
     assert SE["mls_group_id"], "the SE identifies the superseded group"
-
-
-def test_the_resubmission_is_a_distinct_chain():
-    """The survivor carries a NEW submission: a new message_id (the
-    duplicate-message-id intake rule bars reusing the old one for the
-    changed group), so no message can be delivered twice."""
-    idd = (ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text()
-    assert "resubmits on the surviving group as a NEW submission" in idd
-    assert "no message is delivered twice" in idd
-    assert "exactly one DE or NDE" in idd
-
-
-def test_the_id_defines_the_channel_and_the_tie_break():
-    idd = (ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text()
-    assert "sm-mls:channel:v1" in idd
-    assert "bytewise-smaller `group_id`" in idd
-    assert "no election protocol" in idd

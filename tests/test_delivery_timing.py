@@ -69,9 +69,3 @@ def test_negative_availability_after_expiry_fails():
     availability DE post-dating expires_at was accepted. Now it fails."""
     de = copy.deepcopy(DEAV); de["delivered_at"] = "2026-04-07T10:15:01Z"
     assert "LINT-BND-22" in _rules(de)
-
-
-def test_prose_states_the_event_time_rule():
-    idtxt = (ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text()
-    assert "Event time vs artefact time" in idtxt
-    assert "the former availability exemption is removed" in idtxt.replace("\n", " ")

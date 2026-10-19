@@ -114,11 +114,3 @@ def test_negative_a_software_signature_no_longer_verifies_against_the_hsm_record
         "a software-device signature must not verify against the HSM anchor"
     sw = next(d for d in fr["devices"] if d["device_id"] == "dev-01")
     assert bl._verify_wallet_sig(sig, sw["confirmation_key"]) is None
-
-
-def test_the_rule_rollover_and_prohibition_are_normative():
-    umb = " ".join((ROOT / "Secure-Business-Messaging-Profile.md")
-                   .read_text().split()).replace("*", "").replace("`", "")
-    assert "MUST be unique per (mid, device_id)" in umb
-    assert "Intentional multi-device key sharing is PROHIBITED" in umb
-    assert "a rollover never moves a key to a different device" in umb

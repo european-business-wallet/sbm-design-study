@@ -94,13 +94,3 @@ def test_n03_member_count_mismatch_is_rejected():
     import pytest
     with pytest.raises(ValueError, match="disagree"):
         ms.select_usable_suite([[ms.BASELINE]], [[ms.BASELINE], [ms.BASELINE]])
-
-
-def test_n03_the_id_states_per_suite_pools_and_vector_pinning():
-    import pathlib
-    idd = (pathlib.Path(__file__).resolve().parents[1]
-           / "ietf" / "draft-sbm-mls-erd-00.md").read_text()
-    assert "partitioned **per cipher suite**" in idd
-    assert "pinned at group creation" in idd
-    assert "capability support\n  alone never suffices" in idd or \
-        "capability support alone never suffices" in idd.replace("\n  ", " ")

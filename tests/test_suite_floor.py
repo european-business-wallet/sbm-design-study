@@ -227,14 +227,6 @@ def _flat(path):
     return " ".join((ROOT / path).read_text().replace("**", "").replace("`", "").split())
 
 
-def test_the_id_states_the_mandatory_floor_and_the_one_directional_raise():
-    t = _flat("ietf/draft-sbm-mls-erd-00.md")
-    assert "A MANDATORY floor, mls-suite-floor/v1" in t
-    assert "MUST NOT be formed" in t
-    assert "may only RAISE the mandatory floor and never lower it" in t
-    assert "pin the selected suite and that floor in the group-establishment state" in t
-
-
 def test_the_permissive_phrasing_cannot_return():
     src = (ROOT / "scripts" / "doc_lint.py").read_text()
     assert "MAY refuse to join a group whose selected suite" in src

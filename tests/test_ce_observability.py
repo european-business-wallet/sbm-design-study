@@ -58,16 +58,6 @@ def test_negative_the_unobservable_type_is_schema_rejected():
     assert lc.validate_body(bad), "the removed enum value must fail schema"
 
 
-def test_the_id_models_resubmission_as_a_new_chain():
-    idd = (ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text()
-    assert "NEW submission chain (new SE)" in idd
-    assert "re-encrypts NO queued application message" in idd
-
-
-# ---------------------------------------------------------------------------
-# The remaining types are byte-checkable
-# ---------------------------------------------------------------------------
-
 def test_the_shipped_chunking_ce_is_checkable_and_chains_to_the_se():
     assert CE["transformation"] == "chunking"
     assert len(CE["part_envelope_hashes"]) >= 2

@@ -59,44 +59,11 @@ def test_no_document_still_claims_the_commitment_proves_the_conduct():
 # The limit is stated on every reading path, not only in the TS
 # ---------------------------------------------------------------------------
 
-def test_the_normative_id_states_the_limit_where_it_defines_the_commitment():
-    text = _text(ID)
-    assert "the class the sender **committed to**" in text
-    assert "does not certify what the encrypted content actually was" in text
-    assert "commit to a permitted class and encrypt something else" in text
-    assert "overreach in the declared act" in text
-
-
-def test_the_threat_table_states_the_limit():
-    text = _text(PROFILE)
-    assert "out-of-scope **declaration** provable on reveal" in text
-    assert "not the encrypted content" in text
-
-
-def test_the_verifier_companion_states_the_limit():
-    text = _text(VERIFIER)
-    assert "the class an agent **declared** for its act lay within its mandate" in text
-    assert "does not certify the agent's actual conduct" in text
-
-
 def test_the_privacy_shorthand_says_what_it_hides_from():
     """"without either leaking" alone reads as a claim about the whole design;
     the mandate reference and the scope mapping are public by construction."""
     assert "without either leaking **from the commitment itself**" in _text(TS)
 
-
-def test_the_places_corrected_in_the_previous_pass_stayed_corrected():
-    explainer = _text(EXPLAINER)
-    assert "not that the declared class describes the encrypted document" in explainer
-    assert "commit to a permitted class and encrypt something else" in explainer
-    ts = _text(TS)
-    assert "Neither establishes what the encrypted document actually was" in ts
-    assert "An in-scope opening therefore does not certify the agent's actual conduct" in ts
-
-
-# ---------------------------------------------------------------------------
-# And the guarantee that remains is still claimed
-# ---------------------------------------------------------------------------
 
 def test_the_out_of_scope_declaration_is_still_evidence_of_something():
     """The correction narrows the claim; it must not erase it. A reveal of an

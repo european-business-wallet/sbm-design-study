@@ -226,12 +226,3 @@ def test_the_carrier_is_a_stated_compatibility_boundary():
     assert "ietf/draft-sbm-mls-erd-00.md" in bound, bound
     assert "`schemas/envelope.schema.json` (v1.4)" in \
         (ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text(encoding="utf-8")
-
-
-def test_the_agenda_records_the_decision():
-    row = next(l for l in (ROOT / "docs" / "REVIEW_AGENDA.md").read_text().splitlines()
-               if l.startswith("| A14 |"))
-    assert "Decided, 27 September 2026" in row
-    assert "payload-multipart" in row
-    for kept in ("no delimiter", "concatenated"):
-        assert kept in row, kept

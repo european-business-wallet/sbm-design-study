@@ -245,19 +245,3 @@ def test_the_key_encoding_is_pinned_to_the_specification(alg, size):
         assert raw[0] == 0x04, "not a SEC1 uncompressed point"
     with pytest.raises(lc.SignatureVerificationError):
         lc.load_confirmation_key(alg, base64.b64encode(raw[:-1]).decode())
-
-
-def test_the_id_states_the_encodings_and_the_three_way_agreement():
-    t = " ".join((ROOT / "ietf" / "draft-sbm-mls-erd-00.md")
-                 .read_text().replace("**", "").replace("`", "").split())
-    assert "Confirmation-key encodings and algorithm agreement" in t
-    assert "three-way agreement" in t
-    assert "raw 32-byte Ed25519 public key" in t
-    assert "SEC1 uncompressed point on P-256" in t
-    assert "a DER-encoded signature is not a COSE signature" in t
-    assert "its subject public key MUST equal public_key_b64" in t
-
-
-# ---------------------------------------------------------------------------
-# What is NOT claimed
-# ---------------------------------------------------------------------------

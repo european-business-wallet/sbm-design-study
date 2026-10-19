@@ -67,10 +67,3 @@ def test_cipher_suite_and_extensions_are_inside_the_commitment():
     # bytes is what produced the double length prefix.
     with_ext = w.demo_group_context(gid, epoch, extensions=[(0x0001, b"ab")])
     assert len({w.mls_state_hash(x)["hex"] for x in (base, other_suite, with_ext)}) == 3
-
-
-def test_retention_duty_is_stated():
-    idtxt = (ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text()
-    assert "MLS state retention and historical verification" in idtxt
-    umb = (ROOT / "Secure-Business-Messaging-Profile.md").read_text()
-    assert "MLS GroupContext and ratchet tree/GroupInfo" in umb

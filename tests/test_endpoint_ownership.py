@@ -66,9 +66,3 @@ def test_the_evidence_pointer_requires_auth_with_no_existence_oracle():
 def test_the_keypackages_endpoint_is_still_pointer_only():
     kp = SPEC["paths"]["/uid/{uid}/keypackages"]["get"]
     assert "200" not in kp["responses"], "the EDD serves no KeyPackage bytes"
-
-
-def test_the_registry_owns_status_and_redirect_the_discovery_layer_the_mirror():
-    assert re.search(r"status-assertion.*\*\*Core registry\*\*", UMB)
-    assert re.search(r"/members.*\*\*Discovery layer\*\*", UMB)
-    assert "the EDD serves a 302 pointer ONLY" in UMB

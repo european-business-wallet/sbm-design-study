@@ -142,11 +142,3 @@ def test_the_edd_contract_serves_snapshots_as_of():
     assert "get" in path
     # Derived from versions.json — see test_schema_negative for the reasoning.
     assert spec["info"]["version"] == json.loads((ROOT / "versions.json").read_text())["dimensions"]["edd_openapi"]["value"]
-
-
-def test_the_docs_name_the_snapshot_as_the_atomicity_anchor():
-    umb = (ROOT / "Secure-Business-Messaging-Profile.md").read_text()
-    idd = (ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text()
-    assert "**Atomicity anchor:**" in umb
-    assert "**Atomic snapshot.**" in idd
-    assert "enumeration ↔ tree ↔ evidence" in idd

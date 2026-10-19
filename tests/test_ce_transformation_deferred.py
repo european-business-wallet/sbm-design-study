@@ -60,42 +60,6 @@ def test_the_output_commitment_is_typed_to_a_complete_message():
 
 # --- the deferral, stated where an implementer reads it ---------------------
 
-def test_both_transformations_are_deferred_and_must_not_be_issued():
-    flat = _id_flat().replace("**", "")
-    assert "The two envelope transformations are NOT profiled, and are deferred" in flat
-    assert "an RDP MUST NOT issue a CE with either transformation" in flat
-    assert "treat the transformation as unproven rather than as an attested re-framing" in flat
-    # The reasons, each of them, so a later reader cannot repair one and assume
-    # the rest resolved with it.
-    assert "a fragment of an MLSMessage is not an MLSMessage" in flat
-    assert "leaves the inner octets untouched, so its output commitment equals its input" in flat
-    assert "no published contract defines a fragment descriptor" in flat
-
-
-def test_the_closure_it_wrongly_supported_now_rests_on_the_part_rule_alone():
-    """A13 stands: nothing splits a manifest part, which is true whatever
-    happens to envelope framing. What is withdrawn is the ground an earlier
-    revision gave for it."""
-    flat = _id_flat().replace("**", "")
-    assert "Nothing in this profile splits a manifest part" in flat
-    row = next(l for l in AGENDA.read_text(encoding="utf-8").splitlines()
-               if l.startswith("| A13 |"))
-    assert "Decided, 27 September 2026" in row, "A13 is not reopened by this"
-
-
-def test_the_deferral_is_an_agenda_entry_with_what_a_definition_must_pin():
-    row = next((l for l in AGENDA.read_text(encoding="utf-8").splitlines()
-                if l.startswith("| A15 |")), None)
-    assert row, "a deferred mechanism without a record is a mechanism that returns"
-    assert "Deferred, 27 September 2026" in row
-    for needed in ("fragment descriptor", "reassembly boundary", "repeated transformations",
-                   "transport-frame commitment of its own", "published trace"):
-        assert needed in row, needed
-    # And the sample's own values, named rather than left to be discovered again.
-    assert "demo-part:<message_id>:1" in row
-    assert "hashing real bytes does not put them in the declared domain" in row
-
-
 def test_no_document_still_presents_the_transformations_as_available():
     """R26-PUB-04's closure test, and the check that would have prevented it.
 
@@ -132,19 +96,6 @@ def test_no_document_still_presents_the_transformations_as_available():
                     problems.append(f"{rel}: {flat[:150]}")
     assert problems == [], problems
 
-
-def test_the_duty_to_evidence_a_transformation_survives_the_deferral():
-    """Deferring the two operations must not delete the obligation: when a
-    transformation IS defined, the provider still owes evidence for it. The TS
-    keeps the duty and scopes it to what the profile has defined."""
-    ts = " ".join((ROOT / "etsi" / "TS-SBM-QERDS-Binding-v0.1.md").read_text(
-        encoding="utf-8").split())
-    assert "Whenever a transformation the profile has defined occurs — none is defined today " \
-           "— the responsible RDP shall issue a Change-Indication Evidence" in ts
-    assert "shall be made available to both the sender and the addressee" in ts
-
-
-# --- the gap a bundle reports -----------------------------------------------
 
 def test_the_bundle_verifier_reports_the_transformation_as_unestablished():
     """`LINT-BND-I7`, on the bundle that actually ships a CE — nested inside an

@@ -71,23 +71,6 @@ def _prose(body):
     return " ".join(text.split())
 
 
-def test_the_glossary_states_the_expansions_these_rules_hold_records_to():
-    """The expansions are not this file's opinion. If the umbrella renames an
-    institution, this test fails before the records are judged against a stale
-    name."""
-    glossary = UMBRELLA.read_text(encoding="utf-8")
-    assert "**EDD**: European Directory of Entities" in glossary
-    assert "Sending / Delivery / Non-Delivery / Refusal / Evidence Package" in glossary
-    normative = "\n".join(p.read_text(encoding="utf-8") for p in NORMATIVE)
-    for term, full in GLOSSARY_TERMS.items():
-        assert full in normative, (term, full)
-    # And the withdrawn role is NOT in the current-facing text, which is the
-    # other half of the same claim.
-    for term, full in HISTORICAL_TERMS.items():
-        assert full not in glossary, \
-            f"{full!r} is back in current-facing text; see tests/test_stale_roles.py"
-
-
 @pytest.mark.parametrize("stem", [p.stem for p in sorted(
     (ROOT / "docs" / "adr").glob("SBM-ADR-*.md"))])
 def test_a_record_expands_the_terms_it_leans_on(stem):

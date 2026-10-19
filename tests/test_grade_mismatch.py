@@ -114,8 +114,3 @@ def test_gcm_in_ep_must_echo_the_disputed_commitment():
     se = {"message_id": GCM["message_id"], "grade_commitment": "f" * 64}
     el.lint_gcm(v, copy.deepcopy(GCM), se=se)
     assert any(r == "LINT-GCM-01" and "echo" in m for r, m in v.items), v.items
-
-
-def test_legal_clause_is_a_marked_todo():
-    idtxt = (ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text()
-    assert "TODO(legal)" in idtxt and "D5 LEGAL-CONFIRM" in idtxt

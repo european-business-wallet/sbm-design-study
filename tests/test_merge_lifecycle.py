@@ -45,12 +45,6 @@ NDE = json.load(open(ROOT / "samples" / "sample-NDE.json"))["projection"]
 # The state machine: a merger from any live state, never redirect-less
 # ---------------------------------------------------------------------------
 
-def test_merged_is_reachable_from_every_operational_state():
-    assert "| active | merged |" in UMB
-    assert "| suspended | merged |" in UMB
-    assert "| retired | merged |" in UMB
-
-
 def test_the_live_transitions_are_atomic_with_the_redirect():
     """No instant exists in which the UID is merged without its redirect."""
     row = next(line for line in UMB.splitlines()
@@ -69,15 +63,6 @@ def test_the_rerouting_sentence_is_gone_and_forbidden():
     assert any(p.search(former) for p in dl.FORBIDDEN), \
         "doc_lint must forbid the resolver-rerouting phrasing"
 
-
-def test_only_the_sender_re_addresses():
-    assert "new submission with a new SE" in UMB
-    assert "Only an authorised sender changes the legal addressee" in UMB
-
-
-# ---------------------------------------------------------------------------
-# The in-flight outcome: NDE uid-merged + redirect, at any stage of the table
-# ---------------------------------------------------------------------------
 
 def test_uid_merged_nde_requires_the_redirect():
     bad = copy.deepcopy(NDE)

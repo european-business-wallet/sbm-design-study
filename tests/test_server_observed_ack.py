@@ -37,7 +37,6 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 
-
 def _staged(mock, *, issuing_rdp_id, message_id, recipient_uid, mid, device_id,
             octets, session_binding):
     """R7-02: a receipt now requires an item the DS ACCEPTED, QUEUED and
@@ -303,28 +302,6 @@ def test_the_response_is_the_signed_receipt_with_every_bound_field():
     assert receipt.get("unevaluatedProperties") is False, \
         "an undeclared field could otherwise ride along unnoticed"
 
-
-def test_the_id_states_the_server_observed_rule_and_the_forwarding():
-    t = " ".join((ROOT / "ietf" / "draft-sbm-mls-erd-00.md")
-                 .read_text().replace("**", "").replace("`", "").split())
-    assert "The event instant is SERVER-OBSERVED" in t
-    assert "a client-supplied timestamp MUST NOT determine it" in t
-    assert "forward to RDP(out), a signed receipt" in t
-    assert "an unverifiable receipt yields NO DE" in t
-    # R11-04: the receipt dates delivery at the availability grade only.
-    assert "It is delivered_at at the availability grade only" in t
-    assert "delivered_at is the receipt's server_time" not in t
-
-
-# ===========================================================================
-# R9-01 — the collection token is REQUIRED, at runtime as well as on paper
-#
-# The published request declares `[device_id, collection_token]`. The reference
-# compared the token only `if collection_token is not None`, so omitting it
-# skipped the comparison entirely — `None` as a hidden compatibility path
-# around an OpenAPI `required` list, preserving exactly the pre-token flow the
-# token was introduced to retire.
-# ===========================================================================
 
 def _direct(token, message_id="01HZ9TOK00000000000000001", **over):
     """`receipt_ack` called DIRECTLY, so nothing re-stages behind the test.

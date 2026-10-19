@@ -221,12 +221,6 @@ ACTORS = {
 }
 
 
-def test_every_actor_row_has_a_probe():
-    rows, probed = set(actor_rows()), set(ACTORS)
-    assert rows == probed, {"unprobed rows": sorted(rows - probed),
-                            "probes for no row": sorted(probed - rows)}
-
-
 @pytest.mark.parametrize("actor", sorted(ACTORS))
 def test_the_table_tells_the_truth(actor):
     ACTORS[actor]()

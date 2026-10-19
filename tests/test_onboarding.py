@@ -56,20 +56,6 @@ def test_duplicate_headings_and_code_are_handled(tmp_path):
     assert dl.scan_links([page]) == []
 
 
-def test_the_readme_lists_every_explainer():
-    """The README's companion table claims to list the explainers; an
-    explainer it omits is one the review found readers never reach."""
-    manifest = json.loads((ROOT / "versions.json").read_text())
-    historical = set(manifest["prose_sweep_historical"]["paths"])
-    generated = {"docs/lint-catalogue.md", "docs/rule-ownership.md"}
-    readme = (ROOT / "README.md").read_text()
-    for p in sorted((ROOT / "docs").glob("*.md")):
-        rel = p.relative_to(ROOT).as_posix()
-        if rel in historical or rel in generated:
-            continue
-        assert f"]({rel})" in readme, f"README does not list {rel}"
-
-
 def test_the_guide_restates_no_version_or_count():
     """Counts and versions are quoted from the generated files, never
     restated: a guide that says '2069 checks' is wrong by the next commit."""

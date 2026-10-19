@@ -59,19 +59,6 @@ def _bnd22(evidence):
 # The model is stated
 # ---------------------------------------------------------------------------
 
-def test_the_hold_model_is_normative_and_the_terminal_rule_is_gone():
-    assert "HELD, not terminated" in UMB
-    assert "no legal-effect event may occur while it lasts" in UMB
-    former = ("when suspension takes effect **MUST** also result in "
-              "**NDE-v1** `uid-suspended`")
-    assert former not in UMB, "the terminal-at-suspension sentence must be gone"
-    assert "`uid-suspended` is an **intake** reason" in UMB
-
-
-# ---------------------------------------------------------------------------
-# Timeline 1 — the acceptance case: 10-minute suspension, 3-day TTL
-# ---------------------------------------------------------------------------
-
 def test_a_ten_minute_suspension_on_a_three_day_ttl_delivers():
     """ONE outcome: the resumed DE, delivered after reactivation and within
     the authenticated deadline — temporally coherent with the SE."""
@@ -129,7 +116,3 @@ def test_suspension_to_retirement_yields_uid_retired():
 # ---------------------------------------------------------------------------
 # The delivered-before-suspension message retains its DE
 # ---------------------------------------------------------------------------
-
-def test_a_message_past_its_delivery_point_retains_its_de():
-    assert "retains its DE-v1" in UMB
-    assert "tie = delivered" in UMB

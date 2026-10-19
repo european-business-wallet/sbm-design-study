@@ -79,9 +79,3 @@ def test_the_b3_nde_is_event_valid_standalone():
     v = el.Violations()
     el.lint_nde(v, nde)
     assert not [m for r, m in v.items if r == "LINT-NDE-07"]
-
-
-def test_the_ts_documents_the_pending_standards_review():
-    ts = (ROOT / "etsi" / "TS-SBM-QERDS-Binding-v0.1.md").read_text()
-    assert "pending standards-owner review (ETSI TC ESI)" in ts
-    assert "| `policy-violation` | `policy-block` | `B.3-RelayFailure` |" in ts

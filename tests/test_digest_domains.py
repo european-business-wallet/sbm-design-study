@@ -262,15 +262,3 @@ def test_the_consistency_rule_is_scoped_to_the_content_domain():
 
 
 # --- the text says what the schemas enforce --------------------------------
-
-def test_the_normative_text_assigns_the_domains():
-    """A schema that restricted what the text never required would be enforcing
-    a rule nobody wrote. The I-D states the three; the umbrella states the one
-    that was previously only in `bundle_lint`."""
-    id_text = " ".join((ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text().split())
-    assert "The digest domains" in id_text
-    assert "only domain in which a manifest mode is meaningful" in id_text
-    assert "over the exact submitted octets before any parsing" in id_text
-    umbrella = " ".join((ROOT / "Secure-Business-Messaging-Profile.md").read_text().split())
-    assert "`doc_digest` is SHA-256 over the referenced document's signed payload and carries " \
-           "`hash_mode` `raw-sha256`" in umbrella

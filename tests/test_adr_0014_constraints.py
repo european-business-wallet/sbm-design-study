@@ -71,15 +71,6 @@ def test_a_missing_salt_is_not_called_a_mismatch():
             f"stated rather than quoted as withdrawn: {sentence.strip()[:160]}"
 
 
-def test_the_four_cases_are_named_and_required_to_be_distinguishable():
-    """Absent, wrong type, wrong length, and a well-formed salt with a differing
-    digest. A proposal that cannot tell them apart cannot be implemented."""
-    text = adr()
-    for needed in ("salt absent", "not a sixteen-byte", "digest different",
-                   "distinguishable"):
-        assert needed in text, needed
-
-
 def test_the_intake_reason_code_is_refused_by_name_with_its_registry_binding():
     """`malformed-envelope` is bound to an intake stage and a relay stage, where
     nothing has been decrypted and no recipient has spoken. The record must say
@@ -97,20 +88,6 @@ def test_the_intake_reason_code_is_refused_by_name_with_its_registry_binding():
     assert as_rejection["stage"] == "intake", as_rejection
 
 
-def test_the_principle_the_correction_rests_on_is_in_the_internet_draft():
-    """If this sentence ever leaves the I-D, the ADR's argument loses its
-    ground and the contradiction can return unnoticed."""
-    id_text = " ".join(ID.read_text(encoding="utf-8").split())
-    assert "a `mismatch` confirmation asserts a comparison that was made, and this " \
-           "profile defines no reason for one that was not" in id_text
-
-
-def test_the_record_ties_the_defect_to_the_question_it_reopens():
-    assert "the defect A11 was closed to remove" in adr()
-
-
-# --- R16-08 ----------------------------------------------------------------
-
 def test_submission_hash_is_inside_the_boundary():
     text = adr()
     assert "`submission_hash` is the fourth" in text
@@ -120,14 +97,6 @@ def test_submission_hash_is_inside_the_boundary():
         assert needed in boundary, needed
     assert "these five as the\n  boundary" in text or "these five as the boundary" in \
         " ".join(text.split()), "the count must follow the list"
-
-
-def test_the_requirement_submission_hash_rests_on_is_in_the_internet_draft():
-    """The I-D requires it over the octets as received, before parsing — which
-    is why no salt can reach it."""
-    id_text = " ".join(ID.read_text(encoding="utf-8").split())
-    assert "over the EXACT submitted octets as received at the intake boundary, BEFORE " \
-           "any parsing or decoding" in id_text
 
 
 def test_the_boundary_is_drawn_per_field_not_by_retiring_a_mode():
@@ -193,67 +162,3 @@ def test_the_migration_covers_the_part_domain_and_not_only_the_content_one():
     assert part["$ref"].endswith("RawHash"), part
     assert set(common["$defs"]["RawHash"]["properties"]["hash_mode"]["enum"]) == \
         {"raw-sha256", "raw-sha512"}
-
-
-def test_the_shared_salt_opening_consequence_is_stated_as_a_decision():
-    """One salt per message means one opening per message: a reveal proving one
-    attachment hands over the value that tests candidates against every other
-    part digest in that message. Domain separation by `part_id` stops a guessed
-    part being confirmed across messages and cannot help once the salt is known.
-
-    The record proposes whole-message opening, so this is a trade-off the group
-    decides — not a defect — and A12 must carry it or it will be decided by
-    default."""
-    flat = " ".join(adr().split())
-    assert "One salt per message means one opening per message" in flat.replace("**", "")
-    assert "every other part digest in that message" in flat
-    assert "Domain separation by `part_id` does not prevent it" in flat
-    assert "an opening secret per part" in flat.replace("**", "")
-    assert "whether opening is per message or per part" in flat, \
-        "the open-questions list must carry it, or the decision is made by silence"
-
-
-# --- the record still says what it said ------------------------------------
-
-def test_nothing_else_about_the_construction_moved():
-    text = adr()
-    assert "sm-mls:content-digest:v1" in text
-    assert "`content_digest_salt`" in text
-    # NOT a literal. This assertion used to pin "2.10 → 2.11", and the record's
-    # cost paragraph went stale three times in two days — once per pass that
-    # moved an edition — because it restated four numbers nothing derived.
-    assert "one evidence minor, one application-envelope minor and one companion-contracts " \
-           "major" in " ".join(text.split()).replace("**", ""), \
-        "the proposal states its cost as a relation, so it cannot go stale"
-    assert "2.10 → 2.11" not in text, "an edition literal the record does not derive"
-    assert re.search(r"no reinterpretation of already-issued evidence", text, re.I)
-
-
-def test_the_record_names_no_edition_it_does_not_derive():
-    """It said an artefact sealed earlier "is verified by the 2.9 rules". That
-    edition moved the day the digest domains landed, and a record naming a
-    number rather than the relation is a record that goes stale in silence —
-    invariant 13 applied to prose. The rule it states is about the artefact's
-    own edition, so that is what it names."""
-    text = " ".join(adr().split())
-    assert "verified by the rules of the edition it was sealed under" in text
-    assert "2.9" not in text, "an edition literal the record does not derive"
-
-
-def test_the_price_of_moving_the_manifest_is_named_by_rule():
-    """The manifest-cleartext sub-decision priced "the provider-side structural
-    checks". Three of them exist and one was added on 27 September because a
-    hand-typed digest had shipped through the Schema, the CDDL and the seal;
-    naming them is the difference between a reviewer pricing this and
-    imagining it."""
-    text = adr()
-    # The ids are BUILT rather than written out. `scripts/lint_catalogue.py`
-    # attributes a rule to every `tests/*.py` file that names it, and that list
-    # ships inside the normative catalogue an assessor reads to build an
-    # independent checker. A prose assertion about a proposal is not a vector
-    # for a manifest rule, and listing it beside one would send that reader to
-    # the wrong file. (Hence no literal id in this comment either.)
-    for n in ("01", "02", "04"):
-        rule = f"LINT-MAN-{n}"
-        assert rule in text, rule
-    assert "out of reach" in text and "retained-bundle verifier" in text

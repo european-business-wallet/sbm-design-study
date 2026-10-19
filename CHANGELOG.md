@@ -18,7 +18,34 @@ record is not reproduced here.
 
 ---
 
-## Current — 2026-10-11, edition r49
+## Current — 2026-10-19, edition r50
+
+**The tests that only check a sentence leave the snapshot. No artefact
+version moves, no decision changes, nothing reaches the wire.** This
+repository's suite had grown a class of test that reads a Markdown document —
+the umbrella, the Internet-Draft, the TS, a companion, the README, the agenda,
+a record — and asserts that a sentence, a word or a pattern is in it. Such a
+test pins the wording of a document; it does not test the behaviour the
+wording describes, which is the rule this repository's own CONTRIBUTING states.
+In the source repository they guard the editing of the documents; in a
+snapshot the documents are not edited, so the guards guard nothing and cost a
+reader who runs the bar the impression that prose is what the suite is for.
+
+**What left.** Every test whose assertions are all on document text: 112
+functions across 51 files, three files whole (the agenda-citation checks, the
+quoted-count checks and the lifecycle-claim checks). A test that also asserts
+on behaviour — a verifier's verdict, a schema's refusal, a contract's shape —
+stays, with its prose assertions, because its behavioural half is what it
+exists for. The list is generated from the source's tests by the rebuild,
+not kept by hand, so it follows the source as its tests move.
+
+**What did not leave.** The gates that read the documents structurally — every
+link and anchor resolves, every figure is fresh, every version the prose
+states is current, every count written in words matches the list it describes
+in the generated files, the licence lists only files this snapshot has — are
+not tests of a sentence and stay in the bar.
+
+## Edition r49 — 2026-10-11
 
 **The decision records, read by somebody who did not write them. No artefact
 version moves, and no decision changes.** The sixteen architecture decision

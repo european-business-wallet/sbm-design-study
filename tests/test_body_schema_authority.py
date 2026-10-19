@@ -26,7 +26,6 @@ import evidence_lint as el  # noqa: E402
 from cddl_tool import requires_cddl  # noqa: E402
 
 
-
 def _load(name, filename):
     spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / filename)
     mod = importlib.util.module_from_spec(spec)
@@ -91,9 +90,3 @@ def test_cddl_check_gate_reports_all_three_properties():
     src = (ROOT / "scripts" / "cddl_check.py").read_text()
     assert "validate_body" in src, "cddl_check no longer runs the Schema step"
     assert "body Schema-valid" in src
-
-
-def test_id_verification_algorithm_requires_the_schema_step():
-    idtxt = (ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text()
-    assert "authoritative JSON Schema" in idtxt
-    assert "CDDL-valid but Schema-invalid" in idtxt

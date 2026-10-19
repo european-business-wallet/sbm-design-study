@@ -130,10 +130,3 @@ def test_the_shipped_evidence_commits_to_the_scope_extension():
 # ---------------------------------------------------------------------------
 # Capability / lifecycle prose
 # ---------------------------------------------------------------------------
-
-def test_the_id_states_capability_and_immutability():
-    idd = (ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text()
-    assert "`required_capabilities` MUST include it" in idd
-    assert "cannot join silently" in idd
-    assert "`scope_id` is IMMUTABLE for a group" in idd
-    assert "0xF53B" in idd

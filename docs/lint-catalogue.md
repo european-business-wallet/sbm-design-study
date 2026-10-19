@@ -1074,7 +1074,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Predicate (PASS iff):** Let ackers = distinct-by-mid eligible members holding an ack-capable device. For 'quorum:n', len(ackers) MUST be >= n; for 'any-one', ackers MUST be non-empty.
 - **Error outcome:** {ctx}: {pol!r} unsatisfiable — {k} distinct active, ack-capable member(s) eligible, {n} required | {ctx}: 'any-one' unsatisfiable — no active, ack-capable member is eligible
 - **Reference implementation:** `check_policy`
-- **Tests:** `test_bundle_lint.py`, `test_lifecycle_claims.py`, `test_policy_selection.py`
+- **Tests:** `test_bundle_lint.py`, `test_policy_selection.py`
 
 ### LINT-BND-09 · `core`
 
@@ -1083,7 +1083,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Predicate (PASS iff):** The eligible set (distinct-by-mid) MUST be non-empty AND every distinct member MUST hold an ack-capable device.
 - **Error outcome:** {ctx}: 'all' over an empty eligible set is ambiguous — rejected | {ctx}: 'all' unreachable — eligible member(s) {lacking} have no ack-capable device
 - **Reference implementation:** `check_policy`
-- **Tests:** `test_bundle_lint.py`, `test_lifecycle_claims.py`, `test_policy_selection.py`
+- **Tests:** `test_bundle_lint.py`, `test_policy_selection.py`
 
 ### LINT-BND-10 · `core`
 
@@ -1110,7 +1110,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Predicate (PASS iff):** The confirmation's mid (and device_id when present) and every quorum acker mid MUST resolve to an active member of this entity that is ack-capable (the named device enrolled with 'ack', or any ack-capable device when no device_id). Evidence 2.3: a wallet-signed quorum entry names its device — the (mid, device_id) pair is resolved; a provider entry resolves the member alone. The member and device are resolved AS OF THE ACT (the confirmation's own instant), not from the current-status map — a confirmation valid when it was made does not become unresolvable when the member later retires, and a member who was NOT active at the act still fails. Where no version history is supplied the bundle's single current version is used and the behaviour is unchanged.
 - **Error outcome:** {type} confirmation mid {mid!r} does not resolve to an active, ack-capable member of {entity!r} ({why}) — TS clause 6 INTF-2 | {type} quorum acker {mid!r} does not resolve … INTF-2
 - **Reference implementation:** `check_bundle`
-- **Tests:** `test_bundle_lint.py`, `test_federated_fixture.py`, `test_historical_resolution.py`, `test_lifecycle_claims.py`, `test_quorum_proofs.py`, `test_recipient_proof_published_key.py`
+- **Tests:** `test_bundle_lint.py`, `test_federated_fixture.py`, `test_historical_resolution.py`, `test_quorum_proofs.py`, `test_recipient_proof_published_key.py`
 
 ### LINT-BND-13 · `core`
 
@@ -1191,7 +1191,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Predicate (PASS iff):** The confirmation MUST carry a device_id; (mid, device_id) MUST resolve to a device with a confirmation_key.public_key_b64; and the wallet signature MUST verify against that key under the algorithm the anchor DECLARES — EdDSA, ES256 or ES384, with THREE-WAY AGREEMENT between the COSE protected `alg`, the published `confirmation_key.alg` and the key's actual type/curve (one encoding per algorithm, I-D Confirmation-key encodings). This predicate said 'Ed25519' after the verifier became algorithm-neutral, and the generated catalogue is NORMATIVE — an assessor could reject a conforming EC confirmation on it. Fail-closed. Evidence 2.3 extends the same check to wallet-signed quorum entries: each is an independently portable per-member proof, resolved per (mid, device_id) and verified against that member's published anchor. the check runs ONCE PER selected proof field. It used to run after the loop that selects them, on whichever field was iterated last — `s3_attestation` — so a forged recipient_confirmation or recipient_validation_failure on evidence carrying no s3 attestation was never verified at all.
 - **Error outcome:** {type} {field} by {mid!r} is wallet-signed but carries no device_id (finding D) | {type} {field} by {mid!r}/{did!r} has no resolvable confirmation_key anchor (finding D) | {type} {field} wallet_signature_b64 does not verify against the published confirmation key of {mid!r}/{did!r} (INTF-1/S1)
 - **Reference implementation:** `check_bundle`
-- **Tests:** `test_bundle_lint.py`, `test_certificate_binding.py`, `test_historical_resolution.py`, `test_lifecycle_claims.py`, `test_quorum_proofs.py`, `test_recipient_proof_published_key.py`, `test_sender_confirmation.py`
+- **Tests:** `test_bundle_lint.py`, `test_certificate_binding.py`, `test_historical_resolution.py`, `test_quorum_proofs.py`, `test_recipient_proof_published_key.py`, `test_sender_confirmation.py`
 
 ### LINT-BND-22 · `core`
 
@@ -1290,7 +1290,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Predicate (PASS iff):** Confirmation-key uniqueness across the whole member set — the same public key on two (mid, device_id) records, across devices, members or entities, makes a signature resolve to more than one device and security class; device-bound assurance collapses. Fail-closed.
 - **Error outcome:** a confirmation key shared by two device records in the bundle
 - **Reference implementation:** `check_bundle`
-- **Tests:** `test_key_uniqueness.py`, `test_lifecycle_claims.py`
+- **Tests:** `test_key_uniqueness.py`
 
 ### LINT-BND-33 · `core`
 
@@ -1308,7 +1308,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Predicate (PASS iff):** The member version AND the device key are resolved AS THEY STOOD AT THE ACT (sent_at / verified_at / read_at / refused_at per object), not as they stand now. (a) exactly ONE history version is in force at the act — overlapping windows, a history that does not cover the act, and unparsable bounds are REJECTED rather than resolved by manifest order; (b) where a ROSTER-v1 snapshot covers the epoch, the selected version's digest MUST equal the snapshot's member_doc_digest; (c) device.added_at <= act_time and any removal boundary is honoured, so a key minted after the fact cannot anchor an earlier act. Without a history the bundle's single current version is used, so an old-style bundle behaves as before while (c) still runs.
 - **Error outcome:** ambiguous/uncovered/unparsable member history for {mid} at {act} | selected version disagrees with the signed ROSTER member_doc_digest | device {device_id} was added after (or removed before) the act
 - **Reference implementation:** `check_bundle`
-- **Tests:** `test_historical_resolution.py`, `test_lifecycle_claims.py`
+- **Tests:** `test_historical_resolution.py`
 
 ### LINT-BND-35 · `core`
 
@@ -1317,7 +1317,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Predicate (PASS iff):** The pinned policy version was the LATEST one in force at the act. Windows are [valid_from, successor.valid_from) — the upper bound is DERIVED FROM THE CHAIN and MUST NOT be stored. Storing it created a deadlock for the ordinary publication, because a published BW-ORG is pinned by content: leaving v1 unbounded made this rule reject it, and bounding it changed its digest so evidence already pinning the document stopped resolving. Both branches were closed. With a chain: no duplicate valid_from boundaries, no stored valid_until, predecessors named by policy_version AND content digest, and the pinned version equal to the latest whose derived window contains sent_at. The digest chain makes a fork VISIBLE WHEN BOTH DOCUMENTS ARE OBSERVED; it does not prevent equivocation. A PREFIX is not a history. Every `supersedes` must resolve to another document in the supplied set and the earliest must be a first publication with none — a fragment presented as a history is a FAIL, because the claimant chose what to show and the documents themselves say a version is missing. An earlier rule guarded ABSENCE and left truncation open: the fix had been applied to the reproduction rather than to the class. NOT the rule first proposed (the head must equal the manifest's `org`), which cannot fire — LINT-BND-10 already forces that org to BE the pinned document.
 - **Error outcome:** pinned version was superseded before the act | duplicate valid_from | stored valid_until | unlinked or equivocated succession | a later version was in force
 - **Reference implementation:** `check_bundle`
-- **Tests:** `test_lifecycle_claims.py`, `test_policy_maximality.py`
+- **Tests:** `test_policy_maximality.py`
 
 ### LINT-BND-37 · `core`
 
@@ -1398,7 +1398,7 @@ This catalogue is the **normative definition** of every `LINT-*` conformance rul
 - **Predicate (PASS iff):** The state the evidence commits to cannot be inspected without the retained GroupContext. The first version wired the material from the manifest and left ABSENCE unguarded — removing the key from a positive manifest still printed [OK] and exited 0, while the same manifest without `policy_history` reported a gap. Same verdict machinery, same manifest, one property guarded and one not: the fix had been applied to the reproduction rather than to the class. Declared in docs/required-properties.json, which check_bundle ITERATES, so a property added there fails closed until it is wired.
 - **Error outcome:** no retained GroupContext for an evidenced MLS state; the verification is INCOMPLETE
 - **Reference implementation:** `check_bundle`
-- **Tests:** `test_group_params_semantics.py`, `test_lifecycle_claims.py`, `test_release_probes.py`
+- **Tests:** `test_group_params_semantics.py`, `test_release_probes.py`
 
 ### LINT-BND-I5 · `core`
 

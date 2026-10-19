@@ -118,16 +118,6 @@ def test_timeline_issuance_is_admissible_only_within_the_validity():
         "not-yet-valid is as unreliable as expired"
 
 
-def test_the_false_claim_is_gone_and_the_exposure_is_disclosed():
-    assert "cannot conceal" not in UMB
-    assert "Residual stale-status exposure (stated openly — D6)" in UMB
-    assert "bounded and disclosed" in UMB
-
-
-# ---------------------------------------------------------------------------
-# The X-07 outage: deterministic and bounded, never a freeze
-# ---------------------------------------------------------------------------
-
 def test_an_outage_longer_than_the_validity_has_one_outcome():
     """Modeled: the registry goes dark at T0+1min; the assertion expires at
     T0+5min. Until expiry the RDP operates (bounded offline); after it,
@@ -138,8 +128,3 @@ def test_an_outage_longer_than_the_validity_has_one_outcome():
     assert _disc25(copy.deepcopy(DOC), now=during_outage_expired)
     assert "EDD outage semantics (deterministic and bounded)" in UMB
     assert "cannot freeze qualified delivery federation-wide" in UMB
-
-
-def test_the_gate_is_capability_bounded_in_the_prose():
-    assert "capability-bounded — D6" in UMB
-    assert "valid (unexpired) signed status assertion" in UMB

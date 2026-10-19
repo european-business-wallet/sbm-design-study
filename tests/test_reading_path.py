@@ -186,25 +186,6 @@ def test_no_reader_facing_document_points_into_the_unexported_analysis():
 
 # --- process history, and a claim the gates do not make ----------------------
 
-def test_the_guide_opens_on_the_specification_not_on_its_process():
-    """The first substantive paragraph explained two review counters and the
-    mistakes earlier readers had made with them. The distinction is worth
-    keeping; the anecdote is not first-contact material."""
-    guide = _flat(GUIDE)
-    assert "counts the completed **adversarial design reviews**" in guide, \
-        "the two series are genuinely different and the guide must still say so"
-    assert "two readers have now made" not in guide
-    assert "a mistake" not in guide
-
-
-def test_the_green_bar_claim_is_bounded_by_what_the_gates_check():
-    readme = _flat(ROOT / "README.md")
-    assert "The repository agrees with itself, as far as its gates can see" in \
-        readme.replace("**", "")
-    assert "not a claim that no semantic inconsistency remains" in readme
-    assert "each time the answer was a new gate" in readme
-
-
 def test_the_corrections_keep_what_a_reader_could_have_acted_on():
     """A corrections list that keeps everything stops being read. What survives
     is the entries where an earlier edition would have led a reader to a wrong

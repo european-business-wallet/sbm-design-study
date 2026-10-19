@@ -52,9 +52,3 @@ def test_live_documents_carry_no_over_claim():
     import re
     assert not re.search(r"Key transparency\s*\|[^|]*\|\s*REQUIRED", ts), (
         "the TS conformance table still marks key transparency REQUIRED")
-
-
-def test_roadmap_framing_is_present():
-    """Positive: the honest roadmap framing is actually stated."""
-    ts = (ROOT / NORMATIVE_DOCS[0]).read_text(encoding="utf-8")
-    assert "roadmap" in ts.lower() and "key transparency" in ts.lower()

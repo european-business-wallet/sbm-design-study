@@ -205,8 +205,3 @@ def test_negative_unsatisfiable_default_fails_the_bundle():
 # ---------------------------------------------------------------------------
 # Self-containment: the delta framing is gone
 # ---------------------------------------------------------------------------
-
-def test_the_umbrella_definition_is_self_contained():
-    umb = (ROOT / "Secure-Business-Messaging-Profile.md").read_text()
-    assert "Unchanged from v1.0 review except" not in umb
-    assert "Acceptance-policy selection (normative)" in umb

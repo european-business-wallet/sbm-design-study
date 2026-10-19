@@ -41,31 +41,6 @@ def _doc_lint(root):
 
 # --- PT-03: the corrected statement ---------------------------------------
 
-def test_the_profile_no_longer_offers_neutral_naming_as_a_mitigation():
-    text = UMBRELLA.read_text(encoding="utf-8")
-    assert "a neutral id does not" not in text
-    assert "neutral-id guidance for scope naming" not in text
-
-
-def test_it_says_instead_what_a_published_map_discloses():
-    """The replacement must carry the meaning, not just drop the claim: what an
-    observer learns is the SET of content classes the resolved scope covers."""
-    text = UMBRELLA.read_text(encoding="utf-8")
-    assert "the set of content classes the message could have belonged to" in text
-    assert "a coarser scope map discloses less" in text.lower()
-    assert "the organisation that publishes the map" in text, \
-        "the choice belongs to the recipient organisation, and the text must say so"
-
-
-def test_the_content_class_bullet_keeps_both_halves():
-    """`content_class` is not echoed in evidence AND the echoed scope narrows it
-    to a set. A reader must not be able to take the first without the second."""
-    bullet = next(l for l in UMBRELLA.read_text(encoding="utf-8").splitlines()
-                  if l.startswith("- **Content-class inference**"))
-    assert "never echoed in evidence" in bullet
-    assert "narrows the class to the set that scope covers" in bullet
-
-
 @pytest.mark.parametrize("claim", [
     "neutral-id guidance for scope naming",
     "Scope ids are chosen by the publisher — a scope named `x` leaks; a neutral id does not.",
@@ -96,33 +71,6 @@ def test_the_normative_scope_descriptor_is_not_what_changed():
 
 
 # --- PT-02: opened, and answered nowhere ----------------------------------
-
-def test_the_salted_digest_question_is_on_the_agenda():
-    row = next((l for l in AGENDA.read_text(encoding="utf-8").splitlines()
-                if l.startswith("| A12 |")), None)
-    assert row, "PT-02 must be an agenda entry, not a paragraph somewhere"
-    assert row.count("|") == 6, "four columns, the shape its neighbours use"
-    for reached in ("envelope schema", "per-part digests", "reveal path"):
-        assert reached in row, f"the entry must say what a change would reach: {reached}"
-
-
-def test_the_agenda_row_does_not_say_the_profile_is_silent():
-    """The row said "the profile does not say which it assumes". It did not, on
-    26 September; it does now, in the I-D's Security Considerations and in the
-    umbrella's consolidated threat model. A reviewer reads this row before the
-    specification — that is what the agenda is for — so a row describing the
-    documents as silent would have them price the question they were assigned
-    against a repository three days out of date.
-
-    A12 stays OPEN. What moved is what is open: not whether to state the
-    exposure, but whether stating it is enough."""
-    row = next(l for l in AGENDA.read_text(encoding="utf-8").splitlines()
-               if l.startswith("| A12 |"))
-    assert "the profile does not say which it assumes" not in row
-    assert "whether stating it is enough" in row
-    assert "Guessable content behind an unsalted digest" in row
-    assert "Decided" not in row, "A12 stays open"
-
 
 def test_the_agenda_numbering_is_not_reused():
     """A11 was published with the hash-mode pass and is cited from

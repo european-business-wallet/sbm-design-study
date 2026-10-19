@@ -260,17 +260,6 @@ def test_the_draft_specifies_key_bytes_transport_and_freshness():
     assert "hash of the package's public bytes" in flat.lower()
 
 
-def test_the_agenda_records_what_is_answered_and_what_is_not():
-    row = next(l for l in (ROOT / "docs" / "REVIEW_AGENDA.md").read_text(
-        encoding="utf-8").splitlines() if l.startswith("| G1 |"))
-    assert "Answered" in row
-    assert "SignWithLabel" in row or "leaf signature key" in row
-
-
-# ===========================================================================
-# R30-PUB-01 / R30-PUB-02 — the two things the demonstration did not do
-# ===========================================================================
-
 def test_a_client_holding_only_the_published_response_can_refuse():
     """The acceptance test for R30-PUB-01.
 

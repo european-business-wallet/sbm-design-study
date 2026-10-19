@@ -67,12 +67,6 @@ def test_the_shipped_extension_is_bilateral():
     assert w.sbm_scope_extensions("default", "1").hex().endswith("00")
 
 
-def test_the_id_states_the_prohibition_and_the_future_study():
-    assert "EXACTLY TWO entities" in IDD
-    assert "NOT CONFORMANT to this profile version" in IDD
-    assert "Future study:" in IDD and "multiparty" in IDD.lower()
-
-
 def test_the_former_allowance_is_forbidden():
     former = ("A group MAY contain devices from three or more entities "
               "(multi-party channels)")

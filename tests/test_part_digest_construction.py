@@ -37,14 +37,6 @@ def test_a_part_digest_has_one_rule_and_it_is_the_parts_octets():
         "the machine-readable definition must carry the same rule"
 
 
-def test_no_construction_is_profiled_for_a_chunked_part():
-    id_text = " ".join(ID.read_text(encoding="utf-8").split())
-    assert "No Merkle construction is profiled" in id_text
-    assert "the Merkle root over its chunks" not in id_text.replace(
-        '"the Merkle root over its chunks"', ""), \
-        "the withdrawn rule may be quoted as withdrawn, never stated as available"
-
-
 def test_the_framing_that_exists_is_the_envelope_and_it_is_named_as_such():
     """This test used to assert the opposite half of its own docstring.
 
@@ -84,67 +76,6 @@ def test_the_framing_that_exists_is_the_envelope_and_it_is_named_as_such():
     ce = (ROOT / "schemas" / "evidence-ce.schema.json").read_text(encoding="utf-8")
     assert '"chunking"' in ce, "the envelope-framing transformation is untouched"
     assert '"part_envelope_hashes"' in ce
-
-
-def test_the_word_part_is_disambiguated_where_both_meanings_meet():
-    """`part_envelope_hashes` and a manifest `part_id` both say "part" and mean
-    different objects — content, and a fragment of transmitted ciphertext. No
-    normative text said which was which, and that collision is what let "that
-    part's manifest `digest` is the Merkle root over its chunks" read as
-    coherent: it joined a content part to transport fragments in one sentence.
-    """
-    id_text = " ".join(ID.read_text(encoding="utf-8").split())
-    assert "The word *part* in `part_envelope_hashes` names an emitted envelope and never a " \
-           "manifest part" in id_text
-    assert "that distinction survives the deferral" in id_text
-    ts = " ".join((ROOT / "etsi" / "TS-SBM-QERDS-Binding-v0.1.md").read_text(
-        encoding="utf-8").split())
-    assert "content transformation is forbidden" in ts, \
-        "the confinement the closure rests on must still be in the TS"
-    # This assertion used to require the TS to say that re-packaging and
-    # chunking ARE the permitted transformations — the sentence the r26 review
-    # found contradicting the I-D's prohibition. A probe that pins a claim can
-    # hold a wrong claim in place, and this one did.
-    assert "neither of the two the profile enumerates" in ts.replace("**", "")
-
-
-def test_the_closure_records_what_would_have_to_come_first():
-    """A13 is closed, not deleted, and the order matters.
-
-    The reason the Merkle sentence survived a revision is that a construction
-    reads like a small thing: pick a chunk size, hash the leaves. It is not. The
-    row now says that if this reopens, the MECHANISM comes first — a descriptor,
-    evidence of the split, a reassembly rule with a defined endpoint — and the
-    construction only after, with its parameters and vectors. A closure that
-    kept only the cryptographic shopping list would invite the same sentence
-    back with better parameters and still no object to apply them to.
-    """
-    row = next(l for l in AGENDA.read_text(encoding="utf-8").splitlines()
-               if l.startswith("| A13 |"))
-    assert "Decided, 27 September 2026" in row
-    assert "the question does not arise" in row
-    for first in ("part-chunk descriptor", "evidence of the split",
-                  "reassembly rule with a defined endpoint", "and only then the construction"):
-        assert first in row, first
-    for kept in ("chunk boundaries", "domain separation", "discriminator",
-                 "odd number of chunks", "None is profiled"):
-        assert kept in row, kept
-    # NOT "per emitted envelope". That assertion made the wrong ground
-    # MANDATORY: A13 was closed citing the CE envelope transformations as the
-    # framing operation the profile defines, and they are not defined at all.
-    # The closure stands on the part rule, which holds either way.
-    assert "nothing in the profile splits a manifest part" in row.lower().replace("**", "")
-    assert "deferred as" in row and "A15" in row, row[:200]
-
-
-def test_no_record_still_defers_to_an_open_a13():
-    """`SBM-ADR-0014` pointed forward — "if A13 ever profiles a chunk layer,
-    whether it is salted is decided there". A13 is decided, and a proposal that
-    routes a reviewer to an open question that has closed sends them nowhere."""
-    adr = " ".join((ROOT / "docs" / "adr" / "SBM-ADR-0014.md").read_text(
-        encoding="utf-8").split())
-    assert "If A13 ever profiles a chunk layer" not in adr
-    assert "A13 closed on 27 September 2026" in adr
 
 
 def test_the_withdrawn_option_has_a_home():
@@ -199,26 +130,6 @@ def test_no_reader_facing_document_offers_the_withdrawn_construction():
             if re.search(r"merkle", flat, re.I) and not WITHDRAWN.search(flat):
                 problems.append(f"{rel}: {flat[:140]}")
     assert problems == [], problems
-
-
-def test_the_manifest_rules_still_say_what_the_digest_covers():
-    """The rule the withdrawal rests on: a part's digest is over the part's
-    octets. If that goes, reassembly has no defined endpoint and A13's closure
-    loses its ground.
-
-    The wording moved. "digests are over decoded octets (permitted content
-    encodings `identity`, `gzip`)" named an encoding layer that does not exist
-    inside the MLS application data and gave no field in which to declare one,
-    so the term had no referent; the rule is now stated as the identity it is,
-    and *decoded octets* is defined once against it.
-    """
-    id_text = " ".join(ID.read_text(encoding="utf-8").split())
-    assert "`length` is their count and `digest` is over them" in id_text
-    assert "*decoded octets*, used throughout this document for this value, " \
-           "therefore means exactly the part's octets" in id_text
-    assert "permitted content encodings" not in id_text.replace(
-        '"content encodings `identity`, `gzip`"', ""), \
-        "the withdrawn permission may be quoted as withdrawn, never offered"
 
 
 def test_a_manifest_is_flat_in_all_three_authorities():

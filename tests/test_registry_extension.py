@@ -103,15 +103,3 @@ def test_unknown_reason_passes_cddl_and_projection_equality():
     assert lc.projection_equals_decode(art) == []
     cddl = (ROOT / "cddl" / "sm-mls-erd.cddl").read_text()
     assert "nde-reason = tstr" in cddl, "the CDDL reason set closed again"
-
-
-def test_ownership_split_is_recorded():
-    """X-34 residual: the I-D no longer claims to BE the registry; the umbrella
-    owns the artefacts; the well-known registration moved to §8.1."""
-    idtxt = (ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text()
-    umb = (ROOT / "Secure-Business-Messaging-Profile.md").read_text()
-    assert "initially this document" not in idtxt
-    assert "registries/reason-codes.json" in umb and "registries/content-classes.json" in umb
-    assert "Well-Known URI suffix **`bw`**" in umb
-    # the I-D registers no well-known URI and drops the undefined /.well-known/rdp
-    assert "Well-Known URI suffixes `bw` and `rdp`" not in idtxt

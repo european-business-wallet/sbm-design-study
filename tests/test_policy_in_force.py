@@ -194,10 +194,3 @@ def test_the_shipped_orgs_are_in_force_today():
 # ---------------------------------------------------------------------------
 # The rule is stated where implementers read it
 # ---------------------------------------------------------------------------
-
-def test_the_umbrella_states_the_precondition_and_the_prohibition():
-    t = " ".join((ROOT / "Secure-Business-Messaging-Profile.md")
-                 .read_text().replace("**", "").replace("`", "").split())
-    assert "in force at sent_at" in t
-    assert "MUST NOT publish a not-yet-effective BW-ORG" in t
-    assert "no as_of retrieval API is defined" in t

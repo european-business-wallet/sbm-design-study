@@ -446,30 +446,6 @@ def test_the_intake_reason_is_not_reused_for_a_post_decryption_failure():
     assert new["allowed_events"] == ["D.2-ContentConsignmentFailure"]
 
 
-def test_the_normative_text_states_the_distinction():
-    id_text = " ".join((ROOT / "ietf" / "draft-sbm-mls-erd-00.md").read_text().split())
-    assert "A failure of the first step is not a mismatch, and MUST NOT be reported as one" \
-        in id_text.replace("**", "")
-    assert "the same value the sender declared" in id_text
-    assert "`malformed-envelope` **MUST NOT** be reused" in id_text
-    assert "A Mode A recipient is unaffected" in id_text
-
-
-# ===========================================================================
-# R27-PUB-03 — the assertion's INTRINSIC consistency, checked without the SE
-# ===========================================================================
-#
-# What one part's detail says about ITSELF needs no manifest: whether a cause
-# carries the fields it must, whether a claimed mismatch actually differs,
-# whether the two sides of a comparison are comparable at all. Those checks used
-# to sit behind two `continue`s — one taken when no SE was supplied, one taken
-# for every `part-undescribed` claim — so an assertion verified from retained
-# evidence alone was never examined, and an undescribed-part claim was never
-# examined even with the SE at hand. A digest mismatch whose two digests were
-# equal passed standalone and failed the moment an SE was supplied, which is how
-# we know the dependency was control flow and not evidence: the equality of an
-# assertion's own two fields is visible without knowing anything the sender said.
-
 def _rvf_report(**over):
     """The real recipient's report for a payload with a wrong part, as the base
     for each contradiction — so every probe below starts from something the

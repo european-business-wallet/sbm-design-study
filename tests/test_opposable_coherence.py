@@ -54,10 +54,6 @@ def test_annex_r_defines_opposable_with_the_default():
     assert "an absent opposable field means opposable" in FLAT
 
 
-def test_the_optional_contradiction_is_gone():
-    assert "The OPTIONAL salted `SE.mandate_ref.mandate_commitment`" not in UMB
-
-
 def test_one_owner_and_the_legal_layer_stays_put():
     assert "owned by the I-D (Mandate Commitment)" in FLAT
     assert "never automatically binding" in FLAT

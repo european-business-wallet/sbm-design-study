@@ -44,12 +44,6 @@ REG = json.loads((ROOT / "registries" / "auth-assurance.json").read_text())
 SE = json.load(open(ROOT / "samples" / "sample-SE.json"))["projection"]
 
 
-def test_the_p2p_flow_is_gone():
-    """The former defect: a wallet-to-wallet exchange before the group."""
-    assert "WU-S sends an OpenID4VP Authorization Request to WU-R" not in UMB
-    assert "WU-R responds with a VP Token" not in UMB
-
-
 def test_the_ceremony_is_out_of_band_and_skippable():
     assert "no OpenID4VP transport" in FLAT
     assert "never over the messaging path" in FLAT

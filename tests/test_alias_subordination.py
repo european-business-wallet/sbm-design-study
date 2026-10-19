@@ -33,12 +33,6 @@ dl = _load("doc_lint", "doc_lint.py")
 UMB = (ROOT / "Secure-Business-Messaging-Profile.md").read_text()
 
 
-def test_dns_aliasing_is_removed_and_recorded_as_future_study():
-    assert "### 5.5 DNS aliasing — removed (future study)" in UMB
-    assert "NOT part of this profile version" in UMB
-    assert "DNS TXT + SRV + SVCB" not in UMB
-
-
 def test_the_former_dns_phrasing_is_forbidden():
     former = ("Wallets and RPs MAY discover messaging endpoints via "
               "DNS TXT + SRV + SVCB records.")
@@ -67,8 +61,3 @@ def test_the_security_property_is_stated():
     flat = UMB.replace("\n", " ")
     assert "cannot authorise a provider, key or endpoint" in flat
     assert "**Security property:**" in UMB
-
-
-def test_exactly_two_link_relations_are_defined():
-    assert "urn:bw:uid" in UMB and "urn:bw:med" in UMB
-    assert "Unknown relations **MUST** be ignored" in UMB
